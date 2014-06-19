@@ -46,8 +46,11 @@ int snprintf(char* s, size_t n, const char* format, ... );
 #  define __seterrno(e)   kseterrno(e,__FILE__,__LINE__, __func__)
 #  define __geterrno()    kgeterrno()
 
-// Macro alloc
-#define KALLOC(T) ((T*)kalloc (sizeof(T)))
+// Macro
+#define KALLOC(T)     ((T*)kalloc (sizeof(T)))
+#define NO_LOCK       assert(klockcount() == 0)
+#define MOD_ENTER     NO_LOCK
+#define MOD_LEAVE     NO_LOCK
 
 // ======================================================
 // Kernel types
@@ -99,6 +102,7 @@ void klock (spinlock_t* lock);
 int ktrylock (spinlock_t* lock);
 void kunlock (spinlock_t* lock) ;
 int kislocked (spinlock_t* lock);
+int klockcount ();
 
 // Linked List ------------------------------------------
 

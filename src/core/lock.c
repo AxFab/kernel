@@ -28,6 +28,8 @@ int ktrylock (spinlock_t* lock)
 
 void kunlock (spinlock_t* lock)
 {
+  assert (lock->key_ == 1);
+  assert (lock->tid_ == THREAD_ID);
   lock->key_ = 0;
   lock->tid_ = 0;
   _dec_i32 (&kCPU.lockCounter);
@@ -38,4 +40,8 @@ int kislocked (spinlock_t* lock)
   return lock->key_ != 0 && lock->tid_ == THREAD_ID;
 }
 
+int klockcount ()
+{
+  return kCPU.lockCounter;
+}
 

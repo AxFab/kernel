@@ -53,18 +53,24 @@ int kFs_Close(kInode_t* ino)
 int main ()
 {
   kAddSpace_t* addressSpace = kVma_New (STACK_DEFAULT);
+
   kVma_t area = { VMA_READ, 0, 2 * _Kb_, NULL, NULL, NULL, 0};
   kVma_MMap (addressSpace, &area);
+
   fakeInode_t* iLs = getInode ("ls", 0);
   fakeInode_t* iLib = getInode ("libaxc.so", 0);
+
   // We read the file - kernel asm loader read the first 8Kb of the file
   kmmap(addressSpace, NULL, iLs, 8 * _Kb_, 0, VMA_SHARED);
+
   // It use the library libaxc.so - kernel asm loader read the first 8Kb of the file
   kmmap(addressSpace, NULL, iLib, 8 * _Kb_, 0, VMA_SHARED);
   kVma_Display(addressSpace);
+
   // The program is ready...
   // Create the Heap
   kmmap(addressSpace, HEAP_START, NULL, 256 * _Mb_, 0, VMA_HEAP | VMA_READ | VMA_WRITE | VMA_GROWSUP);
+
   // We load the source code    (idea, we add VMA_FIXED, that say this page can be shared as FIXED address)
   //   CODE - The code page can't be shared, as it contains modified re-location and/or dynamic link
   //   DATA - The data page is marked as copy-on-write (the may_shared will request a page copy first)
@@ -72,6 +78,7 @@ int main ()
   kmmap(addressSpace, (void*)(8 * _Mb_ + 0x1000), iLs, 4 * _Kb_, 0x2000, VMA_MAYSHARED | VMA_MAYWRITE | VMA_READ | VMA_DATA);
   kmmap(addressSpace, NULL, iLib, 4 * _Kb_, 0x1000, VMA_READ | VMA_EXEC | VMA_CODE);
   kmmap(addressSpace, NULL, iLib, 4 * _Kb_, 0x2000, VMA_MAYSHARED | VMA_MAYWRITE | VMA_READ | VMA_DATA);
+
   // HERE WE EDIT THE ProcedureLinkageTable (or we let it like this...(it will call interupt resolveSymbol !?))
   kVma_Display(addressSpace);
   int k = 0;
@@ -82,6 +89,6 @@ int main ()
 
   kVma_Display(addressSpace);
   kVma_Destroy (addressSpace);
-  // printf ("Hello world\n");
+  NO_LOCK;
   return 0;
 }

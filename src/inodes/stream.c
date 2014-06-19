@@ -32,8 +32,9 @@ int kFs_ReadBlock (kDevice_t* dev, void* buffer, off_t offset, size_t count)
   if (!dev->read)
     return __seterrno(ENOSYS);
 
-  // FIXME Calling a module !!!
+  MOD_ENTER;
   err = dev->read (dev->fd_, buffer, offset, count);
+  MOD_LEAVE;
   return __seterrno (err);
 }
 

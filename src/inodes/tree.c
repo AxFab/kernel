@@ -56,6 +56,7 @@ static int kFs_Attach (kInode_t* ino, kInode_t* top, const char* name)
 
 kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 {
+  int err;
   kStat_t stat;
   kInode_t* inode;
   int k, symLinkLoop = 0;
@@ -63,7 +64,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
   char* name;
   char* rentTok;
   __noerror();
-  // FIXME should lock
+  // FIXME should use locks & Simplify this routine
   strncpy (uri, path, PATH_MAX);
   name = strtok_r (uri, FILENAME_SEPARATOR, &rentTok);
 
@@ -105,9 +106,11 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 
     memset (&stat, 0, sizeof(kStat_t));
 
-    // FIXME Call driver
-    if (dir->fs_->lookup (name, dir, &stat)) {
-      __seterrno (ENOENT);
+    MOD_ENTER;
+    err = dir->fs_->lookup (name, dir, &stat);
+    MOD_LEAVE;
+    if (err) {
+      __seterrno (err);
       return NULL;
     }
 
@@ -133,9 +136,11 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 
       memset (&stat, 0, sizeof(kStat_t));
 
-      // FIXME Call driver
-      if (dir->parent_->fs_->lookup (name, dir->parent_, &stat)) {
-        __seterrno (ENOENT);
+      MOD_ENTER;
+      err = dir->parent_->fs_->lookup (name, dir->parent_, &stat);
+      MOD_LEAVE;
+      if (err) {
+        __seterrno (err);
         return NULL;
       }
 
@@ -184,9 +189,11 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 
       memset (&stat, 0, sizeof(kStat_t));
 
-      // FIXME Call driver
-      if (dir->fs_->lookup (name, dir, &stat)) {
-        __seterrno (ENOENT);
+      MOD_ENTER;
+      err = dir->fs_->lookup (name, dir, &stat);
+      MOD_LEAVE;
+      if (err) {
+        __seterrno (err);
         return NULL;
       }
 
@@ -225,7 +232,6 @@ kInode_t* kFs_Register(const char* name, kInode_t* dir, kStat_t* stat)
   ino->stat_.mode_ &= (S_IALLUGO | S_IFMT);
   klock(&dir->lock_);
   klock(&ino->lock_);
-
   if (kFs_Attach (ino, dir, name)) {
     kunlock (&dir->lock_);
     kunlock (&ino->lock_);
