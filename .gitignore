@@ -1,0 +1,25 @@
+
+# GIT - ignore
+
+# Strict rule for c project
+*
+!*/
+
+# Disable directory
+3rdparty/
+
+# Allow repository files
+!.gitignore
+!LICENSE
+!README.md
+
+# Allow makefiles
+!Makefile
+!*.mk
+!*.sh
+
+# Allow source files
+!*.c
+!*.h
+!*.asm
+
