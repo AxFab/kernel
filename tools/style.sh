@@ -1,7 +1,7 @@
 #!/bin/bash
 
 for fl in `find include/ src/ tools/ -type f`; do
-  sed 's/\r//' -i $fl
+  sed -e 's/\r//' -e 's/[ \t]*$//' -i $fl
 done;
 
 astyle --style=kr --mode=c --indent=spaces=2 --indent-switches --indent-col1-comments --break-blocks=all --pad-oper --pad-header --delete-empty-lines --align-pointer=type --convert-tabs  src/*/*.c include/*.h  

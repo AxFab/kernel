@@ -5,7 +5,7 @@ all: deliveries
 
 # Rules program ----------------------------------------------------------
 
-$(bin_dir)/%$(bin_ext): 
+$(bin_dir)/%$(bin_ext):
 	$(VVV) $(MKDIR) $(dir $@)
 	$(E) 'Creation of the program $(notdir $@)'
 	$(V) $(LD) -o $@ $(call tbinname,$@,_obj) $(call tbinname,$@,_lflags)
@@ -19,11 +19,11 @@ $(prefix)/bin/%: $(bin_dir)/%$(bin_ext)
 
 # Rules library ----------------------------------------------------------
 
-$(lib_dir)/%$(lib_ext): 
+$(lib_dir)/%$(lib_ext):
 	$(VVV) $(MKDIR) $(dir $@)
 	$(E) 'Creation of the library $(notdir $@)'
 	$(V) $(LD) -shared -o $@ $($(patsubst %$(lib_ext),%, $(notdir $@))_obj) $($(patsubst %$(lib_ext),%, $(notdir $@))_lflags)
-	$(VV) $(AR) $(@:%.so=%.a) $($(patsubst %$(lib_ext),%, $(notdir $@))_obj)  
+	$(VV) $(AR) $(@:%.so=%.a) $($(patsubst %$(lib_ext),%, $(notdir $@))_obj)
 
 $(prefix)/lib/%$(lib_ext): $(lib_dir)/%$(lib_ext)
 	$(VVV) $(MKDIR) $(dir $@)
@@ -41,12 +41,12 @@ $(prefix)/lib/%.a: $(lib_dir)/%.a
 $(out_dir)/lib/%$(lib_ext): $(lib_dir)/%$(lib_ext)
 	$(VVV) $(MKDIR) $(dir $@)
 	$(EE) Create dummy library $(notdir $@)
-	$(VV) objcopy -j .text -j .data -j .bss $< $@ 
+	$(VV) objcopy -j .text -j .data -j .bss $< $@
 
 
 
 # --------------- --------------- --------------- ---------------
- 
+
 $(obj_dir)/%.o: src/%.c $(obj_dir)/%.d
 	$(VVV) $(MKDIR) $(dir $@)
 	$(VV) $(CC) -c -o $@ $< $(CFLAGS)
@@ -86,23 +86,23 @@ deps += $$($(1)_dep)
 $$($(1)_odir)/%.o: $(src_top)/%.c  $$($(1)_odir)/%.d
 	$(VVV) $(MKDIR) $$(dir $$@)
 	$(EE) 'Compile c source $$<'
-	$(VV) $(CC) -c -o $$@ $$< $$($(1)_cflags) 
+	$(VV) $(CC) -c -o $$@ $$< $$($(1)_cflags)
 
 $$($(1)_odir)/%.d: $(src_top)/%.c
 	$(VVV) $(MKDIR) $$(dir $$@)
 	$(EEE) 'Depandancy check for $$<'
-	$(VVV) $(CC) -MM -MG -MT '$$@ $$(@:.d=.o)' -o $$@ $$< $$($(1)_cflags) 
+	$(VVV) $(CC) -MM -MG -MT '$$@ $$(@:.d=.o)' -o $$@ $$< $$($(1)_cflags)
 
 
 $$($(1)_odir)/%.o: $(src_top)/%.cpp  $$($(1)_odir)/%.d
 	$(VVV) $(MKDIR) $$(dir $$@)
 	$(EE) 'Compile cpp source $$<'
-	$(VV) $(CPP) -c -o $$@ $$< $$($(1)_cflags) 
+	$(VV) $(CPP) -c -o $$@ $$< $$($(1)_cflags)
 
 $$($(1)_odir)/%.d: $(src_top)/%.cpp
 	$(VVV) $(MKDIR) $$(dir $$@)
 	$(EEE) 'Depandancy check for $$<'
-	$(VVV) $(CPP) -MM -MG -MT '$$@ $$(@:.d=.o)' -o $$@ $$< $$($(1)_cflags) 
+	$(VVV) $(CPP) -MM -MG -MT '$$@ $$(@:.d=.o)' -o $$@ $$< $$($(1)_cflags)
 
 e_$(1):
 	@ echo $$($(1)_src)
@@ -113,13 +113,13 @@ endef
 
 # Deliveries Templates -------------------------------------------------------
 
-define CRT 
+define CRT
 
 $$($(1)_out): $$($(1)_src)
 	$(VVV) $(MKDIR) $(dir $$@)
 	$(EE) 'Compile cRuntime $(notdir $$<)'
 	$(VV) nasm -f elf32 -o $$@ $$<
-	
+
 endef
 
 
@@ -130,9 +130,9 @@ $(eval $(call COMMON,$(1)))
 $(bin_dir)/$(1)$(bin_ext): $($(1)_refs) $($(1)_obj) $($(1)_crt)
 	$(VVV) $(MKDIR) $(bin_dir)
 	$(E) 'Creation of the kernel image $(notdir $$@)'
-	$(V) ld --oformat=binary -Map $(1).map -o $$@ -Ttext 20000 $($(1)_crt) $$(call tbinname,$$@,_obj) $$(call tbinname,$$@,_lflags) 
-	
-$(1): $(bin_dir)/$(1)$(bin_ext) 
+	$(V) ld --oformat=binary -Map $(1).map -o $$@ -Ttext 20000 $($(1)_crt) $$(call tbinname,$$@,_obj) $$(call tbinname,$$@,_lflags)
+
+$(1): $(bin_dir)/$(1)$(bin_ext)
 endef
 
 define KPROGRAM
@@ -143,8 +143,8 @@ $(bin_dir)/$(1)$(bin_ext): $($(1)_refs) $($(1)_obj) $($(1)_crt)
 	$(VVV) $(MKDIR) $(bin_dir)
 	$(E) 'Creation of the program <ld-cross-platform> $(notdir $$@)'
 	$(V) ld --oformat=elf32-i386 -o $$@ -Ttext 400000 $($(1)_crt) $$(call tbinname,$$@,_obj) $$(call tbinname,$$@,_lflags)
-	
-$(1): $(bin_dir)/$(1)$(bin_ext) 
+
+$(1): $(bin_dir)/$(1)$(bin_ext)
 endef
 
 
@@ -152,7 +152,7 @@ define PROGRAM
 deliveries_bin += $(1)
 $(eval $(call COMMON,$(1)))
 $(bin_dir)/$(1)$(bin_ext): $($(1)_refs) $($(1)_obj)
-$(1): $(bin_dir)/$(1)$(bin_ext) 
+$(1): $(bin_dir)/$(1)$(bin_ext)
 endef
 
 define LIBRARY
@@ -161,8 +161,8 @@ $(1)_maj ?= 1
 $(1)_min ?= 0
 $(eval $(call COMMON,$(1)))
 $(lib_dir)/$(1)$(lib_ext): $($(1)_refs) $($(1)_obj)
-$(1): $($(1)_refs) $(lib_dir)/$(1)$(lib_ext) 
-  
+$(1): $($(1)_refs) $(lib_dir)/$(1)$(lib_ext)
+
 endef
 
 # --------------- --------------- --------------- ---------------

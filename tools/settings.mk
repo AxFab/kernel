@@ -14,17 +14,17 @@ explain = 0
 bld_dir ?= .
 
 bin_top ?= bin
-bin_last ?= 
+bin_last ?=
 bin_dir = $(bld_dir)/$(bin_top)/$(arch)/$(mode)/$(bin_last)
-bin_ext ?= 
+bin_ext ?=
 
 lib_top ?= lib
-lib_last ?= 
+lib_last ?=
 lib_dir = $(bld_dir)/$(lib_top)/$(arch)/$(mode)/$(lib_last)
 lib_ext ?= .so
 
 obj_top ?= obj
-obj_last ?= 
+obj_last ?=
 obj_dir = $(bld_dir)/$(obj_top)/$(arch)/$(mode)/$(obj_last)
 
 
@@ -33,7 +33,7 @@ obj_dir = $(bld_dir)/$(obj_top)/$(arch)/$(mode)/$(obj_last)
 tlibname = $($(patsubst %$(lib_ext),%,$(notdir $(1)))$(2))
 tbinname = $($(patsubst %$(bin_ext),%,$(notdir $(1)))$(2))
 
-# SU = su root 
+# SU = su root
 
 # Verbose & Explain ----------------------------------------------------------
 ifeq ($(shell [ $(verbose) -le '2' ] || echo 'Err'),)
@@ -67,14 +67,14 @@ E = @echo
 endif
 
 
-MKDIR = mkdir -p 
+MKDIR = mkdir -p
 
 ifeq ($(mode),debug)
 LD = gcc
 CC = gcc
 CPP = g++
 AR = ar rc
-else 
+else
 LD = gcc
 CC = gcc
 CPP = g++
