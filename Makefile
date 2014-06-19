@@ -18,7 +18,11 @@ pack_cflags =  -D_DATE_=\"'$(date)'\" -D_OS_FULLNAME_=\"'$(linuxname)'\"
 cflags = $(pack_cflags) -Wall -Wextra -Wno-unused-parameter
 
 std_debug_cflags = $(cflags) -g -ggdb
+std_cov_cflags = $(cflags) --coverage -fprofile-arcs -ftest-coverage
 std_release_cflags = -fPIC -O3 $(cflags)
+
+
+std_cov_lflags = $(lflags) -fprofile-arcs
 
 
 # ===========================================================================
@@ -33,6 +37,7 @@ inodes_src = $(patsubst src/%,%,$(wildcard src/inodes/*.c)) \
 			       dbg/inodes.c
 inodes_inc = include/ 
 inodes_cflags = $(std_$(mode)_cflags)
+inodes_lflags = $(std_$(mode)_lflags)
 $(eval $(call PROGRAM,inodes))
 
 # Target: Program  memory
@@ -41,6 +46,7 @@ memory_src = $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
 			       dbg/memory.c
 memory_inc = include/ 
 memory_cflags = $(std_$(mode)_cflags)
+memory_lflags = $(std_$(mode)_lflags)
 $(eval $(call PROGRAM,memory))
 
 
