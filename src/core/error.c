@@ -1,5 +1,10 @@
 #include <kinfo.h>
 
+// ----------------------------------------------------------------------------
+/**
+    Change the kernel error status. 
+    On debug/paranoïd mode, each error are logged. 
+ */
 int kseterrno(int err, const char* file, int line, const char* func)
 {
   if (err) {
@@ -11,12 +16,22 @@ int kseterrno(int err, const char* file, int line, const char* func)
   return kCPU.errNo;
 }
 
+// ----------------------------------------------------------------------------
+/**
+    Return last registered kernel error/failure.
+ */
 int kgeterrno()
 {
   return kCPU.errNo;
 }
 
-/*
+// ============================================================================
+#ifdef __KERNEL
+
+// ----------------------------------------------------------------------------
+/**
+    The kernel enter on Panic mode, when suite of operations is compromized.
+ */
 int kpanic (const char *str, ...)
 {
   const char** args = &str;
@@ -26,12 +41,16 @@ int kpanic (const char *str, ...)
 }
 
 
+// ----------------------------------------------------------------------------
+/**
+    This overwrite of the assert function is made to retrieve info on kernel
+ */
 void _assert (int test, const char* expression, const char* function, const char* file, int line)
 {
   if (!test) {
-    kprintf ("Assertion: %s at %s:%d on %s\n", expression, file, line, function);
-    for (;;);
+    kpanic ("Assertion: %s at %s:%d on %s\n", expression, file, line, function);
   }
 }
-*/
+
+#endif
 

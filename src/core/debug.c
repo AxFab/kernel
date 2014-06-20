@@ -1,5 +1,10 @@
 #include <kcore.h>
 
+// ----------------------------------------------------------------------------
+/**
+    Print the stack trace of the current frame
+    FIXME: We can improve readablility by parsing the .map file
+ */
 void kstacktrace(uintptr_t MaxFrames)
 {
   uintptr_t frame;
@@ -20,6 +25,10 @@ void kstacktrace(uintptr_t MaxFrames)
   }
 }
 
+// ----------------------------------------------------------------------------
+/**
+    Display hexadeciaml data of a memory area.
+ */
 void kdump (void* ptr, size_t lg)
 {
   int i;
@@ -48,7 +57,11 @@ void kdump (void* ptr, size_t lg)
   kprintf ("\n");
 }
 
+// ----------------------------------------------------------------------------
 static char sz_format[20];
+/**
+    Store in a temporary buffer a size in bytes in a human-friendly format.
+ */
 const char* kpsize (uintmax_t number)
 {
   const char* prefix[] = { "bs", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb" };

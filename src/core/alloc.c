@@ -1,5 +1,10 @@
 #include <kcore.h>
 
+// ----------------------------------------------------------------------------
+/**
+    Allocate and copy a string
+    The string returned can be freed using kfree
+ */
 char* kcopystr (const char* str)
 {
   char* ptr;
@@ -17,11 +22,18 @@ char* kcopystr (const char* str)
   return ptr;
 }
 
+// ============================================================================
 #ifdef __KERNEL
 
 #undef kalloc
 #undef kfree
 
+// ----------------------------------------------------------------------------
+/**
+    Allocate a block of memory on kernel heap.
+    The memory is initialized to zero.
+    The block of memory can be freed using kfree
+ */
 void* kalloc (size_t size)
 {
   void* addr = malloc_r(&kSYS.kheap, size);
@@ -35,6 +47,10 @@ void* kalloc (size_t size)
   return addr;
 }
 
+// ----------------------------------------------------------------------------
+/**
+    Free a memory block allocate on kernel heap
+ */
 void kfree (void* addr)
 {
   free_r (&kSYS.kheap, addr);
@@ -42,4 +58,3 @@ void kfree (void* addr)
 }
 
 #endif /* __KERNEL */
-
