@@ -54,156 +54,119 @@ static int kFs_Attach (kInode_t* ino, kInode_t* top, const char* name)
 
 // ===========================================================================
 
-kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
+static kInode_t* kFs_LookChild (const char* name, kInode_t* dir)
 {
   int err;
   kStat_t stat;
-  kInode_t* inode;
-  int k, symLinkLoop = 0;
-  char uri [PATH_MAX];
-  char* name;
-  char* rentTok;
-  __noerror();
-  // FIXME should use locks & Simplify this routine
-  strncpy (uri, path, PATH_MAX);
-  name = strtok_r (uri, FILENAME_SEPARATOR, &rentTok);
 
-  if (dir == NULL || uri [0] == '/') {
-    dir = kFs_RootInode();
-  }
-
-  // We found it!
-  if (name == NULL) {
-    return dir;
-  }
-
-  // Follow symlink
-  if ( S_ISLNK (dir->stat_.mode_) ) {
-    kFs_FollowLink(&dir, &symLinkLoop);
-
-    if (__geterrno()) {
-      return NULL;
-    }
-
-    if (symLinkLoop > MAX_SYMLINK_LOOP) {
-      __seterrno (ELOOP);
-      return NULL;
-    }
-  }
-
-  // Is a directory
-  if ( !S_ISDIR (dir->stat_.mode_)) {
-    __seterrno(ENOTDIR);
+  if (!dir->fs_->lookup) {
+    __seterrno (ENOENT);
     return NULL;
   }
 
-  if (dir->child_ == NULL) {
-    // kprintf ("Inode search find empty dir %s, look for %s \n", top->name_, name);
-    if (!dir->fs_->lookup) {
-      __seterrno (ENOENT);
-      return NULL;
-    }
-
-    memset (&stat, 0, sizeof(kStat_t));
-
-    MOD_ENTER;
-    err = dir->fs_->lookup (name, dir, &stat);
-    MOD_LEAVE;
-    if (err) {
-      __seterrno (err);
-      return NULL;
-    }
-
-    inode = kFs_Register (name, dir, &stat);
-    kunlock (&inode->lock_);
+  // Request the file system
+  MOD_ENTER;
+  memset (&stat, 0, sizeof(kStat_t));
+  err = dir->fs_->lookup (name, dir, &stat);
+  MOD_LEAVE;
+  if (err) {
+    __seterrno (err);
+    return NULL;
   }
 
-  dir = dir->child_;
-  // END FIRST
+  return kFs_Register (name, dir, &stat);
+}
 
-  for (;;) {
-    k = strcmp(dir->name_, name);
+// ----------------------------------------------------------------------------
 
-    if (k != 0 && dir->next_ != NULL) {
-      dir = dir->next_;
-      continue;
+kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
+{
+  int k;
+  int symLinkLoop = 0;
+  char uri [PATH_MAX];
+  char* name;
+  char* rentTok;
+  kInode_t* ino;
 
-    } else if (k != 0) {
-      if (!dir->parent_->fs_->lookup) {
-        __seterrno (ENOENT);
-        return NULL;
-      }
+  NO_LOCK;
 
-      memset (&stat, 0, sizeof(kStat_t));
+  // IF VOLUME LOOK FOR VOLUME
+  if (strrchr (path, VOLUME_SEPARATOR)) {
+    // FIXME read volume
+  }
 
-      MOD_ENTER;
-      err = dir->parent_->fs_->lookup (name, dir->parent_, &stat);
-      MOD_LEAVE;
-      if (err) {
-        __seterrno (err);
-        return NULL;
-      }
+  // IF NO DIR OR / START WITH ROOT
+  if (dir == NULL || path[0] == '/' || path[0] == '\\')
+    dir = kFs_RootInode();
 
-      inode = kFs_Register (name, dir->parent_, &stat);
-      kunlock (&inode->lock_);
-      dir = dir->parent_->child_;
-      continue;
-    }
-
-    // Check access permissions
-    // kSecurity()
-    name = strtok_r (NULL, FILENAME_SEPARATOR, &rentTok);
-    // kprintf ("Inode search iteration on %s, look for %s \n", top->name_, name);
-
-    if (name == NULL) { // We found it!
-      return dir;
-    }
+  // Look the first node file
+  strncpy (uri, path, PATH_MAX);
+  name = strtok_r (uri, FILENAME_SEPARATORS, &rentTok);
+  klock (&dir->lock_);
+  while (name != NULL) {
 
     // Follow symlink
-    if ( S_ISLNK (dir->stat_.mode_) ) {
+    if (S_ISLNK(dir->stat_.mode_)) {
       kFs_FollowLink(&dir, &symLinkLoop);
-
       if (__geterrno()) {
-        __geterrno();
         return NULL;
       }
 
       if (symLinkLoop > MAX_SYMLINK_LOOP) {
+        kunlock (&dir->lock_);
         __seterrno (ELOOP);
         return NULL;
       }
     }
 
     // Is a directory
-    if ( !S_ISDIR (dir->stat_.mode_)) {
+    if (!S_ISDIR (dir->stat_.mode_)) {
+      kunlock (&dir->lock_);
       __seterrno(ENOTDIR);
       return NULL;
     }
 
+    // If no child, request the file system
     if (dir->child_ == NULL) {
-      // kprintf ("Inode search find empty dir %s, look for %s \n", top->name_, name);
-      if (!dir->fs_->lookup) {
-        __seterrno (ENOENT);
+      kunlock (&dir->lock_);
+      dir = kFs_LookChild (name, dir);
+      if (dir == NULL)
         return NULL;
+
+    } else {
+      ino = dir->child_;
+      for (;;) {
+
+        k = strcmp(ino->name_, name);
+        if (k != 0) {
+          if (ino->next_ != NULL) {
+            ino = ino->next_;
+            continue;
+
+          } else {
+            kunlock (&dir->lock_);
+            dir = kFs_LookChild (name, dir);
+            if (dir == NULL)
+              return NULL;
+
+          }
+        }        
+
+        klock (&ino->lock_);
+        kunlock (&dir->lock_);
+        dir = ino;
+        break;
       }
-
-      memset (&stat, 0, sizeof(kStat_t));
-
-      MOD_ENTER;
-      err = dir->fs_->lookup (name, dir, &stat);
-      MOD_LEAVE;
-      if (err) {
-        __seterrno (err);
-        return NULL;
-      }
-
-      inode = kFs_Register (name, dir, &stat);
-      kunlock (&inode->lock_);
     }
-
-    dir = dir->child_;
+    
+    name = strtok_r (NULL, FILENAME_SEPARATORS, &rentTok);
   }
+
+  kunlock (&dir->lock_);
+  NO_LOCK;
+  return dir;
 }
+
 
 // ===========================================================================
 

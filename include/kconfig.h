@@ -17,8 +17,8 @@
 
 #define ROOT_UID 0x1593
 
-#define FILENAME_SEPARATOR "/\\"
-#define VOLUME_SEPARATOR ":"
+#define FILENAME_SEPARATORS "/\\"
+#define VOLUME_SEPARATOR ':'
 
 #define HEAP_START ((void*)(256 * _Mb_))
 #define STACK_DEFAULT (1 * _Mb_)

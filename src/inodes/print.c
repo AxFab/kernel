@@ -16,6 +16,9 @@ int kFs_ReadLink (kInode_t* ino, char* ptr, size_t length)
   char uri [PATH_MAX];
   uri[0] = ptr[0] = '\0';
 
+  if (!ino) 
+    return __seterrno (EINVAL);
+
   for (;;) {
     if (ino->parent_ == NULL) {
       return __noerror ();
@@ -42,6 +45,9 @@ int kFs_ReadUri (kInode_t* ino, char* ptr, size_t length)
   char uri [PATH_MAX];
   uri[0] = ptr[0] = '\0';
 
+  if (!ino) 
+    return __seterrno (EINVAL);
+  
   for (;;) {
     if (ino == NULL) {
       ret = snprintf (uri, PATH_MAX, "%s:%s", "Sys", ptr);
@@ -66,15 +72,6 @@ int kFs_ReadUri (kInode_t* ino, char* ptr, size_t length)
     ino = ino->parent_;
   }
 }
-
-
-ssize_t kreadlink(kStat_t* dir, char* buf, size_t bufsiz)
-{
-  kInode_t* ino = (kInode_t*)dir->no_;
-  kFs_ReadUri (ino, buf, bufsiz);
-  return (ssize_t)strlen (buf);
-}
-
 
 
 // ============================================================================

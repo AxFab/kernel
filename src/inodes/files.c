@@ -4,20 +4,26 @@
 
 int kFs_Open(kInode_t* ino)
 {
+  if (!ino) 
+    return __seterrno (EINVAL);
+
   klock(&ino->lock_);
   ++ino->readers_;
   kunlock (&ino->lock_);
-  return 0;
+  return __noerror();
 }
 
 // ===========================================================================
 
 int kFs_Close(kInode_t* ino)
 {
+  if (!ino) 
+    return __seterrno (EINVAL);
+  
   klock(&ino->lock_);
   --ino->readers_;
   kunlock (&ino->lock_);
-  return 0;
+  return __noerror();
 }
 
 // ===========================================================================

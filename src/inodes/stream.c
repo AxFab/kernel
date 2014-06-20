@@ -43,6 +43,9 @@ int kFs_Feed(kInode_t* ino, void* buffer, off_t offset, size_t count)
 {
   memset (buffer, 0x99, count);
 
+  if (!ino) 
+    return __seterrno (EINVAL);
+
   if (S_ISBLK(ino->stat_.mode_)) {
     if (!ino->stat_.dev_)
       return __seterrno(EPERM);
