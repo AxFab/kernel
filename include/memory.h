@@ -60,7 +60,7 @@ kVma_t* kVma_MMap (kAddSpace_t* addressSpace, kVma_t* area);
 int kVma_Unmap (kAddSpace_t* addp, uintptr_t address, size_t length);
 
 kVma_t* kVma_FindAt (kAddSpace_t* addp, uintptr_t address);
-kVma_t* kVma_FindFile (kAddSpace_t* addp, uintptr_t address, kInode_t* ino, off_t offset);
+kVma_t* kVma_FindFile (kAddSpace_t* addp, kInode_t* ino, off_t offset);
 void kVma_Display(kAddSpace_t* addp);
 
 int kVma_GrowUp (kAddSpace_t* addp, void* address, size_t extra_size);

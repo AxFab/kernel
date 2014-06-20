@@ -30,6 +30,7 @@ kAddSpace_t* kVma_Clone (kAddSpace_t* addp)
   while (md) {
     if (addsp->last_) {
       addsp->last_->next_ = (kVma_t*)kalloc(sizeof(kVma_t));
+      addsp->last_->next_->prev_ = addsp->last_;
       addsp->last_ = addsp->last_->next_;
 
     } else {
@@ -37,10 +38,19 @@ kAddSpace_t* kVma_Clone (kAddSpace_t* addp)
       addsp->last_ = addsp->first_;
     }
 
-    memcpy (addsp->last_, md, sizeof(kVma_t));
+    addsp->last_->base_ = md->base_;
+    addsp->last_->limit_ = md->limit_;
+    addsp->last_->flags_ = md->flags_;
+    if (md->ino_) {
+      kFs_Open (md->ino_);
+      addsp->last_->ino_ = md->ino_;
+      addsp->last_->offset_ = md->offset_;
+    }
+
     md = md->next_;
   }
 
+  addsp->vrtPages_ = addp->vrtPages_;
   return addsp;
 }
 

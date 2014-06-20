@@ -9,22 +9,29 @@ kVma_t* kVma_FindAt (kAddSpace_t* addp, uintptr_t address)
   int maxLoop = MAX_LOOP_BUCKET;
 
   while (origin && --maxLoop) {
-    if (origin->base_ <= address && origin->limit_ > address)
-      break;
+    if (origin->limit_ > address) {
+      
+      if (origin->base_ <= address)
+        break;
 
+      return NULL;
+    }
+    
     origin = origin->next_;
   }
 
   return origin;
 }
 
-kVma_t* kVma_FindFile (kAddSpace_t* addp, uintptr_t address, kInode_t* ino, off_t offset)
+// ----------------------------------------------------------------------------
+kVma_t* kVma_FindFile (kAddSpace_t* addp, kInode_t* ino, off_t offset)
 {
   kVma_t* origin = addp->first_;
   int maxLoop = MAX_LOOP_BUCKET;
 
   while (origin && --maxLoop) {
-    if (origin->ino_ == ino && (origin->flags_ & VMA_SHARED) &&
+    if (origin->ino_ == ino && 
+        (origin->flags_ & VMA_SHARED) &&
         origin->offset_ <= offset &&
         origin->offset_ + (off_t)(origin->limit_ - origin->base_) > offset)
       break;
@@ -56,9 +63,7 @@ void kVma_Display(kAddSpace_t* addp)
            addp->vrtPages_, kpsize(addp->vrtPages_ * PAGE_SIZE));
 
   while (bk != NULL) {
-    if (bk->prev_ != ptr)
-      kprintf ("LK error\n");
-
+    assert (bk->prev_ == ptr);
     if (bk->ino_)
       kprintf ("%2d] [0x%16x - 0x%16x] %s - <%s>  %s :0x%x\n", ++i,
                (uint32_t)bk->base_, (uint32_t)bk->limit_, rights[bk->flags_ & 0xf],

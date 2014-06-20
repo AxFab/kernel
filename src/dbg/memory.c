@@ -52,6 +52,8 @@ int kFs_Close(kInode_t* ino)
 
 int main ()
 {
+  kVma_Initialize ();
+
   kAddSpace_t* addressSpace = kVma_New (STACK_DEFAULT);
 
   kVma_t area = { VMA_READ, 0, 2 * _Kb_, NULL, NULL, NULL, 0};
@@ -87,8 +89,22 @@ int main ()
     k = kVma_GrowUp (addressSpace, HEAP_START, 16 * _Mb_);
   } while (!k);
 
+  kVma_FindFile (addressSpace, (kInode_t*)iLs, 0x1000);
+  kVma_FindFile (addressSpace, (kInode_t*)iLs, 0x8000);
+  kVma_FindFile (addressSpace, (kInode_t*)iLib, 0x6000);
+  kVma_FindFile (addressSpace, (kInode_t*)iLib, 0);
+
   kVma_Display(addressSpace);
-  kVma_Destroy (addressSpace);
+
+  kAddSpace_t* add2 = kVma_Clone (addressSpace);
+
+  kVma_GrowDown (add2, (void*)(0xd0000000 - 16), 64 * _Kb_);
+
+  kVma_Display(add2);
+  kVma_Display(addressSpace);
+
+  kVma_Destroy (addressSpace);  
+  kVma_Destroy (add2);
   NO_LOCK;
   return 0;
 }
