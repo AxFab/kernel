@@ -4,7 +4,7 @@
 
 int kFs_Open(kInode_t* ino)
 {
-  if (!ino) 
+  if (!ino)
     return __seterrno (EINVAL);
 
   klock(&ino->lock_);
@@ -17,9 +17,9 @@ int kFs_Open(kInode_t* ino)
 
 int kFs_Close(kInode_t* ino)
 {
-  if (!ino) 
+  if (!ino)
     return __seterrno (EINVAL);
-  
+
   klock(&ino->lock_);
   --ino->readers_;
   kunlock (&ino->lock_);
@@ -30,6 +30,7 @@ int kFs_Close(kInode_t* ino)
 
 kInode_t* kFs_MkNode(const char* name, kInode_t* dir, kStat_t* stat)
 {
+  int err;
   kInode_t* ino;
 
   if (!dir->fs_->create) {
@@ -37,15 +38,16 @@ kInode_t* kFs_MkNode(const char* name, kInode_t* dir, kStat_t* stat)
     return NULL;
   }
 
-  if (!dir->fs_->create(name, dir, stat)) {
-    ino = kFs_Register (name, dir, stat);
+  MOD_ENTER;
+  err = dir->fs_->create(name, dir, stat);
+  MOD_LEAVE;
+  if (err)
+    return NULL;
 
-    if (ino) kunlock (&ino->lock_);
-
-    return ino;
-  }
-
-  return NULL;
+  ino = kFs_Register (name, dir, stat);
+  if (ino)
+    kunlock (&ino->lock_);
+  return ino;
 }
 
 // ===========================================================================

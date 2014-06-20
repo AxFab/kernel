@@ -41,9 +41,10 @@ int kFs_ReadBlock (kDevice_t* dev, void* buffer, off_t offset, size_t count)
 
 int kFs_Feed(kInode_t* ino, void* buffer, off_t offset, size_t count)
 {
+  int err;
   memset (buffer, 0x99, count);
 
-  if (!ino) 
+  if (!ino)
     return __seterrno (EINVAL);
 
   if (S_ISBLK(ino->stat_.mode_)) {
@@ -56,8 +57,11 @@ int kFs_Feed(kInode_t* ino, void* buffer, off_t offset, size_t count)
     if (!ino->fs_->read)
       return __seterrno(ENOSYS);
 
-    ino->fs_->read (ino, buffer, offset, count);
-    // kprintf ("DEBUG WANT TO FEED \n" /*%s, <%x-%x>\n", ino->name_, offset, count */);
+    MOD_ENTER;
+    err = ino->fs_->read (ino, buffer, offset, count);
+    MOD_LEAVE;
+    if (err)
+      return __seterrno(err);
   }
 
   return __noerror();
