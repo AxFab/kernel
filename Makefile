@@ -49,6 +49,15 @@ memory_cflags = $(std_$(mode)_cflags)
 memory_lflags = $(std_$(mode)_lflags)
 $(eval $(call PROGRAM,memory))
 
+# Target: Program  tasks
+tasks_src = $(patsubst src/%,%,$(wildcard src/tasks/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/core/*.c)) \
+			       dbg/tasks.c
+tasks_inc = include/ 
+tasks_cflags = $(std_$(mode)_cflags)
+tasks_lflags = $(std_$(mode)_lflags)
+$(eval $(call PROGRAM,tasks))
+
 
 
 # ===========================================================================

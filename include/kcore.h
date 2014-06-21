@@ -1,12 +1,12 @@
 #ifndef KCORE_H__
 #define KCORE_H__
 
-// Config AxLibC
+// Config AxLibC - Get stdlib basic version (no syscalls)
 #ifndef __EX
 #define __EX
 #endif
 
-// Standard include
+// Standard includes
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
@@ -15,19 +15,18 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-/* MISSING STD TYPE */
-typedef struct spinlock spinlock_t;
+/* MISSING STDLIB */
+int snprintf(char* s, size_t n, const char* format, ... );
 
+typedef struct spinlock     spinlock_t;
 struct spinlock {
   int32_t   key_;
   int       tid_;
 };
 
-int snprintf(char* s, size_t n, const char* format, ... );
+/* END OF STDLIB */
 
-/* END OF STD TYPE */
-
-// Headers
+// Configuration header
 #include <kconfig.h>
 
 // ======================================================
@@ -35,16 +34,18 @@ int snprintf(char* s, size_t n, const char* format, ... );
 #define _Kb_      (1024)
 #define _Mb_      (1024 * _Kb_)
 #define _Gb_      (1024 * _Mb_)
-#define _Tb_      (1024 * _Gb_)
+#define _Tb_      (1024LL * _Gb_)
+#define _Pb_      (1024LL * _Tb_)
+#define _Eb_      (1024LL * _Eb_)
 
 // Macro align ------------------------------------------
 #define ALIGN_UP(v,a)      (((v)+(a-1))&(~(a-1)))
 #define ALIGN_DW(v,a)      ((v)&(~(a-1)))
 
 // Macro error ------------------------------------------
-#  define __noerror()     kseterrno(0,__FILE__,__LINE__, __func__)
-#  define __seterrno(e)   kseterrno(e,__FILE__,__LINE__, __func__)
-#  define __geterrno()    kgeterrno()
+#define __noerror()     kseterrno(0,__FILE__,__LINE__, __func__)
+#define __seterrno(e)   kseterrno(e,__FILE__,__LINE__, __func__)
+#define __geterrno()    kgeterrno()
 
 // Macro
 #define KALLOC(T)     ((T*)kalloc (sizeof(T)))
@@ -54,19 +55,25 @@ int snprintf(char* s, size_t n, const char* format, ... );
 
 // ======================================================
 // Kernel types
-typedef struct kAssembly    kAssembly_t;
-typedef struct kProcess     kProcess_t;
 typedef struct kCpuRegs     kCpuRegs_t;
 typedef struct kTty         kTty_t;
+typedef struct kUser        kUser_t;
 // inodes.h
-typedef struct kStat      kStat_t;
-typedef struct kInode     kInode_t;
-typedef struct kFsys      kFsys_t;
-typedef struct kDevice    kDevice_t;
-typedef struct kResxFile  kResxFile_t;
+typedef struct kStat        kStat_t;
+typedef struct kInode       kInode_t;
+typedef struct kFsys        kFsys_t;
+typedef struct kDevice      kDevice_t;
+typedef struct kResxFile    kResxFile_t;
 // memory.h
-typedef struct kVma       kVma_t;
-typedef struct kAddSpace  kAddSpace_t;
+typedef struct kVma         kVma_t;
+typedef struct kAddSpace    kAddSpace_t;
+// tasks.h
+typedef struct kWorkspace   kWorkspace_t;
+typedef struct kProcess     kProcess_t;
+typedef struct kThread      kThread_t;
+typedef struct kAssembly    kAssembly_t;
+typedef struct kSection     kSection_t;
+
 
 // ======================================================
 // Init -------------------------------------------------

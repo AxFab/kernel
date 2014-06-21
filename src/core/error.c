@@ -2,8 +2,8 @@
 
 // ----------------------------------------------------------------------------
 /**
-    Change the kernel error status. 
-    On debug/paranoïd mode, each error are logged. 
+    Change the kernel error status.
+    On debug/paranoid mode, each error are logged.
  */
 int kseterrno(int err, const char* file, int line, const char* func)
 {

@@ -36,6 +36,7 @@ struct kInode {
   kFsys_t*        fs_;        ///< File system driver
   int             pageCount_; ///< max number of physical pages in cache
   uint32_t*       physPages_; ///< physical pages caching
+  kAssembly_t*    assembly_;
 };
 
 struct kFsys {
