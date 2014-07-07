@@ -82,9 +82,9 @@ kAssembly_t* kAsm_Open (kInode_t* ino)
   assembly = KALLOC(kAssembly_t);
   assembly->entry_ = (void*)head->entry_;
   for (i = 0; i < head->phCount_; ++i) {
-    int off = head->phOff_ + i * sizeof(ELF_PhEntry_t);
+    size_t off = head->phOff_ + i * sizeof(ELF_PhEntry_t);
     assert (off + sizeof(ELF_PhEntry_t) < 4096);
-    phe = (ELF_PhEntry_t*)(head + off);
+    phe = (ELF_PhEntry_t*)((size_t)head + off);
 
     kAsm_ReadSection (assembly, ino, phe);
   }

@@ -150,7 +150,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
               return NULL;
 
           }
-        }        
+        }
 
         klock (&ino->lock_);
         kunlock (&dir->lock_);
@@ -158,7 +158,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
         break;
       }
     }
-    
+
     name = strtok_r (NULL, FILENAME_SEPARATORS, &rentTok);
   }
 

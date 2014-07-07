@@ -3,7 +3,7 @@
 
 #include <kcore.h>
 #include <kernel/fs.h>
-#include <kio.h>
+#include <kcpu.h>
 // #include <sys/stat.h>
 
 #define ATA_SR_BSY     0x80

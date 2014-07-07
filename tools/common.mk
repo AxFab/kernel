@@ -54,6 +54,7 @@ $(obj_dir)/%.o: src/%.c $(obj_dir)/%.d
 $(obj_dir)/%.d: src/%.c
 	$(VVV) $(MKDIR) $(dir $@)
 	$(VVV) $(CC) -MM -MG -MT '$@ $(@:.d=.o)' -o $@ $< $(CFLAGS)
+#	$(VVV) $(CC) -MM -o $@ $< $(CFLAGS)
 
 
 
@@ -91,6 +92,7 @@ $$($(1)_odir)/%.o: $(src_top)/%.c  $$($(1)_odir)/%.d
 $$($(1)_odir)/%.d: $(src_top)/%.c
 	$(VVV) $(MKDIR) $$(dir $$@)
 	$(EEE) 'Depandancy check for $$<'
+#	$(VVV) $(CC) -MM -o $$@ $$< $$($(1)_cflags)
 	$(VVV) $(CC) -MM -MG -MT '$$@ $$(@:.d=.o)' -o $$@ $$< $$($(1)_cflags)
 
 
@@ -102,6 +104,7 @@ $$($(1)_odir)/%.o: $(src_top)/%.cpp  $$($(1)_odir)/%.d
 $$($(1)_odir)/%.d: $(src_top)/%.cpp
 	$(VVV) $(MKDIR) $$(dir $$@)
 	$(EEE) 'Depandancy check for $$<'
+#	$(VVV) $(CPP) -MM -o $$@ $$< $$($(1)_cflags)
 	$(VVV) $(CPP) -MM -MG -MT '$$@ $$(@:.d=.o)' -o $$@ $$< $$($(1)_cflags)
 
 e_$(1):

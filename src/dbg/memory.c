@@ -103,7 +103,7 @@ int main ()
   kVma_Display(add2);
   kVma_Display(addressSpace);
 
-  kVma_Destroy (addressSpace);  
+  kVma_Destroy (addressSpace);
   kVma_Destroy (add2);
   NO_LOCK;
   return 0;

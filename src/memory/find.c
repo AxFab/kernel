@@ -10,13 +10,13 @@ kVma_t* kVma_FindAt (kAddSpace_t* addp, uintptr_t address)
 
   while (origin && --maxLoop) {
     if (origin->limit_ > address) {
-      
+
       if (origin->base_ <= address)
         break;
 
       return NULL;
     }
-    
+
     origin = origin->next_;
   }
 
@@ -30,7 +30,7 @@ kVma_t* kVma_FindFile (kAddSpace_t* addp, kInode_t* ino, off_t offset)
   int maxLoop = MAX_LOOP_BUCKET;
 
   while (origin && --maxLoop) {
-    if (origin->ino_ == ino && 
+    if (origin->ino_ == ino &&
         (origin->flags_ & VMA_SHARED) &&
         origin->offset_ <= offset &&
         origin->offset_ + (off_t)(origin->limit_ - origin->base_) > offset)

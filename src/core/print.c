@@ -2,6 +2,9 @@
 
 #ifdef __KERNEL
 
+#include <format.h>
+void kTty_Update();
+
 char* klogStart = (char*)0x7000;
 int klogLg = (0x10000 - 0x7000);
 int kLogPen = 0;

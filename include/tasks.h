@@ -13,12 +13,12 @@
 
 // ============================================================================
 struct kWorkspace {
-  int             pathsCap_;
-  kInode_t**      paths_;
+  // int             pathsCap_;
+  // kInode_t**      paths_;
 
   kProcess_t*     processHead_t;
-  kInode_t*       root_;
-  kUser_t*        user_;
+  // kInode_t*       root_;
+  // kUser_t*        user_;
 };
 
 struct kProcess {
@@ -26,9 +26,20 @@ struct kProcess {
   kWorkspace_t*   workspace_;
   kThread_t*      threadHead_;
   kAddSpace_t*    maddress_;
+
   kProcess_t*     parent_;
+  kProcess_t*     nextSibl_;
+  kProcess_t*     prevSibl_;
+  kProcess_t*     firstChild_;
+
+
   kInode_t*       workingDir_;
   kAssembly_t*    assembly_;
+  kInode_t*       files_[32];
+
+  kThread_t       thread_;
+
+
 };
 
 

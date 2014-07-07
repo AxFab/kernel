@@ -16,7 +16,7 @@ int kFs_ReadLink (kInode_t* ino, char* ptr, size_t length)
   char uri [PATH_MAX];
   uri[0] = ptr[0] = '\0';
 
-  if (!ino) 
+  if (!ino)
     return __seterrno (EINVAL);
 
   for (;;) {
@@ -45,9 +45,9 @@ int kFs_ReadUri (kInode_t* ino, char* ptr, size_t length)
   char uri [PATH_MAX];
   uri[0] = ptr[0] = '\0';
 
-  if (!ino) 
+  if (!ino)
     return __seterrno (EINVAL);
-  
+
   for (;;) {
     if (ino == NULL) {
       ret = snprintf (uri, PATH_MAX, "%s:%s", "Sys", ptr);

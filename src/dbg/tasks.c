@@ -5,6 +5,12 @@
 
 /*
 */
+kAddSpace_t* kVma_New (size_t stack_size)
+{
+  return NULL;
+}
+
+
 
 kInode_t* kFs_Lookup(char* path, kInode_t* dir)
 {

@@ -2,6 +2,30 @@
 #include <memory.h>
 
 // ============================================================================
+kProcess_t* kTsk_NewProcess (char* filename, kInode_t* output, kInode_t* input) 
+{
+  kProcess_t* proc;
+
+  proc = KALLOC(kProcess_t);
+  // Command line arguments
+  proc->argc_ = 0;
+  proc->argv_ = NULL;
+
+  // Get Workspace
+  proc->workspace_ = kGetCurrent()->process_->workspace_;
+  proc->workdir_ = proc->workspace_->directory;
+  proc->parent_ = kGetCurrent()->process_;
+  proc->flags_ = 0; /* PROC_NEW_WINDOW | PROC_LOGIN | PROC_DIALG */
+
+  proc->filename_ = "/bin/bash";
+  proc->files_[0] = output;
+  proc->files_[1] = input;
+  proc->files_[2] = error;
+}
+
+
+
+// ============================================================================
 
 void kTsk_SetThread (void* entry, uintmax_t param)
 {
@@ -44,11 +68,5 @@ kWorkspace_t* kTsk_NewWorkspace ()
 pid_t kTsk_GetPid()
 {
   return 0;
-}
-
-
-kAddSpace_t* kVma_New (size_t stack_size)
-{
-  return NULL;
 }
 
