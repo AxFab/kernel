@@ -132,7 +132,7 @@ kVma_t* kVma_MMap (kAddSpace_t* addressSpace, kVma_t* area)
   if (area->ino_)
     kFs_Open(area->ino_); // TODO if fail !?
 
-  klock (&addressSpace->lock_);
+  klock (&addressSpace->lock_, LOCK_VMA_MMAP);
 
   if (area->base_ != 0)
     vma = kVma_MapAt (addressSpace, area);
@@ -172,7 +172,7 @@ int kVma_GrowUp (kAddSpace_t* addp, void* address, size_t extra_size)
     return __seterrno (EPERM);
 
   __noerror();
-  klock (&addp->lock_);
+  klock (&addp->lock_, LOCK_VMA_GROW);
 
   if (vma->next_->base_ >= vma->limit_ + extra_size) {
     vma->limit_ += extra_size;
@@ -200,7 +200,7 @@ int kVma_GrowDown (kAddSpace_t* addp, void* address, size_t extra_size)
     return __seterrno (EPERM);
 
   __noerror();
-  klock (&addp->lock_);
+  klock (&addp->lock_, LOCK_VMA_GROW);
 
   if (vma->prev_->limit_ <= vma->base_ - extra_size) {
     vma->base_ -= extra_size;

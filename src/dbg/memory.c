@@ -26,27 +26,23 @@ int kmmap (kAddSpace_t* addressSpace, void* add, fakeInode_t* ino, size_t length
 int kFs_Open(kInode_t* ino)
 {
   fakeInode_t* f = (fakeInode_t*)ino;
-  klock (&f->lock_);
   f->readers_++;
-  kunlock (&f->lock_);
   return __noerror();
 }
 
 int kFs_Close(kInode_t* ino)
 {
   fakeInode_t* f = (fakeInode_t*)ino;
-  klock (&f->lock_);
+  
   assert (f->readers_ > 0);
   f->readers_--;
 
   if (f->readers_ == 0) {
     free (f->name_);
-    kunlock (&f->lock_);
     free (f);
     return __noerror();
   }
 
-  kunlock (&f->lock_);
   return __noerror();
 }
 
