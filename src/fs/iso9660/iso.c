@@ -2,71 +2,35 @@
 
 #include <stdio.h>
 #include <fcntl.h>
-// isoVolumeInfo_t* FS_Infos = 0;
-
-// kVolume_t isoFs = {
-//   "iso9660",
-//   &isoMount, NULL, NULL,
-//   &isoLookup, &isoRead, NULL, NULL,
-//   NULL, NULL, NULL, NULL, NULL,
-// };
 
 
-// int iso_Mount (kFsys_t* fs, kStat_t* file)
-// {
-//   if (!fs->dev_)
-//     return ENOTBLK;
-
-//   if (fs->dev_->block_ != 2048)
-//     return EBADF;
+kFileOp_t isoOps = {
+  ISO_Mount, NULL, NULL, 
+  ISO_Lookup, ISO_Read, NULL, NULL, 
+  (void*)ISO_Write, (void*)ISO_Write, NULL, (void*)ISO_Write, NULL, 
+};
 
 
-//   fs->block_ = 2048;
-//   fs->cluster_ = 2048;
-
-//   fs->lookup = isoLookup;
-//   fs->read = isoRead;
-
-//   strncpy (fs->name_, "Iso 9660 Fs", 16);
-
-//   kStat_t root;
-//   return isoMount (fs->dev_, &root);
-// }
-
-
-isoVolume_t* volInfo;
-
-int isoMount (kFsys_t* fs, kStat_t* root)
+int ISO_Mount (kInode_t* dev, kInode_t* mnt)
 {
   int i;
   int inDesc = 1;
   int sec = 16;
+  char name[128];
   uint8_t* buf;
   uint32_t* bufi;
   isoFstDescriptor_t* firstDesc;
-  kDevice_t* dev = fs->dev_;
+  kStat_t root = { 0, S_IFDIR | 0555, 0, 0, 0L, 0L, 0U, 0U, 0U, 0, 0, 0 };
+  isoVolume_t* volInfo;
 
-  if (!dev)
-    return ENOTBLK;
-
-  if (dev->block_ != 2048)
+  if (dev->stat_.cblock_ != 2048) 
     return EBADF;
+  
 
-  fs->block_ = 2048;
-  fs->cluster_ = 2048;
-  fs->lookup = isoLookup;
-  fs->read = isoRead;
-  strncpy (fs->name_, "Iso 9660 Fs", 16);
-  buf = malloc (2048);
+  buf = (uint8_t*) malloc (2048);
   bufi = (uint32_t*)buf;
-  memset (buf, 0, 2048);
-
   while (inDesc) {
-    // lseek (dev, sec * 2048, SEEK_SET);
-    // read (2048, buf, dev);
-    // kprintf ("iso9660] Read sector %d \n", sec);
-    kFs_ReadBlock (dev, buf, sec * 2048, 2048);
-    // FIXME Read block don't use caching pages
+    kFs_Read (dev, buf, 1, sec);
 
     if ((bufi[0] & 0xFFFFFF00) != ISO9660_STD_ID1 ||
         (bufi[1] & 0x0000FFFF) != ISO9660_STD_ID2 ||
@@ -74,11 +38,12 @@ int isoMount (kFsys_t* fs, kStat_t* root)
       free (buf);
       return EBADF;
     }
-
+    
     switch (buf[0]) {
       case ISO9660_VOLDESC_PRIM:
         firstDesc =  (isoFstDescriptor_t*)&buf[8];
         volInfo = (isoVolume_t*)malloc (sizeof(isoVolume_t));
+        volInfo->dev = dev;
         volInfo->bootable = 0;
         volInfo->created = 0;
         volInfo->sectorSize = firstDesc->logicBlockSizeLE;
@@ -95,48 +60,61 @@ int isoMount (kFsys_t* fs, kStat_t* root)
           else
             break;
 
+        strcpy (name, firstDesc->applicationId);
         kprintf ("iso9660] This disc is named '%s' \n", firstDesc->applicationId);
         //err = Fsys_ChangeVolumeName (prim->applicationId);
         break;
+
       case ISO9660_VOLDESC_BOOT:
         // kprintf ("iso9660] Bootable descriptor\n");
         volInfo->bootable = !0;
         break;
+
       case ISO9660_VOLDESC_TERM:
         // kprintf ("iso9660] Terminal descriptor\n");
         inDesc = 0;
         break;
+
       default:
         // kprintf ("iso9660] Bad volume descriptor id %d\n", buf[0]);
-        free(buf);
+        free (buf);
         return __seterrno(ENOSYS);
     }
 
-    ++sec;
+     ++sec;
   }
 
-  root->dev_ = NULL;
-  root->mode_ = S_IFDIR | 0555;
-  root->lba_ = volInfo->lbaroot;
-  root->length_ = volInfo->lgthroot;
-  // nInfo.parentLba = 0;
+  root.mode_ = S_IFDIR | 0555;
+  root.lba_ = volInfo->lbaroot;
+  root.length_ = volInfo->lgthroot;
+  // FIXME Fill creation date
+  kFs_CreateDevice (name, mnt, &isoOps, (void*)volInfo, &root);
+
   free (buf);
   return __noerror ();
 }
 
+int ISO_Write()
+{
+  return EROFS;
+}
 
-int isoLookup(const char* name, kInode_t* dir, kStat_t* file)
+int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
 {
   char filename[PATH_MAX];
   size_t sec = dir->stat_.lba_;
   isoDirEntry_t* entry;
   char* buf = malloc (2048);
-  // entry
-  // kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, dir->lba_);
-  // kprintf ("iso9660] Read sector %d \n", sec);
-  kFs_ReadBlock (dir->fs_->dev_, buf, sec * 2048, 2048);
-  entry = (isoDirEntry_t*)buf;
+  isoVolume_t* volInfo = (isoVolume_t*)dir->devinfo_;
+  
+  kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
+  kprintf ("iso9660] Read sector %d on %s \n", sec, volInfo->dev->name_);
+  
+  kFs_Read (volInfo->dev, buf, 1, sec);
+  kprintf ("iso9660] Done\n");
+
   // Skip the first two entries
+  entry = (isoDirEntry_t*)buf;
   entry = (isoDirEntry_t*) & (((char*)entry)[entry->lengthRecord]);
   entry = (isoDirEntry_t*) & (((char*)entry)[entry->lengthRecord]);
 
@@ -147,9 +125,11 @@ int isoLookup(const char* name, kInode_t* dir, kStat_t* file)
     if (filename[entry->lengthFileId - 2 ] == ';')
       filename[entry->lengthFileId - 2] = '\0';
 
-    // kprintf ("iso9660] See entry: '%s' \n", filename);
+    kprintf ("iso9660] See entry: '%s' \n", filename);
     if (strcmp(name, filename) == 0) {
-      file->dev_ = NULL;
+      file->dev_ = volInfo->dev->stat_.ino_;
+      file->dblock_ = volInfo->dev->stat_.cblock_;
+      file->cblock_ = 2048;
 
       if (entry->fileFlag & 2)
         file->mode_ = S_IFDIR | 0555;
@@ -170,13 +150,19 @@ int isoLookup(const char* name, kInode_t* dir, kStat_t* file)
   return ENOENT;
 }
 
-int isoRead (kInode_t* fp, void* buffer, off_t offset, size_t length)
+int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 {
+  isoVolume_t* volInfo = (isoVolume_t*)fp->devinfo_;
   size_t sec = fp->stat_.lba_;
-  kFs_ReadBlock (fp->fs_->dev_, buffer, sec * 2048 + offset, length);
-  // TODO Respect the limit of the file !!!
-  // readBlk (buffer, length, sec * 2048 + offset, fp->dev_);
-  // kdump (buffer, 10);
+  size_t lg = ALIGN_UP (fp->stat_.length_, fp->stat_.cblock_) / fp->stat_.cblock_;
+  if (lg < lba + count ) {
+
+    kprintf ("iso9660] File %s have size %d (request until %d)\n", fp->name_, lg, lba + count );
+    return __seterrno (ERANGE);
+  }
+
+  kprintf ("iso9660] File %s, read dev %s at %d \n", fp->name_, volInfo->dev->name_, sec + lba );
+  kFs_Read (volInfo->dev, buffer, count, sec + lba);
   return 0;
 }
 
@@ -216,23 +202,3 @@ int isoRead (kInode_t* fp, void* buffer, off_t offset, size_t length)
 //   free (buff);
 //   return __Err_None_;
 // }
-
-// _Error iso9660_readfile (const _pFileNode fn, FILE* fp, int offset, int count) {
-
-//   _Error err;
-//   _pByte buff = (_pByte)malloc (ALIGN(count, 2048));
-//   _pIso9660_FileInfo pInfo = (_pIso9660_FileInfo)fn;
-//   if (offset + count > pInfo->length)
-//     return __FsErr_Outbound_;
-
-//   err = STO_readSectors (buff, pInfo->lba, 0, ALIGN(count, 2048) / 2048); //FS_Infos->lbaroot
-//   if (err) {
-//     free (buff);
-//     return err;
-//   }
-//   fwrite (buff, count, 1, fp);
-
-//   free (buff);
-//   return __Err_None_;
-// }
-

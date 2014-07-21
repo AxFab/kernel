@@ -2,8 +2,9 @@
 #define _FS_ATA_H__
 
 #include <kcore.h>
-#include <kernel/fs.h>
+// #include <kernel/fs.h>
 #include <kcpu.h>
+#include <inodes.h>
 // #include <sys/stat.h>
 
 #define ATA_SR_BSY     0x80
@@ -112,20 +113,20 @@ struct kAtaDrive
 #define DELAY   __delay()
 extern void __delay();
 
-
+void ATA_Initialize ();
+// int ATA_Initialize(kInode_t* dev);
 
 // ssize_t kreadlink(kStat_t* dir, char *buf, size_t bufsiz);
 off_t lseek(int fd, off_t offset, int whence);
 ssize_t read(int fd, void *buf, size_t count);
 
-int ataMount(int dev, kStat_t* root);
-int ataUnmount(void);
+int ATA_Mount(int dev, kStat_t* root);
+int ATA_Unmount(void);
 
-int ataRead (kStat_t* fp, void* bucket, size_t offset, size_t length);
-int ataWrite (kStat_t* fp, void* bucket, size_t offset, size_t length);
+int ATA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba);
+int ATA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba);
 
-
-int ataDetect (kAtaDrive_t* dr);
+int ATA_Detect (kAtaDrive_t* dr);
 
 
 extern kAtaDrive_t sdx[4];

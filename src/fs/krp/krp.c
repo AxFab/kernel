@@ -34,7 +34,7 @@ kVolume_t krpFs = {
 // ===========================================================================
 int krpMount(int dev, kStat_t* root)
 {
-  time_t now = ktime();
+  time_t now = time(NULL);
   root->mode_ = S_IFDIR | 0500;
   root->uid_ = ROOT_UID;
   root->gid_ = ROOT_UID;
@@ -67,7 +67,7 @@ int krpUnmount(void)
 // ===========================================================================
 int krpLookup(const char* name, kStat_t* dir, kStat_t* file)
 {
-  time_t now = ktime();
+  time_t now = time(NULL);
   char uri [PATH_MAX];
   char search [PATH_MAX];
   kreadlink (dir, uri, PATH_MAX);

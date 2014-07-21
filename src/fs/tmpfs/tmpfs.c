@@ -1,40 +1,28 @@
 #include <inodes.h>
 
-// STANDARD AVAILABLE FUNCTION
-// read / write / syncfs
-// printf / malloc / free
-// str* / mem*
-// time
 
-
-int tmpfsLookup(const char* name, kInode_t* dir, kStat_t* file);
-int tmpfsCreate(const char* name, kInode_t* dir, kStat_t* file);
-
-
-
-
-
-int tmpfsLookup(const char* name, kInode_t* dir, kStat_t* file)
+int TMPFS_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 {
-  return ENOENT;
-}
-
-int tmpfsCreate(const char* name, kInode_t* dir, kStat_t* file)
-{
+  memset (buffer, 0, count * PAGE_SIZE);
   return 0;
 }
 
-int tmpfsMount (kFsys_t* fs)
-{
-  if (fs->dev_)
-    return ENXIO;
 
-  fs->block_ = 512;
-  fs->cluster_ = 512;
-  fs->lookup = tmpfsLookup;
-  fs->create = tmpfsCreate;
-  strncpy (fs->name_, "tmpfs", 16);
+int TMPFS_Create (const char* name, kInode_t* dir, kStat_t* file)
+{
+  time_t now = time(NULL);
+  file->atime_ = now;
+  file->mtime_ = now;
+  file->ctime_ = now;
+  file->dblock_ = 1;
+  file->cblock_ = PAGE_SIZE;
   return 0;
 }
 
+
+kFileOp_t tmpFsOperation = {
+  NULL, NULL, NULL, 
+  NULL, TMPFS_Read, NULL, NULL, 
+  TMPFS_Create, NULL, NULL, NULL, NULL, 
+};
 

@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <unistd.h>
+#include <time.h>
 #include <sys/types.h>
 
 /* MISSING STDLIB */
@@ -21,8 +22,14 @@ int snprintf(char* s, size_t n, const char* format, ... );
 typedef struct spinlock     spinlock_t;
 struct spinlock {
   int32_t   key_;
-  int       tid_;
+  int       cpu_;
+  int       why_;
 };
+
+/** ltime_t is an accurate time storage
+ *  it hold the number of microsecond since 1st Jan 1900 */
+typedef int64_t ltime_t;
+ltime_t ltime (ltime_t* ptr);
 
 /* END OF STDLIB */
 
@@ -49,6 +56,7 @@ struct spinlock {
 
 // Macro
 #define KALLOC(T)     ((T*)kalloc (sizeof(T)))
+#define SIZEOF(T)     kprintf ("Sizeof " #T ": %x\n", sizeof(T))
 #define NO_LOCK       assert(klockcount() == 0)
 #define MOD_ENTER     NO_LOCK
 #define MOD_LEAVE     NO_LOCK
@@ -64,13 +72,13 @@ typedef struct kInode       kInode_t;
 typedef struct kFsys        kFsys_t;
 typedef struct kDevice      kDevice_t;
 typedef struct kResxFile    kResxFile_t;
+typedef struct kFileOp      kFileOp_t;
 // memory.h
 typedef struct kVma         kVma_t;
 typedef struct kAddSpace    kAddSpace_t;
 // tasks.h
-typedef struct kWorkspace   kWorkspace_t;
 typedef struct kProcess     kProcess_t;
-typedef struct kThread      kThread_t;
+typedef struct kTask        kTask_t;
 typedef struct kAssembly    kAssembly_t;
 typedef struct kSection     kSection_t;
 
@@ -101,33 +109,18 @@ void* kalloc(size_t size);
 void kfree(void* addr);
 char* kcopystr(const char* str);
 
-// Time -------------------------------------------------
-time_t ktime();
-
 // Lock -------------------------------------------------
-void klock (spinlock_t* lock);
-int ktrylock (spinlock_t* lock);
+void klock (spinlock_t* lock, int why);
+int ktrylock (spinlock_t* lock, int why);
 void kunlock (spinlock_t* lock) ;
 int kislocked (spinlock_t* lock);
 int klockcount ();
 
-// Linked List ------------------------------------------
-
-typedef struct klist klist_t;
-
-// #define offsetof (type,member)  ((int)(&((type*)0)->member))
-#define klist_dataof(ptr, type, member) \
-    ((type) (((char*)(ptr)) - offsetof(type,member)))
-
-void klist_init(klist_t* head);
-void klist_add (klist_t* new, klist_t* head);
-void klist_addback (klist_t* new, klist_t* head);
-void klist_del (klist_t* node);
-void klist_replace (klist_t* old, klist_t* new);
-
-
 
 // ======================================================
+#define MIN(a,b)  ((a) <= (b) ? (a) : (b))
+#define MAX(a,b)  ((a) >= (b) ? (a) : (b))
+
 #ifndef __KERNEL
 #define PAGE_SIZE 4096
 #define kalloc(s) calloc(s,1)

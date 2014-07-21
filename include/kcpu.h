@@ -3,13 +3,10 @@
 
 #include <kcore.h>
 
-uint32_t _xchg_u32 (uint32_t* ref, uint32_t val);
-int32_t _xchg_i32 (int32_t* ref, int32_t val);
-
-void _inc_i32 (int32_t* ref);
-void _dec_i32 (int32_t* ref);
-
-
+int32_t atomic_xchg_i32 (int32_t* ref, int32_t val);
+int32_t atomic_inc_i32 (int32_t* ref);
+int32_t atomic_dec_i32 (int32_t* ref);
+int32_t atomic_add_i32 (int32_t* ref, int32_t val);
 
 void outb (uint16_t port, uint8_t value);
 void outw (uint16_t port, uint16_t value);

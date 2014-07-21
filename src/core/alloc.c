@@ -23,7 +23,13 @@ char* kcopystr (const char* str)
 }
 
 // ============================================================================
+
+ltime_t ltime (ltime_t* ptr) { return 0L; }
+
 #ifdef __KERNEL
+
+// FIXME Why here !?
+time_t time (time_t* ptr) { return 0; }
 
 #undef kalloc
 #undef kfree

@@ -1,5 +1,22 @@
 #include <kcore.h>
 
+
+// Linked List ------------------------------------------
+
+typedef struct klist klist_t;
+
+// #define offsetof (type,member)  ((int)(&((type*)0)->member))
+#define klist_dataof(ptr, type, member) \
+    ((type) (((char*)(ptr)) - offsetof(type,member)))
+
+void klist_init(klist_t* head);
+void klist_add (klist_t* new, klist_t* head);
+void klist_addback (klist_t* new, klist_t* head);
+void klist_del (klist_t* node);
+void klist_replace (klist_t* old, klist_t* new);
+
+// -------------------------------------------------------
+
 struct klist {
   klist_t*  prev_;
   klist_t*  next_;

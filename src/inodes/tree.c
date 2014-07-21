@@ -1,4 +1,5 @@
 #include <inodes.h>
+#include <kinfo.h>
 
 // ===========================================================================
 /**
@@ -102,7 +103,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
   // Look the first node file
   strncpy (uri, path, PATH_MAX);
   name = strtok_r (uri, FILENAME_SEPARATORS, &rentTok);
-  klock (&dir->lock_);
+  klock (&dir->lock_, LOCK_FS_LOOK);
   while (name != NULL) {
 
     // Follow symlink
@@ -152,7 +153,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
           }
         }
 
-        klock (&ino->lock_);
+        klock (&ino->lock_, LOCK_FS_LOOK);
         kunlock (&dir->lock_);
         dir = ino;
         break;
@@ -169,18 +170,18 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 
 
 // ===========================================================================
-
+/** Try to add a new inode on the VFS tree 
+ * The returned inode is still locked
+ */
 kInode_t* kFs_Register(const char* name, kInode_t* dir, kStat_t* stat)
 {
   kInode_t* ino;
   __noerror ();
 
-  if (name == NULL || stat == NULL) {
+  if (name == NULL || dir == NULL || stat == NULL) {
     __seterrno (EINVAL);
     return NULL;
   }
-
-  if (dir == NULL) dir = kFs_RootInode();
 
   if ( !S_ISDIR (dir->stat_.mode_)) {
     __seterrno(ENOTDIR);
@@ -189,12 +190,13 @@ kInode_t* kFs_Register(const char* name, kInode_t* dir, kStat_t* stat)
 
   ino = (kInode_t*) kalloc(sizeof(kInode_t));
   ino->name_ = kcopystr(name);
-  ino->fs_ = dir->fs_; // FIXME Not always !?
+  ino->fs_ = dir->fs_;
+  ino->devinfo_ = dir->devinfo_;
   memcpy (&ino->stat_, stat, sizeof(kStat_t));
-  ino->stat_.no_ = (ino_t)ino;
+  ino->stat_.ino_ = kSys_NewIno();
   ino->stat_.mode_ &= (S_IALLUGO | S_IFMT);
-  klock(&dir->lock_);
-  klock(&ino->lock_);
+  klock(&dir->lock_, LOCK_FS_REGISTER);
+  klock(&ino->lock_, LOCK_FS_REGISTER);
   if (kFs_Attach (ino, dir, name)) {
     kunlock (&dir->lock_);
     kunlock (&ino->lock_);

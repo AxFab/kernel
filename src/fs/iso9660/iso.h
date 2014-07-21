@@ -15,7 +15,6 @@
 // ========================================================
 // ISO9660 - Specification structures
 
-typedef int _Timestamp;
 
 typedef struct isoDirEntry          isoDirEntry_t;
 typedef struct isoFstDescriptor     isoFstDescriptor_t;
@@ -94,12 +93,14 @@ struct isoVolume {
   int         lgthroot;
   int         sectorCount;
   int         sectorSize;
+  kInode_t*   dev;
 };
 
-int isoMount (kFsys_t* fs, kStat_t* root) ;
 
-int isoLookup(const char* name, kInode_t* dir, kStat_t* file);
-int isoRead (kInode_t* fp, void* buffer, off_t offset, size_t length);
+int ISO_Mount (kInode_t* dev, kInode_t* mnt);
+int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file);
+int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba);
+int ISO_Write();
 
 
 #endif /* FS_ISO9660_ISO_H__ */

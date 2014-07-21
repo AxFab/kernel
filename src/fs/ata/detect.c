@@ -18,7 +18,7 @@ void atapiDetect (kAtaDrive_t* dr)
   DELAY;
 }
 
-int ataDetect (kAtaDrive_t* dr)
+int ATA_Detect (kAtaDrive_t* dr)
 {
   int res, k;
   uint8_t ptr[2048];
