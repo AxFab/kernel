@@ -20,12 +20,12 @@ void klock (spinlock_t* lock, int why)
 int ktrylock (spinlock_t* lock, int why)
 {
   if (atomic_xchg_i32 (&lock->key_, 1) != 0)
-    return !0;
+    return 0;
 
   lock->cpu_ = kCPU.cpuNo_;
   lock->why_ = why;
   atomic_inc_i32 (&kCPU.lockCounter);
-  return 0;
+  return 1;
 }
 
 void kunlock (spinlock_t* lock)

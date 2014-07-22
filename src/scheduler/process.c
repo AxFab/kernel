@@ -1,5 +1,7 @@
 #include <scheduler.h>
+#include <memory.h>
 #include <kinfo.h>
+
 
 
 // ---------------------------------------------------------------------------
@@ -24,22 +26,27 @@ static void kSch_AttachProcess (kProcess_t *proc)
 
 // ===========================================================================
 /** Create a new process, ready to start */
-int kSch_NewProcess (kProcess_t *parent, kAssembly_t* image)
+int kSch_NewProcess (kProcess_t *parent, kInode_t* image)
 {
   assert (image != NULL);
 
   // FIXME load the image
+  kAddSpace_t* mmsp = kVma_New (4 * _Mb_);
+  kAsm_Load (mmsp, image);
+
   kProcess_t* proc = KALLOC (kProcess_t);
   proc->pid_ = kSys_NewPid();
   proc->execStart_ = ltime(NULL);
   proc->parent_ = parent;
+  proc->image_ = image;
+  proc->memSpace_ = mmsp;
   if (parent) 
     atomic_inc_i32 (&parent->childrenCount_);
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   kSch_AttachProcess (proc);
   proc->threadCount_++;
-  proc->threadFrst_ = kSch_NewThread (proc, 0x0, 0xc0ffee);
+  proc->threadFrst_ = kSch_NewThread (proc, 0x1000000, 0xc0ffee);
   proc->threadLast_ = proc->threadFrst_;
   kunlock (&proc->lock_);
   return proc->pid_;

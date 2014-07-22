@@ -1,94 +1,71 @@
-#include <kernel/files.h>
-#include <kernel/fs.h>
-#include <stdio.h>
-// #include <unistd.h>
+#include <inodes.h>
 
 #define TAR_RECORDSIZE 512
 
-long strtol(const char*, const char**, int);
-ssize_t kreadlink(kStat_t* dir, char* buf, size_t bufsiz);
-off_t lseek(int fd, off_t offset, int whence);
-ssize_t read(int fd, void* buf, size_t count);
+int KRP_Mount (kInode_t* dev, kInode_t* mnt);
+int KRP_Write();
+int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file);
+int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba);
 
-int krpMount(int dev, kStat_t* root);
-int krpUnmount(void);
+kFileOp_t krpOps = {
+  KRP_Mount, NULL, NULL, 
+  KRP_Lookup, KRP_Read, NULL, NULL, 
+  (void*)KRP_Write, (void*)KRP_Write, NULL, (void*)KRP_Write, NULL, 
+};
 
-int krpLookup(const char* name, kStat_t* dir, kStat_t* file);
-int krpRead (kStat_t* fp, void* bucket, size_t offset, size_t length);
 
-// ===========================================================================
-const char* krpPrefix = "krp/";
+const char* krpPrefix = "./";
 extern char krpPack;
 extern int krpLength;
 // int krpLength;
 char* krpBase;
 
-kVolume_t krpFs = {
-  "KRP'FS",
-  &krpMount, &krpUnmount, NULL,
-  &krpLookup, &krpRead, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL,
-};
-
-
 // ===========================================================================
-int krpMount(int dev, kStat_t* root)
+int KRP_Mount (kInode_t* dev, kInode_t* mnt)
 {
   time_t now = time(NULL);
-  root->mode_ = S_IFDIR | 0500;
-  root->uid_ = ROOT_UID;
-  root->gid_ = ROOT_UID;
-  root->atime_ = now;
-  root->mtime_ = now;
-  root->ctime_ = now;
-  // if (dev == 0) {
+  kStat_t root = { 0, S_IFDIR | 0500, 0, 0, 0L, 0L, now, now, now, 0, 0, 0 };
+
   krpBase = &krpPack;
-  // } else {
-  //   // krpLength = lseek(dev, 0, SEEK_END);
-  //   // krpBase = malloc (krpLength);
-  //   // lseek (dev, 0, SEEK_SET);
-  //   // read (dev, krpBase, krpLength);
-  // }
-  return 0;
+  kFs_CreateDevice ("krp", mnt, &krpOps, (void*)NULL, &root);
+  return __noerror ();
 }
 
-int krpUnmount(void)
+
+// ---------------------------------------------------------------------------
+int KRP_Write()
 {
-  free (krpBase);
-  return 0;
+  return EROFS;
 }
 
 
-// statfs / options
-
-
-
-
-// ===========================================================================
-int krpLookup(const char* name, kStat_t* dir, kStat_t* file)
+// ---------------------------------------------------------------------------
+int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
 {
   time_t now = time(NULL);
   char uri [PATH_MAX];
   char search [PATH_MAX];
-  kreadlink (dir, uri, PATH_MAX);
+  kFs_ReadUri (dir, uri, PATH_MAX);
 
   if (strlen (strchr(uri, ':') + 1) == 0)
     snprintf(search, PATH_MAX, "%s%s", krpPrefix, name);
-
   else
     snprintf(search, PATH_MAX, "%s%s/%s", krpPrefix, (strchr (uri, ':') + 2), name);
 
-  // printf ("krpFs] Look for %s -> '%s' on dir %s \n", name, search, uri);
-  file->uid_ = ROOT_UID;
-  file->gid_ = ROOT_UID;
+  if (KLOG_FS) printf ("krpFs] Look for %s -> '%s' on dir %s \n", name, search, uri);
+  file->uid_ = 0;
+  file->gid_ = 0;
   file->atime_ = now;
   file->mtime_ = now;
   file->ctime_ = now;
+  file->dblock_ = 512;
+  file->cblock_ = 512;
   int pos = 0;
   int lg = strlen (search);
   char* table = krpBase;
 
   while (pos < krpLength) {
+    // printf ("krpFs] Compare {%s|%s} at %d \n", search, table, pos/512);
     if (memcmp(search, table, lg) == 0) {
       if (table[lg] == '/') {
         file->mode_ = S_IFDIR | 0500;
@@ -100,6 +77,7 @@ int krpLookup(const char* name, kStat_t* dir, kStat_t* file)
         file->mode_ = S_IFREG | 0500;
         file->length_ = strtol(&table[0x7c], NULL, 0);
         file->lba_ = pos;
+        if (KLOG_FS) printf ("krpFs] Find %s{%s} at %d \n", name, table, pos/512);
         return 0;
       }
     }
@@ -110,23 +88,20 @@ int krpLookup(const char* name, kStat_t* dir, kStat_t* file)
     pos += sz;
   }
 
-  printf ("krpFs] Unable to find entry %s\n", search);
+  if (KLOG_FS) printf ("krpFs] Unable to find entry %s\n", search);
   return ENOENT;
 }
 
 
-int krpRead (kStat_t* fp, void* bucket, size_t offset, size_t length)
+// ---------------------------------------------------------------------------
+int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 {
-  char* table = krpBase + (uintptr_t)fp->lba_ + 512 + offset;
-  // printf ("Copy %d bytes from %x to %x\n", length, table, bucket);
-  // kTty_HexDump (table, 128);
-  // TODO Add position checks and fp validity
-  memcpy (bucket, table, length);
-  // kTty_HexDump (bucket, 128);
-  return length;
+  size_t idx = fp->stat_.lba_ + (lba + 1) * 512;
+  if (KLOG_FS) printf ("krpFs] Read file at %d[%x] for %d cluster on [%x]\n", idx, &krpBase[0], count, buffer);
+  memcpy (buffer, &krpBase[idx], count * 512);
+
+  // kTty_HexDump (&krpBase[idx], 0x50);
+  return 0;
 }
 
-
-// int (*readdir)();
-// int (*readlink)();
 

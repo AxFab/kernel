@@ -106,8 +106,6 @@ kcpu_SysCall:
     push esp
     call kInt_SysCall
     add esp, 4
-    mov al,0x20
-    out 0x20,al
     LOAD_REGS
     iret
 
@@ -200,3 +198,42 @@ IntEx07_Handler:
     INT_EX_HANDLER 0x07
 
 
+extern kInt_Look
+global kcpu_Look
+kcpu_Look:
+    SAVE_REGS
+    call kInt_Look
+    mov al,0x20
+    out 0x20,al
+    LOAD_REGS
+    iret
+
+
+; ========================================================
+; IDE BUS 
+
+global IRQ14_handler, IRQ15_handler
+extern kCpu_IRQ
+
+IRQ14_handler:
+    SAVE_REGS
+    push esp
+    push 14
+    call kCpu_IRQ
+    add esp, 8
+    mov al,0x20
+    out 0x20,al
+    LOAD_REGS
+    iret
+
+
+IRQ15_handler:
+    SAVE_REGS
+    push esp
+    push 15
+    call kCpu_IRQ
+    add esp, 8
+    mov al,0x20
+    out 0x20,al
+    LOAD_REGS
+    iret

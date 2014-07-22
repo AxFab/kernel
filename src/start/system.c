@@ -5,6 +5,7 @@
 #include "inodes.h"
 #include "memory.h"
 #include "scheduler.h"
+#include <assembly.h>
 
 void kinit() 
 {
@@ -48,44 +49,24 @@ int kCore_Initialize ()
   kinit ();
   kFs_Initialize ();
   kVma_Initialize ();
-  kSch_Initialize ();
 
   // Mount the system disc ---- 
   kInode_t* cd = kFs_LookFor ("/dev/sdA", NULL);
   kInode_t* mnt = kFs_LookFor ("/mnt/", NULL);
   ISO_Mount (cd, mnt);
+  KRP_Mount (NULL, mnt);
 
-
-  kInode_t* kimg = kFs_LookFor ("/mnt/OS_CORE/BOOT/KIMAGE.", NULL);
-
-  uint8_t buff [2048];
-  kFs_Read (kimg, buff, 1, 0);
-  kTty_HexDump (buff, 512);
+  kInode_t* master = kFs_LookFor ("/mnt/OS_CORE/USR/BIN/MASTER.", NULL);
+  // kInode_t* master = kFs_LookFor ("/mnt/krp/master", NULL);
 
   kFs_PrintAll ();
 
+  if (kAsm_Open (master)) {
+    kSch_NewProcess (NULL, master);
+  }
 
-  SIZEOF(kCpuRegs_t);
-  SIZEOF(kTty_t);
-  // SIZEOF(kUser_t);
-  SIZEOF(kStat_t);
-  SIZEOF(kInode_t);
-  // SIZEOF(kFsys_t);
-  SIZEOF(kDevice_t);
-  SIZEOF(kResxFile_t);
-  SIZEOF(kFileOp_t);
-  SIZEOF(kVma_t);
-  SIZEOF(kAddSpace_t);
-  SIZEOF(kProcess_t);
-  SIZEOF(kTask_t);
-  // SIZEOF(kAssembly_t);
-  // SIZEOF(kSection_t);
+  kSch_Initialize ();
 
   return 0;
 }
 
-
-void kCore_Syscall()
-{
-  kprintf ("SYSCALL\n");
-}

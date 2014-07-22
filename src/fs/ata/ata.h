@@ -41,8 +41,8 @@
 #define ATA_CMD_IDENTIFY          0xEC
 
 
-#define      ATAPI_CMD_READ       0xA8
-#define      ATAPI_CMD_EJECT      0x1B
+#define ATAPI_CMD_READ       0xA8
+#define ATAPI_CMD_EJECT      0x1B
 
 #define ATA_IDENT_DEVICETYPE   0
 #define ATA_IDENT_CYLINDERS    2

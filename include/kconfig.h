@@ -99,4 +99,7 @@ enum LOCK
 
 #define KSTATS_PRECISION  (100) 
 
+#define KLOG_FS 0
+#define KLOG_PF 0
+
 #endif /* KCONFIG_H__ */

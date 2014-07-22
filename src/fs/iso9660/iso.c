@@ -61,7 +61,7 @@ int ISO_Mount (kInode_t* dev, kInode_t* mnt)
             break;
 
         strcpy (name, firstDesc->applicationId);
-        kprintf ("iso9660] This disc is named '%s' \n", firstDesc->applicationId);
+        if (KLOG_FS) kprintf ("iso9660] This disc is named '%s' \n", firstDesc->applicationId);
         //err = Fsys_ChangeVolumeName (prim->applicationId);
         break;
 
@@ -107,11 +107,11 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   char* buf = malloc (2048);
   isoVolume_t* volInfo = (isoVolume_t*)dir->devinfo_;
   
-  kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
-  kprintf ("iso9660] Read sector %d on %s \n", sec, volInfo->dev->name_);
+  if (KLOG_FS) kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
+  if (KLOG_FS) kprintf ("iso9660] Read sector %d on %s \n", sec, volInfo->dev->name_);
   
   kFs_Read (volInfo->dev, buf, 1, sec);
-  kprintf ("iso9660] Done\n");
+  if (KLOG_FS) kprintf ("iso9660] Done\n");
 
   // Skip the first two entries
   entry = (isoDirEntry_t*)buf;
@@ -125,7 +125,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
     if (filename[entry->lengthFileId - 2 ] == ';')
       filename[entry->lengthFileId - 2] = '\0';
 
-    kprintf ("iso9660] See entry: '%s' \n", filename);
+    if (KLOG_FS) kprintf ("iso9660] See entry: '%s' \n", filename);
     if (strcmp(name, filename) == 0) {
       file->dev_ = volInfo->dev->stat_.ino_;
       file->dblock_ = volInfo->dev->stat_.cblock_;
@@ -140,7 +140,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
       file->lba_ = entry->locExtendLE;
       file->length_ = entry->dataLengthLE;
       free (buf);
-      return __noerror();
+      return 0;
     }
 
     entry = (isoDirEntry_t*) & (((char*)entry)[entry->lengthRecord]);
@@ -155,13 +155,15 @@ int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
   isoVolume_t* volInfo = (isoVolume_t*)fp->devinfo_;
   size_t sec = fp->stat_.lba_;
   size_t lg = ALIGN_UP (fp->stat_.length_, fp->stat_.cblock_) / fp->stat_.cblock_;
-  if (lg < lba + count ) {
+  if (lg < lba + count ) 
+    count = lg - lba;
 
-    kprintf ("iso9660] File %s have size %d (request until %d)\n", fp->name_, lg, lba + count );
-    return __seterrno (ERANGE);
+  if (count <= 0) {
+    if (KLOG_FS) kprintf ("iso9660] File %s have size %d (request until %d)\n", fp->name_, lg, lba + count );
+    return ERANGE;
   }
 
-  kprintf ("iso9660] File %s, read dev %s at %d \n", fp->name_, volInfo->dev->name_, sec + lba );
+  if (KLOG_FS) kprintf ("iso9660] File %s, read dev %s at %d \n", fp->name_, volInfo->dev->name_, sec + lba );
   kFs_Read (volInfo->dev, buffer, count, sec + lba);
   return 0;
 }

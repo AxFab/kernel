@@ -14,6 +14,8 @@ extern void kcpu_Protect();
 extern void kcpu_Irq15();
 extern void kcpu_CMOS();
 
+extern void kcpu_Look();
+
 extern void IRQ0_handler();
 extern void IRQ1_handler();
 extern void IRQ2_handler();
@@ -166,10 +168,15 @@ int kCpu_Initialize (void)
 
   // Hardware Interrupt Request - Slave
   // kcpuWriteIDTEntry(0x70, 0x08, (uint32_t)kcpu_CMOS, INTGATE); // 0x70 Should be CMOS-RTC
-  // kcpuWriteIDTEntry(0x77, 0x08, (uint32_t)kcpu_Irq15, INTGATE); // Disque dur secondaire OR  LPT1 (+suprious irq)
+  kcpuWriteIDTEntry(0x76, 0x08, (uint32_t)IRQ14_handler, INTGATE); // Primary IDE bus
+  kcpuWriteIDTEntry(0x77, 0x08, (uint32_t)IRQ15_handler, INTGATE); // Secondary IDE bus
 
   // Syscall entry
   kcpuWriteIDTEntry(0x30, 0x08, (uint32_t)kcpu_SysCall, TRAPGATE);
+
+  //for (i=0x74; i<0x76; ++i) 
+  // kcpuWriteIDTEntry(0x76, 0x08, (uint32_t)kcpu_Look, INTGATE);
+
 
   return __noerror();
 }
@@ -195,5 +202,20 @@ void init_pic(void)
   /* masquage des interruptions */
   outb(0x21, 0x0);
   outb(0xA1, 0x0);
+}
+
+
+void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param)
+{
+  regs->gs = 0x2B;
+  regs->fs = 0x2B;
+  regs->es = 0x2B;
+  regs->ds = 0x2B;
+  regs->espx = USR_SPACE_LIMIT - 0x10;
+  regs->eax = param;
+  regs->eip = entry;
+  regs->cs = 0x23;
+  regs->esp = USR_SPACE_LIMIT - 0x10;
+  regs->ss = 0x33;
 }
 

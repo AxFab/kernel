@@ -64,7 +64,7 @@ ssize_t kFs_Read(kInode_t* ino, void* buffer, size_t length, off_t offset)
     return -1;
   }
 
-  kprintf ("FS] Read '%s' on LBA %d using %x\n", ino->name_, offset, ino->fs_->read);
+  if (KLOG_FS) kprintf ("FS] Read '%s' on LBA %d using %x\n", ino->name_, offset, ino->fs_->read);
   int err = ino->fs_->read (ino, buffer, length, offset);
   if (err) {
     __seterrno (err);

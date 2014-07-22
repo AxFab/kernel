@@ -2,6 +2,7 @@
 #define SCHEDULER_H__
 
 #include <kcore.h>
+#include <kcpu.h>
 
 // Process flags
 #define PROC_EXITED     (1 << 0)
@@ -24,6 +25,9 @@ struct kProcess
   ltime_t       execStart_;       /// DateTime of the start of this process
   int           exitStatus_;      /// status of this process at exit
   spinlock_t    lock_;            /// Lock
+  kInode_t*     image_;
+  kAddSpace_t*  memSpace_;
+  uint32_t      dir_;
   // Assembly_
 
 };
@@ -52,6 +56,8 @@ struct kTask
   kTask_t*      nextEv_;          /// Next item on event list
 
   spinlock_t    lock_;            /// Lock
+
+  kCpuRegs_t    regs_;
 };
 
 
@@ -64,7 +70,7 @@ void kSch_Ticks () ;
 int kSch_TimeSlice (kTask_t* task);
 void kSch_PickNext ();
 // ---------------------------------------------------------------------------
-int kSch_NewProcess (kProcess_t *parent, kAssembly_t* image);
+int kSch_NewProcess (kProcess_t *parent, kInode_t* image);
 int kSch_AddThread (kProcess_t* proc, uintptr_t entry, intmax_t arg);
 void kSch_DestroyProcess (kProcess_t* proc);
 void kSch_ExitProcess (kProcess_t* proc, int status);

@@ -36,6 +36,21 @@ int main ()
   kInode_t* inoShell = kFs_Lookup ("bin/i686/debug/inodes", NULL);
   kAssembly_t* asmShell = kAsm_Open (inoShell);
 
+
+  // START #1
+  // START #2
+  // EXIT #2
+  // START #3
+  // EXIT #1
+  // START #4
+  // EXIT #2
+  // EXIT #3
+  // START #5
+  // START #6
+  // EXIT #5
+  // EXIT #6
+
+
   // kInode_t* inoHome = kFs_Lookup ("/home/", NULL);
   // kProcess_t* pFirst = kTsk_NewProcess (asmShell, inoHome);
 

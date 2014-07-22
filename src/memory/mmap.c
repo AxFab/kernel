@@ -146,6 +146,9 @@ kVma_t* kVma_MMap (kAddSpace_t* addressSpace, kVma_t* area)
   if (vma != NULL)
     addressSpace->vrtPages_ += (vma->limit_ - vma->base_) / PAGE_SIZE;
 
+  // vma->flags_ = area->flags_;
+  // vma->offset_ = area->offset_;
+  // vma->ino_ = area->ino_;
   kunlock (&addressSpace->lock_);
   return vma;
 }

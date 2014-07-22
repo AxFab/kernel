@@ -41,6 +41,8 @@ int kpanic (const char *str, ...)
 {
   const char** args = &str;
   format ((_putc_f)kputc, 0, str, ++args);
+
+  kstacktrace (5);
   kTty_Update();
   for (;;);
 }

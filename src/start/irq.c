@@ -56,16 +56,27 @@ int kInt_Default (kCpuRegs_t* registers)
 	return 0;
 }
 
+int clockCount = 0;
 int ticksCount = 0;
 int kInt_Clock (kCpuRegs_t* registers) 
 {
   /** PIT - Timers [ +/- 1.73 sec/day ] 
 
    */
-  if (++ticksCount > CLOCK_HZ) {
+
+  // FIXME check kSYS.on_ !?
+  // kTty_Putc ('.');
+  if (++ticksCount > CLOCK_HZ / 10) {
     ticksCount = 0;
+    // kprintf ("System clock: %lld us\n", kSYS.now_);
+    kSch_Ticks();
+  }
+
+  if (++clockCount > CLOCK_HZ) {
+    clockCount = 0;
     kprintf ("System clock: %lld us\n", kSYS.now_);
   }
+
 
 
   // if (_dotCount == 4) {
@@ -170,3 +181,27 @@ int kIrq_Do (int no, kCpuRegs_t* registers)
   kAta_onIRQ = 1;
   return 0;
 }
+
+
+int kInt_Look (unsigned int address, kCpuRegs_t* registers) 
+{
+  kTty_Write ("LOOK IRQ...\n");
+  for (;;);
+  return 0;
+}
+
+void IRQ14_Enter ();
+int kCpu_IRQ (int irq, kCpuRegs_t* regs)
+{
+  switch (irq) {
+    case 14:
+      IRQ14_Enter();
+      break;
+      
+    default:
+      kprintf ("Interrupt by IRQ %d\n", irq);
+      break;
+  }
+}
+
+

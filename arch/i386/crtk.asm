@@ -141,7 +141,7 @@ global krpPack, krpLength
 
 align 256
 krpPack:
-; incbin "resx/krp.tar"
+incbin "krp.tar"
 krpPackEnd:
 
 align 8
@@ -240,12 +240,26 @@ global kCpu_SwitchContext
 extern kCpu_DisplayRegs, kTty_HexDump
 ; void kCpu_SwitchContext (kCpuRegs_t* regs, uint32_t dir) 
 
+; void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir);
+global kCpu_Switch
+extern kPg_NewDir, kTty_HexChar
+kCpu_Switch:
 kCpu_SwitchContext: 
     
     push ebp
     mov ebp, esp
+    cli
 
   ; Set Page directory
+    mov edx, [ebp + 12]
+    mov eax, [edx]
+    test eax, eax
+    jnz .do
+    call kPg_NewDir
+    mov [edx], eax
+
+  .do:
+    mov cr3, eax
 
   ; Copy REGS on stack
     mov ax, ds
@@ -255,6 +269,15 @@ kCpu_SwitchContext:
     mov esi, [ebp + 8]
     mov edi, esp
     rep movsb
+
+    add esp, 0x10
+    mov [esp + 3*4], esp
+    sub esp, 0x10
+    
+    mov eax, [esp + 14*4]
+    or eax, 0x200
+    and eax, 0xffffbfff
+    mov [esp + 14*4], eax
 
   ; End of interupt
     mov al,0x20
@@ -266,7 +289,6 @@ kCpu_SwitchContext:
     pop es
     pop ds
     popad
-
 
   ; Jump
     iret

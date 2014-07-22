@@ -32,7 +32,7 @@ int kSch_TimeSlice (kTask_t* task)
   ltime_t elapsed = ltime(NULL) - task->execStart_;
   if (elapsed == 0) elapsed = 1;
   long weight = (21 - task->niceValue_) * 2;
-  long weightElapsed = (task->elapsedUser_ * kSYS.schedLatency_) / elapsed / kSYS.cpuCount_;
+  long weightElapsed = (task->elapsedUser_ * kSYS.schedLatency_) / elapsed / 1;//kSYS.cpuCount_;
   long weightProc = (weight * kSYS.schedLatency_) / kSYS.prioWeight_;
   long sliceMicro = weightProc - weightElapsed;
   if (sliceMicro < kSYS.minTimeSlice_)
@@ -51,18 +51,21 @@ void kSch_PickNext ()
   int waiting = atomic_dec_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING]);
   if (waiting >= 0) {
     
-    for (pick = kCPU.current_->nextSc_; 
-        pick != kCPU.current_; 
-        pick = pick->nextSc_) {
-
-      if (pick->state_ != TASK_STATE_WAITING)
+    pick = kCPU.current_->nextSc_;
+    do {
+      if (pick->state_ != TASK_STATE_WAITING) {
+        pick = pick->nextSc_;
         continue;
+      }
 
-      if (!ktrylock(&pick->lock_, LOCK_TASK_NEXT))
+      if (!ktrylock(&pick->lock_, LOCK_TASK_NEXT)) {
+        pick = pick->nextSc_;
         continue;
+      }
 
       if (pick->state_ != TASK_STATE_WAITING) { // FIXME unlikely()
         kunlock (&pick->lock_);
+        pick = pick->nextSc_;
         continue;
       }
 
@@ -74,18 +77,23 @@ void kSch_PickNext ()
       atomic_inc_i32 (&kSYS.tasksCount_[pick->state_]);
       pick->execOnCpu_ = kCPU.cpuNo_;
       kCpu_SetStatus (CPU_STATE_USER);
-      // FIXME Do switch
       kunlock (&pick->lock_);
-    }
 
-    // FIXME LOG 
+      // kprintf ("scheduler] calling switch <%x, %x>\n", &pick->regs_, &pick->process_->dir_);
+      // kCpu_DisplayRegs (&pick->regs_);
+      kCpu_Switch (&pick->regs_, &pick->process_->dir_);
+
+    } while (pick != kCPU.current_);
+
+    kprintf ("scheduler] pick next didn't find any available task\n");
   }
 
+  kprintf ("scheduler] No task go idle...\n");
   atomic_inc_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING]);
   kCpu_SetStatus (CPU_STATE_IDLE);
   // In case the current task is on garbadge collector
   kCPU.current_ = kCPU.current_->nextSc_; 
-  // FIXME check kSYS.on_ !?
   // FIXME call __asm__ HLT
+  kpanic ("HLT is not implemented.\n");
 }
 

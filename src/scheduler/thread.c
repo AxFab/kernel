@@ -80,9 +80,10 @@ kTask_t* kSch_NewThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   task->tid_ = kSys_NewPid();
   task->execOnCpu_ = -1;
   task->process_ = proc;
-  task->execStart_ = ltime(NULL);
   task->state_ = TASK_STATE_WAITING;
   task->niceValue_ = 5;
+  task->execStart_ = ltime(NULL);
+  kCpu_Reset (&task->regs_, entry, arg);
   atomic_inc_i32 (&proc->runningTask_);
   kSch_InsertTask (task);
   return task;
@@ -95,6 +96,7 @@ void kSch_ResurectTask (kTask_t* task, uintptr_t entry, intmax_t arg)
   assert (task->state_ == TASK_STATE_ZOMBIE);
 
   task->execStart_ = ltime(NULL);
+  kCpu_Reset (&task->regs_, entry, arg);
   atomic_inc_i32 (&task->process_->runningTask_);
   kSch_WakeUp (task);
 }

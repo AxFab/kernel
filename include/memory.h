@@ -67,4 +67,9 @@ int kVma_GrowUp (kAddSpace_t* addp, void* address, size_t extra_size);
 int kVma_GrowDown (kAddSpace_t* addp, void* address, size_t extra_size);
 
 
+int kPg_Fault (uint32_t address);
+uint32_t kPg_NewDir () ;
+
+
+
 #endif /* MEMORY_H__ */

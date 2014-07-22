@@ -1,5 +1,6 @@
-#include <tasks.h>
+#include <assembly.h>
 #include <inodes.h>
+#include <memory.h>
 #include "elf.h"
 
 
@@ -24,6 +25,24 @@ void kAsm_Destroy (kAssembly_t* assembly)
 
   kfree(assembly);
 }
+
+void kAsm_Load (kAddSpace_t* mmsp, kInode_t* ino)
+{
+  kAssembly_t* assembly = ino->assembly_;
+  kVma_t area = { VMA_EXECUTABLE, 0L, 0L, 0, 0, ino, 0 };
+
+  kSection_t* sec = assembly->section_;
+  while (sec != NULL) {
+    area.base_ = sec->address_;
+    area.limit_ = area.base_ + sec->length_;
+    area.offset_ = sec->offset_;
+    kVma_MMap (mmsp, &area);
+    sec = sec->next_;
+  }
+
+  kVma_Display (mmsp);
+}
+
 
 void kAsm_ReadSection (kAssembly_t* assembly, kInode_t* ino, ELF_PhEntry_t* phe)
 {
@@ -61,7 +80,9 @@ kAssembly_t* kAsm_Open (kInode_t* ino)
 
   head = (ELF_Header_t*)kalloc(4096);
   kFs_Open (ino);
-  if (kFs_Read (ino, head, 0, 4096)) {
+  kFs_Read (ino, head, 4096 / ino->stat_.cblock_, 0);
+  if (0) {
+    kprintf ("elf] Read first page failed\n");
     kfree(head);
     kFs_Close (ino);
     return NULL;
@@ -73,6 +94,7 @@ kAssembly_t* kAsm_Open (kInode_t* ino)
     err = ENOEXEC;
 
   if (err) {
+    kprintf ("elf] File is not a valid ELF file.\n");
     __seterrno (err);
     kFs_Close (ino);
     kfree(head);
@@ -90,6 +112,7 @@ kAssembly_t* kAsm_Open (kInode_t* ino)
   }
 
   if (!assembly->section_) {
+    kprintf ("elf] File doesn't have loadable section\n");
     kAsm_Destroy (assembly);
     __seterrno (ENOEXEC);
     kFs_Close (ino);

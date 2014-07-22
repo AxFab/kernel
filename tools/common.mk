@@ -145,7 +145,7 @@ $(eval $(call COMMON,$(1)))
 $(bin_dir)/$(1)$(bin_ext): $($(1)_refs) $($(1)_obj) $($(1)_crt)
 	$(VVV) $(MKDIR) $(bin_dir)
 	$(E) 'Creation of the program <ld-cross-platform> $(notdir $$@)'
-	$(V) ld --oformat=elf32-i386 -o $$@ -Ttext 400000 $($(1)_crt) $$(call tbinname,$$@,_obj) $$(call tbinname,$$@,_lflags)
+	$(V) ld --oformat=elf32-i386 -o $$@ -Ttext 1000000 $($(1)_crt) $$(call tbinname,$$@,_obj) $$(call tbinname,$$@,_lflags)
 
 $(1): $(bin_dir)/$(1)$(bin_ext)
 endef

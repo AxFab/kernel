@@ -114,12 +114,15 @@ $(eval $(call KERNEL,kMin))
 # ---------------------------------------------------------------------------
 # Target: Program  kImage
 kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
+             $(patsubst src/%,%,$(wildcard src/syscalls/*.c))  \
              $(patsubst src/%,%,$(wildcard src/inodes/*.c))  \
+             $(patsubst src/%,%,$(wildcard src/assembly/*.c))  \
              $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/tmpfs/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/ata/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/fs/krp/*.c)) \
              $(patsubst src/%,%,$(wildcard src/core/*.c)) 
 kImage_crt = $(obj_dir)/crtk.o
 kImage_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/
@@ -129,11 +132,28 @@ $(eval $(call KERNEL,kImage))
 
 
 # ===========================================================================
+# ===========================================================================
 
+
+# ---------------------------------------------------------------------------
+master_src = dummy/master.c
+master_crt = $(obj_dir)/crt0.o
+master_cflags = $(std_$(mode)_cflags) -nostdinc
+master_lflags = $(AXLIBC)/lib/libaxc.a
+$(eval $(call KPROGRAM,master))
+# ---------------------------------------------------------------------------
+deamon_src = dummy/deamon.c
+deamon_crt = $(obj_dir)/crt0.o
+deamon_cflags = $(std_$(mode)_cflags) -nostdinc
+deamon_lflags = $(AXLIBC)/lib/libaxc.a
+$(eval $(call KPROGRAM,deamon))
+
+# ===========================================================================
+# ===========================================================================
 kimg = kImage
 
 cdrom: Os.iso
-Os.iso: $(kimg)
+Os.iso: $(kimg) master deamon
 	$(VVV) mkdir -p iso/boot/grub
 #	$(VVV) mkdir -p iso/usr/{,local/}{bin,lib,sbin}
 	$(VVV) mkdir -p iso/usr/bin
@@ -145,6 +165,9 @@ Os.iso: $(kimg)
 
 	$(VV) cp tools/grub/grub.cfg  iso/boot/grub/grub.cfg
 	$(VV) cp $(bin_dir)/$(kimg) iso/boot/kImage
+
+	$(VV) cp $(bin_dir)/master iso/usr/bin/master
+	$(VV) cp $(bin_dir)/deamon iso/usr/bin/deamon
 
 	$(VV) cp ../axBox/bin/i686/krn/buzybox iso/usr/bin/buzybox
 	$(VV) cp ../axBox/scripts/* iso/usr/bin/

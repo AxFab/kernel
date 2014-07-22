@@ -55,8 +55,8 @@ xchdata:
     sub esp, 8
     pushad
     mov ecx, [ebp + 8]   ; fd
-    mov edx, [ebp + 12]
-    mov ebx, [ebp + 16]
+    mov edx, [ebp + 12]  ; buf
+    mov ebx, [ebp + 16]  ; count
     lea esi, [ebp - 4]   ; char_reads
     int 0x30
     ; mov errno, eax
