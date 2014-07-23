@@ -3,7 +3,7 @@
 
 
 // ---------------------------------------------------------------------------
-void kSch_Initialize () 
+void kSch_Initialize ()
 {
   // INIT kSYS
   kSYS.ticksCountMax_ = 3;
@@ -19,14 +19,14 @@ void kSch_Initialize ()
 
 // ---------------------------------------------------------------------------
 /** Inform if the current processor have a task assign to it. */
-int kSch_OnTask () 
+int kSch_OnTask ()
 {
   return kCPU.current_ != NULL && kCPU.current_->execOnCpu_ == kCPU.cpuNo_;
 }
 
 
 // ---------------------------------------------------------------------------
-void kSch_WakeUp (kTask_t* task) 
+void kSch_WakeUp (kTask_t* task)
 {
   atomic_dec_i32 (&kSYS.tasksCount_[task->state_]);
   assert (kSYS.tasksCount_[task->state_] >= 0);
@@ -37,15 +37,19 @@ void kSch_WakeUp (kTask_t* task)
 
 // ---------------------------------------------------------------------------
 /** Change the status of the current executing task and save the current registers */
-void kSch_StopTask (int state) 
+void kSch_StopTask (int state, kCpuRegs_t* regs)
 {
   assert (kSch_OnTask ());
-  assert (kCPU.current_->state_ == TASK_STATE_EXECUTING || 
+  assert (kCPU.current_->state_ == TASK_STATE_EXECUTING ||
     (kCPU.current_->state_ == TASK_STATE_ABORTING && state == TASK_STATE_ZOMBIE));
   assert (state != TASK_STATE_EXECUTING && state != TASK_STATE_ABORTING);
 
   kTask_t* task = kCPU.current_;
-  // FIXME Save registers
+
+  asm ("cli");
+  if (state != TASK_STATE_ZOMBIE)
+    kCpu_Save (task, regs); // FIXME Save registers
+
   task->execOnCpu_ = -1;
   task->elapsedUser_ += ltime(NULL) - task->lastWakeUp_;
   if (task->state_ == TASK_STATE_ABORTING)
@@ -88,4 +92,5 @@ void kSch_Abort (kTask_t* task)
 
   kunlock (&task->lock_);
 }
+
 

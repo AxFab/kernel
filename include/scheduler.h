@@ -37,7 +37,7 @@ struct kTask
   int           tid_;             /// Unique number
   int           flags_;           /// Thread flags [ ]
   int           execOnCpu_;       /// Which CPU is currently running this task
-  int           timeSlice_;      
+  int           timeSlice_;
   int           niceValue_;
   int           state_;
   int           eventType_;
@@ -58,15 +58,16 @@ struct kTask
   spinlock_t    lock_;            /// Lock
 
   kCpuRegs_t    regs_;
+  uint32_t      kstack_;
 };
 
 
 
 // ---------------------------------------------------------------------------
-void kSch_WaitEvent(kTask_t* task, int event, long param);
-void kSch_CancelEvent (kTask_t* task); 
+void kSch_WaitEvent(kTask_t* task, int event, long param, kCpuRegs_t* regs);
+void kSch_CancelEvent (kTask_t* task);
 // ---------------------------------------------------------------------------
-void kSch_Ticks () ;
+void kSch_Ticks (kCpuRegs_t* regs) ;
 int kSch_TimeSlice (kTask_t* task);
 void kSch_PickNext ();
 // ---------------------------------------------------------------------------
@@ -78,7 +79,7 @@ void kSch_ExitProcess (kProcess_t* proc, int status);
 void kSch_Initialize ();
 int kSch_OnTask ();
 void kSch_WakeUp (kTask_t* task);
-void kSch_StopTask (int state);
+void kSch_StopTask (int state, kCpuRegs_t* regs);
 void kSch_Abort (kTask_t* task);
 // ---------------------------------------------------------------------------
 kTask_t* kSch_NewThread (kProcess_t* proc, uintptr_t entry, intmax_t arg);

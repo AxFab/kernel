@@ -29,7 +29,7 @@
   Hardware Interrupt Request
     IRQ 0 (0x20) : System Clock
     IRQ 1 : Keyboard
-    IRQ 2 : N/A 
+    IRQ 2 : N/A
     IRQ 3 : Serial port (COM2/COM4)
     IRQ 4 : Serial port (COM1/COM3)
     IRQ 5 : LPT2 (sound card)
@@ -49,7 +49,7 @@
 
 // --------------------------------------------------------
 
-int kInt_Default (kCpuRegs_t* registers) 
+int kInt_Default (kCpuRegs_t* registers)
 {
 	kTty_Write ("Unk.IRQ!\n");
   // for (;;);
@@ -58,23 +58,25 @@ int kInt_Default (kCpuRegs_t* registers)
 
 int clockCount = 0;
 int ticksCount = 0;
-int kInt_Clock (kCpuRegs_t* registers) 
+int kInt_Clock (kCpuRegs_t* regs)
 {
-  /** PIT - Timers [ +/- 1.73 sec/day ] 
+  /** PIT - Timers [ +/- 1.73 sec/day ]
 
    */
 
+
   // FIXME check kSYS.on_ !?
   // kTty_Putc ('.');
-  if (++ticksCount > CLOCK_HZ / 10) {
+  if (++ticksCount > CLOCK_HZ / 100) {
     ticksCount = 0;
     // kprintf ("System clock: %lld us\n", kSYS.now_);
-    kSch_Ticks();
+
+    kSch_Ticks((kCpuRegs_t*)&regs);
   }
 
   if (++clockCount > CLOCK_HZ) {
     clockCount = 0;
-    kprintf ("System clock: %lld us\n", kSYS.now_);
+    // kprintf ("System clock: %lld us\n", kSYS.now_);
   }
 
 
@@ -91,8 +93,10 @@ int kInt_Clock (kCpuRegs_t* registers)
 	return 0;
 }
 
-int kInt_KBoard (kCpuRegs_t* registers) 
+int kInt_KBoard (kCpuRegs_t* registers)
 {
+  return 0;
+
 	unsigned char i;
 	while((inb(0x64) & 0x01) == 0);
 
@@ -109,7 +113,7 @@ int kInt_KBoard (kCpuRegs_t* registers)
 uint64_t value = 0;
 int kInt_CMOS (kCpuRegs_t* registers)
 {
-  /** RTC - Interval Timers from 512Hz to 8096Hz 
+  /** RTC - Interval Timers from 512Hz to 8096Hz
     512Hz  -> 1953125.0    ns
     1024Hz ->  976562.5    ns
     2KHz   ->  488281.25   ns
@@ -120,16 +124,16 @@ int kInt_CMOS (kCpuRegs_t* registers)
   // if (value > /*9765625 */ 1024) {
   //   value = 0;
     kTty_Putc ('-');
-  // } 
+  // }
   outb(0x70, 0x8C); // select register C
   inb(0x71);    // just throw away contents
-  
+
   return 0;
 }
 
 int kCore_Syscall (kCpuRegs_t* regs, int func, uintptr_t p1, uintptr_t p2, uintptr_t p3, uintptr_t p4, uintptr_t p5);
 
-int kInt_SysCall (kCpuRegs_t* regs) 
+int kInt_SysCall (kCpuRegs_t* regs)
 {
   regs->eax = kCore_Syscall (regs, (int)regs->eax,
     (uintptr_t)regs->ecx,
@@ -144,14 +148,14 @@ int kInt_SysCall (kCpuRegs_t* regs)
 
 int kPg_Fault (uint32_t address);
 
-int kInt_PageFault (uint32_t address, kCpuRegs_t* registers) 
+int kInt_PageFault (uint32_t address, kCpuRegs_t* registers)
 {
   // kprintf ("PageFault at 0x%x\n", address);
   return kPg_Fault (address);
 }
 
 
-int kInt_Protect (unsigned int address, kCpuRegs_t* registers) 
+int kInt_Protect (unsigned int address, kCpuRegs_t* registers)
 {
   kTty_Write ("Protect...\n");
   // for (;;);
@@ -162,7 +166,7 @@ int kInt_Protect (unsigned int address, kCpuRegs_t* registers)
 
 int kAta_onIRQ = 0;
 
-int kIrq_Wait (int no) 
+int kIrq_Wait (int no)
 {
   kTty_Write ("Wait for Irq15: ");
   kTty_HexChar (kAta_onIRQ, 8);
@@ -175,7 +179,7 @@ int kIrq_Wait (int no)
   return __noerror();
 }
 
-int kIrq_Do (int no, kCpuRegs_t* registers) 
+int kIrq_Do (int no, kCpuRegs_t* registers)
 {
   // kTty_Write ("Irq15!\n");
   kAta_onIRQ = 1;
@@ -183,7 +187,7 @@ int kIrq_Do (int no, kCpuRegs_t* registers)
 }
 
 
-int kInt_Look (unsigned int address, kCpuRegs_t* registers) 
+int kInt_Look (unsigned int address, kCpuRegs_t* registers)
 {
   kTty_Write ("LOOK IRQ...\n");
   for (;;);
@@ -197,7 +201,7 @@ int kCpu_IRQ (int irq, kCpuRegs_t* regs)
     case 14:
       IRQ14_Enter();
       break;
-      
+
     default:
       kprintf ("Interrupt by IRQ %d\n", irq);
       break;

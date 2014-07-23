@@ -1,4 +1,6 @@
 #include <scheduler.h>
+#include <memory.h>
+#include <inodes.h>
 #include <kinfo.h>
 
 
@@ -36,7 +38,7 @@ static void kSch_RemoveTask (kTask_t* task)
   assert (task->eventType_ == 0); // FIXME use macro
   assert (task->nextEv_ == NULL);
   assert (task->prevEv_ == NULL);
-  
+
   atomic_dec_i32 (&kSYS.tasksCount_[0]);
   atomic_dec_i32 (&kSYS.tasksCount_[task->state_]);
   atomic_add_i32 (&kSYS.prioWeight_, -(21 - task->niceValue_));
@@ -60,7 +62,7 @@ static void kSch_RemoveTask (kTask_t* task)
       assert (pick != kSYS.allTaskFrst_);
     }
 
-    if (task == kSYS.allTaskLast_) 
+    if (task == kSYS.allTaskLast_)
       kSYS.allTaskLast_ = pick;
     pick->nextSc_ = task->nextSc_;
   }
@@ -74,9 +76,12 @@ static void kSch_RemoveTask (kTask_t* task)
 kTask_t* kSch_NewThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 {
   assert (proc != NULL);
+  kVma_t area = { VMA_STACK, 0L, 0L, 0, 0, 0, 0 };
+  area.limit_ = PAGE_SIZE * 2;
 
   // FIXME load memory
   kTask_t* task = KALLOC (kTask_t);
+  task->kstack_ = kVma_MMap (proc->memSpace_, &area)->base_;
   task->tid_ = kSys_NewPid();
   task->execOnCpu_ = -1;
   task->process_ = proc;
@@ -91,7 +96,7 @@ kTask_t* kSch_NewThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 
 // ---------------------------------------------------------------------------
 /** Ressurect a zombie thread, ready to execute */
-void kSch_ResurectTask (kTask_t* task, uintptr_t entry, intmax_t arg) 
+void kSch_ResurectTask (kTask_t* task, uintptr_t entry, intmax_t arg)
 {
   assert (task->state_ == TASK_STATE_ZOMBIE);
 
@@ -103,11 +108,24 @@ void kSch_ResurectTask (kTask_t* task, uintptr_t entry, intmax_t arg)
 
 // ---------------------------------------------------------------------------
 /**  */
-void kSch_DestroyThread (kTask_t* task) 
+void kSch_DestroyThread (kTask_t* task)
 {
   klock (&task->lock_, LOCK_TASK_DESTROY);
   kSch_RemoveTask (task);
   task->flags_ |= TASK_REMOVED;
   kunlock (&task->lock_);
+}
+
+
+
+// INODES
+
+int kSch_PrintTask ()
+{
+  kProcess_t* proc = kSYS.allProcFrst_;
+  while (proc) {
+    kprintf ("PROC [%d] %s, \n", proc->pid_, proc->image_->name_);
+    proc = proc->nextAll_;
+  }
 }
 

@@ -2,13 +2,13 @@
 #include <kinfo.h>
 
 // ---------------------------------------------------------------------------
-void kSch_Ticks () 
+void kSch_Ticks (kCpuRegs_t* regs)
 {
   if (!kSch_OnTask()) {
     kSch_PickNext ();
 
   } else if (kCPU.current_->state_ == TASK_STATE_ABORTING) {
-    kSch_StopTask (TASK_STATE_ZOMBIE);
+    kSch_StopTask (TASK_STATE_ZOMBIE, regs);
     kSch_PickNext ();
 
   } else if (--kCPU.current_->timeSlice_ > 0) {
@@ -20,7 +20,7 @@ void kSch_Ticks ()
     kCPU.current_->timeSlice_ = kSch_TimeSlice (kCPU.current_);
 
   } else {
-    kSch_StopTask (TASK_STATE_WAITING);
+    kSch_StopTask (TASK_STATE_WAITING, regs);
     kSch_PickNext ();
   }
 }
@@ -38,19 +38,20 @@ int kSch_TimeSlice (kTask_t* task)
   if (sliceMicro < kSYS.minTimeSlice_)
       return kSYS.minTimeSlice_ / 1000;
   return (int)sliceMicro / 1000;
-}      
+}
 
 
 // ---------------------------------------------------------------------------
-void kSch_PickNext () 
+void kSch_PickNext ()
 {
   kTask_t* pick;
   assert (!kSch_OnTask());
 
-  // FIXME call __asm__ STI
+  // FIXME call __asm__ CLI
+  asm ("cli");
   int waiting = atomic_dec_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING]);
   if (waiting >= 0) {
-    
+
     pick = kCPU.current_->nextSc_;
     do {
       if (pick->state_ != TASK_STATE_WAITING) {
@@ -79,20 +80,20 @@ void kSch_PickNext ()
       kCpu_SetStatus (CPU_STATE_USER);
       kunlock (&pick->lock_);
 
-      // kprintf ("scheduler] calling switch <%x, %x>\n", &pick->regs_, &pick->process_->dir_);
+      if (KLOG_SCH) kprintf ("scheduler] calling switch <%x, %x> [%x]\n", &pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
       // kCpu_DisplayRegs (&pick->regs_);
-      kCpu_Switch (&pick->regs_, &pick->process_->dir_);
+      kCpu_Switch (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
 
     } while (pick != kCPU.current_);
 
     kprintf ("scheduler] pick next didn't find any available task\n");
   }
 
-  kprintf ("scheduler] No task go idle...\n");
+  if (KLOG_SCH) kprintf ("scheduler] No task go idle...\n");
   atomic_inc_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING]);
   kCpu_SetStatus (CPU_STATE_IDLE);
   // In case the current task is on garbadge collector
-  kCPU.current_ = kCPU.current_->nextSc_; 
+  kCPU.current_ = kCPU.current_->nextSc_;
   // FIXME call __asm__ HLT
   kpanic ("HLT is not implemented.\n");
 }

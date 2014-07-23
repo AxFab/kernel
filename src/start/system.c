@@ -7,10 +7,10 @@
 #include "scheduler.h"
 #include <assembly.h>
 
-void kinit() 
+void kinit()
 {
   meminit_r(&kSYS.kheap, (void*)0xD0000000, 0x20000000);
-  // kCPU.asp = kMem_Create (4 * _Mb_);  
+  // kCPU.asp = kMem_Create (4 * _Mb_);
 }
 
 
@@ -24,7 +24,7 @@ int ATA_Initialize(kInode_t* dev);
   int ISO_Mount (kInode_t* dev, kInode_t* mnt);
 
 
-int kCore_Initialize () 
+int kCore_Initialize ()
 {
   if (screen._mode == 1) {
     screen._ptr = (uint32_t*)(4 * _Mb_);
@@ -36,7 +36,7 @@ int kCore_Initialize ()
 
   char tmp[510];
   struct tm dt = RTC_GetTime ();
-  asctime_r (&dt, tmp); 
+  asctime_r (&dt, tmp);
   kprintf ("Date: %s", tmp);
 
   // RTC_EnableCMOS ();
@@ -50,23 +50,31 @@ int kCore_Initialize ()
   kFs_Initialize ();
   kVma_Initialize ();
 
-  // Mount the system disc ---- 
+  // Mount the system disc ----
   kInode_t* cd = kFs_LookFor ("/dev/sdA", NULL);
   kInode_t* mnt = kFs_LookFor ("/mnt/", NULL);
   ISO_Mount (cd, mnt);
-  KRP_Mount (NULL, mnt);
+  // KRP_Mount (NULL, mnt);
 
   kInode_t* master = kFs_LookFor ("/mnt/OS_CORE/USR/BIN/MASTER.", NULL);
+  kInode_t* deamon = kFs_LookFor ("/mnt/OS_CORE/USR/BIN/DEAMON.", NULL);
+
+  // kprintf ("LOAD OF %s[%x] AND %s[%x] \n", master->name_, master, deamon->name_, deamon);
   // kInode_t* master = kFs_LookFor ("/mnt/krp/master", NULL);
 
-  kFs_PrintAll ();
+  // kFs_PrintAll ();
 
   if (kAsm_Open (master)) {
     kSch_NewProcess (NULL, master);
   }
 
-  kSch_Initialize ();
+  if (kAsm_Open (deamon)) {
+    kSch_NewProcess (NULL, deamon);
+  }
 
+  kSch_Initialize ();
+  // kSch_PrintTask ();
+
+  // for (;;);
   return 0;
 }
-

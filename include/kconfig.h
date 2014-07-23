@@ -12,10 +12,13 @@
 
 #define PTR_POISON  ((void*)0xdeaddead)
 
-#define USR_SPACE_BASE  0x00400000
+#define USR_SPACE_BASE  0x00800000
 #define USR_SPACE_LIMIT 0xD0000000
 
 #define ROOT_UID 0x1593
+
+#define FS_DEV_NODE "dev"
+#define FS_MNT_NODE "mnt"
 
 #define FILENAME_SEPARATORS "/\\"
 #define VOLUME_SEPARATOR ':'
@@ -34,7 +37,7 @@ enum SYS_STATE
 };
 
 enum CPU_STATE
-{ 
+{
   CPU_STATE_NONE = 0,
   CPU_STATE_USER,
   CPU_STATE_SYSTEM,
@@ -68,7 +71,7 @@ enum TASK_EVENT
 };
 
 
-enum LOCK 
+enum LOCK
 {
   LOCK_NONE,
 
@@ -79,7 +82,7 @@ enum LOCK
   // Memory
   LOCK_VMA_MMAP,
   LOCK_VMA_GROW,
-  
+
   // Scheduler
   LOCK_ATTACH_PROCESS,
   LOCK_PROCESS_CREATION,
@@ -97,9 +100,11 @@ enum LOCK
 
 };
 
-#define KSTATS_PRECISION  (100) 
+#define KSTATS_PRECISION  (100)
 
 #define KLOG_FS 0
 #define KLOG_PF 0
+#define KLOG_VFS 0
+#define KLOG_SCH 0
 
 #endif /* KCONFIG_H__ */

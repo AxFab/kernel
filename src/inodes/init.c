@@ -1,3 +1,14 @@
+/**
+ *      This file is part of the KERNEL project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Initialization of the module for inodes.
+ */
 #include <inodes.h>
 #include <kinfo.h>
 
@@ -7,17 +18,15 @@ kInode_t* kFs_RootInode()
   return kSYS.RootFs;
 }
 
-#define FS_DEV_NODE "dev"
-#define FS_MNT_NODE "mnt"
 
 extern kFileOp_t tmpFsOperation;
 
 // ---------------------------------------------------------------------------
-/** Initialize the FS kernel module 
+/** Initialize the FS kernel module
  *  Create the root node and start device detection
  *  @note Requests a list of device drivers.
  */
-int kFs_Initialize() 
+int kFs_Initialize()
 {
   time_t now = time(NULL);
   kInode_t* root = KALLOC(kInode_t);
@@ -45,7 +54,7 @@ int kFs_CreateDevice (const char* name, kInode_t* dir, kFileOp_t* fileops, void*
 {
   stat->atime_ = time(NULL);
   kInode_t* dev = kFs_Register (name, dir, stat);
-  if (!dev) 
+  if (!dev)
     return __geterrno();
 
   dev->fs_ = fileops;
@@ -53,25 +62,3 @@ int kFs_CreateDevice (const char* name, kInode_t* dir, kFileOp_t* fileops, void*
   kunlock (&dev->lock_);
   return __noerror();
 }
-
-
-ssize_t kFs_Read(kInode_t* ino, void* buffer, size_t length, off_t offset)
-{
-  assert (ino != NULL && buffer != NULL);
-
-  if (ino->fs_->read == NULL) {
-    __seterrno (EINVAL);
-    return -1;
-  }
-
-  if (KLOG_FS) kprintf ("FS] Read '%s' on LBA %d using %x\n", ino->name_, offset, ino->fs_->read);
-  int err = ino->fs_->read (ino, buffer, length, offset);
-  if (err) {
-    __seterrno (err);
-    return -1;
-  }
-
-  return length;
-}
-
-

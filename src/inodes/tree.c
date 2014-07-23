@@ -65,6 +65,7 @@ static kInode_t* kFs_LookChild (const char* name, kInode_t* dir)
     return NULL;
   }
 
+  // kprintf ("FS] REQ FS LookChild %s \n", name);
   // Request the file system
   MOD_ENTER;
   memset (&stat, 0, sizeof(kStat_t));
@@ -75,6 +76,7 @@ static kInode_t* kFs_LookChild (const char* name, kInode_t* dir)
     return NULL;
   }
 
+  // kprintf ("FS] REQ FS FIND Child %s \n", name);
   return kFs_Register (name, dir, &stat);
 }
 
@@ -133,6 +135,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
       dir = kFs_LookChild (name, dir);
       if (dir == NULL)
         return NULL;
+      // kprintf ("FS] Request %s, get %s\n", name, dir->name_);
 
     } else {
       ino = dir->child_;
@@ -140,16 +143,20 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 
         k = strcmp(ino->name_, name);
         if (k != 0) {
+          // kprintf ("FS] Browse %s - %s, get %x\n", ino->name_, name, ino->next_);
           if (ino->next_ != NULL) {
             ino = ino->next_;
             continue;
 
           } else {
+            // kprintf ("FS] Browse LOOK %s - %s, get %x\n", ino->name_, name, ino->next_);
             kunlock (&dir->lock_);
             dir = kFs_LookChild (name, dir);
             if (dir == NULL)
               return NULL;
 
+            // kprintf ("FS] Browse FIND %s - %s\n", ino->name_, name);
+            break;
           }
         }
 
@@ -170,7 +177,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 
 
 // ===========================================================================
-/** Try to add a new inode on the VFS tree 
+/** Try to add a new inode on the VFS tree
  * The returned inode is still locked
  */
 kInode_t* kFs_Register(const char* name, kInode_t* dir, kStat_t* stat)

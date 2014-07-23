@@ -4,10 +4,10 @@
 int fontW = 6;
 int fontH = 9;
 
-int kTty_offsetIn = 0; // TODO remove this lame input 
+int kTty_offsetIn = 0; // TODO remove this lame input
 
 // ===========================================================================
-struct kTty 
+struct kTty
 {
   uint32_t  _color;
   uint32_t  _bkground;
@@ -31,25 +31,25 @@ kTty_t screen;
 void kTty_Putc (char ch);
 kTty_t screen;
 // ---------------------------------------------------------------------------
-/** 
- * As we need to log early during initialization we need to a temporary tty 
+/**
+ * As we need to log early during initialization we need to a temporary tty
  */
 int kTty_PreSystem (uint32_t* base, int width, int height, int depth)
 {
   int lg;
 
-  
+
   screen._ptr = base;
   screen._mode = ((unsigned)screen._ptr == 0x000B8000) ? 0 : 1;
   screen._width = width;
   screen._height = height;
   screen._depth = depth;
-  
-  
+
+
   screen._length = screen._width * screen._height * screen._depth;
   screen._cursorX = 0;
   screen._cursorY = 0;
-  
+
   if (screen._mode) {
     screen._column = width / fontW;
     screen._row = height / fontH;
@@ -64,7 +64,7 @@ int kTty_PreSystem (uint32_t* base, int width, int height, int depth)
     screen._row = screen._height;
     screen._color = 0x0700;
     memset (screen._ptr, 0, screen._length);
-  } 
+  }
 
   return __noerror();
 }
@@ -75,7 +75,7 @@ int kTty_PreSystem (uint32_t* base, int width, int height, int depth)
 // ---------------------------------------------------------------------------
 
 // typedef struct kStrBuild kStrBuild_t;
-// struct kStrBuild 
+// struct kStrBuild
 // {
 //   char*  _buf;
 //   int     _curs;
@@ -90,7 +90,7 @@ int kTty_PreSystem (uint32_t* base, int width, int height, int depth)
 //   return 0;
 // }
 
-// int snprintf (char* buf, size_t limit, const char* str, ...) 
+// int snprintf (char* buf, size_t limit, const char* str, ...)
 // {
 //   const char** args = &str;
 //   kStrBuild_t sb;
@@ -206,15 +206,15 @@ enum Special_Key {
 	ArrL = 0x8a,
 	ArrR = 0x8b,
 
-	CtrL = 0xc0, 
+	CtrL = 0xc0,
 	CtrR = 0xc1,
-	AltL = 0xc2, 
+	AltL = 0xc2,
 	AltR = 0xc3,
-	SftL = 0xc4, 
+	SftL = 0xc4,
 	SftR = 0xc5,
-	HstL = 0xc6, 
+	HstL = 0xc6,
 	HstR = 0xc7,
-	
+
 	Caps = 0xe0,
 	Nums = 0xe1,
 	Scrl = 0xe2,
@@ -223,8 +223,8 @@ enum Special_Key {
 	Menu = 0xe9,
 
 	Fn01 = 0xf1,
-	Fn02 = 0xf2, 
-	Fn03 = 0xf3, 
+	Fn02 = 0xf2,
+	Fn03 = 0xf3,
 	Fn04 = 0xf4,
 	Fn05 = 0xf5,
 	Fn06 = 0xf6,
@@ -237,18 +237,18 @@ enum Special_Key {
 };
 
 	unsigned char qwerty_US[2][0x80] = { {
-		Null, Escp, '1' , '2' , '3' , '4' , '5' , '6' ,	// 00 
-		'7' , '8' , '9' , '0' , '-' , '=' , BkSp, Tabl, // 08 
+		Null, Escp, '1' , '2' , '3' , '4' , '5' , '6' ,	// 00
+		'7' , '8' , '9' , '0' , '-' , '=' , BkSp, Tabl, // 08
 		'q' , 'w' , 'e' , 'r' , 't' , 'y' , 'u' , 'i' , // 10
-		'o' , 'p' , '[' , ']' , Entr, CtrL, 'a' , 's' , // 18 
+		'o' , 'p' , '[' , ']' , Entr, CtrL, 'a' , 's' , // 18
 		'd' , 'f' , 'g' , 'h' , 'j' , 'k' , 'l' , ';' , // 20
-		'\'', '`' , SftL, '\\', 'z' , 'x' , 'c' , 'v' , // 28 
-		'b' , 'n' , 'm' , ',' , '.' , '/' , SftR, '*' , // 30 
-		AltL, ' ' , Caps, Fn01, Fn02, Fn03, Fn04, Fn05, // 38 
-		Fn06, Fn07, Fn08, Fn09, Fn10, Nums, Scrl, '7' , // 40 
+		'\'', '`' , SftL, '\\', 'z' , 'x' , 'c' , 'v' , // 28
+		'b' , 'n' , 'm' , ',' , '.' , '/' , SftR, '*' , // 30
+		AltL, ' ' , Caps, Fn01, Fn02, Fn03, Fn04, Fn05, // 38
+		Fn06, Fn07, Fn08, Fn09, Fn10, Nums, Scrl, '7' , // 40
 		'8' , '9' , '-' , '4' , '5' , '6' , '+' , '1' , // 48
 		'2' , '3' , '0' , '.' , Null, Null, '\\', Fn11, // 50
-		Fn12, Null, Null, HstL, HstR, Menu, Null, Null, // 58 
+		Fn12, Null, Null, HstL, HstR, Menu, Null, Null, // 58
 		Null, Null, Null, Null, Null, Null, Null, Null, // 60
 		Null, Null, Null, Null, Null, Null, Null, Null, // 68
 		Null, Null, Null, Null, Null, Null, Null, Null, // 70
@@ -261,11 +261,11 @@ enum Special_Key {
 		'D' , 'F' , 'G' , 'H' , 'J' , 'K' , 'L' , ':' , // 20
 		'"' , '~' , SftL, '|' , 'Z' , 'X' , 'C' , 'V' , // 28
 		'B' , 'N' , 'M' , '<' , '>' , '?' , SftR, '*' , // 30
-		AltL, ' ' , Caps, Fn01, Fn02, Fn03, Fn04, Fn05, // 38 
-		Fn06, Fn07, Fn08, Fn09, Fn10, Nums, Scrl, Home, // 40 
+		AltL, ' ' , Caps, Fn01, Fn02, Fn03, Fn04, Fn05, // 38
+		Fn06, Fn07, Fn08, Fn09, Fn10, Nums, Scrl, Home, // 40
 		ArrU, PgUp, '-' , ArrL, '5' , ArrR, '+' , End , // 48
 		ArrD, PgDw, Insr, Delt, Null, Null, '\\', Fn11, // 50
-		Fn12, Null, Null, HstL, HstR, Menu, Null, Null, // 58 
+		Fn12, Null, Null, HstL, HstR, Menu, Null, Null, // 58
 		Null, Null, Null, Null, Null, Null, Null, Null, // 60
 		Null, Null, Null, Null, Null, Null, Null, Null, // 68
 		Null, Null, Null, Null, Null, Null, Null, Null, // 70
@@ -345,7 +345,7 @@ int kTty_Initialize (void)
 	SftL_enable = SftR_enable = 0;
 	Caps_enable = 0;
 	Nums_enable = 1;
-	
+
 
   /*
 	kTty_Buffer = (short*)0xB80a0;
@@ -353,7 +353,7 @@ int kTty_Initialize (void)
 	kTty_style = Regular;
 
 	kTty_Update();
- 
+
   */
   return __noerror ();
 }
@@ -375,7 +375,7 @@ void kTty_Putc (char c)
 	} else {
 		if (c < 0)
 			c = '?';
-		else if (c < 0x20) 
+		else if (c < 0x20)
 			c = 0x20;
 		kTty_Buffer[kTty_offsetX + kTty_offsetY] = (c & 0xff) | kTty_style;
 		kTty_offsetX++;
@@ -443,13 +443,14 @@ void kTty_EOL ()
   screen._cursorY++;
   if (screen._cursorY >= 58 /* screen._row */) {
     screen._cursorY -= 1;
+
     memcpy (screen._ptr, &screen._ptr[(fontH+1) * screen._width ], screen._width * (screen._height - fontH-1)*4);
     // memset (screen._ptr, &screen._ptr[600 - (fontH+1) * 800 ], (fontH+1) * 800 *4);
   }
 }
 
 /*
-void kTty_Eol () 
+void kTty_Eol ()
 {
   kTty_offsetY += 80;
   kTty_offsetX = 0;
@@ -464,7 +465,7 @@ void kTty_Scroll ()
 }
 */
 
-void kTty_Putc (char ch) 
+void kTty_Putc (char ch)
 {
   int i, j;
   uint64_t vl;
@@ -474,13 +475,13 @@ void kTty_Putc (char ch)
   if (c == '\n') {
     kTty_EOL();
     return;
-  } 
+  }
 
   if (c < 0x20 || c >= 0x80) c = 0x20;
 
 
   if (screen._mode == 1) {
-    k = 1 + screen._width + screen._cursorY * (fontH+1) * screen._width + 
+    k = 1 + screen._width + screen._cursorY * (fontH+1) * screen._width +
         screen._cursorX * (fontW);
     vl = (uint64_t)kTty_Font[c - 0x20];
     for (j=0; j<fontH; ++j) {
@@ -501,7 +502,7 @@ void kTty_Putc (char ch)
 
 
 
-void kTty_HexChar (unsigned int value, int size) 
+void kTty_HexChar (unsigned int value, int size)
 {
 	value = value << ((8 - size) * 4);
 	while (size-- > 0) {
@@ -511,7 +512,7 @@ void kTty_HexChar (unsigned int value, int size)
 	}
 }
 
-void kTty_HexDump (unsigned char* ptr, int length) 
+void kTty_HexDump (unsigned char* ptr, int length)
 {
 	int i;
 	while (length > 0) {
@@ -522,7 +523,7 @@ void kTty_HexDump (unsigned char* ptr, int length)
       kTty_HexChar ((unsigned int)ptr[i], 2);
       kTty_Putc (' ');
     }
-    
+
     for (i=0; i<16; i++) {
       if (ptr[i] < 0x20)
         kTty_Putc ('.');
@@ -559,6 +560,7 @@ struct kTtyTerm
 kTtyTerm_t klog = {
   (char*)0x7000,
   0x10000 - 0x7000,
+  // 0x200,
   0,
   0,
   NULL
@@ -575,17 +577,24 @@ void kTty_Update ()
 
   while (1) {
     str = &term->buffer_[term->offset_];
+    int max = term->length_ - term->offset_;
     lg = 0;
-    
-    while (str[lg] != '\0' && str[lg] != '\n') ++lg;
+
+    while (str[lg] != '\0' && str[lg] != '\n' && lg < max) ++lg;
 
     if (str[lg] == '\0') break;
     if (str[lg] == '\n') lg++;
 
     term->offset_ += lg;
     int i;
+
     for (i=0; i<lg; ++i)
       kTty_Putc (str[i]);
+
+
+    if (term->offset_ >= term->length_) {
+      term->offset_ = 0;
+    }
   }
 }
 

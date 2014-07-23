@@ -18,7 +18,7 @@ extern kTty_t screen;
 
 // ---------------------------------------------------------------------------
 
-void kpgBuild () 
+void kpgBuild ()
 {
   int i;
   uint32_t* fpage =         (uint32_t*) 0x3000;
@@ -31,21 +31,22 @@ void kpgBuild ()
   kernelPage[1022] = PHYS (kernelPage, MMU_KERNEL);
   kernelPage[1023] = PHYS (kernelPage, MMU_KERNEL);
   for (i = 0; i< 1024/4; ++i) {
-    fpage[i] = PHYS (i * PAGE_SIZE, MMU_KERNEL);
+    if (i != 5)
+      fpage[i] = PHYS (i * PAGE_SIZE, MMU_KERNEL);
   }
 
 
   // SCREEN
   if (screen._mode == 0)
     return;
-  
+
   // TODO MAP USING REGULAR WAY !!!
   kernelPage[1] = PHYS (pageScreen, MMU_KERNEL);
   memset ((void*)pageScreen, 0, PAGE_SIZE);
   if ((uint32_t)screen._ptr & (PAGE_SIZE-1)) {
     kpanic ("BIG FAILED, screen is not align\n");
     for (;;);
-  } 
+  }
 
   int lg = ALIGN_UP (screen._length, PAGE_SIZE) / PAGE_SIZE;
   if (lg > 1024) lg = 1024;
@@ -55,8 +56,8 @@ void kpgBuild ()
 }
 
 // ---------------------------------------------------------------------------
-/** 
- * Allocat a 4k page for the system and return it's physical address 
+/**
+ * Allocat a 4k page for the system and return it's physical address
  */
 uintptr_t kPg_AllocPage (void)
 {
@@ -64,7 +65,7 @@ uintptr_t kPg_AllocPage (void)
   int i=0, j=0;
   while (bitmap[i] == 0xFF && i < i386_MemBitMapLg)
     i++;
-  
+
   if (i >= i386_MemBitMapLg) {
     kpanic ("Not a single page available\n");
   }
@@ -83,8 +84,8 @@ uintptr_t kPg_AllocPage (void)
 }
 
 // ---------------------------------------------------------------------------
-/** 
- * Mark a physique 4k page, returned by kPg_AllocPage, as available 
+/**
+ * Mark a physique 4k page, returned by kPg_AllocPage, as available
  */
 void kPg_ReleasePage (uintptr_t page)
 {
@@ -101,10 +102,10 @@ void kPg_ReleasePage (uintptr_t page)
 
 
 // ---------------------------------------------------------------------------
-/** 
- * Initialize the paging mechanism nut set the available RAM to zero 
+/**
+ * Initialize the paging mechanism nut set the available RAM to zero
  */
-int kPg_PreSystem (void) 
+int kPg_PreSystem (void)
 {
   memset ((void*)i386_MemBitMap, 0xff, i386_MemBitMapLg);
   pageAvailable = 0;
@@ -123,14 +124,14 @@ int kPg_AddRam (uint64_t base, uint64_t length)
 
   base = (base + PAGE_SIZE - 1ULL) & ~(PAGE_SIZE - 1ULL);
   length = (length - (base - obase)) & ~(PAGE_SIZE - 1ULL);
-  
+
   base = base / PAGE_SIZE;
   length = length / PAGE_SIZE;
 
   if (base >= 4ULL * _Gb_ / PAGE_SIZE)
     return __noerror ();
-  if (base < 1 * _Mb_ / PAGE_SIZE) {// The first Mo is reserved to kernel 
-    if (base + length > 1 * _Mb_ / PAGE_SIZE) 
+  if (base < 1 * _Mb_ / PAGE_SIZE) {// The first Mo is reserved to kernel
+    if (base + length > 1 * _Mb_ / PAGE_SIZE)
       kpanic ("Unexpected boot behaviour\n");
     return __noerror ();
   }
@@ -146,7 +147,7 @@ int kPg_AddRam (uint64_t base, uint64_t length)
 
 // ---------------------------------------------------------------------------
 /**
- * Initialize kernel pagination using available memory 
+ * Initialize kernel pagination using available memory
  */
 int kPg_Initialize (void)
 {
@@ -155,7 +156,7 @@ int kPg_Initialize (void)
   kprintf ("Memory detected %s\n", kpsize((uintmax_t)memMax));
   kprintf ("Memory available %s\n", kpsize(pageAvailable * PAGE_SIZE));
 
-  
+
   kpgBuild ();
   return __noerror ();
 }

@@ -1,26 +1,42 @@
+/**
+ *      This file is part of the KERNEL project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Internal header used to define the structure of an ELF image.
+ */
 #ifndef _ELF_H__
 #define _ELF_H__
 
-#define ELFCLASSNONE    0       // Invalid class
-#define ELFCLASS32      1       // 32-bit objects
-#define ELFCLASS64      2       // 64-bit objects
 
-#define ET_NONE         0       // No file type
-#define ET_REL          1       // Relocatable file
-#define ET_EXEC         2       // Executable file
-#define ET_DYN          3       // Shared object file
-#define ET_CORE         4       // Core file
-#define ET_LOPROC       0xff00  // Processor-specific
-#define ET_HIPROC       0xffff  // Processor-specific
+enum ELF_Class {
+  ELFCLASSNONE = 0,     /// Invalid class
+  ELFCLASS32 = 1,       /// 32-bit objects
+  ELFCLASS64 = 2,       /// 64-bit objects
+};
 
-#define EM_NONE         0       // No machine
-#define EM_M32          1       // AT&T WE 32100
-#define EM_SPARC        2       // SPARC
-#define EM_386          3       // Intel 80386
-#define EM_68K          4       // Motorola 68000
-#define EM_88K          5       // Motorola 88000
-#define EM_860          7       // Intel 80860
-#define EM_MIPS         8       // MIPS RS3000
+#define ET_NONE         0       /// No file type
+#define ET_REL          1       /// Relocatable file
+#define ET_EXEC         2       /// Executable file
+#define ET_DYN          3       /// Shared object file
+#define ET_CORE         4       /// Core file
+#define ET_LOPROC       0xff00  /// Processor-specific
+#define ET_HIPROC       0xffff  /// Processor-specific
+
+enum ELF_Machine {
+  EM_NONE = 0,       /// No machine
+  EM_M32 = 1,        /// AT&T WE 32100
+  EM_SPARC = 2,      /// SPARC
+  EM_386 = 3,        /// Intel 80386
+  EM_68K = 4,        /// Motorola 68000
+  EM_88K = 5,        /// Motorola 88000
+  EM_860 = 7,        /// Intel 80860
+  EM_MIPS = 8,       /// MIPS RS3000
+};
 
 /* Sh Type */
 #define PT_NULL             0

@@ -1,4 +1,4 @@
-# Makefile 
+# Makefile
 
 #ifeq ($(MAKE_SCRIPTS_DIR),)
   MAKE_SCRIPTS_DIR = tools
@@ -41,7 +41,7 @@ inodes_src = $(patsubst src/%,%,$(wildcard src/inodes/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/img/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
 			       dbg/inodes.c
-inodes_inc = include/ 
+inodes_inc = include/
 inodes_cflags = $(std_$(mode)_cflags)
 inodes_lflags = $(std_$(mode)_lflags)
 $(eval $(call PROGRAM,inodes))
@@ -52,7 +52,7 @@ $(eval $(call PROGRAM,inodes))
 memory_src = $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/core/*.c)) \
 			       dbg/memory.c
-memory_inc = include/ 
+memory_inc = include/
 memory_cflags = $(std_$(mode)_cflags)
 memory_lflags = $(std_$(mode)_lflags)
 $(eval $(call PROGRAM,memory))
@@ -64,7 +64,7 @@ scheduler_src = $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
 			          $(patsubst src/%,%,$(wildcard src/core/*.c)) \
 			          dbg/scheduler.c
 
-scheduler_inc = include/ 
+scheduler_inc = include/
 scheduler_cflags = $(std_$(mode)_cflags)
 scheduler_lflags = $(std_$(mode)_lflags)
 $(eval $(call PROGRAM,scheduler))
@@ -80,7 +80,7 @@ $(eval $(call PROGRAM,scheduler))
 #            $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
 #            $(patsubst src/%,%,$(wildcard src/tasks/*.c)) \
 #            dbg/mods.c
-# mods_inc = include/ 
+# mods_inc = include/
 # mods_cflags = $(std_$(mode)_cflags)
 # mods_lflags = $(std_$(mode)_lflags)
 # $(eval $(call PROGRAM,mods))
@@ -103,7 +103,7 @@ $(eval $(call CRT,CRT0))
 # ---------------------------------------------------------------------------
 # Target: Program  kMin
 kMin_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
-           $(patsubst src/%,%,$(wildcard src/core/*.c)) 
+           $(patsubst src/%,%,$(wildcard src/core/*.c))
 kMin_crt = $(obj_dir)/crtk.o
 kMin_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/
 kMin_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL
@@ -113,6 +113,7 @@ $(eval $(call KERNEL,kMin))
 
 # ---------------------------------------------------------------------------
 # Target: Program  kImage
+			       # $(patsubst src/%,%,$(wildcard src/fs/krp/*.c))
 kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/syscalls/*.c))  \
              $(patsubst src/%,%,$(wildcard src/inodes/*.c))  \
@@ -122,8 +123,7 @@ kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/tmpfs/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/ata/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
-			       $(patsubst src/%,%,$(wildcard src/fs/krp/*.c)) \
-             $(patsubst src/%,%,$(wildcard src/core/*.c)) 
+             $(patsubst src/%,%,$(wildcard src/core/*.c))
 kImage_crt = $(obj_dir)/crtk.o
 kImage_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/
 kImage_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL

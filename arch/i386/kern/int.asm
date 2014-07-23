@@ -73,7 +73,9 @@ kcpu_Protect:
 ; 0x20 - Hardware Clock
 kcpu_Clock:
     SAVE_REGS
+    push esp
     call kInt_Clock
+    add esp, 4
     mov al,0x20
     out 0x20,al
     LOAD_REGS
@@ -210,7 +212,7 @@ kcpu_Look:
 
 
 ; ========================================================
-; IDE BUS 
+; IDE BUS
 
 global IRQ14_handler, IRQ15_handler
 extern kCpu_IRQ

@@ -6,7 +6,7 @@ use32
 
 global _start
 
-extern kCpu_Initialize, kCore_Initialize 
+extern kCpu_Initialize, kCore_Initialize
 extern init_pic
 
 ; GRUB symbols -----------------------------
@@ -56,7 +56,7 @@ start:
     mov byte [0xB8004], 0x00
 
   .failed:
-    hlt 
+    hlt
     jmp $
 
 
@@ -139,9 +139,9 @@ align 4
 
 global krpPack, krpLength
 
-align 256
+;align 256
 krpPack:
-incbin "krp.tar"
+;incbin "krp.tar"
 krpPackEnd:
 
 align 8
@@ -169,11 +169,11 @@ kcpu_pic:
     .2:
     mov al, 0x04  ; initialisation de ICW3
     out 0x21, al
-    jmp .3  
+    jmp .3
     .3:
     mov al, 0x01  ; initialisation de ICW4
     out 0x21, al
-    jmp .4  
+    jmp .4
     .4:
     xor al, al  ; Mask
     out 0x21, al
@@ -189,11 +189,11 @@ kcpu_pic:
     .6:
     mov al, 0x02  ; initialisation de ICW3
     out 0xA1, al
-    jmp .7  
+    jmp .7
     .7:
     mov al, 0x01  ; initialisation de ICW4
     out 0xA1, al
-    jmp .8  
+    jmp .8
     .8:
     xor al, al  ; Mask
     out 0x21, al
@@ -207,7 +207,7 @@ extern kTty_HexDump
 
 kCpu_Context:
 
-  ; Set Page directory 
+  ; Set Page directory
     ; mov dword [0x8000000f], 0x0000feeb
     mov esp, 0x7000 - 0x10
 
@@ -238,28 +238,18 @@ kCpu_Context:
 ; =============================================
 global kCpu_SwitchContext
 extern kCpu_DisplayRegs, kTty_HexDump
-; void kCpu_SwitchContext (kCpuRegs_t* regs, uint32_t dir) 
+; void kCpu_SwitchContext (kCpuRegs_t* regs, uint32_t dir)
 
-; void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir);
+; void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
 global kCpu_Switch
-extern kPg_NewDir, kTty_HexChar
+extern kPg_NewDir, kTty_HexChar, kDBG
 kCpu_Switch:
-kCpu_SwitchContext: 
-    
+kCpu_SwitchContext:
+
+    cli
     push ebp
     mov ebp, esp
-    cli
-
-  ; Set Page directory
-    mov edx, [ebp + 12]
-    mov eax, [edx]
-    test eax, eax
-    jnz .do
-    call kPg_NewDir
-    mov [edx], eax
-
-  .do:
-    mov cr3, eax
+    mov esp, 0x6800
 
   ; Copy REGS on stack
     mov ax, ds
@@ -270,18 +260,46 @@ kCpu_SwitchContext:
     mov edi, esp
     rep movsb
 
+    ; Fix ESP
     add esp, 0x10
     mov [esp + 3*4], esp
     sub esp, 0x10
-    
+
+    ; Fix EFLAGS
     mov eax, [esp + 14*4]
     or eax, 0x200
     and eax, 0xffffbfff
     mov [esp + 14*4], eax
 
+    ; Set TSS ESP0
+    mov ebx, [ebp + 16]
+    mov edi, 0x1004
+    mov [edi], ebx
+
+    ; Set Page directory
+    mov edx, [ebp + 12]
+    mov eax, [edx]
+    test eax, eax
+    jnz .d1
+    call kPg_NewDir
+    mov edx, [ebp + 12]
+    mov [edx], eax
+    mov cr3, eax
+
+    ; Init kernel stack
+    mov ebx, [ebp + 16]
+    mov byte [ebx], 0
+    jmp .d2
+  .d1:
+    mov cr3, eax
+  .d2:
+
+
+
   ; End of interupt
     mov al,0x20
     out 0x20,al
+
 
   ; Load register
     pop gs

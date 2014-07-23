@@ -1,9 +1,23 @@
+/**
+ *      This file is part of the KERNEL project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Extract assembly information form an ELF file.
+ */
 #include <assembly.h>
 #include <inodes.h>
 #include <memory.h>
 #include "elf.h"
 
-
+// ---------------------------------------------------------------------------
+/** The section structure hold information about a segment of an executable
+ *  image.
+ */
 struct kSection
 {
   uintptr_t   address_;
@@ -13,7 +27,11 @@ struct kSection
   kSection_t* next_ ;
 };
 
-void kAsm_Destroy (kAssembly_t* assembly)
+// ---------------------------------------------------------------------------
+/** Destroy an assembly and release allocated memory
+ *  @bug no locking mechanism have been put in place to garanted end of use.
+ */
+static void kAsm_Destroy (kAssembly_t* assembly)
 {
   kSection_t* sec;
 
@@ -26,6 +44,13 @@ void kAsm_Destroy (kAssembly_t* assembly)
   kfree(assembly);
 }
 
+// ---------------------------------------------------------------------------
+/** Load an assembly image on an address space.
+ *  Basically, it place the correct virtual memory area at the right addresses.
+ *  @note A nice feature will be to compute offset for relocation.
+ *  @bug We need to handle the case were loading in part or complete failed.
+ *       This is probable with shared object without reloc info.
+ */
 void kAsm_Load (kAddSpace_t* mmsp, kInode_t* ino)
 {
   kAssembly_t* assembly = ino->assembly_;
@@ -40,10 +65,14 @@ void kAsm_Load (kAddSpace_t* mmsp, kInode_t* ino)
     sec = sec->next_;
   }
 
-  kVma_Display (mmsp);
+  // kVma_Display (mmsp);
 }
 
 
+// ---------------------------------------------------------------------------
+/** Read a section entry on a ELF image file.
+ *  If needed, a new kSection_t object is allocaed and push on assembly.
+ */
 void kAsm_ReadSection (kAssembly_t* assembly, kInode_t* ino, ELF_PhEntry_t* phe)
 {
   kSection_t* sec;
@@ -65,6 +94,9 @@ void kAsm_ReadSection (kAssembly_t* assembly, kInode_t* ino, ELF_PhEntry_t* phe)
   }
 }
 
+// ---------------------------------------------------------------------------
+/** Read an ELF image file and create the corresponding assembly.
+ */
 kAssembly_t* kAsm_Open (kInode_t* ino)
 {
   int i;

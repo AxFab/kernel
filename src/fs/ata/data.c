@@ -160,7 +160,7 @@ int kAta_Data(int dir, kAtaDrive_t* dr, uint32_t lba,  uint8_t sects, uint8_t* b
 // ===========================================================================
 int IRQ14_LOCK = 0;
 
-void IRQ14_Enter () 
+void IRQ14_Enter ()
 {
   IRQ14_LOCK = 0;
   if (KLOG_FS) kprintf ("IRQ %d\n", 14);
@@ -170,14 +170,15 @@ void IRQ14_Enter ()
 void ATA_WaitIRQ (kAtaDrive_t* dr, int irq)
 {
   // int k = 0x80000;
-  IRQ14_LOCK = 1; 
-  
+  IRQ14_LOCK = 1;
+
   if (KLOG_FS) kprintf ("IRQ 14 WAIT\n");
   while (IRQ14_LOCK);
-  if (IRQ14_LOCK)
+  if (IRQ14_LOCK) {
     if (KLOG_FS) kprintf ("IRQ 14 ABORT\n");
-  else
+  } else {
     if (KLOG_FS)  kprintf ("IRQ 14 NOTICED\n");
+  }
   IRQ14_LOCK = 0;
 }
 

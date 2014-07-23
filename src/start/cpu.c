@@ -1,5 +1,6 @@
 #include <kcore.h>
 #include <kcpu.h>
+#include <scheduler.h>
 
 #define i386_TssAddress  0x1000
 
@@ -54,7 +55,7 @@ typedef struct kIdtEntry        kIdtEntry_t;
 typedef struct kTaskSs          kTaskSs_t;
 
 struct kGdtEntry {
-    uint16_t lim0_15;    
+    uint16_t lim0_15;
     uint16_t base0_15;
     uint8_t base16_23;
     uint8_t access;
@@ -64,7 +65,7 @@ struct kGdtEntry {
 } __attribute__ ((packed));
 
 struct kIdtEntry {
-    uint16_t offset0_15;    
+    uint16_t offset0_15;
     uint16_t segment;
     uint16_t type;
     uint16_t offset16_31;
@@ -92,7 +93,7 @@ struct kTaskSs {
 
 // ===========================================================================
 /** Write an GDT entry on the table */
-static void kcpuWriteGDTEntry (int number, uint32_t base, uint32_t limit, 
+static void kcpuWriteGDTEntry (int number, uint32_t base, uint32_t limit,
     int access, int other)
 {
     kGdtEntry_t* ptr = (kGdtEntry_t*)(0);
@@ -108,8 +109,8 @@ static void kcpuWriteGDTEntry (int number, uint32_t base, uint32_t limit,
 
 // ---------------------------------------------------------------------------
 /** Write an IDT entry on the table */
-static void kcpuWriteIDTEntry (int number, int segment, uint32_t address, 
-    int type) 
+static void kcpuWriteIDTEntry (int number, int segment, uint32_t address,
+    int type)
 {
     kIdtEntry_t* ptr = (kIdtEntry_t*)(0x800);
     ptr += number;
@@ -120,17 +121,17 @@ static void kcpuWriteIDTEntry (int number, int segment, uint32_t address,
 }
 
 // ===========================================================================
-/** 
- * Initialize cpu structure like GDT and IDT 
+/**
+ * Initialize cpu structure like GDT and IDT
  */
-int kCpu_Initialize (void) 
+int kCpu_Initialize (void)
 {
   int i;
 
   kprintf ("CPU.0 initialization\n");
 
   // GDT - Global Descriptor Table
-  kcpuWriteGDTEntry(0, 0, 0, 0, 0);                           // Empty    
+  kcpuWriteGDTEntry(0, 0, 0, 0, 0);                           // Empty
   kcpuWriteGDTEntry(1, 0x0, 0xfffff, 0x9B, 0x0D);             // kernel Code
   kcpuWriteGDTEntry(2, 0x0, 0xfffff, 0x93, 0x0D);             // kernel Data
   kcpuWriteGDTEntry(3, 0x0, 0x0, 0x97, 0x0D);                 // kernel Stack
@@ -142,7 +143,7 @@ int kCpu_Initialize (void)
   // TSS - Task State Segment
   ((kTaskSs_t*)i386_TssAddress)->debug_flag = 0x00;
   ((kTaskSs_t*)i386_TssAddress)->io_map = 0x00;
-  ((kTaskSs_t*)i386_TssAddress)->esp0 = 0x7000; // TODO Kernel Stack !
+  ((kTaskSs_t*)i386_TssAddress)->esp0 = (0x7000 - 4); // TODO Kernel Stack !
   ((kTaskSs_t*)i386_TssAddress)->ss0 = 0x18;   // TODO Kernel stack segment
 
   // IDT - Interupt Descriptor Table
@@ -174,7 +175,7 @@ int kCpu_Initialize (void)
   // Syscall entry
   kcpuWriteIDTEntry(0x30, 0x08, (uint32_t)kcpu_SysCall, TRAPGATE);
 
-  //for (i=0x74; i<0x76; ++i) 
+  //for (i=0x74; i<0x76; ++i)
   // kcpuWriteIDTEntry(0x76, 0x08, (uint32_t)kcpu_Look, INTGATE);
 
 
@@ -217,5 +218,16 @@ void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param)
   regs->cs = 0x23;
   regs->esp = USR_SPACE_LIMIT - 0x10;
   regs->ss = 0x33;
+}
+
+void kCpu_Save (kTask_t* task, kCpuRegs_t* regs)
+{
+  // kCpu_DisplayRegs (regs);
+  // kCpu_DisplayRegs (&task->regs_);
+  memcpy (&task->regs_, regs, sizeof(kCpuRegs_t));
+  if (task->regs_.cs == 0x08) {
+    task->regs_.esp = task->regs_.espx + 12;
+    task->regs_.ss = 0x18;
+  }
 }
 

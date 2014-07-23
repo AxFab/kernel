@@ -21,13 +21,13 @@ kEventHandler_t EH[] = {
 
 
 // ===========================================================================
-void kSch_WaitEvent(kTask_t* task, int event, long param)
+void kSch_WaitEvent(kTask_t* task, int event, long param, kCpuRegs_t* regs)
 {
   assert (event > 0 && event < TASK_EVENT_COUNT);
   klock (&task->lock_, LOCK_EVENT_REGISTER);  // FIXME longest Lock detected
   task->eventType_ = event;
   task->eventParam_ = param;
-  kSch_StopTask(TASK_STATE_BLOCKED);
+  kSch_StopTask(TASK_STATE_BLOCKED, regs);
 
   EH[task->eventType_].regist (task);
 
@@ -36,7 +36,7 @@ void kSch_WaitEvent(kTask_t* task, int event, long param)
 
 
 // ---------------------------------------------------------------------------
-void kSch_CancelEvent (kTask_t* task) 
+void kSch_CancelEvent (kTask_t* task)
 {
   assert (kislocked (&task->lock_));
   assert (task->eventType_ > 0 && task->eventType_ < TASK_EVENT_COUNT);

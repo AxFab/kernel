@@ -20,7 +20,7 @@ void outsw (uint16_t port, void* addr, uint32_t count);
 
 
 
-struct kCpuRegs 
+struct kCpuRegs
 {
   uint16_t    gs, rs4;
   uint16_t    fs, rs3;
@@ -42,7 +42,8 @@ struct kCpuRegs
 };
 
 void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param);
-void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir);
+void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
+void kCpu_Save (kTask_t* task, kCpuRegs_t* regs);
 
 
 
