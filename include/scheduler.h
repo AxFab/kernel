@@ -67,8 +67,8 @@ struct kTask
 void kSch_WaitEvent(kTask_t* task, int event, long param, kCpuRegs_t* regs);
 void kSch_CancelEvent (kTask_t* task);
 // ---------------------------------------------------------------------------
+// int kSch_TimeSlice (kTask_t* task);
 void kSch_Ticks (kCpuRegs_t* regs) ;
-int kSch_TimeSlice (kTask_t* task);
 void kSch_PickNext ();
 // ---------------------------------------------------------------------------
 int kSch_NewProcess (kProcess_t *parent, kInode_t* image);

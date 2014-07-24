@@ -26,6 +26,7 @@ struct kStat {
   size_t          cblock_;
 };
 
+
 struct kInode {
   const char*     name_;      ///< Name of the inode
   kStat_t         stat_;      ///<

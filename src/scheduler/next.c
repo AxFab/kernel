@@ -2,6 +2,21 @@
 #include <kinfo.h>
 
 // ---------------------------------------------------------------------------
+static int kSch_TimeSlice (kTask_t* task)
+{
+  ltime_t elapsed = ltime(NULL) - task->execStart_;
+  if (elapsed == 0) elapsed = 1;
+  long weight = (21 - task->niceValue_) * 2;
+  long weightElapsed = (task->elapsedUser_ * kSYS.schedLatency_) / elapsed / 1;//kSYS.cpuCount_;
+  long weightProc = (weight * kSYS.schedLatency_) / kSYS.prioWeight_;
+  long sliceMicro = weightProc - weightElapsed;
+  if (sliceMicro < kSYS.minTimeSlice_)
+      return kSYS.minTimeSlice_ / 1000;
+  return (int)sliceMicro / 1000;
+}
+
+
+// ---------------------------------------------------------------------------
 void kSch_Ticks (kCpuRegs_t* regs)
 {
   if (!kSch_OnTask()) {
@@ -23,21 +38,6 @@ void kSch_Ticks (kCpuRegs_t* regs)
     kSch_StopTask (TASK_STATE_WAITING, regs);
     kSch_PickNext ();
   }
-}
-
-
-// ---------------------------------------------------------------------------
-int kSch_TimeSlice (kTask_t* task)
-{
-  ltime_t elapsed = ltime(NULL) - task->execStart_;
-  if (elapsed == 0) elapsed = 1;
-  long weight = (21 - task->niceValue_) * 2;
-  long weightElapsed = (task->elapsedUser_ * kSYS.schedLatency_) / elapsed / 1;//kSYS.cpuCount_;
-  long weightProc = (weight * kSYS.schedLatency_) / kSYS.prioWeight_;
-  long sliceMicro = weightProc - weightElapsed;
-  if (sliceMicro < kSYS.minTimeSlice_)
-      return kSYS.minTimeSlice_ / 1000;
-  return (int)sliceMicro / 1000;
 }
 
 

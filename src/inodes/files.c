@@ -1,4 +1,4 @@
-/**
+/*
  *      This file is part of the KERNEL project.
  *
  *  Copyright of this program is the property of its author(s), without

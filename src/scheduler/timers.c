@@ -3,7 +3,7 @@
 
 
 // ===========================================================================
-int kEvt_RegSleep (kTask_t* task) 
+int kEvt_RegSleep (kTask_t* task)
 {
   task->eventParam_ += ltime(NULL);
   assert (task == kCPU.current_);
@@ -11,7 +11,7 @@ int kEvt_RegSleep (kTask_t* task)
 
   if ((ltime_t)task->eventParam_ < kSYS.timerMin_)
     kSYS.timerMin_ = (ltime_t)task->eventParam_;
- 
+
   task->prevEv_ = kSYS.timerLast_;
   task->nextEv_ = NULL;
   if (kSYS.timerFrst_ == NULL) {
@@ -28,7 +28,7 @@ int kEvt_RegSleep (kTask_t* task)
 
 
 // ---------------------------------------------------------------------------
-int kEvt_RemoveSleep (kTask_t* task) 
+static int kEvt_RemoveSleep (kTask_t* task)
 {
   if (task->prevEv_ == NULL)
     kSYS.timerFrst_ = task->nextEv_;
@@ -49,7 +49,7 @@ int kEvt_RemoveSleep (kTask_t* task)
 
 
 // ---------------------------------------------------------------------------
-int kEvt_CancelSleep (kTask_t* task) 
+int kEvt_CancelSleep (kTask_t* task)
 {
   klock (&kSYS.timerLock_, LOCK_TIMER_CANCEL_SLEEP);
   kEvt_RemoveSleep (task);
@@ -73,7 +73,7 @@ void kEvt_TimeIsUp()
   while (task != NULL) {
     kTask_t* next = task->nextEv_;
     if ((ltime_t)task->eventParam_ < now) {
-      
+
       // wake up the task
       if (task->eventType_ == TASK_EVENT_SLEEP) {
         kSch_WakeUp (task);

@@ -1,3 +1,14 @@
+/*
+ *      This file is part of the KERNEL project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Routines to manipulate the nodes tree.
+ */
 #include <inodes.h>
 #include <kinfo.h>
 

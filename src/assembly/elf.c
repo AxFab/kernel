@@ -1,4 +1,4 @@
-/**
+/*
  *      This file is part of the KERNEL project.
  *
  *  Copyright of this program is the property of its author(s), without
@@ -73,7 +73,7 @@ void kAsm_Load (kAddSpace_t* mmsp, kInode_t* ino)
 /** Read a section entry on a ELF image file.
  *  If needed, a new kSection_t object is allocaed and push on assembly.
  */
-void kAsm_ReadSection (kAssembly_t* assembly, kInode_t* ino, ELF_PhEntry_t* phe)
+static void kAsm_ReadSection (kAssembly_t* assembly, kInode_t* ino, ELF_PhEntry_t* phe)
 {
   kSection_t* sec;
   char* interpret;
