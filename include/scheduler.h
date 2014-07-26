@@ -26,10 +26,11 @@ struct kProcess
   int           exitStatus_;      /// status of this process at exit
   spinlock_t    lock_;            /// Lock
   kInode_t*     image_;
+  kInode_t*     workingDir_;
   kAddSpace_t*  memSpace_;
   uint32_t      dir_;
-  // Assembly_
-
+  kStream_t**   openStreams_;
+  int           streamCap_;
 };
 
 struct kTask
@@ -71,7 +72,7 @@ void kSch_CancelEvent (kTask_t* task);
 void kSch_Ticks (kCpuRegs_t* regs) ;
 void kSch_PickNext ();
 // ---------------------------------------------------------------------------
-int kSch_NewProcess (kProcess_t *parent, kInode_t* image);
+int kSch_NewProcess (kProcess_t* proc, kInode_t* image, kInode_t* dir);
 int kSch_AddThread (kProcess_t* proc, uintptr_t entry, intmax_t arg);
 void kSch_DestroyProcess (kProcess_t* proc);
 void kSch_ExitProcess (kProcess_t* proc, int status);

@@ -98,6 +98,9 @@ enum LOCK
   LOCK_TIMER_CANCEL_SLEEP,
   LOCK_TIMER_UP,
 
+
+  // Syscalls
+  LOCK_SYSFILE_FD,
 };
 
 #define KSTATS_PRECISION  (100)
@@ -106,5 +109,6 @@ enum LOCK
 #define KLOG_PF 0
 #define KLOG_VFS 0
 #define KLOG_SCH 0
+#define KLOG_SYC 1
 
 #endif /* KCONFIG_H__ */

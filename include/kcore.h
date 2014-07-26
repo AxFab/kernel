@@ -69,9 +69,7 @@ typedef struct kUser        kUser_t;
 // inodes.h
 typedef struct kStat        kStat_t;
 typedef struct kInode       kInode_t;
-typedef struct kFsys        kFsys_t;
-typedef struct kDevice      kDevice_t;
-typedef struct kResxFile    kResxFile_t;
+typedef struct kStream      kStream_t;
 typedef struct kFileOp      kFileOp_t;
 // memory.h
 typedef struct kVma         kVma_t;

@@ -1,7 +1,10 @@
 use32
 
-global _start, start, ossyscall, 
-global read, write
+global _start, start
+global sys_sname, sys_exit, sys_exec
+global sys_close, sys_open, sys_read, sys_write
+global _errno
+
 extern main
 
 
@@ -13,59 +16,104 @@ _start:
     mov [esp], eax
     mov [esp + 4], eax
     call main
-    mov ebx, eax
+    mov ecx, eax
     mov eax, 0x10
     int 0x30
     jmp $
 
-ossyscall:
-    push ebp
-    mov ebp, esp
-    ;pushad
-    sub esp, 0x20
-    mov eax, [ebp]
-    mov ecx, [ebp + 4]
-    mov edx, [ebp + 8]
-    mov ebx, [ebp + 12]
-    ;mov esi, [ebp + 16]
-    ;mov edi, [ebp + 20]
-    int 0x30
-    ;mov [esp + 0], eax
-    ;popad
-    leave
-    ret
-
-
+_errno:
+    dd 0
 
 ; ----------------------------------------------------------------------------
-; ssize_t read(int fd, void *buf, size_t count);
-; ssize_t write(int fd, void *buf, size_t count);
-read:
+; ----------------------------------------------------------------------------
+sys_sname:
+    mov eax, 0x00
+    jmp os_syscall_2
+
+; ----------------------------------------------------------------------------
+; ----------------------------------------------------------------------------
+sys_exit:
+    mov eax, 0x10
+    jmp os_syscall_2
+
+sys_exec:
+    mov eax, 0x11
+    jmp os_syscall_2
+
+; ----------------------------------------------------------------------------
+; ----------------------------------------------------------------------------
+sys_close:
+    mov eax, 0x20
+    jmp os_syscall_2
+
+sys_open:
+    mov eax, 0x21
+    jmp os_syscall_3
+
+sys_read:
     xor eax, eax
     mov al, 0x22
-    jmp xchdata
+    jmp os_syscall_4
 
-write:
+sys_write:
     mov eax, 0x23
-    jmp xchdata
+    jmp os_syscall_4
 
-xchdata:
+; ----------------------------------------------------------------------------
+; ----------------------------------------------------------------------------
+os_syscall_2:
     push ebp
     mov ebp, esp
-    sub esp, 8
-    pushad
-    mov ecx, [ebp + 8]   ; fd
-    mov edx, [ebp + 12]  ; buf
-    mov ebx, [ebp + 16]  ; count
-    lea esi, [ebp - 4]   ; char_reads
+    mov ecx, [ebp + 8]   ; arg1
+    mov edx, [ebp + 12]  ; arg2
     int 0x30
-    ; mov errno, eax
-    mov eax, [ebp - 4]
-    popad
+    leave
+    ret
+
+os_syscall_3:
+    push ebp
+    mov ebp, esp
+    push ebx
+    mov ecx, [ebp + 8]   ; arg1
+    mov edx, [ebp + 12]  ; arg2
+    mov ebx, [ebp + 16]  ; arg3
+    int 0x30
+    pop ebx
+    leave
+    ret
+
+os_syscall_4:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    mov ecx, [ebp + 8]   ; arg1
+    mov edx, [ebp + 12]  ; arg2
+    mov ebx, [ebp + 16]  ; arg3
+    mov esi, [ebp + 20]  ; arg4
+    int 0x30
+    pop esi
+    pop ebx
+    leave
+    ret
+
+os_syscall_5:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    push edi
+    mov ecx, [ebp + 8]   ; arg1
+    mov edx, [ebp + 12]  ; arg2
+    mov ebx, [ebp + 16]  ; arg3
+    mov esi, [ebp + 20]  ; arg4
+    mov edi, [ebp + 24]  ; arg5
+    int 0x30
+    pop edi
+    pop esi
+    pop ebx
     leave
     ret
 
 ; ----------------------------------------------------------------------------
-
-
-
+; ----------------------------------------------------------------------------

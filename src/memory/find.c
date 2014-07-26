@@ -41,7 +41,9 @@ kVma_t* kVma_FindFile (kAddSpace_t* addp, kInode_t* ino, off_t offset)
 
   if (!(origin && --maxLoop)) {
     size_t filemap = FILE_MAP_SIZE;
-    kVma_t vma = { 0, 0, filemap, NULL, NULL, ino, ALIGN_DW (offset, filemap) };
+    // FIXME eventually freed the old ones.
+    // FIXME wrong flags
+    kVma_t vma = { VMA_SHARED, 0, filemap, NULL, NULL, ino, ALIGN_DW (offset, filemap) };
     return kVma_MMap (addp, &vma);
   }
 

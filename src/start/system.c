@@ -33,6 +33,7 @@ int kCore_Initialize ()
   // kinit ();
   // kTty_NewTerminal (0x7000, 0x10000 - 0x7000);
   kTty_Update ();
+  kprintf ("Kernel Smoke v0.0 Build 0 compiled Jul 26 2014 with gcc 4.7.2\n");
 
   char tmp[510];
   struct tm dt = RTC_GetTime ();
@@ -50,27 +51,23 @@ int kCore_Initialize ()
   kFs_Initialize ();
   kVma_Initialize ();
 
+
   // Mount the system disc ----
   kInode_t* cd = kFs_LookFor ("/dev/sdA", NULL);
   kInode_t* mnt = kFs_LookFor ("/mnt/", NULL);
   ISO_Mount (cd, mnt);
+
   // KRP_Mount (NULL, mnt);
 
-  kInode_t* master = kFs_LookFor ("/mnt/OS_CORE/USR/BIN/MASTER.", NULL);
-  kInode_t* deamon = kFs_LookFor ("/mnt/OS_CORE/USR/BIN/DEAMON.", NULL);
-
-  // kprintf ("LOAD OF %s[%x] AND %s[%x] \n", master->name_, master, deamon->name_, deamon);
-  // kInode_t* master = kFs_LookFor ("/mnt/krp/master", NULL);
+  kInode_t* path = kFs_LookFor ("/mnt/OS_CORE/USR/BIN/", NULL);
+  kInode_t* master = kFs_LookFor ("MASTER.", path);
+  kInode_t* deamon = kFs_LookFor ("DEAMON.", path);
 
   // kFs_PrintAll ();
 
-  if (kAsm_Open (master)) {
-    kSch_NewProcess (NULL, master);
-  }
 
-  if (kAsm_Open (deamon)) {
-    kSch_NewProcess (NULL, deamon);
-  }
+  kSch_NewProcess (NULL, master, path);
+  kSch_NewProcess (NULL, deamon, path);
 
   kSch_Initialize ();
   // kSch_PrintTask ();

@@ -114,7 +114,7 @@ int kPg_Fault (uint32_t address)
     kAddSpace_t* mmspc = kCPU.current_->process_->memSpace_;
     kVma_t* vma = kVma_FindAt (mmspc, address);
     if (vma == NULL ) {
-      kprintf ("PF] Page fault in user space <%x> SIGFAULT \n", address);
+      kpanic ("PF] Page fault in user space <%x> SIGFAULT \n", address);
       for (;;);
     } else if (vma->flags_ & VMA_STACK) {
       kPg_Resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR);
@@ -122,7 +122,7 @@ int kPg_Fault (uint32_t address)
     } else if (vma->ino_ != NULL)
       kPg_FillStream (vma, ALIGN_DW (address, PAGE_SIZE),  PG_USER_RDWR);
     else {
-      kprintf ("PF] Page fault in user space <%x> [%x] \n", address, vma);
+      kpanic ("PF] Page fault in user space <%x> [%x] \n", address, vma);
       for (;;);
     }
   } else if (address < 0xffc00000)
@@ -135,8 +135,7 @@ int kPg_Fault (uint32_t address)
 }
 
 // ---------------------------------------------------------------------------
-uint32_t kPg_NewDir (int t
-  )
+uint32_t kPg_NewDir (int t)
 {
   int i;
   uint32_t page = kPg_AllocPage();
@@ -157,7 +156,7 @@ uint32_t kPg_NewDir (int t
   TABLE_DIR_WIN [1023] = page | PG_KERNEL_ONLY;
 
   // kPg_DumpTable (TABLE_DIR_WIN);
-  kprintf ("pg] Directory is ready [%x]\n", &t); // FIXME can't remove this, need to handle TBL invalidation first
+  if (KLOG_PF) kprintf ("pg] Directory is ready [%x]\n", &t); // FIXME can't remove this, need to handle TBL invalidation first
   // TABLE_DIR_THR [1020] = 0;
 
   return page;

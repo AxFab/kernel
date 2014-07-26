@@ -120,8 +120,8 @@ int kFs_CreateDevice (const char* name, kInode_t* dir, kFileOp_t* fileops, void*
 // int kFs_CreateBlock (const char* name, kFileOp_t* fileops, void* devinfo, size_t block);
 
 
-int kFs_ReadBlock (kDevice_t* dev, void* buffer, off_t offset, size_t count);
-int kFs_Feed(kInode_t* ino, void* buffer, off_t offset, size_t count);
+// int kFs_ReadBlock (kDevice_t* dev, void* buffer, off_t offset, size_t count);
+// int kFs_Feed(kInode_t* ino, void* buffer, off_t offset, size_t count);
 
 
 #endif /* INODES_H__ */

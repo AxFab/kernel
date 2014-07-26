@@ -1,14 +1,15 @@
 #include <scheduler.h>
 #include <memory.h>
+#include <inodes.h>
 #include <kinfo.h>
 
 
 
 // ---------------------------------------------------------------------------
-/** Attach a new process to the system list. 
- * @note: {proc} must be locked 
+/** Attach a new process to the system list.
+ * @note: {proc} must be locked
  */
-static void kSch_AttachProcess (kProcess_t *proc) 
+static void kSch_AttachProcess (kProcess_t *proc)
 {
   assert (kislocked (&proc->lock_));
 
@@ -26,9 +27,14 @@ static void kSch_AttachProcess (kProcess_t *proc)
 
 // ===========================================================================
 /** Create a new process, ready to start */
-int kSch_NewProcess (kProcess_t *parent, kInode_t* image)
+int kSch_NewProcess (kProcess_t* parent, kInode_t* image, kInode_t* dir)
 {
   assert (image != NULL);
+
+  if (!kAsm_Open (image)) {
+    __seterrno (ENOEXEC);
+    return 0;
+  }
 
   // FIXME load the image
   kAddSpace_t* mmsp = kVma_New (4 * _Mb_);
@@ -37,11 +43,11 @@ int kSch_NewProcess (kProcess_t *parent, kInode_t* image)
   kProcess_t* proc = KALLOC (kProcess_t);
   proc->pid_ = kSys_NewPid();
   proc->execStart_ = ltime(NULL);
+  proc->workingDir_ = dir;
   proc->parent_ = parent;
   proc->image_ = image;
   proc->memSpace_ = mmsp;
-  if (parent) 
-    atomic_inc_i32 (&parent->childrenCount_);
+  if (parent)  atomic_inc_i32 (&parent->childrenCount_);
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   kSch_AttachProcess (proc);
@@ -49,6 +55,9 @@ int kSch_NewProcess (kProcess_t *parent, kInode_t* image)
   proc->threadFrst_ = kSch_NewThread (proc, 0x1000000, 0xc0ffee);
   proc->threadLast_ = proc->threadFrst_;
   kunlock (&proc->lock_);
+
+  kprintf ("Start program [%d - %s - root<0> - /mnt/cd0/USR/BIN]\n", proc->pid_, image->name_);
+
   return proc->pid_;
 }
 
@@ -59,7 +68,7 @@ int kSch_AddThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   assert (proc != NULL);
   assert (kCPU.current_ != NULL && proc == kCPU.current_->process_);
 
-  if (proc->flags_ & PROC_EXITED) 
+  if (proc->flags_ & PROC_EXITED)
     return __seterrno(ENOSYS);
 
   klock (&proc->lock_, LOCK_PROCESS_ADD_THREAD);
@@ -82,11 +91,11 @@ int kSch_AddThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 
 // ---------------------------------------------------------------------------
 /** Push process to the garbage collector */
-void kSch_DestroyProcess (kProcess_t* proc) 
+void kSch_DestroyProcess (kProcess_t* proc)
 {
   proc->flags_ |= PROC_EXITED;
   // FIXME if (proc->parent_ != NULL && proc->flags_ & PROC_TRACED) { // signal() }
-  
+
   klock (&proc->lock_, LOCK_PROCESS_DESTROY);
   kTask_t* task = proc->threadFrst_;
   while (task != NULL) {
@@ -97,6 +106,8 @@ void kSch_DestroyProcess (kProcess_t* proc)
 
   proc->threadFrst_ = NULL;
   proc->threadLast_ = NULL;
+
+  kprintf ("Exit program [%d] \n", proc->pid_);
   // FIXME release all ressources
   // FIXME remove from process list
   // FIXME send to garbage collector
@@ -105,7 +116,7 @@ void kSch_DestroyProcess (kProcess_t* proc)
 
 // ---------------------------------------------------------------------------
 /** Exit a process by terminate all associated threads.
- *  All threads are requested to stop, once none are running, 
+ *  All threads are requested to stop, once none are running,
  *  kSch_DestroyProcess is called.
  */
 void kSch_ExitProcess (kProcess_t* proc, int status)

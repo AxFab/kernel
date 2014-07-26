@@ -138,22 +138,38 @@ $(eval $(call KERNEL,kImage))
 # ---------------------------------------------------------------------------
 master_src = dummy/master.c
 master_crt = $(obj_dir)/crt0.o
+master_inc = $(AXLIBC)/include/
 master_cflags = $(std_$(mode)_cflags) -nostdinc
 master_lflags = $(AXLIBC)/lib/libaxc.a
 $(eval $(call KPROGRAM,master))
 # ---------------------------------------------------------------------------
 deamon_src = dummy/deamon.c
 deamon_crt = $(obj_dir)/crt0.o
+deamon_inc = $(AXLIBC)/include/
 deamon_cflags = $(std_$(mode)_cflags) -nostdinc
 deamon_lflags = $(AXLIBC)/lib/libaxc.a
 $(eval $(call KPROGRAM,deamon))
+# ---------------------------------------------------------------------------
+hello_src = dummy/hello.c
+hello_crt = $(obj_dir)/crt0.o
+hello_inc = $(AXLIBC)/include/
+hello_cflags = $(std_$(mode)_cflags) -nostdinc
+hello_lflags = $(AXLIBC)/lib/libaxc.a
+$(eval $(call KPROGRAM,hello))
+# ---------------------------------------------------------------------------
+sname_src = dummy/sname.c
+sname_crt = $(obj_dir)/crt0.o
+sname_inc = $(AXLIBC)/include/
+sname_cflags = $(std_$(mode)_cflags) -nostdinc
+sname_lflags = $(AXLIBC)/lib/libaxc.a
+$(eval $(call KPROGRAM,sname))
 
 # ===========================================================================
 # ===========================================================================
 kimg = kImage
 
 cdrom: Os.iso
-Os.iso: $(kimg) master deamon
+Os.iso: $(kimg) master deamon hello sname
 	$(VVV) mkdir -p iso/boot/grub
 #	$(VVV) mkdir -p iso/usr/{,local/}{bin,lib,sbin}
 	$(VVV) mkdir -p iso/usr/bin
@@ -168,6 +184,8 @@ Os.iso: $(kimg) master deamon
 
 	$(VV) cp $(bin_dir)/master iso/usr/bin/master
 	$(VV) cp $(bin_dir)/deamon iso/usr/bin/deamon
+	$(VV) cp $(bin_dir)/hello iso/usr/bin/hello
+	$(VV) cp $(bin_dir)/sname iso/usr/bin/sname
 
 	$(VV) cp ../axBox/bin/i686/krn/buzybox iso/usr/bin/buzybox
 	$(VV) cp ../axBox/scripts/* iso/usr/bin/
