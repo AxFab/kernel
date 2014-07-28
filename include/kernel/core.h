@@ -143,4 +143,21 @@ int printf(const char*, ...);
 
 // ======================================================
 
+struct kTty
+{
+  uint32_t  _color;
+  uint32_t  _bkground;
+  int       _cursorX;
+  int       _cursorY;
+  int       _mode; // TODO txtmode
+  int       _column;
+  int       _row;
+  int       _width;
+  int       _height;
+  int       _depth;
+  uint32_t* _ptr;
+  uint32_t  _length;
+};
+
+
 #endif /* KCORE_H__ */

@@ -38,7 +38,7 @@ int kSch_NewProcess (kProcess_t* parent, kInode_t* image, kInode_t* dir)
   }
 
   // FIXME load the image
-  kAddSpace_t* mmsp = kVma_New (4 * _Mb_);
+  kAddSpace_t* mmsp = kvma_new (4 * _Mb_);
   kasm_load (mmsp, image);
 
   kProcess_t* proc = KALLOC (kProcess_t);

@@ -1,9 +1,20 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Memory mapping routines
+ */
 #include <kernel/memory.h>
 #include <kernel/inodes.h>
 
-// ============================================================================
-
-static kVma_t* kVma_MapAtBegin (kAddSpace_t* addp, kVma_t* area)
+// ===========================================================================
+/** */
+static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
 {
   kVma_t* vma = NULL;
   kVma_t* origin = addp->first_;
@@ -57,9 +68,10 @@ static kVma_t* kVma_MapAtBegin (kAddSpace_t* addp, kVma_t* area)
   return NULL;
 }
 
-// ============================================================================
 
-static kVma_t* kVma_MapAt (kAddSpace_t* addp, kVma_t* area)
+// ---------------------------------------------------------------------------
+/** */
+static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
 {
   kVma_t* vma = NULL;
   kVma_t* origin = addp->first_;
@@ -82,7 +94,7 @@ static kVma_t* kVma_MapAt (kAddSpace_t* addp, kVma_t* area)
 
   while (--maxLoop) {
     if (origin->limit_ > address)  {
-      return kVma_MapAtBegin (addp, area);
+      return kvma_map_begin (addp, area);
     }
 
     if (origin->next_ != NULL && origin->next_->base_ >= address + length) {
@@ -112,18 +124,19 @@ static kVma_t* kVma_MapAt (kAddSpace_t* addp, kVma_t* area)
   return NULL;
 }
 
-// ============================================================================
 
+// ---------------------------------------------------------------------------
 // Try before an address (BEFORE HEAP, BEFORE STACK - to preserve heap)
-// static kVma_t* kVma_MapBefore (kAddSpace_t* addp, kVma_t* area)
+// static kVma_t* kvma_map_before (kAddSpace_t* addp, kVma_t* area)
 // {
 //   __seterrno(ENOSYS);
 //   return NULL;
 // }
 
-// ============================================================================
 
-kVma_t* kVma_MMap (kAddSpace_t* addressSpace, kVma_t* area)
+// ===========================================================================
+/** */
+kVma_t* kvma_mmap (kAddSpace_t* addressSpace, kVma_t* area)
 {
   kVma_t* vma;
 
@@ -135,37 +148,40 @@ kVma_t* kVma_MMap (kAddSpace_t* addressSpace, kVma_t* area)
   klock (&addressSpace->lock_, LOCK_VMA_MMAP);
 
   if (area->base_ != 0)
-    vma = kVma_MapAt (addressSpace, area);
+    vma = kvma_map_at (addressSpace, area);
 
   else
-    vma = kVma_MapAtBegin (addressSpace, area);
+    vma = kvma_map_begin (addressSpace, area);
 
   if (vma == NULL && area->ino_)
     kfs_release (area->ino_);
 
-  if (vma != NULL)
+  if (vma != NULL) {
     addressSpace->vrtPages_ += (vma->limit_ - vma->base_) / PAGE_SIZE;
 
-  // vma->flags_ = area->flags_;
-  // vma->offset_ = area->offset_;
-  // vma->ino_ = area->ino_;
+    vma->flags_ = area->flags_;
+    vma->offset_ = area->offset_;
+    vma->ino_ = area->ino_;
+  }
+
   kunlock (&addressSpace->lock_);
   return vma;
 }
 
-// ============================================================================
 
-int kVma_Unmap (kAddSpace_t* addp, uintptr_t address, size_t length)
+// ---------------------------------------------------------------------------
+
+int kvma_unmap (kAddSpace_t* addp, uintptr_t address, size_t length)
 {
   return __seterrno(ENOSYS);
 }
 
 
-// ============================================================================
+// ---------------------------------------------------------------------------
 
-int kVma_GrowUp (kAddSpace_t* addp, void* address, size_t extra_size)
+int kvma_grow_up (kAddSpace_t* addp, void* address, size_t extra_size)
 {
-  kVma_t* vma = kVma_FindAt (addp, (uintptr_t)address);
+  kVma_t* vma = kvma_look_at (addp, (uintptr_t)address);
   extra_size = ALIGN_UP(extra_size, PAGE_SIZE);
 
   if (!vma)
@@ -189,11 +205,12 @@ int kVma_GrowUp (kAddSpace_t* addp, void* address, size_t extra_size)
   return __geterrno();
 }
 
-// ============================================================================
 
-int kVma_GrowDown (kAddSpace_t* addp, void* address, size_t extra_size)
+// ---------------------------------------------------------------------------
+
+int kvma_grow_down (kAddSpace_t* addp, void* address, size_t extra_size)
 {
-  kVma_t* vma = kVma_FindAt (addp, (uintptr_t)address);
+  kVma_t* vma = kvma_look_at (addp, (uintptr_t)address);
   extra_size = ALIGN_UP(extra_size, PAGE_SIZE);
 
   if (!vma)
@@ -217,4 +234,5 @@ int kVma_GrowDown (kAddSpace_t* addp, void* address, size_t extra_size)
   return __geterrno();
 }
 
-
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------

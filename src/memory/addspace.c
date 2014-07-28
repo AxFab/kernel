@@ -1,14 +1,30 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Initialize Memory address space
+ */
 #include <kernel/memory.h>
 #include <kernel/inodes.h>
 
 
-int kVma_Initialize ()
+// ===========================================================================
+/** Initialize memory addressing
+ */
+void kvma_init ()
 {
-  return __noerror();
+  return;
 }
 
 
-kAddSpace_t* kVma_New (size_t stack_size)
+// ---------------------------------------------------------------------------
+/** Initialize a new address space structure with a first user-stack */
+kAddSpace_t* kvma_new (size_t stack_size)
 {
   kAddSpace_t* addsp = (kAddSpace_t*)kalloc(sizeof(kAddSpace_t));
   stack_size = ALIGN_UP(stack_size, PAGE_SIZE);
@@ -22,7 +38,9 @@ kAddSpace_t* kVma_New (size_t stack_size)
 }
 
 
-kAddSpace_t* kVma_Clone (kAddSpace_t* addp)
+// ---------------------------------------------------------------------------
+/** Initialize a new address space structure from an already existing one */
+kAddSpace_t* kvma_clone (kAddSpace_t* addp)
 {
   kAddSpace_t* addsp = (kAddSpace_t*)kalloc(sizeof(kAddSpace_t));
   kVma_t* md = addp->first_;
@@ -54,7 +72,10 @@ kAddSpace_t* kVma_Clone (kAddSpace_t* addp)
   return addsp;
 }
 
-int kVma_Destroy (kAddSpace_t* addp)
+
+// ---------------------------------------------------------------------------
+/** Free all memory area inforation */
+int kvma_destroy (kAddSpace_t* addp)
 {
   kVma_t* nx = addp->first_;
   kVma_t* md = addp->first_;
@@ -72,3 +93,6 @@ int kVma_Destroy (kAddSpace_t* addp)
   kfree(addp);
   return __noerror();
 }
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------

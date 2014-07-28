@@ -12,6 +12,7 @@ enum kTty_Style {
 
 typedef struct kTty kTty_t;
 
+/*
 struct kTty
 {
   uint32_t  _color;
@@ -26,7 +27,7 @@ struct kTty
   int       _depth;
   uint32_t* _ptr;
   uint32_t  _length;
-};
+}; */
 
 extern kTty_t screen;
 

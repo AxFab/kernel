@@ -46,7 +46,7 @@ int kasm_load (kAddSpace_t* mmsp, kInode_t* ino)
     area.base_ = sec->address_;
     area.limit_ = area.base_ + sec->length_;
     area.offset_ = sec->offset_;
-    kVma_MMap (mmsp, &area);
+    kvma_mmap (mmsp, &area);
     sec = sec->next_;
   }
 

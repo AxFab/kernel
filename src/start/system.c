@@ -21,8 +21,7 @@ void RTC_DisableCMOS () ;
 void PIT_Initialize (uint32_t frequency);
 int ATA_Initialize(kInode_t* dev);
 int VBA_Initialize(kInode_t* dev);
-
-  int ISO_Mount (kInode_t* dev, kInode_t* mnt);
+int ISO_Mount (kInode_t* dev, kInode_t* mnt);
 
 
 int kCore_Initialize ()
@@ -53,7 +52,7 @@ int kCore_Initialize ()
   kCpu_SetStatus (CPU_STATE_SYSCALL);
 
   kfs_init ();
-  kVma_Initialize ();
+  kvma_init ();
 
   ATA_Initialize (kSYS.devNd_);
   VBA_Initialize (kSYS.devNd_);
@@ -76,8 +75,6 @@ int kCore_Initialize ()
   kSch_NewProcess (NULL, deamon, path);
 
   kSch_Initialize ();
-  // kSch_PrintTask ();
 
-  // for (;;);
   return 0;
 }

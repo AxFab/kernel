@@ -146,12 +146,12 @@ int kInt_SysCall (kCpuRegs_t* regs)
 }
 */
 
-int kPg_Fault (uint32_t address);
+int kpg_fault (uint32_t address);
 
 int kInt_PageFault (uint32_t address, kCpuRegs_t* registers)
 {
   // kprintf ("PageFault at 0x%x\n", address);
-  return kPg_Fault (address);
+  return kpg_fault (address);
 }
 
 
@@ -201,7 +201,7 @@ int kInt_Look (unsigned int address, kCpuRegs_t* registers)
 }
 
 void IRQ14_Enter ();
-int kCpu_IRQ (int irq, kCpuRegs_t* regs)
+void kCpu_IRQ (int irq, kCpuRegs_t* regs)
 {
   switch (irq) {
     case 14:

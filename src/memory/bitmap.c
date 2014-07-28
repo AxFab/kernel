@@ -1,29 +1,37 @@
-#include "pages.h"
-// #include "mmu.h"
-#include "tty.h"
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Bitmap page allocation
+ */
+#include <kernel/memory.h>
 
 
 #define MMU_KERNEL                (3)
 #define MMU_USER                  (7)
-#define i386_MemBitMap            (0x80000)
-#define i386_MemBitMapLg          (0x20000)
 #define PHYS(p,r)         ((uint32_t)(p) | (r))
-
-// ===========================================================================
-
 static uint32_t pageAvailable = 0;
 static uint64_t memMax = 0;
-
+int kpg_step = 0;
 extern kTty_t screen;
 
-// ---------------------------------------------------------------------------
 
-void kpgBuild ()
+// ===========================================================================
+/** Initialize kernel pagination using available memory */
+void kpg_init (void)
 {
   int i;
   uint32_t* fpage =         (uint32_t*) 0x3000;
   uint32_t* kernelPage =    (uint32_t*) 0x2000;
   uint32_t* pageScreen =    (uint32_t*) 0x4000;
+
+  kprintf ("Memory detected %s\n", kpsize((uintmax_t)memMax));
+  kprintf ("Memory available %s\n", kpsize(pageAvailable * PAGE_SIZE));
 
   memset ((void*)kernelPage, 0, PAGE_SIZE);
   kernelPage[0] = PHYS (fpage, MMU_KERNEL);
@@ -55,18 +63,17 @@ void kpgBuild ()
   }
 }
 
+
 // ---------------------------------------------------------------------------
-/**
- * Allocat a 4k page for the system and return it's physical address
- */
-uintptr_t kPg_AllocPage (void)
+/** Allocat a 4k page for the system and return it's physical address */
+uintptr_t kpg_alloc (void)
 {
-  uint8_t* bitmap = (uint8_t*)i386_MemBitMap;
+  uint8_t* bitmap = (uint8_t*)PG_BITMAP_ADD;
   int i=0, j=0;
-  while (bitmap[i] == 0xFF && i < i386_MemBitMapLg)
+  while (bitmap[i] == 0xFF && i < PG_BITMAP_LG)
     i++;
 
-  if (i >= i386_MemBitMapLg) {
+  if (i >= PG_BITMAP_LG) {
     kpanic ("Not a single page available\n");
   }
   uint8_t value = bitmap[i];
@@ -78,47 +85,39 @@ uintptr_t kPg_AllocPage (void)
   bitmap[i] = bitmap[i] | (1 << j);
   pageAvailable--;
 
-  //kTty_HexDump (i386_MemBitMap, 120);
-  //kprintf ("Allocat a page %d, %d, 0x%x\n", i, j, (uint32_t)(i * 8 + j) * PAGE_SIZE);
   return (i * 8 + j) * PAGE_SIZE;
 }
 
+
 // ---------------------------------------------------------------------------
-/**
- * Mark a physique 4k page, returned by kPg_AllocPage, as available
- */
-void kPg_ReleasePage (uintptr_t page)
+/** Mark a physique 4k page, returned by kpg_alloc, as available */
+void kpg_release (uintptr_t page)
 {
-  uint8_t* bitmap = (uint8_t*)i386_MemBitMap;
+  uint8_t* bitmap = (uint8_t*)PG_BITMAP_ADD;
   int i = (page / PAGE_SIZE) / 8;
   int j = (page / PAGE_SIZE) % 8;
 
-  if (i >= i386_MemBitMapLg || (bitmap[i] & (1 << j)) == 0) {
+  if (i >= PG_BITMAP_LG || (bitmap[i] & (1 << j)) == 0) {
     kpanic ("Release page with wrong args\n");
   }
+
   bitmap[i] = bitmap[i] & (~(1 << j));
 }
 
 
-
-// ---------------------------------------------------------------------------
-/**
- * Initialize the paging mechanism nut set the available RAM to zero
- */
-int kPg_PreSystem (void)
-{
-  memset ((void*)i386_MemBitMap, 0xff, i386_MemBitMapLg);
-  pageAvailable = 0;
-
-  return __noerror ();
-}
-
 // ---------------------------------------------------------------------------
 /** Function to inform paging module that some RAM can be used by the system .
- * @note this function should be used between kPg_PreSystem and kPg_Initialize.
+ * \note this function should be used before kpg_init.
  */
-int kPg_AddRam (uint64_t base, uint64_t length)
+void kpg_ram (uint64_t base, uint64_t length)
 {
+  if (kpg_step == 0) {
+    memset ((void*)PG_BITMAP_ADD, 0xff, PG_BITMAP_LG);
+    pageAvailable = 0;
+    kpg_step++;
+  } else if (kpg_step > 1)
+    return;
+
   unsigned int obase = base;
   if (base + length > memMax) memMax = base + length;
 
@@ -129,36 +128,19 @@ int kPg_AddRam (uint64_t base, uint64_t length)
   length = length / PAGE_SIZE;
 
   if (base >= 4ULL * _Gb_ / PAGE_SIZE)
-    return __noerror ();
+    return;
   if (base < 1 * _Mb_ / PAGE_SIZE) {// The first Mo is reserved to kernel
     if (base + length > 1 * _Mb_ / PAGE_SIZE)
       kpanic ("Unexpected boot behaviour\n");
-    return __noerror ();
+    return;
   }
+
   if (base + length > 4ULL * _Gb_ / PAGE_SIZE)
     length = 4ULL * _Gb_ - base;
 
-
   pageAvailable += length;
-  bclearbytes ((uint8_t*)i386_MemBitMap, base, length);
-
-  return __noerror ();
+  bclearbytes ((uint8_t*)PG_BITMAP_ADD, base, length);
 }
 
 // ---------------------------------------------------------------------------
-/**
- * Initialize kernel pagination using available memory
- */
-int kPg_Initialize (void)
-{
-  // kprintf ("Memory detected %d Mb \n", (uint32_t)(memMax / 1024 / 1024));
-  // kprintf ("Memory available %d Mb \n", pageAvailable / 256);
-  kprintf ("Memory detected %s\n", kpsize((uintmax_t)memMax));
-  kprintf ("Memory available %s\n", kpsize(pageAvailable * PAGE_SIZE));
-
-
-  kpgBuild ();
-  return __noerror ();
-}
-
-
+// ---------------------------------------------------------------------------

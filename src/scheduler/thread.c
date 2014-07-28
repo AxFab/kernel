@@ -81,7 +81,7 @@ kTask_t* kSch_NewThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 
   // FIXME load memory
   kTask_t* task = KALLOC (kTask_t);
-  task->kstack_ = kVma_MMap (proc->memSpace_, &area)->base_;
+  task->kstack_ = kvma_mmap (proc->memSpace_, &area)->base_;
   task->tid_ = kSys_NewPid();
   task->execOnCpu_ = -1;
   task->process_ = proc;

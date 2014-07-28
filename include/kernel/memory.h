@@ -23,7 +23,6 @@
 #define VMA_CODE          0x4000
 #define VMA_DATA          0x8000
 
-// #define VMA_COPY          0x008 ///< The page need to be copied before writting
 
 
 // ============================================================================
@@ -51,24 +50,32 @@ struct kAddSpace {
 
 // ============================================================================
 
-int kVma_Initialize ();
-kAddSpace_t* kVma_New (size_t stack_size);
-kAddSpace_t* kVma_Clone (kAddSpace_t* addp);
-int kVma_Destroy (kAddSpace_t* addp);
+void kvma_init (void);
+kAddSpace_t* kvma_new (size_t stack_size);
+kAddSpace_t* kvma_clone (kAddSpace_t* addp);
+int kvma_destroy (kAddSpace_t* addp);
 
-kVma_t* kVma_MMap (kAddSpace_t* addressSpace, kVma_t* area);
-int kVma_Unmap (kAddSpace_t* addp, uintptr_t address, size_t length);
+kVma_t* kvma_mmap (kAddSpace_t* addressSpace, kVma_t* area);
+int kvma_unmap (kAddSpace_t* addp, uintptr_t address, size_t length);
+int kvma_grow_up (kAddSpace_t* addp, void* address, size_t extra_size);
+int kvma_grow_down (kAddSpace_t* addp, void* address, size_t extra_size);
 
-kVma_t* kVma_FindAt (kAddSpace_t* addp, uintptr_t address);
-kVma_t* kVma_FindFile (kAddSpace_t* addp, kInode_t* ino, off_t offset);
-void kVma_Display(kAddSpace_t* addp);
+kVma_t* kvma_look_at (kAddSpace_t* addp, uintptr_t address);
+kVma_t* kvma_look_ino (kAddSpace_t* addp, kInode_t* ino, off_t offset);
+void kvma_display(kAddSpace_t* addp);
 
-int kVma_GrowUp (kAddSpace_t* addp, void* address, size_t extra_size);
-int kVma_GrowDown (kAddSpace_t* addp, void* address, size_t extra_size);
+void kpg_dump (uint32_t *table);
+void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page);
+int kpg_fault (uint32_t address);
+uint32_t kpg_new ();
 
+void kpg_init (void);
+uintptr_t kpg_alloc (void);
+void kpg_release (uintptr_t page);
+void kpg_ram (uint64_t base, uint64_t length);
 
-int kPg_Fault (uint32_t address);
-uint32_t kPg_NewDir () ;
+int kpg_fill_stream (kVma_t* vma, uint32_t address, int rights);
+void kpg_sync_stream (kVma_t* vma, uint32_t address);
 
 
 

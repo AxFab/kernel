@@ -1,4 +1,4 @@
-#include <memory.h>
+#include <kernel/memory.h>
 
 typedef struct fakeInode fakeInode_t;
 struct fakeInode {
@@ -20,7 +20,7 @@ fakeInode_t* getInode (const char* name, size_t length)
 int kmmap (kAddSpace_t* addressSpace, void* add, fakeInode_t* ino, size_t length, off_t offset, int flags)
 {
   kVma_t area = { flags, (uintptr_t)add, (uintptr_t)add + length, NULL, NULL, (kInode_t*)ino, offset};
-  return kVma_MMap (addressSpace, &area) ? 0 : -1;
+  return kvma_mmap (addressSpace, &area) ? 0 : -1;
 }
 
 int kfs_grab(kInode_t* ino)
@@ -53,7 +53,7 @@ int main ()
   kAddSpace_t* addressSpace = kVma_New (STACK_DEFAULT);
 
   kVma_t area = { VMA_READ, 0, 2 * _Kb_, NULL, NULL, NULL, 0};
-  kVma_MMap (addressSpace, &area);
+  kvma_mmap (addressSpace, &area);
 
   fakeInode_t* iLs = getInode ("ls", 0);
   fakeInode_t* iLib = getInode ("libaxc.so", 0);
@@ -63,7 +63,7 @@ int main ()
 
   // It use the library libaxc.so - kernel asm loader read the first 8Kb of the file
   kmmap(addressSpace, NULL, iLib, 8 * _Kb_, 0, VMA_SHARED);
-  kVma_Display(addressSpace);
+  kvma_display(addressSpace);
 
   // The program is ready...
   // Create the Heap
@@ -78,26 +78,26 @@ int main ()
   kmmap(addressSpace, NULL, iLib, 4 * _Kb_, 0x2000, VMA_MAYSHARED | VMA_MAYWRITE | VMA_READ | VMA_DATA);
 
   // HERE WE EDIT THE ProcedureLinkageTable (or we let it like this...(it will call interupt resolveSymbol !?))
-  kVma_Display(addressSpace);
+  kvma_display(addressSpace);
   int k = 0;
 
   do {
-    k = kVma_GrowUp (addressSpace, HEAP_START, 16 * _Mb_);
+    k = kvma_grow_up (addressSpace, HEAP_START, 16 * _Mb_);
   } while (!k);
 
-  kVma_FindFile (addressSpace, (kInode_t*)iLs, 0x1000);
-  kVma_FindFile (addressSpace, (kInode_t*)iLs, 0x8000);
-  kVma_FindFile (addressSpace, (kInode_t*)iLib, 0x6000);
-  kVma_FindFile (addressSpace, (kInode_t*)iLib, 0);
+  kvma_look_ino (addressSpace, (kInode_t*)iLs, 0x1000);
+  kvma_look_ino (addressSpace, (kInode_t*)iLs, 0x8000);
+  kvma_look_ino (addressSpace, (kInode_t*)iLib, 0x6000);
+  kvma_look_ino (addressSpace, (kInode_t*)iLib, 0);
 
-  kVma_Display(addressSpace);
+  kvma_display(addressSpace);
 
   kAddSpace_t* add2 = kVma_Clone (addressSpace);
 
-  kVma_GrowDown (add2, (void*)(0xd0000000 - 16), 64 * _Kb_);
+  kvma_grow_down (add2, (void*)(0xd0000000 - 16), 64 * _Kb_);
 
-  kVma_Display(add2);
-  kVma_Display(addressSpace);
+  kvma_display(add2);
+  kvma_display(addressSpace);
 
   kVma_Destroy (addressSpace);
   kVma_Destroy (add2);

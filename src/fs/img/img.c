@@ -2,51 +2,49 @@
 #include <stdio.h>
 
 
-int img_Read(dev_t fd, void* buffer, off_t offset, size_t length)
+int IMG_read (kInode_t* ino, void* buf, size_t count, size_t lba);
+int IMG_write (kInode_t* ino, void* buf, size_t count, size_t lba);
+
+
+kFileOp_t imgOps = {
+  NULL, NULL, NULL,
+  NULL, IMG_read, NULL, NULL,
+  NULL, IMG_write, NULL, NULL, NULL,
+};
+
+
+int IMG_read (kInode_t* ino, void* buf, size_t count, size_t lba)
 {
-  lseek (fd, offset, SEEK_SET);
-  read(fd, buffer, length);
+  int fd = (int)ino->devinfo_;
+  lseek (fd, lba * ino->stat_.dblock_, SEEK_SET);
+  read(fd, buf, count * ino->stat_.dblock_);
   return 0;
 }
 
-int img_Write(dev_t fd, void* buffer, off_t offset, size_t length)
+
+int IMG_write (kInode_t* ino, void* buf, size_t count, size_t lba)
 {
-  lseek (fd, offset, SEEK_SET);
-  write(fd, buffer, length);
+  int fd = (int)ino->devinfo_;
+  lseek (fd, lba * ino->stat_.dblock_, SEEK_SET);
+  write(fd, buf, count * ino->stat_.dblock_);
   return 0;
 }
 
 
-
-int img_InitBlock (kDevice_t* dev)
+int IMG_init (kInode_t* dev)
 {
-  if (!dev->fd_)
-    return ENOTBLK;
+  time_t now = time (NULL);
+  kStat_t stat = { 0, S_IFBLK | 0755, 0, 0, 0L, 0L, now, now, now, 0, 0, 0 };
 
-  dev->block_ = 2048;
-  dev->size_ = lseek(dev->fd_, 0, SEEK_END);
-  dev->read = img_Read;
-  dev->write = NULL;
-  strncpy (dev->name_, "Image driver", 16);
-  return 0;
-}
-
-int isoMount (kFsys_t* fs, kStat_t* root);
-
-int img_Initialize (kInode_t* dev, kInode_t* mnt)
-{
   int fd = open ("../kernel/Os.iso", O_RDWR);
+  if (!fd)
+    return EBADF;
 
-  if (!fd) return EBADF;
-
-  kInode_t* blk = kFs_CreateBlock ("iso", dev, fd, img_InitBlock);
-  // FIXME Handle plug N play better
-  kFs_Mount ("cdrom", mnt, blk, isoMount);
-  return __noerror();
+  int block = 2048;
+  stat.dblock_ = stat.cblock_ = block;
+  kfs_new_device ("sdA", dev, &imgOps, (void*)fd, &stat);
+  return 0;
 }
-
-
-
 
 
 

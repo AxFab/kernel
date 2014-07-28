@@ -242,7 +242,7 @@ extern kCpu_DisplayRegs, kTty_HexDump
 
 ; void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
 global kCpu_Switch
-extern kPg_NewDir, kTty_HexChar, kDBG
+extern kpg_new, kTty_HexChar, kDBG
 kCpu_Switch:
 kCpu_SwitchContext:
 
@@ -281,7 +281,7 @@ kCpu_SwitchContext:
     mov eax, [edx]
     test eax, eax
     jnz .d1
-    call kPg_NewDir
+    call kpg_new
     mov edx, [ebp + 12]
     mov [edx], eax
     mov cr3, eax

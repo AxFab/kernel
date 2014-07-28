@@ -1,4 +1,4 @@
-#include "pages.h"
+#include <kernel/memory.h>
 
 void VBA_Set (void* address, int width, int height, int depth);
 
@@ -10,7 +10,6 @@ static int kgrubMemory (uint32_t *mmap)
   uint64_t length;
   // uint64_t total = 0;
 
-  kPg_PreSystem ();
   for (; mmap[0] == 0x14; mmap += 6) {
 
     base = (uint64_t)mmap[1] | (uint64_t)mmap[2] << 32;
@@ -18,12 +17,12 @@ static int kgrubMemory (uint32_t *mmap)
     // if (base + length > total) total = base + length;
     // kprintf ("MEM RECORD [%x-%x] <%x>\n", (uint32_t)base, (uint32_t)length, (uint32_t)(total >> 32ULL));
     if (mmap[5] == 1) {
-      kPg_AddRam (base, length);
+      kpg_ram (base, length);
 		}
   }
 
   // kprintf ("Memory detected %d Kb\n", (uint32_t)(total / 1024) );
-  kPg_Initialize ();
+  kpg_init ();
 
   return __noerror();
 }

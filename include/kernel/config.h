@@ -28,7 +28,24 @@
 
 #define FILE_MAP_SIZE  (8 * _Kb_)
 
+#define PG_BITMAP_ADD           (0x80000)
+#define PG_BITMAP_LG            (0x20000)
+
 #define CLOCK_HZ  128
+
+
+#define PG_KERNEL_ONLY    3
+#define PG_USER_RDWR      7
+#define PG_USER_RDONLY    5
+
+#define TABLE_DIR_THR ((uint32_t *)0xfffff000)
+#define TABLE_DIR_PRC ((uint32_t *)0xffffe000)
+#define TABLE_DIR_KRN ((uint32_t *)0xffffd000)
+#define TABLE_DIR_WIN ((uint32_t *)0xffffc000)
+
+#define TABLE_PAGE_TH(s) ((uint32_t *)(0xffc00000 | ((s) << 12)))
+
+
 
 enum SYS_STATE
 {

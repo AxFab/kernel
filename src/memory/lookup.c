@@ -1,9 +1,20 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Reach information about memory area
+ */
 #include <kernel/memory.h>
 
-// ============================================================================
 
-
-kVma_t* kVma_FindAt (kAddSpace_t* addp, uintptr_t address)
+// ===========================================================================
+/** */
+kVma_t* kvma_look_at (kAddSpace_t* addp, uintptr_t address)
 {
   kVma_t* origin = addp->first_;
   int maxLoop = MAX_LOOP_BUCKET;
@@ -23,8 +34,10 @@ kVma_t* kVma_FindAt (kAddSpace_t* addp, uintptr_t address)
   return origin;
 }
 
-// ----------------------------------------------------------------------------
-kVma_t* kVma_FindFile (kAddSpace_t* addp, kInode_t* ino, off_t offset)
+
+// ---------------------------------------------------------------------------
+/** */
+kVma_t* kvma_look_ino (kAddSpace_t* addp, kInode_t* ino, off_t offset)
 {
   kVma_t* origin = addp->first_;
   int maxLoop = MAX_LOOP_BUCKET;
@@ -44,13 +57,16 @@ kVma_t* kVma_FindFile (kAddSpace_t* addp, kInode_t* ino, off_t offset)
     // FIXME eventually freed the old ones.
     // FIXME wrong flags
     kVma_t vma = { VMA_SHARED, 0, filemap, NULL, NULL, ino, ALIGN_DW (offset, filemap) };
-    return kVma_MMap (addp, &vma);
+    return kvma_mmap (addp, &vma);
   }
 
   return origin;
 }
 
-void kVma_Display(kAddSpace_t* addp)
+
+// ---------------------------------------------------------------------------
+/** */
+void kvma_display(kAddSpace_t* addp)
 {
   const char* rights[] = {
     "----", "---x", "--w-",  "--wx",
@@ -82,4 +98,5 @@ void kVma_Display(kAddSpace_t* addp)
   }
 }
 
-
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------

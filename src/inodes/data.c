@@ -10,6 +10,7 @@
  *      Methods used for common file operations.
  */
 #include <kernel/inodes.h>
+#include <kernel/memory.h>
 
 
 // ===========================================================================
@@ -60,7 +61,7 @@ int kfs_sync(kInode_t* ino, void* buffer, size_t length, off_t offset)
 
 int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead)
 {
-  *page = kPg_AllocPage();
+  *page = kpg_alloc();
   *mustRead = 1;
   return __noerror();
 }

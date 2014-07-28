@@ -110,7 +110,7 @@ static ssize_t read_block (kStream_t* stream, void* buf, size_t length, off_t of
 
   while (length > 0) {
 
-    kVma_t* vma = kVma_FindFile (addSpace, stream->ino_, off);
+    kVma_t* vma = kvma_look_ino (addSpace, stream->ino_, off);
     assert (vma != NULL);
 
     // TRY MANUAL MAPPING (may be not need to try that)
@@ -139,7 +139,7 @@ static ssize_t write_block (kStream_t* stream, void* buf, size_t length, off_t o
 
   while (length > 0) {
 
-    kVma_t* vma = kVma_FindFile (addSpace, stream->ino_, off);
+    kVma_t* vma = kvma_look_ino (addSpace, stream->ino_, off);
     assert (vma != NULL);
 
     // TRY MANUAL MAPPING (may be not need to try that)
@@ -154,7 +154,7 @@ static ssize_t write_block (kStream_t* stream, void* buf, size_t length, off_t o
     off += lg;
     count += lg;
 
-    // kPg_SyncStream (vma, address);
+    // kpg_sync_stream (vma, address);
   }
 
   kprintf ("fs] write block [%d]\n", count);

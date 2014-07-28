@@ -7,21 +7,7 @@ int fontH = 9;
 int kTty_offsetIn = 0; // TODO remove this lame input
 
 // ===========================================================================
-struct kTty
-{
-  uint32_t  _color;
-  uint32_t  _bkground;
-  int       _cursorX;
-  int       _cursorY;
-  int       _mode; // TODO txtmode
-  int       _column;
-  int       _row;
-  int       _width;
-  int       _height;
-  int       _depth;
-  uint32_t* _ptr;
-  uint32_t  _length;
-};
+
 
 kTty_t screen;
 // ===========================================================================
@@ -592,7 +578,7 @@ void kTty_Update ()
       kTty_Putc (str[i]);
 
 
-    if (term->offset_ >= term->length_) {
+    if ((size_t)term->offset_ >= term->length_) {
       term->offset_ = 0;
     }
   }

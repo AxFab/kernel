@@ -14,20 +14,9 @@
   H: Huge page
 
  */
-#define PG_KERNEL_ONLY    3
-#define PG_USER_RDWR      7
-#define PG_USER_RDONLY    5
-
-#define TABLE_DIR_THR ((uint32_t *)0xfffff000)
-#define TABLE_DIR_PRC ((uint32_t *)0xffffe000)
-#define TABLE_DIR_KRN ((uint32_t *)0xffffd000)
-#define TABLE_DIR_WIN ((uint32_t *)0xffffc000)
-
-#define TABLE_PAGE_TH(s) ((uint32_t *)(0xffc00000 | ((s) << 12)))
-
 
 // ---------------------------------------------------------------------------
-void kPg_DumpTable (uint32_t *table)
+void kpg_dump (uint32_t *table)
 {
   int i;
   for (i=0; i<1024; ++i) {
@@ -53,14 +42,14 @@ void kPg_DumpTable (uint32_t *table)
 
 // ---------------------------------------------------------------------------
 /** Resolve a soft page fault by allocating a new page in designed context */
-static void kPg_Resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page)
+void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page)
 {
   int dir = (address >> 22) & 0x3ff;
   int tbl = (address >> 12) & 0x3ff;
 
   if (KLOG_PF) kprintf ("PF] Resolve at %x with %d,%d <%d,%d>\n", address, rights, dirRight, dir, tbl);
   if (table[dir] == 0) {
-    uint32_t page = kPg_AllocPage();
+    uint32_t page = kpg_alloc();
     table[dir] = page | dirRight;
 
     if (table != TABLE_DIR_THR) {
@@ -72,7 +61,7 @@ static void kPg_Resolve (uint32_t address, uint32_t *table, int rights, int dirR
 
   if (TABLE_PAGE_TH(dir)[tbl] == 0) {
     if (page == 0)
-      page = kPg_AllocPage();
+      page = kpg_alloc();
     TABLE_PAGE_TH(dir)[tbl] = page | rights;
     memset ((void*)(address & ~(PAGE_SIZE-1)), 0, PAGE_SIZE);
   }
@@ -80,54 +69,8 @@ static void kPg_Resolve (uint32_t address, uint32_t *table, int rights, int dirR
 
 
 // ---------------------------------------------------------------------------
-/** Resolve a soft page fault by allocating a new page in designed context
- *  FIXME Get rule to know how many pages must be mapped
- */
-int kPg_FillStream (kVma_t* vma, uint32_t address, int rights)
-{
-  if (KLOG_PF) kprintf ("PF] stream at <%x> \n", address);
-  size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
-  size_t off = (vma->offset_ + (address - vma->base_)) / vma->ino_->stat_.cblock_;
-
-  uint32_t page;
-  int read;
-  if (kfs_map (vma->ino_, off, &page, &read))
-    return __geterrno ();
-
-  kPg_Resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page);
-  if (read)
-    kfs_feed (vma->ino_, (void*)address, lg, off);
-
-  // kTty_HexDump (address, 0x40);
-  if (KLOG_PF) kprintf ("PF] fill stream at <%x> \n", address);
-
-  return __noerror();
-}
-
-// ---------------------------------------------------------------------------
-/** Resolve a soft page fault by allocating a new page in designed context */
-void kPg_SyncStream (kVma_t* vma, uint32_t address)
-{
-  // uint32_t address = vma->base_;
-  // size_t lg = vma->limit_ - vma->base_;
-  // for (;address < vma->limit_; address += PAGE_SIZE)
-
-  if (KLOG_PF) kprintf ("PF] stream at <%x> \n", address);
-  size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
-  size_t off = (vma->offset_ + (address - vma->base_)) / vma->ino_->stat_.cblock_;
-  kfs_sync (vma->ino_, (void*)address, lg, off);
-  // kTty_HexDump (address, 0x40);
-  if (KLOG_PF) kprintf ("PF] sync stream at <%x> \n", address);
-
-  // kVma_Display (kCPU.current_->process_->memSpace_);
-
-  //for (;;);
-}
-
-
-// ---------------------------------------------------------------------------
 uint32_t last = 0;
-int kPg_Fault (uint32_t address)
+int kpg_fault (uint32_t address)
 {
   if (KLOG_PF) kprintf ("PF] PF at <%x> \n", address);
 
@@ -135,21 +78,21 @@ int kPg_Fault (uint32_t address)
     kpanic ("PF] PG NOT ALLOWED <%x> \n", address);
   else if (address < USR_SPACE_LIMIT) {
     kAddSpace_t* mmspc = kCPU.current_->process_->memSpace_;
-    kVma_t* vma = kVma_FindAt (mmspc, address);
+    kVma_t* vma = kvma_look_at (mmspc, address);
     if (vma == NULL ) {
       kpanic ("PF] Page fault in user space <%x> SIGFAULT \n", address);
       for (;;);
     } else if (vma->flags_ & VMA_STACK) {
-      kPg_Resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR, 0);
+      kpg_resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR, 0);
       if (KLOG_PF) kprintf ("PF] Extend the stack\n");
     } else if (vma->ino_ != NULL)
-      kPg_FillStream (vma, ALIGN_DW (address, PAGE_SIZE),  PG_USER_RDWR);
+      kpg_fill_stream (vma, ALIGN_DW (address, PAGE_SIZE),  PG_USER_RDWR);
     else {
       kpanic ("PF] Page fault in user space <%x> [%x] \n", address, vma);
       for (;;);
     }
   } else if (address < 0xffc00000)
-    kPg_Resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY, 0);
+    kpg_resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY, 0);
   else
     kpanic ("PF] PG NOT ALLOWED <%x> \n", address);
 
@@ -158,13 +101,13 @@ int kPg_Fault (uint32_t address)
 }
 
 // ---------------------------------------------------------------------------
-uint32_t kPg_NewDir (int t)
+uint32_t kpg_new ()
 {
   int i;
-  uint32_t page = kPg_AllocPage();
+  uint32_t page = kpg_alloc();
   // FIXME check this operation is possible (sti, realy clean here!)
   if (KLOG_PF) kprintf ("pg] Create a new directory <%X> \n", page);
-  // kPg_DumpTable (TABLE_DIR_THR);
+  // kpg_dump (TABLE_DIR_THR);
   TABLE_DIR_THR [1020] = page | PG_KERNEL_ONLY;
 
   memset (TABLE_DIR_WIN, 0, PAGE_SIZE);
@@ -178,12 +121,12 @@ uint32_t kPg_NewDir (int t)
   TABLE_DIR_WIN [1022] = page | PG_KERNEL_ONLY;
   TABLE_DIR_WIN [1023] = page | PG_KERNEL_ONLY;
 
-  // kPg_DumpTable (TABLE_DIR_WIN);
-  if (KLOG_PF) kprintf ("pg] Directory is ready [%x]\n", &t); // FIXME can't remove this, need to handle TBL invalidation first
+  // kpg_dump (TABLE_DIR_WIN);
+  if (KLOG_PF) kprintf ("pg] Directory is ready\n");
   // TABLE_DIR_THR [1020] = 0;
 
   return page;
 }
 
-
-
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
