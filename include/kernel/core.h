@@ -34,7 +34,7 @@ ltime_t ltime (ltime_t* ptr);
 /* END OF STDLIB */
 
 // Configuration header
-#include <kconfig.h>
+#include <kernel/config.h>
 
 // ======================================================
 // Macro size -------------------------------------------
@@ -114,6 +114,8 @@ void kunlock (spinlock_t* lock) ;
 int kislocked (spinlock_t* lock);
 int klockcount ();
 
+// CPU -------------------------------------------------
+int kcpu_state();
 
 // ======================================================
 #define MIN(a,b)  ((a) <= (b) ? (a) : (b))

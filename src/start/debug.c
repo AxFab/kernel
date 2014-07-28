@@ -1,7 +1,7 @@
-#include <kcore.h>
-#include <kcpu.h>
+#include <kernel/core.h>
+#include <kernel/cpu.h>
 
-void kCpu_DisplayRegs (kCpuRegs_t* regs) 
+void kCpu_DisplayRegs (kCpuRegs_t* regs)
 {
   kprintf ("  eax:%8x  ebx:%8x  ecx:%8x  edx:%8x    eflags:%8x\n",
     regs->eax, regs->ebx, regs->ecx, regs->edx, regs->eflags);

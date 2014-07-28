@@ -1,4 +1,4 @@
-#include <inodes.h>
+#include <kernel/inodes.h>
 #include <stdio.h>
 
 

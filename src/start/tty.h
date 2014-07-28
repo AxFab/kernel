@@ -1,7 +1,7 @@
 #ifndef _TTY_H__
 #define _TTY_H__
 
-#include <kcore.h>
+#include <kernel/core.h>
 
 enum kTty_Style {
 	White = 0x0f00,
@@ -12,7 +12,7 @@ enum kTty_Style {
 
 typedef struct kTty kTty_t;
 
-struct kTty 
+struct kTty
 {
   uint32_t  _color;
   uint32_t  _bkground;

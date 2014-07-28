@@ -1,4 +1,4 @@
-#include <memory.h>
+#include <kernel/memory.h>
 
 /** Check if this buffer cover a valid user space area
  *  \note the current requierment is to write on a single memory bucket

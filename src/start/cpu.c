@@ -1,6 +1,6 @@
-#include <kcore.h>
-#include <kcpu.h>
-#include <scheduler.h>
+#include <kernel/core.h>
+#include <kernel/cpu.h>
+#include <kernel/scheduler.h>
 
 #define i386_TssAddress  0x1000
 

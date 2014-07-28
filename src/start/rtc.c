@@ -1,4 +1,4 @@
-#include <kcpu.h>
+#include <kernel/cpu.h>
 #include <time.h> /* struct tm */
 
 #define CURRENT_YEAR        2014
@@ -61,7 +61,7 @@ static inline int RTC_Equals(struct tm* d1, struct tm* d2)
 }
 
 // ----------------------------------------------------------------------------
-void RTC_EnableCMOS () 
+void RTC_EnableCMOS ()
 {
   int rate = 7; // 3->8Khz  6->1024Hz 7->512Hz
   outb(CMOS_ADDRESS, 0x8B);
@@ -76,7 +76,7 @@ void RTC_EnableCMOS ()
 }
 
 // ----------------------------------------------------------------------------
-void RTC_DisableCMOS () 
+void RTC_DisableCMOS ()
 {
   outb(CMOS_ADDRESS, 0x0B);
   outb(CMOS_DATA, inb(CMOS_DATA) & 0xBF);

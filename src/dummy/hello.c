@@ -1,6 +1,6 @@
 
-int sys_write(int fd, const void *buf, unsigned int count, int off);
-int sys_open(const char* path, int flag, int mode);
+int write(int fd, const void *buf, unsigned int count);
+int open(const char* path, int flag, int mode);
 
 
 void delay()
@@ -42,13 +42,13 @@ int main (int argc, char** argv)
   }
 
   if (argc > 2) {
-    where = sys_open (argv[2], /*O_WRONLY | O_APPEND | O_CREAT*/ 0, 0);
+    where = open (argv[2], /*O_WRONLY | O_APPEND | O_CREAT*/ 0, 0);
   }
 
   delay();
 
   int lg = strhl (tmp, who);
-  sys_write (where, tmp, lg, -1);
+  write (where, tmp, lg);
 
   return 0;
 }

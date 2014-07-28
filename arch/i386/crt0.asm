@@ -1,8 +1,8 @@
 use32
 
 global _start, start
-global sys_sname, sys_exit, sys_exec
-global sys_close, sys_open, sys_read, sys_write
+global sname, exit, exec
+global close, open, read, write
 global _errno
 
 extern main
@@ -26,41 +26,49 @@ _errno:
 
 ; ----------------------------------------------------------------------------
 ; ----------------------------------------------------------------------------
-sys_sname:
+sname:
     mov eax, 0x00
     jmp os_syscall_2
 
 ; ----------------------------------------------------------------------------
 ; ----------------------------------------------------------------------------
-sys_exit:
+exit:
     mov eax, 0x10
-    jmp os_syscall_2
+    jmp os_syscall_1
 
-sys_exec:
+exec:
     mov eax, 0x11
     jmp os_syscall_2
 
 ; ----------------------------------------------------------------------------
 ; ----------------------------------------------------------------------------
-sys_close:
+close:
     mov eax, 0x20
-    jmp os_syscall_2
+    jmp os_syscall_1
 
-sys_open:
+open:
     mov eax, 0x21
     jmp os_syscall_3
 
-sys_read:
+read:
     xor eax, eax
     mov al, 0x22
-    jmp os_syscall_4
+    jmp os_syscall_3
 
-sys_write:
+write:
     mov eax, 0x23
-    jmp os_syscall_4
+    jmp os_syscall_2
 
 ; ----------------------------------------------------------------------------
 ; ----------------------------------------------------------------------------
+os_syscall_1:
+    push ebp
+    mov ebp, esp
+    mov ecx, [ebp + 8]   ; arg1
+    int 0x30
+    leave
+    ret
+
 os_syscall_2:
     push ebp
     mov ebp, esp

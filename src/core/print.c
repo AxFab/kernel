@@ -1,4 +1,4 @@
-#include <kcore.h>
+#include <kernel/core.h>
 
 #ifdef __KERNEL
 
@@ -17,8 +17,10 @@ int kputc (int c)
 
   klogStart[kLogPen++] = (c & 0x7f);
 
-  if (kLogPen >= klogLg)
+  if (kLogPen >= klogLg) {
     kLogPen = 0;
+    kpanic ("END OF STREAM KLOG\n");
+  }
 
   return c;
 }

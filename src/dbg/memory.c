@@ -23,17 +23,17 @@ int kmmap (kAddSpace_t* addressSpace, void* add, fakeInode_t* ino, size_t length
   return kVma_MMap (addressSpace, &area) ? 0 : -1;
 }
 
-int kFs_Open(kInode_t* ino)
+int kfs_grab(kInode_t* ino)
 {
   fakeInode_t* f = (fakeInode_t*)ino;
   f->readers_++;
   return __noerror();
 }
 
-int kFs_Close(kInode_t* ino)
+int kfs_release(kInode_t* ino)
 {
   fakeInode_t* f = (fakeInode_t*)ino;
-  
+
   assert (f->readers_ > 0);
   f->readers_--;
 

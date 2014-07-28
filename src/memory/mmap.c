@@ -1,5 +1,5 @@
-#include <memory.h>
-#include <inodes.h>
+#include <kernel/memory.h>
+#include <kernel/inodes.h>
 
 // ============================================================================
 
@@ -130,7 +130,7 @@ kVma_t* kVma_MMap (kAddSpace_t* addressSpace, kVma_t* area)
   // TODO move area check here
 
   if (area->ino_)
-    kFs_Open(area->ino_); // TODO if fail !?
+    kfs_grab(area->ino_); // TODO if fail !?
 
   klock (&addressSpace->lock_, LOCK_VMA_MMAP);
 
@@ -141,7 +141,7 @@ kVma_t* kVma_MMap (kAddSpace_t* addressSpace, kVma_t* area)
     vma = kVma_MapAtBegin (addressSpace, area);
 
   if (vma == NULL && area->ino_)
-    kFs_Close (area->ino_);
+    kfs_release (area->ino_);
 
   if (vma != NULL)
     addressSpace->vrtPages_ += (vma->limit_ - vma->base_) / PAGE_SIZE;

@@ -1,5 +1,5 @@
-#include <scheduler.h>
-#include <kinfo.h>
+#include <kernel/scheduler.h>
+#include <kernel/info.h>
 
 
 // ===========================================================================

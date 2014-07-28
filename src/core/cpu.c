@@ -1,4 +1,4 @@
-#include <kcore.h>
+#include <kernel/core.h>
 
 int32_t atomic_xchg_i32 (int32_t* ref, int32_t val)
 {
@@ -28,7 +28,7 @@ uint64_t __udivmoddi4(uint64_t num, uint64_t den, uint64_t *rem_p)
 {
   uint64_t quot = 0, qbit = 1;
 
-  if ( den == 0 ) 
+  if ( den == 0 )
     return 1/((unsigned)den); /* INT: divide by zero */
 
   /* Left-justify denominator and count shift */

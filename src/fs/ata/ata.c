@@ -5,13 +5,13 @@
 kAtaDrive_t sdx[4];
 
 kFileOp_t ataOperation = {
-  NULL, NULL, NULL, 
-  NULL, ATA_Read, NULL, NULL, 
-  NULL, ATA_Write, NULL, NULL, NULL, 
+  NULL, NULL, NULL,
+  NULL, ATA_Read, NULL, NULL,
+  NULL, ATA_Write, NULL, NULL, NULL,
 };
 
 // ===========================================================================
-void ATA_Initialize (kInode_t* dev) 
+void ATA_Initialize (kInode_t* dev)
 {
   int i;
   time_t now = time(NULL);
@@ -39,7 +39,7 @@ void ATA_Initialize (kInode_t* dev)
     if (ATA_Detect(&sdx[i])) {
       int block = sdx[i]._type == IDE_ATA ? 512 : 2048;
       stat.dblock_ = stat.cblock_ = block;
-      kFs_CreateDevice (name[i], dev, &ataOperation, &sdx[i], &stat);
+      kfs_new_device (name[i], dev, &ataOperation, &sdx[i], &stat);
     }
   }
 }

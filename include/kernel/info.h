@@ -1,8 +1,8 @@
 #ifndef KINFO_H__
 #define KINFO_H__
 
-#include <kcore.h>
-#include <kcpu.h>
+#include <kernel/core.h>
+#include <kernel/cpu.h>
 #ifdef __KERNEL
 #  include <alloc.h>
 #endif
@@ -10,7 +10,7 @@
 
 // ---------------------------------------------------------------------------
 typedef struct kCpuCore kCpuCore_t;
-struct kCpuCore 
+struct kCpuCore
 {
   // CORE
   int   cpuNo_;
@@ -37,10 +37,10 @@ struct kCpuCore
 
 // ---------------------------------------------------------------------------
 typedef struct kSysCore kSysCore_t;
-struct kSysCore 
+struct kSysCore
 {
   // CORE
-  ltime_t     now_;       // IMPORTANT! Must be the first field for ASM timers 
+  ltime_t     now_;       // IMPORTANT! Must be the first field for ASM timers
   int         state_;
   int         cpuCount_;
 
@@ -50,7 +50,7 @@ struct kSysCore
 
   // INODES
   int         autoIno_;
-  kInode_t*   RootFs;
+  kInode_t*   rootNd_;
   kInode_t*   devNd_;
   kInode_t*   mntNd_;
 

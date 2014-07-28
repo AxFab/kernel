@@ -1,9 +1,9 @@
-#include <inodes.h>
-#include <scheduler.h>
-#include <memory.h>
+#include <kernel/inodes.h>
+#include <kernel/scheduler.h>
+#include <kernel/memory.h>
 #include <stdio.h>
-#include <kinfo.h>
-#include <uparams.h>
+#include <kernel/info.h>
+#include <kernel/uparams.h>
 
 struct kStream
 {
@@ -67,7 +67,7 @@ static int kSys_SetFd (kInode_t* ino, int flags)
     proc->openStreams_ = openFd;
   }
 
-  kFs_Open (ino); // TODO if failed !? free readFD cause probably a lock stuff
+  kfs_grab (ino); // TODO if failed !? free readFD cause probably a lock stuff
   openFd[i]->ino_ = ino;
   openFd[i]->flags_ = flags;
 
@@ -364,7 +364,7 @@ int kSys_Open(int dirfd, const char *path, int flags, mode_t mode)
     return -1;
   }
 
-  ino = kFs_LookFor (path, dir);
+  ino = kfs_lookup (path, dir);
   if (ino == NULL) {
 
     if (__geterrno() == ELOOP || __geterrno() == ENOTDIR)

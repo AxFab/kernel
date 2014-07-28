@@ -5,9 +5,9 @@
 
 
 kFileOp_t isoOps = {
-  ISO_Mount, NULL, NULL, 
-  ISO_Lookup, ISO_Read, NULL, NULL, 
-  (void*)ISO_Write, (void*)ISO_Write, NULL, (void*)ISO_Write, NULL, 
+  ISO_Mount, NULL, NULL,
+  ISO_Lookup, ISO_Read, NULL, NULL,
+  (void*)ISO_Write, (void*)ISO_Write, NULL, (void*)ISO_Write, NULL,
 };
 
 
@@ -23,14 +23,14 @@ int ISO_Mount (kInode_t* dev, kInode_t* mnt)
   kStat_t root = { 0, S_IFDIR | 0555, 0, 0, 0L, 0L, 0U, 0U, 0U, 0, 0, 0 };
   isoVolume_t* volInfo;
 
-  if (dev->stat_.cblock_ != 2048) 
+  if (dev->stat_.cblock_ != 2048)
     return EBADF;
-  
+
 
   buf = (uint8_t*) malloc (2048);
   bufi = (uint32_t*)buf;
   while (inDesc) {
-    kFs_Read (dev, buf, 1, sec);
+    kfs_feed (dev, buf, 1, sec);
 
     if ((bufi[0] & 0xFFFFFF00) != ISO9660_STD_ID1 ||
         (bufi[1] & 0x0000FFFF) != ISO9660_STD_ID2 ||
@@ -38,7 +38,7 @@ int ISO_Mount (kInode_t* dev, kInode_t* mnt)
       free (buf);
       return EBADF;
     }
-    
+
     switch (buf[0]) {
       case ISO9660_VOLDESC_PRIM:
         firstDesc =  (isoFstDescriptor_t*)&buf[8];
@@ -88,7 +88,7 @@ int ISO_Mount (kInode_t* dev, kInode_t* mnt)
   root.lba_ = volInfo->lbaroot;
   root.length_ = volInfo->lgthroot;
   // FIXME Fill creation date
-  kFs_CreateDevice (name, mnt, &isoOps, (void*)volInfo, &root);
+  kfs_new_device (name, mnt, &isoOps, (void*)volInfo, &root);
 
   free (buf);
   return __noerror ();
@@ -106,11 +106,11 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   isoDirEntry_t* entry;
   char* buf = malloc (2048);
   isoVolume_t* volInfo = (isoVolume_t*)dir->devinfo_;
-  
+
   if (KLOG_FS) kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
   if (KLOG_FS) kprintf ("iso9660] Read sector %d on %s \n", sec, volInfo->dev->name_);
-  
-  kFs_Read (volInfo->dev, buf, 1, sec);
+
+  kfs_feed (volInfo->dev, buf, 1, sec);
   if (KLOG_FS) kprintf ("iso9660] Done\n");
 
   // Skip the first two entries
@@ -155,7 +155,7 @@ int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
   isoVolume_t* volInfo = (isoVolume_t*)fp->devinfo_;
   size_t sec = fp->stat_.lba_;
   size_t lg = ALIGN_UP (fp->stat_.length_, fp->stat_.cblock_) / fp->stat_.cblock_;
-  if (lg < lba + count ) 
+  if (lg < lba + count )
     count = lg - lba;
 
   if (count <= 0) {
@@ -164,7 +164,7 @@ int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
   }
 
   if (KLOG_FS) kprintf ("iso9660] File %s, read dev %s at %d \n", fp->name_, volInfo->dev->name_, sec + lba );
-  kFs_Read (volInfo->dev, buffer, count, sec + lba);
+  kfs_feed (volInfo->dev, buffer, count, sec + lba);
   return 0;
 }
 

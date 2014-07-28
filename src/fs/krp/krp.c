@@ -1,4 +1,4 @@
-#include <inodes.h>
+#include <kernel/inodes.h>
 
 #define TAR_RECORDSIZE 512
 
@@ -8,9 +8,9 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file);
 int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba);
 
 kFileOp_t krpOps = {
-  KRP_Mount, NULL, NULL, 
-  KRP_Lookup, KRP_Read, NULL, NULL, 
-  (void*)KRP_Write, (void*)KRP_Write, NULL, (void*)KRP_Write, NULL, 
+  KRP_Mount, NULL, NULL,
+  KRP_Lookup, KRP_Read, NULL, NULL,
+  (void*)KRP_Write, (void*)KRP_Write, NULL, (void*)KRP_Write, NULL,
 };
 
 
@@ -27,7 +27,7 @@ int KRP_Mount (kInode_t* dev, kInode_t* mnt)
   kStat_t root = { 0, S_IFDIR | 0500, 0, 0, 0L, 0L, now, now, now, 0, 0, 0 };
 
   krpBase = &krpPack;
-  kFs_CreateDevice ("krp", mnt, &krpOps, (void*)NULL, &root);
+  kfs_new_device ("krp", mnt, &krpOps, (void*)NULL, &root);
   return __noerror ();
 }
 
@@ -45,7 +45,7 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   time_t now = time(NULL);
   char uri [PATH_MAX];
   char search [PATH_MAX];
-  kFs_ReadUri (dir, uri, PATH_MAX);
+  kfs_puri (dir, uri, PATH_MAX);
 
   if (strlen (strchr(uri, ':') + 1) == 0)
     snprintf(search, PATH_MAX, "%s%s", krpPrefix, name);

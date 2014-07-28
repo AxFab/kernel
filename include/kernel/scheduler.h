@@ -1,8 +1,8 @@
 #ifndef SCHEDULER_H__
 #define SCHEDULER_H__
 
-#include <kcore.h>
-#include <kcpu.h>
+#include <kernel/core.h>
+#include <kernel/cpu.h>
 
 // Process flags
 #define PROC_EXITED     (1 << 0)

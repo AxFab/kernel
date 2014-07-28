@@ -32,6 +32,9 @@ static int kgrubMemory (uint32_t *mmap)
 /**
  * Using grub at boot, we send to the kernel all known machine infos
  */
+extern char* klogStart;
+extern int klogLg;
+
 int kGrub_Initialize (uint32_t* bTable)
 {
   if (bTable[0] & (1<<11) && bTable[22] != 0x000B8000) {
@@ -41,7 +44,7 @@ int kGrub_Initialize (uint32_t* bTable)
     kTty_PreSystem ((void*)0x000B8000, 80, 25, 2);
   }
 
-  memset ((void*)0x7000, 0, 0x3000);
+  memset (klogStart, 0, klogLg);
   // kprintf ("\n");
   if (bTable[0] & (1<<9)) {
     kprintf ("Boot Loader: %s\n", (char*)bTable[16]);

@@ -1,4 +1,4 @@
-#include <kcpu.h>
+#include <kernel/cpu.h>
 // #include <prv/format.h>
 
 int fontW = 6;

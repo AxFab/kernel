@@ -1,7 +1,7 @@
 #ifndef KCPU_H__
 #define KCPU_H__
 
-#include <kcore.h>
+#include <kernel/core.h>
 
 int32_t atomic_xchg_i32 (int32_t* ref, int32_t val);
 int32_t atomic_inc_i32 (int32_t* ref);

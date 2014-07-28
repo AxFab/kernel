@@ -4,8 +4,8 @@
 typedef struct axStartInfo axStartInfo_t;
 
 
-int sys_write(int fd, const void *buf, unsigned int count, int off);
-int sys_exec (const char *path, axStartInfo_t* param);
+int write(int fd, const void *buf, unsigned int count);
+int exec (const char *path, axStartInfo_t* param);
 
 
 struct axStartInfo
@@ -34,7 +34,7 @@ const char* cmdl[] = {
 int execv_s(const char *path, const char * args)
 {
   axStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
-  return sys_exec (path, &param);
+  return exec (path, &param);
 }
 
 void delay()
@@ -53,13 +53,13 @@ int main ()
   int o = 0;
   int m = 4; //sizeof (cmdl) / sizeof (char*);
 
-  sys_write (1, "Deamon v1.0\n", 17, -1);
+  write (1, "Deamon v1.0\n", 17);
 
   for (;;) {
 
     for (j = 0; j < 2; ++j) {
       delay();
-      sys_write (1, "deamon - still here\n", 19, -1);
+      write (1, "deamon - still here\n", 19);
     }
 
     delay();

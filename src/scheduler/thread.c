@@ -1,7 +1,7 @@
-#include <scheduler.h>
-#include <memory.h>
-#include <inodes.h>
-#include <kinfo.h>
+#include <kernel/scheduler.h>
+#include <kernel/memory.h>
+#include <kernel/inodes.h>
+#include <kernel/info.h>
 
 
 // ---------------------------------------------------------------------------
@@ -120,7 +120,7 @@ void kSch_DestroyThread (kTask_t* task)
 
 // INODES
 
-int kSch_PrintTask ()
+void kSch_PrintTask ()
 {
   kProcess_t* proc = kSYS.allProcFrst_;
   while (proc) {

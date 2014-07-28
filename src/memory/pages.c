@@ -1,7 +1,7 @@
-#include <memory.h>
-#include <scheduler.h>
-#include <inodes.h>
-#include <kinfo.h>
+#include <kernel/memory.h>
+#include <kernel/scheduler.h>
+#include <kernel/inodes.h>
+#include <kernel/info.h>
 
 /**
   Table   xxxx----HDA--UWP b
@@ -51,11 +51,6 @@ void kPg_DumpTable (uint32_t *table)
   kTty_Putc ('\n');
 }
 
-void kDBG() {
-  kPg_DumpTable (TABLE_DIR_THR);
-  for (;;);
-}
-
 // ---------------------------------------------------------------------------
 /** Resolve a soft page fault by allocating a new page in designed context */
 static void kPg_Resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page)
@@ -86,29 +81,27 @@ static void kPg_Resolve (uint32_t address, uint32_t *table, int rights, int dirR
 
 // ---------------------------------------------------------------------------
 /** Resolve a soft page fault by allocating a new page in designed context
- *
+ *  FIXME Get rule to know how many pages must be mapped
  */
-void kPg_FillStream (kVma_t* vma, uint32_t address, int rights)
+int kPg_FillStream (kVma_t* vma, uint32_t address, int rights)
 {
-  // uint32_t address = vma->base_;
-  // size_t lg = vma->limit_ - vma->base_;
-  // for (;address < vma->limit_; address += PAGE_SIZE)
-
   if (KLOG_PF) kprintf ("PF] stream at <%x> \n", address);
   size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
   size_t off = (vma->offset_ + (address - vma->base_)) / vma->ino_->stat_.cblock_;
 
+  uint32_t page;
+  int read;
+  if (kfs_map (vma->ino_, off, &page, &read))
+    return __geterrno ();
 
-  // uint32_t page;
-  // int read;
-  //kFs_Map (vma->ino_, off, &page, &read);
-  kPg_Resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, 0);
-  kFs_Read (vma->ino_, (void*)address, lg, off);
+  kPg_Resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page);
+  if (read)
+    kfs_feed (vma->ino_, (void*)address, lg, off);
 
   // kTty_HexDump (address, 0x40);
   if (KLOG_PF) kprintf ("PF] fill stream at <%x> \n", address);
 
-  //for (;;);
+  return __noerror();
 }
 
 // ---------------------------------------------------------------------------
@@ -122,7 +115,7 @@ void kPg_SyncStream (kVma_t* vma, uint32_t address)
   if (KLOG_PF) kprintf ("PF] stream at <%x> \n", address);
   size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
   size_t off = (vma->offset_ + (address - vma->base_)) / vma->ino_->stat_.cblock_;
-  kFs_Write (vma->ino_, (void*)address, lg, off);
+  kfs_sync (vma->ino_, (void*)address, lg, off);
   // kTty_HexDump (address, 0x40);
   if (KLOG_PF) kprintf ("PF] sync stream at <%x> \n", address);
 

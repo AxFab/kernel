@@ -1,7 +1,7 @@
 #ifndef MEMORY_H__
 #define MEMORY_H__
 
-#include <kcore.h>
+#include <kernel/core.h>
 
 
 #define VMA_WRITE         0x002 ///< Pages can be written to

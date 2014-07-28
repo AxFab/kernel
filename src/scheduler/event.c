@@ -1,4 +1,4 @@
-#include <scheduler.h>
+#include <kernel/scheduler.h>
 
 typedef struct kEventHandler kEventHandler_t;
 

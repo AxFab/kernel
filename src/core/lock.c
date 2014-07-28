@@ -1,5 +1,5 @@
-#include <kinfo.h>
-#include <kcpu.h>
+#include <kernel/info.h>
+#include <kernel/cpu.h>
 
 /*
  * The current thread has a counter of kernel lock acquiered.

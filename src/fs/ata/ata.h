@@ -1,10 +1,10 @@
 #ifndef _FS_ATA_H__
 #define _FS_ATA_H__
 
-#include <kcore.h>
+#include <kernel/core.h>
 // #include <kernel/fs.h>
-#include <kcpu.h>
-#include <inodes.h>
+#include <kernel/cpu.h>
+#include <kernel/inodes.h>
 // #include <sys/stat.h>
 
 #define ATA_SR_BSY     0x80

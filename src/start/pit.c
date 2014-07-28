@@ -1,5 +1,5 @@
-#include <kcore.h>
-#include <kcpu.h>
+#include <kernel/core.h>
+#include <kernel/cpu.h>
 
 #define MICROSEC_IN_SEC (1000 * 1000)
 #define PIT_CH0   0x40  // Channel 0 data port (read/write)
@@ -23,6 +23,6 @@ void PIT_Initialize (uint32_t frequency)
   outb(0x40, (divisor >> 8) & 0xff);     /* Set high byte of divisor */
 
   kprintf ("Set PIT timer : Fq %d Hz, Period: %d us, <rate %d>\n", PIT_Frequency, PIT_Period, divisor);
-} 
+}
 
 

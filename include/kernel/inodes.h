@@ -1,7 +1,7 @@
 #ifndef INODES_H__
 #define INODES_H__
 
-#include <kcore.h>
+#include <kernel/core.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -89,16 +89,15 @@ struct kResxFile {
 
 // ============================================================================
 
-kInode_t* kFs_RootInode();
-int kFs_Initialize();
+int kfs_init();
 
-kInode_t* kFs_LookFor(const char* path, kInode_t* dir);
-kInode_t* kFs_Register(const char* name, kInode_t* dir, kStat_t* stat);
-int kFs_Unregister(kInode_t* ino);
+kInode_t* kfs_lookup(const char* path, kInode_t* dir);
+kInode_t* kfs_register(const char* name, kInode_t* dir, kStat_t* stat);
+int kfs_unregister(kInode_t* ino);
 
-int kFs_Open(kInode_t* ino);
-int kFs_Close(kInode_t* ino);
-kInode_t* kFs_MkNode(const char* name, kInode_t* dir, kStat_t* stat);
+int kfs_grab(kInode_t* ino);
+int kfs_release(kInode_t* ino);
+kInode_t* kfs_mknod(const char* name, kInode_t* dir, kStat_t* stat);
 int kFs_Delete(kInode_t* ino);
 
 ssize_t kFs_Read(kInode_t* ino, void* buffer, size_t count, off_t offset);
@@ -108,16 +107,16 @@ ssize_t kFs_Write(kInode_t* ino, void* buffer, size_t count, off_t offset);
 // int kFs_Write(kInode_t* ino, void* buffer, off_t offset, size_t count);
 int kFs_Sync(kInode_t* ino);
 
-int kFs_FollowLink (kInode_t** ino, int* loopCount);
-int kFs_ReadLink (kInode_t* ino, char* ptr, size_t length);
-int kFs_ReadUri (kInode_t* ino, char* ptr, size_t length);
-void kFs_InoPrint (kInode_t* ino, int depth);
-void kFs_PrintAll ();
+int kfs_follow_link (kInode_t** ino, int* loopCount);
+int kfs_plink (kInode_t* ino, char* ptr, size_t length);
+int kfs_puri (kInode_t* ino, char* ptr, size_t length);
+void kfs_log_ino (kInode_t* ino, int depth);
+void kfs_log_all ();
 
 // kInode_t* kFs_Mount (const char* name, kInode_t* dir, kInode_t* dev, int (*fsEntry)(kFsys_t* fs, kStat_t* file));
 // kInode_t* kFs_CreateBlock (const char* name, kInode_t* dir, dev_t fd, int (*driverEntry)(kDevice_t* dev));
 
-int kFs_CreateDevice (const char* name, kInode_t* dir, kFileOp_t* fileops, void* devinfo, kStat_t* stat);
+int kfs_new_device (const char* name, kInode_t* dir, kFileOp_t* fileops, void* devinfo, kStat_t* stat);
 
 // int kFs_CreateBlock (const char* name, kFileOp_t* fileops, void* devinfo, size_t block);
 
@@ -125,6 +124,10 @@ int kFs_CreateDevice (const char* name, kInode_t* dir, kFileOp_t* fileops, void*
 // int kFs_ReadBlock (kDevice_t* dev, void* buffer, off_t offset, size_t count);
 // int kFs_Feed(kInode_t* ino, void* buffer, off_t offset, size_t count);
 
+
+int kfs_feed(kInode_t* ino, void* buffer, size_t length, off_t offset);
+int kfs_sync(kInode_t* ino, void* buffer, size_t length, off_t offset);
+int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead);
 
 #endif /* INODES_H__ */
 

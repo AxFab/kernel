@@ -1,7 +1,7 @@
 #ifndef FS_ISO9660_ISO_H__
 #define FS_ISO9660_ISO_H__
 
-#include <inodes.h>
+#include <kernel/inodes.h>
 
 // Identificators for volume descriptors
 #define ISO9660_STD_ID1    0x30444300

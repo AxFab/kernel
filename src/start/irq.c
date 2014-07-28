@@ -1,7 +1,7 @@
 #include "tty.h"
 #include "cpu.h"
-#include <kinfo.h>
-#include <scheduler.h>
+#include <kernel/info.h>
+#include <kernel/scheduler.h>
 
 /**
 

@@ -1,16 +1,22 @@
-#include <inodes.h>
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Methods used to build pathname and display
+ */
+#include <kernel/inodes.h>
+#include <kernel/info.h>
 
 
 
-int kFs_FollowLink (kInode_t** ino, int* loopCount)
-{
-  (*loopCount)++;
-  return __seterrno (ENOSYS);
-}
+// ===========================================================================
 
-
-
-int kFs_ReadLink (kInode_t* ino, char* ptr, size_t length)
+int kfs_plink (kInode_t* ino, char* ptr, size_t length)
 {
   int ret;
   char uri [PATH_MAX];
@@ -36,9 +42,8 @@ int kFs_ReadLink (kInode_t* ino, char* ptr, size_t length)
 }
 
 // --------------------------------------------------------------------------
-
-
-int kFs_ReadUri (kInode_t* ino, char* ptr, size_t length)
+/** */
+int kfs_puri (kInode_t* ino, char* ptr, size_t length)
 {
 #define ISVOL(ino) (S_ISDIR(ino->stat_.mode_) && ino->fs_ != ino->parent_->fs_)
   int ret;
@@ -74,8 +79,8 @@ int kFs_ReadUri (kInode_t* ino, char* ptr, size_t length)
 }
 
 
-// ============================================================================
-void kFs_InoPrint (kInode_t* ino, int depth)
+// --------------------------------------------------------------------------
+void kfs_log_ino (kInode_t* ino, int depth)
 {
   int i;
   char type;
@@ -123,31 +128,33 @@ void kFs_InoPrint (kInode_t* ino, int depth)
   for (i = 0; i < depth; ++i)
     kprintf("  ");
 
-  //kFs_ReadLink (ino, uri, PATH_MAX);
+  //kfs_plink (ino, uri, PATH_MAX);
   //kprintf(" %s\n", uri);
   kprintf(" '%s'\n", ino->name_);
 }
 
-static void kFs_DirPrint (kInode_t* ino, int depth)
+// --------------------------------------------------------------------------
+void kfs_log_dir (kInode_t* ino, int depth)
 {
   ino = ino->child_;
 
   while (ino) {
-    kFs_InoPrint (ino, depth);
+    kfs_log_ino (ino, depth);
 
     if (ino->child_) {
-      kFs_DirPrint (ino, depth + 1);
+      kfs_log_dir (ino, depth + 1);
     }
 
     ino = ino->next_;
   }
 }
 
-void kFs_PrintAll ()
+// --------------------------------------------------------------------------
+void kfs_log_all ()
 {
   kprintf ("Vfs debug display -----\n");
-  kInode_t* ino = kFs_RootInode();
-  kFs_InoPrint (ino, 0);
-  kFs_DirPrint (ino, 1);
+  kInode_t* ino = kSYS.rootNd_;
+  kfs_log_ino (ino, 0);
+  kfs_log_dir (ino, 1);
 }
 

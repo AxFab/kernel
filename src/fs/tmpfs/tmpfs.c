@@ -1,4 +1,4 @@
-#include <inodes.h>
+#include <kernel/inodes.h>
 
 
 int TMPFS_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
@@ -21,8 +21,8 @@ int TMPFS_Create (const char* name, kInode_t* dir, kStat_t* file)
 
 
 kFileOp_t tmpFsOperation = {
-  NULL, NULL, NULL, 
-  NULL, TMPFS_Read, NULL, NULL, 
-  TMPFS_Create, NULL, NULL, NULL, NULL, 
+  NULL, NULL, NULL,
+  NULL, TMPFS_Read, NULL, NULL,
+  TMPFS_Create, NULL, NULL, NULL, NULL,
 };
 

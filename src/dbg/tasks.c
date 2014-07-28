@@ -18,8 +18,8 @@ kInode_t* kFs_Lookup(char* path, kInode_t* dir)
 }
 
 
-int kFs_Open(kInode_t* ino) { return 0; }
-int kFs_Close(kInode_t* ino) { return 0; }
+int kfs_grab(kInode_t* ino) { return 0; }
+int kfs_release(kInode_t* ino) { return 0; }
 
 int kFs_Read(kInode_t* ino, void* buffer, off_t offset, size_t count)
 {

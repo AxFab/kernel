@@ -1,5 +1,5 @@
 /*
- *      This file is part of the KERNEL project.
+ *      This file is part of the Smoke project.
  *
  *  Copyright of this program is the property of its author(s), without
  *  those written permission reproduction in whole or in part is prohibited.

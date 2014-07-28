@@ -1,11 +1,11 @@
 #include "tty.h"
 #include "cpu.h"
-#include <kinfo.h>
+#include <kernel/info.h>
 
-#include "inodes.h"
-#include "memory.h"
-#include "scheduler.h"
-#include <assembly.h>
+#include "kernel/inodes.h"
+#include "kernel/memory.h"
+#include "kernel/scheduler.h"
+#include <kernel/assembly.h>
 
 void kinit()
 {
@@ -20,6 +20,7 @@ void RTC_EnableCMOS () ;
 void RTC_DisableCMOS () ;
 void PIT_Initialize (uint32_t frequency);
 int ATA_Initialize(kInode_t* dev);
+int VBA_Initialize(kInode_t* dev);
 
   int ISO_Mount (kInode_t* dev, kInode_t* mnt);
 
@@ -48,22 +49,27 @@ int kCore_Initialize ()
   // - - - - - - - - - - - - - - - - - - -
 
   kinit ();
-  kFs_Initialize ();
+
+  kCpu_SetStatus (CPU_STATE_SYSCALL);
+
+  kfs_init ();
   kVma_Initialize ();
 
-  // Mount the system disc ----
-  kInode_t* cd = kFs_LookFor ("/dev/sdA", NULL);
-  kInode_t* mnt = kFs_LookFor ("/mnt/", NULL);
-  ISO_Mount (cd, mnt);
+  ATA_Initialize (kSYS.devNd_);
   VBA_Initialize (kSYS.devNd_);
+
+  // Mount the system disc ----
+  kInode_t* cd = kfs_lookup ("/dev/sdA", NULL);
+  kInode_t* mnt = kfs_lookup ("/mnt/", NULL);
+  ISO_Mount (cd, mnt);
 
   // KRP_Mount (NULL, mnt);
 
-  kInode_t* path = kFs_LookFor ("/mnt/OS_CORE/USR/BIN/", NULL);
-  kInode_t* master = kFs_LookFor ("MASTER.", path);
-  kInode_t* deamon = kFs_LookFor ("DEAMON.", path);
+  kInode_t* path = kfs_lookup ("/mnt/OS_CORE/USR/BIN/", NULL);
+  kInode_t* master = kfs_lookup ("MASTER.", path);
+  kInode_t* deamon = kfs_lookup ("DEAMON.", path);
 
-  // kFs_PrintAll ();
+  // kfs_log_all ();
 
 
   kSch_NewProcess (NULL, master, path);

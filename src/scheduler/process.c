@@ -1,7 +1,8 @@
-#include <scheduler.h>
-#include <memory.h>
-#include <inodes.h>
-#include <kinfo.h>
+#include <kernel/scheduler.h>
+#include <kernel/assembly.h>
+#include <kernel/memory.h>
+#include <kernel/inodes.h>
+#include <kernel/info.h>
 
 
 
@@ -31,14 +32,14 @@ int kSch_NewProcess (kProcess_t* parent, kInode_t* image, kInode_t* dir)
 {
   assert (image != NULL);
 
-  if (!kAsm_Open (image)) {
+  if (!kasm_open (image)) {
     __seterrno (ENOEXEC);
     return 0;
   }
 
   // FIXME load the image
   kAddSpace_t* mmsp = kVma_New (4 * _Mb_);
-  kAsm_Load (mmsp, image);
+  kasm_load (mmsp, image);
 
   kProcess_t* proc = KALLOC (kProcess_t);
   proc->pid_ = kSys_NewPid();

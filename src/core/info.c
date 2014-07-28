@@ -1,4 +1,4 @@
-#include <kinfo.h>
+#include <kernel/info.h>
 
 // Kernel Info structures
 kCpuCore_t kCPU;
@@ -6,20 +6,20 @@ kSysCore_t kSYS;
 
 // ===========================================================================
 // ---------------------------------------------------------------------------
-static int kSys_RunnableTasks() 
+static int kSys_RunnableTasks()
 {
-  return kSYS.tasksCount_[(int)TASK_STATE_WAITING] + 
+  return kSYS.tasksCount_[(int)TASK_STATE_WAITING] +
       kSYS.tasksCount_[(int)TASK_STATE_EXECUTING];
 }
 
 // ---------------------------------------------------------------------------
-int kSys_NewPid() 
+int kSys_NewPid()
 {
   return atomic_inc_i32 (&kSYS.autoPid_);
 }
 
 // ---------------------------------------------------------------------------
-int kSys_NewIno() 
+int kSys_NewIno()
 {
   return atomic_inc_i32 (&kSYS.autoIno_);
 }
@@ -28,7 +28,7 @@ int kSys_NewIno()
 
 // ---------------------------------------------------------------------------
 /** Change the status of the CPU
- *  note that status flow may be tricky on interruptable-interrupts 
+ *  note that status flow may be tricky on interruptable-interrupts
  *  FIXME Do task timing at the same time
  */
 int kCpu_SetStatus (int state)
@@ -46,14 +46,14 @@ int kCpu_SetStatus (int state)
 }
 
 // ---------------------------------------------------------------------------
-void kCpu_Statistics () 
+void kCpu_Statistics ()
 {
   int i;
 
   if (kCPU.cpuNo_ == 0) {
     for (i = 0; i < KRN_LOADAVG_COUNT; ++i) {
       float coef = kSYS.loadCoef_[i];
-      kSYS.loadAvg_[i] = 
+      kSYS.loadAvg_[i] =
           kSys_RunnableTasks() * coef + (1.0f - coef) * kSYS.loadAvg_[i];
     }
   }
@@ -67,3 +67,9 @@ void kCpu_Statistics ()
 
   memset (kCPU.stateTime_, 0, sizeof (kCPU.stateTime_));
 }
+
+int kcpu_state()
+{
+  return kCPU.state_;
+}
+

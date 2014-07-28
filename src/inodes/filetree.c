@@ -1,5 +1,5 @@
 /*
- *      This file is part of the KERNEL project.
+ *      This file is part of the Smoke project.
  *
  *  Copyright of this program is the property of its author(s), without
  *  those written permission reproduction in whole or in part is prohibited.
@@ -9,8 +9,8 @@
  *
  *      Routines to manipulate the nodes tree.
  */
-#include <inodes.h>
-#include <kinfo.h>
+#include <kernel/inodes.h>
+#include <kernel/info.h>
 
 // ===========================================================================
 /**
@@ -18,7 +18,7 @@
  *   EEXIST the method found an item with the same name
  * @note The inode are attach in alphabetic order.
  */
-static int kFs_Attach (kInode_t* ino, kInode_t* top, const char* name)
+static int kfs_attach (kInode_t* ino, kInode_t* top, const char* name)
 {
   int k;
   kInode_t* cursor = top->child_;
@@ -64,9 +64,10 @@ static int kFs_Attach (kInode_t* ino, kInode_t* top, const char* name)
   }
 }
 
-// ===========================================================================
 
-static kInode_t* kFs_LookChild (const char* name, kInode_t* dir)
+// ---------------------------------------------------------------------------
+/** */
+static kInode_t* kfs_stat (const char* name, kInode_t* dir)
 {
   int err;
   kStat_t stat;
@@ -88,12 +89,13 @@ static kInode_t* kFs_LookChild (const char* name, kInode_t* dir)
   }
 
   // kprintf ("FS] REQ FS FIND Child %s \n", name);
-  return kFs_Register (name, dir, &stat);
+  return kfs_register (name, dir, &stat);
 }
 
-// ----------------------------------------------------------------------------
 
-kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
+// ===========================================================================
+/** */
+kInode_t* kfs_lookup(const char* path, kInode_t* dir)
 {
   int k;
   int symLinkLoop = 0;
@@ -111,7 +113,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 
   // IF NO DIR OR / START WITH ROOT
   if (dir == NULL || path[0] == '/' || path[0] == '\\')
-    dir = kFs_RootInode();
+    dir = kSYS.rootNd_;
 
   // Look the first node file
   strncpy (uri, path, PATH_MAX);
@@ -121,7 +123,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 
     // Follow symlink
     if (S_ISLNK(dir->stat_.mode_)) {
-      kFs_FollowLink(&dir, &symLinkLoop);
+      kfs_follow_link(&dir, &symLinkLoop);
       if (__geterrno()) {
         return NULL;
       }
@@ -143,7 +145,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
     // If no child, request the file system
     if (dir->child_ == NULL) {
       kunlock (&dir->lock_);
-      dir = kFs_LookChild (name, dir);
+      dir = kfs_stat (name, dir);
       if (dir == NULL)
         return NULL;
       // kprintf ("FS] Request %s, get %s\n", name, dir->name_);
@@ -162,7 +164,7 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
           } else {
             // kprintf ("FS] Browse LOOK %s - %s, get %x\n", ino->name_, name, ino->next_);
             kunlock (&dir->lock_);
-            dir = kFs_LookChild (name, dir);
+            dir = kfs_stat (name, dir);
             if (dir == NULL)
               return NULL;
 
@@ -187,11 +189,11 @@ kInode_t* kFs_LookFor(const char* path, kInode_t* dir)
 }
 
 
-// ===========================================================================
+// ---------------------------------------------------------------------------
 /** Try to add a new inode on the VFS tree
  * The returned inode is still locked
  */
-kInode_t* kFs_Register(const char* name, kInode_t* dir, kStat_t* stat)
+kInode_t* kfs_register(const char* name, kInode_t* dir, kStat_t* stat)
 {
   kInode_t* ino;
   __noerror ();
@@ -215,7 +217,7 @@ kInode_t* kFs_Register(const char* name, kInode_t* dir, kStat_t* stat)
   ino->stat_.mode_ &= (S_IALLUGO | S_IFMT);
   klock(&dir->lock_, LOCK_FS_REGISTER);
   klock(&ino->lock_, LOCK_FS_REGISTER);
-  if (kFs_Attach (ino, dir, name)) {
+  if (kfs_attach (ino, dir, name)) {
     kunlock (&dir->lock_);
     kunlock (&ino->lock_);
     kfree(ino);
@@ -226,11 +228,13 @@ kInode_t* kFs_Register(const char* name, kInode_t* dir, kStat_t* stat)
   return ino;
 }
 
-// ===========================================================================
 
-int kFs_Unregister(kInode_t* ino)
+// ---------------------------------------------------------------------------
+/** */
+int kfs_unregister(kInode_t* ino)
 {
   return __seterrno (ENOSYS);
 }
 
-
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------

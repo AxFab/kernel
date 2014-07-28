@@ -1,5 +1,5 @@
-#include <memory.h>
-#include <inodes.h>
+#include <kernel/memory.h>
+#include <kernel/inodes.h>
 
 
 int kVma_Initialize ()
@@ -42,7 +42,7 @@ kAddSpace_t* kVma_Clone (kAddSpace_t* addp)
     addsp->last_->limit_ = md->limit_;
     addsp->last_->flags_ = md->flags_;
     if (md->ino_) {
-      kFs_Open (md->ino_);
+      kfs_grab (md->ino_);
       addsp->last_->ino_ = md->ino_;
       addsp->last_->offset_ = md->offset_;
     }
@@ -63,7 +63,7 @@ int kVma_Destroy (kAddSpace_t* addp)
     nx = md->next_;
 
     if (md->ino_)
-      kFs_Close (md->ino_);
+      kfs_release (md->ino_);
 
     kfree(md);
     md = nx;

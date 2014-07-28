@@ -1,7 +1,7 @@
 #ifndef ASSEMBLY_H__
 #define ASSEMBLY_H__
 
-#include <kcore.h>
+#include <kernel/core.h>
 
 // ============================================================================
 

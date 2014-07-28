@@ -1,7 +1,7 @@
 #ifndef PAGES_H__
 #define PAGES_H__
 
-#include <kcore.h>
+#include <kernel/core.h>
 
 uintptr_t kPg_AllocPage (void);
 void kPg_ReleasePage (uintptr_t page);

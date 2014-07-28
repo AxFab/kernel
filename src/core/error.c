@@ -1,4 +1,4 @@
-#include <kinfo.h>
+#include <kernel/info.h>
 
 #ifdef __KERNEL
 #  include <format.h>

@@ -1,7 +1,7 @@
 #ifndef CPU_H__
 #define CPU_H__
 
-#include <kcore.h>
+#include <kernel/core.h>
 
 // #error  WHAT !?
 

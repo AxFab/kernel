@@ -135,4 +135,5 @@ enum LOCK
 #define KLOG_SCH 0
 #define KLOG_SYC 1
 
+
 #endif /* KCONFIG_H__ */
