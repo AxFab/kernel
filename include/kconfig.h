@@ -40,13 +40,37 @@ enum CPU_STATE
 {
   CPU_STATE_NONE = 0,
   CPU_STATE_USER,
-  CPU_STATE_SYSTEM,
+  // CPU_STATE_SYSTEM,
   CPU_STATE_NICE,
   CPU_STATE_IDLE,
   CPU_STATE_IOWAIT,
   CPU_STATE_HARDWARE_IRQ,
   CPU_STATE_SOFTWARE_IRQ,
   CPU_STATE_STEALTIME,
+
+  /** This mode is valid only when the CPU are on user-space and should never
+   *  be set on kernel code.
+   */
+  CPU_STATE_USERMODE,
+
+  /** State given at the entry into a system call.
+   *  The function called on this state must check for user privileges.
+   */
+  CPU_STATE_SYSCALL,
+
+  /** State of the cpu, when no task are running.
+   *  This state can only be given by the function StopTask, which will save
+   *  the task-cpu state.
+   *  The only function that should be called here is PickNext().
+   */
+  CPU_STATE_SYSTEM,
+
+  /** This is the mode given to the CPU when driver is called.
+   *  the mode is keeped for routines called from a drivers.
+   *  Other function are not allowed and will raise a user-exception.
+   */
+  CPU_STATE_HARDWARE,
+
   CPU_STATE_COUNT,
 };
 

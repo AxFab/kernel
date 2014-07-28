@@ -94,6 +94,32 @@ ssize_t kFs_Read(kInode_t* ino, void* buffer, size_t length, off_t offset)
   return length;
 }
 
+ssize_t kFs_Write(kInode_t* ino, void* buffer, size_t length, off_t offset)
+{
+  assert (ino != NULL && buffer != NULL);
+
+  if (ino->fs_->write == NULL) {
+    __seterrno (EINVAL);
+    return -1;
+  }
+
+  if (KLOG_VFS) kprintf ("FS] Write '%s' on LBA %d using %x\n", ino->name_, offset, ino->fs_->write);
+  int err = ino->fs_->write (ino, buffer, length, offset);
+  if (err) {
+    __seterrno (err);
+    return -1;
+  }
+
+  return length;
+}
 
 
+
+
+int kFs_Map (kInode_t*ino, off_t offset, uint32_t* page, int mustRead)
+{
+  page = kPg_AllocPage();
+  mustRead = 1;
+  return __noerror();
+}
 

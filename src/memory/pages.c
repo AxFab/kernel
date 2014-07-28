@@ -58,7 +58,7 @@ void kDBG() {
 
 // ---------------------------------------------------------------------------
 /** Resolve a soft page fault by allocating a new page in designed context */
-void kPg_Resolve (uint32_t address, uint32_t *table, int rights, int dirRight)
+static void kPg_Resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page)
 {
   int dir = (address >> 22) & 0x3ff;
   int tbl = (address >> 12) & 0x3ff;
@@ -76,14 +76,18 @@ void kPg_Resolve (uint32_t address, uint32_t *table, int rights, int dirRight)
   }
 
   if (TABLE_PAGE_TH(dir)[tbl] == 0) {
-    TABLE_PAGE_TH(dir)[tbl] = kPg_AllocPage() | rights;
+    if (page == 0)
+      page = kPg_AllocPage();
+    TABLE_PAGE_TH(dir)[tbl] = page | rights;
     memset ((void*)(address & ~(PAGE_SIZE-1)), 0, PAGE_SIZE);
   }
 }
 
 
 // ---------------------------------------------------------------------------
-/** Resolve a soft page fault by allocating a new page in designed context */
+/** Resolve a soft page fault by allocating a new page in designed context
+ *
+ */
 void kPg_FillStream (kVma_t* vma, uint32_t address, int rights)
 {
   // uint32_t address = vma->base_;
@@ -93,10 +97,36 @@ void kPg_FillStream (kVma_t* vma, uint32_t address, int rights)
   if (KLOG_PF) kprintf ("PF] stream at <%x> \n", address);
   size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
   size_t off = (vma->offset_ + (address - vma->base_)) / vma->ino_->stat_.cblock_;
-  kPg_Resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR);
+
+
+  // uint32_t page;
+  // int read;
+  //kFs_Map (vma->ino_, off, &page, &read);
+  kPg_Resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, 0);
   kFs_Read (vma->ino_, (void*)address, lg, off);
+
   // kTty_HexDump (address, 0x40);
   if (KLOG_PF) kprintf ("PF] fill stream at <%x> \n", address);
+
+  //for (;;);
+}
+
+// ---------------------------------------------------------------------------
+/** Resolve a soft page fault by allocating a new page in designed context */
+void kPg_SyncStream (kVma_t* vma, uint32_t address)
+{
+  // uint32_t address = vma->base_;
+  // size_t lg = vma->limit_ - vma->base_;
+  // for (;address < vma->limit_; address += PAGE_SIZE)
+
+  if (KLOG_PF) kprintf ("PF] stream at <%x> \n", address);
+  size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
+  size_t off = (vma->offset_ + (address - vma->base_)) / vma->ino_->stat_.cblock_;
+  kFs_Write (vma->ino_, (void*)address, lg, off);
+  // kTty_HexDump (address, 0x40);
+  if (KLOG_PF) kprintf ("PF] sync stream at <%x> \n", address);
+
+  // kVma_Display (kCPU.current_->process_->memSpace_);
 
   //for (;;);
 }
@@ -117,7 +147,7 @@ int kPg_Fault (uint32_t address)
       kpanic ("PF] Page fault in user space <%x> SIGFAULT \n", address);
       for (;;);
     } else if (vma->flags_ & VMA_STACK) {
-      kPg_Resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR);
+      kPg_Resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR, 0);
       if (KLOG_PF) kprintf ("PF] Extend the stack\n");
     } else if (vma->ino_ != NULL)
       kPg_FillStream (vma, ALIGN_DW (address, PAGE_SIZE),  PG_USER_RDWR);
@@ -126,7 +156,7 @@ int kPg_Fault (uint32_t address)
       for (;;);
     }
   } else if (address < 0xffc00000)
-    kPg_Resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY);
+    kPg_Resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY, 0);
   else
     kpanic ("PF] PG NOT ALLOWED <%x> \n", address);
 

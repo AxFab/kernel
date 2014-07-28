@@ -103,10 +103,11 @@ kcpu_CMOS:
 
 
 ; 0x30 - System Calls
+extern kCore_Syscall
 kcpu_SysCall:
     SAVE_REGS
     push esp
-    call kInt_SysCall
+    call kCore_Syscall
     add esp, 4
     LOAD_REGS
     iret
@@ -153,9 +154,19 @@ kcpu_Irq15:
 
 ; ============================================================================
 
-extern kprintf
+extern kprintf, kInt_Exception
 
 %macro INT_EX_HANDLER 1
+    SAVE_REGS
+    push esp
+    push %1
+    call kInt_Exception
+    add esp, 8
+    LOAD_REGS
+    iret
+%endmacro
+
+%macro INT_EX_HANDLER_PRINT 1
     SAVE_REGS
     push dword %1
     push dword IntEx_Message

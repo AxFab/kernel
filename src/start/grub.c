@@ -1,8 +1,10 @@
 #include "pages.h"
 
+void VBA_Set (void* address, int width, int height, int depth);
+
 // --------------------------------------------------------------------------
 /** Read memory map */
-static int kgrubMemory (uint32_t *mmap) 
+static int kgrubMemory (uint32_t *mmap)
 {
   uint64_t base;
   uint64_t length;
@@ -27,18 +29,20 @@ static int kgrubMemory (uint32_t *mmap)
 }
 
 // --------------------------------------------------------------------------
-/** 
- * Using grub at boot, we send to the kernel all known machine infos 
+/**
+ * Using grub at boot, we send to the kernel all known machine infos
  */
-int kGrub_Initialize (uint32_t* bTable) 
+int kGrub_Initialize (uint32_t* bTable)
 {
   if (bTable[0] & (1<<11) && bTable[22] != 0x000B8000) {
     kTty_PreSystem ((void*)bTable[22], bTable[25], bTable[26], 4);
+    VBA_Set ((void*)bTable[22], bTable[25], bTable[26], 4);
   } else  {
     kTty_PreSystem ((void*)0x000B8000, 80, 25, 2);
   }
 
-  kprintf ("\n");
+  memset ((void*)0x7000, 0, 0x3000);
+  // kprintf ("\n");
   if (bTable[0] & (1<<9)) {
     kprintf ("Boot Loader: %s\n", (char*)bTable[16]);
   }
@@ -51,7 +55,7 @@ int kGrub_Initialize (uint32_t* bTable)
       kprintf ("HDD\n");
     else if (bTable[3] >> 24 == 0xe0)
       kprintf ("CD\n");
-    else 
+    else
       kprintf ("Unknown <%x>\n", bTable[3] >> 24);
   }
 

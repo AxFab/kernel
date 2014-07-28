@@ -51,11 +51,11 @@ int kCore_Initialize ()
   kFs_Initialize ();
   kVma_Initialize ();
 
-
   // Mount the system disc ----
   kInode_t* cd = kFs_LookFor ("/dev/sdA", NULL);
   kInode_t* mnt = kFs_LookFor ("/mnt/", NULL);
   ISO_Mount (cd, mnt);
+  VBA_Initialize (kSYS.devNd_);
 
   // KRP_Mount (NULL, mnt);
 

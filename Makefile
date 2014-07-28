@@ -122,6 +122,7 @@ kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/tmpfs/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/ata/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/fs/vba/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
              $(patsubst src/%,%,$(wildcard src/core/*.c))
 kImage_crt = $(obj_dir)/crtk.o

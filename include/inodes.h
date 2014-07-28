@@ -61,6 +61,7 @@ struct kFileOp {
   int (*unlink)();
   int (*symlink)();
 
+  // uint32_t (*map)(kInode_t* fp, off_t offset);
 };
 
 /*
@@ -101,9 +102,10 @@ kInode_t* kFs_MkNode(const char* name, kInode_t* dir, kStat_t* stat);
 int kFs_Delete(kInode_t* ino);
 
 ssize_t kFs_Read(kInode_t* ino, void* buffer, size_t count, off_t offset);
+ssize_t kFs_Write(kInode_t* ino, void* buffer, size_t count, off_t offset);
 
 // int kFs_Read(kInode_t* ino, void* buffer, off_t offset, size_t count);
-int kFs_Write(kInode_t* ino, void* buffer, off_t offset, size_t count);
+// int kFs_Write(kInode_t* ino, void* buffer, off_t offset, size_t count);
 int kFs_Sync(kInode_t* ino);
 
 int kFs_FollowLink (kInode_t** ino, int* loopCount);

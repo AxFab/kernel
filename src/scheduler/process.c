@@ -7,7 +7,7 @@
 
 // ---------------------------------------------------------------------------
 /** Attach a new process to the system list.
- * @note: {proc} must be locked
+ * \note {proc} must be locked
  */
 static void kSch_AttachProcess (kProcess_t *proc)
 {
@@ -49,11 +49,21 @@ int kSch_NewProcess (kProcess_t* parent, kInode_t* image, kInode_t* dir)
   proc->memSpace_ = mmsp;
   if (parent)  atomic_inc_i32 (&parent->childrenCount_);
 
+  proc->streamCap_ = 8;
+  proc->openStreams_ = (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
+  proc->openStreams_[0] = (kStream_t*)1;
+  proc->openStreams_[1] = (kStream_t*)1;
+  proc->openStreams_[2] = (kStream_t*)1;
+
+
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   kSch_AttachProcess (proc);
   proc->threadCount_++;
   proc->threadFrst_ = kSch_NewThread (proc, 0x1000000, 0xc0ffee);
   proc->threadLast_ = proc->threadFrst_;
+
+
+
   kunlock (&proc->lock_);
 
   kprintf ("Start program [%d - %s - root<0> - /mnt/cd0/USR/BIN]\n", proc->pid_, image->name_);

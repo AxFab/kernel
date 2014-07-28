@@ -1,6 +1,7 @@
 #include "tty.h"
 #include "cpu.h"
 #include <kinfo.h>
+#include <scheduler.h>
 
 /**
 
@@ -123,7 +124,7 @@ int kInt_CMOS (kCpuRegs_t* registers)
   value += 9765625000; // Period in pico-seconds
   // if (value > /*9765625 */ 1024) {
   //   value = 0;
-    kTty_Putc ('-');
+  //  kTty_Putc ('-');
   // }
   outb(0x70, 0x8C); // select register C
   inb(0x71);    // just throw away contents
@@ -131,8 +132,7 @@ int kInt_CMOS (kCpuRegs_t* registers)
   return 0;
 }
 
-int kCore_Syscall (kCpuRegs_t* regs, int func, uintptr_t p1, uintptr_t p2, uintptr_t p3, uintptr_t p4, uintptr_t p5);
-
+/*
 int kInt_SysCall (kCpuRegs_t* regs)
 {
   regs->eax = kCore_Syscall (regs, (int)regs->eax,
@@ -144,7 +144,7 @@ int kInt_SysCall (kCpuRegs_t* regs)
   regs->ebx = __geterrno();
   return 0;
 }
-
+*/
 
 int kPg_Fault (uint32_t address);
 
@@ -155,10 +155,16 @@ int kInt_PageFault (uint32_t address, kCpuRegs_t* registers)
 }
 
 
-int kInt_Protect (unsigned int address, kCpuRegs_t* registers)
+int kInt_Protect (unsigned int address, kCpuRegs_t* regs)
 {
   kTty_Write ("Protect...\n");
-  // for (;;);
+  if (regs->cs == 0x08)
+    kpanic ("Kernel throw general protection fault at [%x]\n", address);
+
+  kprintf ("task throw general protection at [%x]: abort\n", address);
+  kSch_ExitProcess (kCPU.current_->process_, -1);
+  kSch_StopTask (TASK_STATE_ZOMBIE, regs);
+  kSch_PickNext ();
   return 0;
 }
 
@@ -209,3 +215,26 @@ int kCpu_IRQ (int irq, kCpuRegs_t* regs)
 }
 
 
+
+
+int kInt_Exception (int no, kCpuRegs_t* regs)
+{
+  if (regs->cs == 0x08)
+    kpanic ("Kernel throw an exception [%d]\n", no);
+
+  if (no == 3) {
+
+    kprintf ("Breakpoint for task [%d]: continue\n", kCPU.current_->process_->pid_);
+    kCpu_DisplayRegs (regs);
+
+  } else {
+
+    kprintf ("task throw an exception [%d]: abort\n", no);
+
+    kSch_ExitProcess (kCPU.current_->process_, -1);
+    kSch_StopTask (TASK_STATE_ZOMBIE, regs);
+    kSch_PickNext ();
+  }
+
+  return 0;
+}
