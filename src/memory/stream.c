@@ -37,13 +37,13 @@ int kpg_fill_stream (kVma_t* vma, uint32_t address, int rights)
   } else {
     // FIXME Copy-on-write
     read = 1;
-    page = kpg_alloc();    
+    page = kpg_alloc();
   }
 
   kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page, read);
   if (read)
     kfs_feed (vma->ino_, (void*)address, lg, off / vma->ino_->stat_.cblock_);
-  
+
   if (KLOG_PF) kprintf ("PF] fill stream at <%x> \n", address);
   return __noerror();
 }
