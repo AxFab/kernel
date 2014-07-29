@@ -16,7 +16,8 @@
 #include <time.h>
 #include <sys/types.h>
 
-/* MISSING STDLIB */
+/* --- MISSING STDLIB --- */
+unsigned long long strtoull (const char * str, char ** endptr, int base);
 int snprintf(char* s, size_t n, const char* format, ... );
 
 typedef struct spinlock     spinlock_t;
@@ -31,7 +32,10 @@ struct spinlock {
 typedef int64_t ltime_t;
 ltime_t ltime (ltime_t* ptr);
 
-/* END OF STDLIB */
+#define TRUE    (!0)
+#define FALSE   (0)
+
+/* --- END OF STDLIB --- */
 
 // Configuration header
 #include <kernel/config.h>
@@ -71,6 +75,7 @@ typedef struct kStat        kStat_t;
 typedef struct kInode       kInode_t;
 typedef struct kStream      kStream_t;
 typedef struct kFileOp      kFileOp_t;
+typedef struct kPage        kPage_t;
 // memory.h
 typedef struct kVma         kVma_t;
 typedef struct kAddSpace    kAddSpace_t;
@@ -94,8 +99,10 @@ int kgeterrno();
 int kpanic(const char* str, ...);
 
 // Debug ------------------------------------------------
+void ksymreg (uintptr_t ptr, const char* sym);
 void kstacktrace(uintptr_t MaxFrames);
 void kdump (void* ptr, size_t lg);
+void kregisters (kCpuRegs_t* regs);
 
 // Print ------------------------------------------------
 int kputc(int c);
@@ -137,9 +144,6 @@ int printf(const char*, ...);
 #define free kfree
 #endif
 
-
-// ======================================================
-#define THREAD_ID 0x1793
 
 // ======================================================
 

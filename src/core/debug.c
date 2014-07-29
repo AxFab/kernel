@@ -1,5 +1,50 @@
 #include <kernel/core.h>
 
+
+// ----------------------------------------------------------------------------
+typedef struct kSymbol kSymbol_t;
+struct kSymbol
+{
+  const char* name_;
+  uintptr_t   address_;
+  kSymbol_t*  next_;
+};
+
+kSymbol_t* first;
+kSymbol_t* last;
+
+// ----------------------------------------------------------------------------
+void ksymreg (uintptr_t ptr, const char* sym)
+{
+
+  if (first == NULL) {
+    first = KALLOC (kSymbol_t);
+    last = first;
+  } else {
+    last->next_ =  KALLOC (kSymbol_t);
+    last = last->next_;
+  }
+
+  // kprintf ("[%6x] <%s>\n", (uint32_t)ptr, sym);
+  last->name_ = kcopystr(sym);
+  last->address_ = ptr;
+}
+
+// ----------------------------------------------------------------------------
+const char* ksymbol (uintptr_t address)
+{
+  kSymbol_t* iter = first;
+  if (address < first->address_)
+    return "<<<<<";
+  while (iter->next_) {
+    if (iter->next_->address_ > address)
+      return iter->name_;
+    iter = iter->next_;
+  }
+
+  return ">>>>>";
+}
+
 // ----------------------------------------------------------------------------
 /**
     Print the stack trace of the current frame
@@ -21,7 +66,7 @@ void kstacktrace(uintptr_t MaxFrames)
     // Unwind to previous stack frame
     ebp = (uintptr_t*)(ebp[0]);
     uintptr_t* arguments = &ebp[2];
-    kprintf("  0x%x    [%x - %x] \n", eip, (uintptr_t)ebp, (uintptr_t)arguments);
+    kprintf("  0x%x - %s ()         [args: %x] \n", eip, ksymbol(eip), (uintptr_t)arguments);
   }
 }
 
@@ -56,41 +101,3 @@ void kdump (void* ptr, size_t lg)
 
   kprintf ("\n");
 }
-
-// ----------------------------------------------------------------------------
-static char sz_format[20];
-/**
-    Store in a temporary buffer a size in bytes in a human-friendly format.
- */
-const char* kpsize (uintmax_t number)
-{
-  const char* prefix[] = { "bs", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb" };
-  int k = 0;
-  int rest = 0;
-
-  while (number > 1024) {
-    k++;
-    rest = number & (1024 - 1);
-    number /= 1024;
-  };
-
-  if (k == 0) {
-    snprintf (sz_format, 20, "%d bytes", (int)number);
-
-  } else if (number < 10) {
-    float value = (rest / 1024.0f) * 100;
-    snprintf (sz_format, 20, "%1d.%02d %s", (int)number, (int)value, prefix[k]);
-
-  } else if (number < 100) {
-    float value = (rest / 1024.0f) * 10;
-    snprintf (sz_format, 20, "%2d.%01d %s", (int)number, (int)value, prefix[k]);
-
-  } else {
-    // float value = (rest / 1024.0f) + number;
-    //snprintf (sz_format, 20, "%.3f %s", (float)value, prefix[k]);
-    snprintf (sz_format, 20, "%4d %s", (int)number, prefix[k]);
-  }
-
-  return sz_format;
-}
-

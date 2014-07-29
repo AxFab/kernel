@@ -12,7 +12,7 @@
 
 
 struct kStat {
-  ino_t           ino_;        ///< Inode number
+  ino_t           ino_;       ///< Inode number
   mode_t          mode_;      ///< File mode
   uid_t           uid_;       ///< User ID
   gid_t           gid_;       ///< Group ID
@@ -37,10 +37,17 @@ struct kInode {
   kInode_t*       child_;     ///< First child inode
   spinlock_t      lock_;      ///< Lock
   kFileOp_t*      fs_;        ///< File system driver
-  int             pageCount_; ///< max number of physical pages in cache
-  uint32_t*       physPages_; ///< physical pages caching
   kAssembly_t*    assembly_;
   void*           devinfo_;
+  int             pageCount_;  ///< max number of physical pages in cache
+  kPage_t*        pagesCache_; ///< physical pages caching
+};
+
+struct kPage
+{
+  uint32_t  phys_;
+  off_t     offset_;
+  int       flags_;
 };
 
 

@@ -22,6 +22,8 @@ void PIT_Initialize (uint32_t frequency);
 int ATA_Initialize(kInode_t* dev);
 int VBA_Initialize(kInode_t* dev);
 int ISO_Mount (kInode_t* dev, kInode_t* mnt);
+void ksymbols_load (kInode_t* ino);
+
 
 
 int kCore_Initialize ()
@@ -64,6 +66,12 @@ int kCore_Initialize ()
 
   // KRP_Mount (NULL, mnt);
 
+  kInode_t* sym = kfs_lookup ("/mnt/OS_CORE/BOOT/KIMAGE.MAP", NULL);
+  if (sym != NULL)
+    ksymbols_load(sym);
+  else
+    kprintf ("We can't found the file kImage.map\n");
+
   kInode_t* path = kfs_lookup ("/mnt/OS_CORE/USR/BIN/", NULL);
   kInode_t* master = kfs_lookup ("MASTER.", path);
   kInode_t* deamon = kfs_lookup ("DEAMON.", path);
@@ -71,10 +79,10 @@ int kCore_Initialize ()
   // kfs_log_all ();
 
 
-  kSch_NewProcess (NULL, master, path);
-  kSch_NewProcess (NULL, deamon, path);
+  ksch_create_process (NULL, master, path);
+  ksch_create_process (NULL, deamon, path);
 
-  kSch_Initialize ();
+  ksch_init ();
 
   return 0;
 }

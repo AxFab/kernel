@@ -1,3 +1,14 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Routines for page completions
+ */
 #include <kernel/memory.h>
 #include <kernel/scheduler.h>
 #include <kernel/inodes.h>
@@ -18,31 +29,32 @@
 // ---------------------------------------------------------------------------
 void kpg_dump (uint32_t *table)
 {
-  int i;
-  for (i=0; i<1024; ++i) {
-    if ((i % 128) == 0)
-      kTty_Putc ('\n');
-    if (table[i] == 0)
-      kTty_Putc ('.');
-    // else
-    //   kTty_Putc ((table[i] & 0x7) + '0');
+  int i, j;
+  char* tmp = (char*)kalloc (1024 + 10);
 
+  for (i=0, j=0; i<1024; ++i) {
+    if ((i % 128) == 0)
+      tmp[j++] = '\n';
+    if (table[i] == 0)
+      tmp[j++] = '.';
     else if ((table[i] & 0x7) == 7)
-      kTty_Putc ('U');
+      tmp[j++] = 'u';
     else if ((table[i] & 0x7) == 3)
-      kTty_Putc ('K');
+      tmp[j++] = 'k';
     else if ((table[i] & 0x7) == 5)
-      kTty_Putc ('R');
+      tmp[j++] = 'r';
     else
-      kTty_Putc ('?');
+      tmp[j++] = '?';
   }
 
-  kTty_Putc ('\n');
+  tmp[j++] = '\n';
+  tmp[j++] = '\0';
+  kprintf (tmp);
 }
 
 // ---------------------------------------------------------------------------
 /** Resolve a soft page fault by allocating a new page in designed context */
-void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page)
+void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page, int reset)
 {
   int dir = (address >> 22) & 0x3ff;
   int tbl = (address >> 12) & 0x3ff;
@@ -63,7 +75,8 @@ void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, u
     if (page == 0)
       page = kpg_alloc();
     TABLE_PAGE_TH(dir)[tbl] = page | rights;
-    memset ((void*)(address & ~(PAGE_SIZE-1)), 0, PAGE_SIZE);
+    if (reset)
+      memset ((void*)(address & ~(PAGE_SIZE-1)), 0, PAGE_SIZE);
   }
 }
 
@@ -83,16 +96,16 @@ int kpg_fault (uint32_t address)
       kpanic ("PF] Page fault in user space <%x> SIGFAULT \n", address);
       for (;;);
     } else if (vma->flags_ & VMA_STACK) {
-      kpg_resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR, 0);
+      kpg_resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR, 0, TRUE);
       if (KLOG_PF) kprintf ("PF] Extend the stack\n");
     } else if (vma->ino_ != NULL)
-      kpg_fill_stream (vma, ALIGN_DW (address, PAGE_SIZE),  PG_USER_RDWR);
+      kpg_fill_stream (vma, ALIGN_DW (address, PAGE_SIZE), PG_USER_RDWR);
     else {
       kpanic ("PF] Page fault in user space <%x> [%x] \n", address, vma);
       for (;;);
     }
   } else if (address < 0xffc00000)
-    kpg_resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY, 0);
+    kpg_resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY, 0, TRUE);
   else
     kpanic ("PF] PG NOT ALLOWED <%x> \n", address);
 

@@ -119,6 +119,7 @@ enum LOCK
   // Inodes
   LOCK_FS_LOOK,
   LOCK_FS_REGISTER,
+  LOCK_FS_MAP,
 
   // Memory
   LOCK_VMA_MMAP,
@@ -150,7 +151,7 @@ enum LOCK
 #define KLOG_PF 0
 #define KLOG_VFS 0
 #define KLOG_SCH 0
-#define KLOG_SYC 1
+#define KLOG_SYC 0
 
 
 #endif /* KCONFIG_H__ */

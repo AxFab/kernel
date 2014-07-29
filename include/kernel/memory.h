@@ -65,7 +65,7 @@ kVma_t* kvma_look_ino (kAddSpace_t* addp, kInode_t* ino, off_t offset);
 void kvma_display(kAddSpace_t* addp);
 
 void kpg_dump (uint32_t *table);
-void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page);
+void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page, int reset);
 int kpg_fault (uint32_t address);
 uint32_t kpg_new ();
 

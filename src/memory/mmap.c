@@ -162,6 +162,8 @@ kVma_t* kvma_mmap (kAddSpace_t* addressSpace, kVma_t* area)
     vma->flags_ = area->flags_;
     vma->offset_ = area->offset_;
     vma->ino_ = area->ino_;
+
+    // assert ((vma->offset_ & (PAGE_SIZE-1)) == 0);
   }
 
   kunlock (&addressSpace->lock_);

@@ -1,3 +1,14 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Main function related to processes.
+ */
 #include <kernel/scheduler.h>
 #include <kernel/assembly.h>
 #include <kernel/memory.h>
@@ -10,7 +21,7 @@
 /** Attach a new process to the system list.
  * \note {proc} must be locked
  */
-static void kSch_AttachProcess (kProcess_t *proc)
+static void ksch_attach_proc (kProcess_t *proc)
 {
   assert (kislocked (&proc->lock_));
 
@@ -28,7 +39,7 @@ static void kSch_AttachProcess (kProcess_t *proc)
 
 // ===========================================================================
 /** Create a new process, ready to start */
-int kSch_NewProcess (kProcess_t* parent, kInode_t* image, kInode_t* dir)
+int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir)
 {
   assert (image != NULL);
 
@@ -58,9 +69,9 @@ int kSch_NewProcess (kProcess_t* parent, kInode_t* image, kInode_t* dir)
 
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
-  kSch_AttachProcess (proc);
+  ksch_attach_proc (proc);
   proc->threadCount_++;
-  proc->threadFrst_ = kSch_NewThread (proc, 0x1000000, 0xc0ffee);
+  proc->threadFrst_ = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
   proc->threadLast_ = proc->threadFrst_;
 
 
@@ -74,7 +85,7 @@ int kSch_NewProcess (kProcess_t* parent, kInode_t* image, kInode_t* dir)
 
 // ---------------------------------------------------------------------------
 /** Add a new thread to the process */
-int kSch_AddThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
+int ksch_add_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 {
   assert (proc != NULL);
   assert (kCPU.current_ != NULL && proc == kCPU.current_->process_);
@@ -86,7 +97,7 @@ int kSch_AddThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   kTask_t* pick = proc->threadFrst_;
   while (pick != NULL) {
     if (pick->state_ == TASK_STATE_ZOMBIE) {
-      kSch_ResurectTask (pick, entry, arg);
+      ksch_resurect_thread (pick, entry, arg);
       kunlock (&proc->lock_);
       return __noerror();
     }
@@ -94,15 +105,22 @@ int kSch_AddThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   }
 
   proc->threadCount_++;
-  proc->threadLast_->nextPr_ = kSch_NewThread (proc, entry, arg);
+  proc->threadLast_->nextPr_ = ksch_new_thread (proc, entry, arg);
   proc->threadLast_ = proc->threadLast_->nextPr_;
   kunlock (&proc->lock_);
   return __noerror();
 }
 
 // ---------------------------------------------------------------------------
-/** Push process to the garbage collector */
-void kSch_DestroyProcess (kProcess_t* proc)
+/** Push process to the garbage collector
+ *  FIXME if the process is traced, or launcher is waiting, don't erase
+ *  anything. When the parent stop follow, test if process have exited, in this
+ *  case release ressources.
+ *  FIXME processes can refer to this one as parent. We need to clean that.
+ *  NOTE the only use of process parenting is for waitPid, that can be handle
+ *  differently.
+ */
+void ksch_destroy_process (kProcess_t* proc)
 {
   proc->flags_ |= PROC_EXITED;
   // FIXME if (proc->parent_ != NULL && proc->flags_ & PROC_TRACED) { // signal() }
@@ -112,7 +130,7 @@ void kSch_DestroyProcess (kProcess_t* proc)
   while (task != NULL) {
     kTask_t* pick = task;
     task = task->nextPr_;
-    kSch_DestroyThread (pick);
+    ksch_destroy_thread (pick);
   }
 
   proc->threadFrst_ = NULL;
@@ -128,15 +146,15 @@ void kSch_DestroyProcess (kProcess_t* proc)
 // ---------------------------------------------------------------------------
 /** Exit a process by terminate all associated threads.
  *  All threads are requested to stop, once none are running,
- *  kSch_DestroyProcess is called.
+ *  ksch_destroy_process is called.
  */
-void kSch_ExitProcess (kProcess_t* proc, int status)
+void ksch_exit (kProcess_t* proc, int status)
 {
   proc->flags_ |= PROC_EXITED;
   proc->exitStatus_ = status;
   kTask_t* task = proc->threadFrst_;
   while (task != NULL) {
-    kSch_Abort (task);
+    ksch_abort (task);
     task = task->nextPr_;
   }
 }

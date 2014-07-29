@@ -19,7 +19,7 @@ int kUserParam_Buffer (kAddSpace_t* addp, void* base, size_t length)
   return !0;
 }
 
-int kUserParam_String (kAddSpace_t* addp, const char* str, int max)
+int kUserParam_String (kAddSpace_t* addp, const char* str, size_t max)
 {
   kVma_t* start = kvma_look_at (addp, (uintptr_t)str);
   if (start == NULL) {

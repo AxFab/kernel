@@ -56,7 +56,7 @@ kVma_t* kvma_look_ino (kAddSpace_t* addp, kInode_t* ino, off_t offset)
     size_t filemap = FILE_MAP_SIZE;
     // FIXME eventually freed the old ones.
     // FIXME wrong flags
-    kVma_t vma = { VMA_SHARED, 0, filemap, NULL, NULL, ino, ALIGN_DW (offset, filemap) };
+    kVma_t vma = { VMA_SHARED | VMA_READ | VMA_WRITE, 0, filemap, NULL, NULL, ino, ALIGN_DW (offset, filemap) };
     return kvma_mmap (addp, &vma);
   }
 

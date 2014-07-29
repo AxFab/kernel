@@ -117,6 +117,7 @@ $(eval $(call KERNEL,kMin))
 kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/syscalls/*.c))  \
              $(patsubst src/%,%,$(wildcard src/inodes/*.c))  \
+             $(patsubst src/%,%,$(wildcard src/streams/*.c))  \
              $(patsubst src/%,%,$(wildcard src/assembly/*.c))  \
              $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
@@ -182,6 +183,7 @@ Os.iso: $(kimg) master deamon hello sname
 
 	$(VV) cp tools/grub/grub.cfg  iso/boot/grub/grub.cfg
 	$(VV) cp $(bin_dir)/$(kimg) iso/boot/kImage
+	$(VV) cp kImage.map iso/boot/kImage.map
 
 	$(VV) cp $(bin_dir)/master iso/usr/bin/master
 	$(VV) cp $(bin_dir)/deamon iso/usr/bin/deamon

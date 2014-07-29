@@ -24,6 +24,7 @@ struct kSection
   uintptr_t   align_;
   uintptr_t   offset_;
   kSection_t* next_ ;
+  int         flags_;
 };
 
 

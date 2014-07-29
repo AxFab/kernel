@@ -1,3 +1,14 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Routines for page data syncronization with streams.
+ */
 #include <kernel/memory.h>
 #include <kernel/scheduler.h>
 #include <kernel/inodes.h>
@@ -10,19 +21,29 @@
  */
 int kpg_fill_stream (kVma_t* vma, uint32_t address, int rights)
 {
-  if (KLOG_PF) kprintf ("PF] stream at <%x> \n", address);
+  size_t off = (vma->offset_ + (address - vma->base_));
+  if (KLOG_PF) kprintf ("PF] stream at <%x>  [%x-%x-%x]\n", address, vma->offset_, vma->base_, off);
   size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
-  size_t off = (vma->offset_ + (address - vma->base_)) / vma->ino_->stat_.cblock_;
 
   uint32_t page;
   int read;
-  if (kfs_map (vma->ino_, off, &page, &read))
-    return __geterrno ();
 
-  kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page);
+  if (vma->flags_ & VMA_SHARED) {
+    if (kfs_map (vma->ino_, off, &page, &read))
+      return __geterrno ();
+
+    if (rights == PG_USER_RDWR)
+      rights = vma->flags_ & VMA_WRITE ? PG_USER_RDWR : PG_USER_RDONLY;
+  } else {
+    // FIXME Copy-on-write
+    read = 1;
+    page = kpg_alloc();    
+  }
+
+  kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page, read);
   if (read)
-    kfs_feed (vma->ino_, (void*)address, lg, off);
-
+    kfs_feed (vma->ino_, (void*)address, lg, off / vma->ino_->stat_.cblock_);
+  
   if (KLOG_PF) kprintf ("PF] fill stream at <%x> \n", address);
   return __noerror();
 }

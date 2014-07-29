@@ -222,8 +222,6 @@ void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param)
 
 void kCpu_Save (kTask_t* task, kCpuRegs_t* regs)
 {
-  // kCpu_DisplayRegs (regs);
-  // kCpu_DisplayRegs (&task->regs_);
   memcpy (&task->regs_, regs, sizeof(kCpuRegs_t));
   if (task->regs_.cs == 0x08) {
     task->regs_.esp = task->regs_.espx + 12;

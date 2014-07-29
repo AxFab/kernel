@@ -1,12 +1,23 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Function related to thread creation.
+ */
 #include <kernel/scheduler.h>
 #include <kernel/memory.h>
 #include <kernel/inodes.h>
 #include <kernel/info.h>
 
 
-// ---------------------------------------------------------------------------
+// ===========================================================================
 /** Add a new task on the scheduler list as a waiting task. */
-static void kSch_InsertTask (kTask_t* task)
+static void ksch_insert (kTask_t* task)
 {
   klock(&kSYS.schedLock_, LOCK_SCHED_INSERT);
   klock(&task->lock_, LOCK_SCHED_INSERT);
@@ -30,7 +41,7 @@ static void kSch_InsertTask (kTask_t* task)
 
 
 // ---------------------------------------------------------------------------
-static void kSch_RemoveTask (kTask_t* task)
+static void ksch_remove (kTask_t* task)
 {
   klock(&kSYS.schedLock_, LOCK_SCHED_REMOVE);
   assert (task->state_ == TASK_STATE_ZOMBIE);
@@ -73,10 +84,10 @@ static void kSch_RemoveTask (kTask_t* task)
 
 // ===========================================================================
 /** Create a new thread, ready to execute */
-kTask_t* kSch_NewThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
+kTask_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 {
   assert (proc != NULL);
-  kVma_t area = { VMA_STACK, 0L, 0L, 0, 0, 0, 0 };
+  kVma_t area = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
   area.limit_ = PAGE_SIZE * 2;
 
   // FIXME load memory
@@ -90,37 +101,36 @@ kTask_t* kSch_NewThread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   task->execStart_ = ltime(NULL);
   kCpu_Reset (&task->regs_, entry, arg);
   atomic_inc_i32 (&proc->runningTask_);
-  kSch_InsertTask (task);
+  ksch_insert (task);
   return task;
 }
 
 // ---------------------------------------------------------------------------
 /** Ressurect a zombie thread, ready to execute */
-void kSch_ResurectTask (kTask_t* task, uintptr_t entry, intmax_t arg)
+void ksch_resurect_thread (kTask_t* task, uintptr_t entry, intmax_t arg)
 {
   assert (task->state_ == TASK_STATE_ZOMBIE);
 
   task->execStart_ = ltime(NULL);
   kCpu_Reset (&task->regs_, entry, arg);
   atomic_inc_i32 (&task->process_->runningTask_);
-  kSch_WakeUp (task);
+  ksch_wakeup (task);
 }
 
 // ---------------------------------------------------------------------------
 /**  */
-void kSch_DestroyThread (kTask_t* task)
+void ksch_destroy_thread (kTask_t* task)
 {
   klock (&task->lock_, LOCK_TASK_DESTROY);
-  kSch_RemoveTask (task);
+  ksch_remove (task);
   task->flags_ |= TASK_REMOVED;
   kunlock (&task->lock_);
 }
 
 
 
-// INODES
-
-void kSch_PrintTask ()
+// ---------------------------------------------------------------------------
+void ksch_print ()
 {
   kProcess_t* proc = kSYS.allProcFrst_;
   while (proc) {
@@ -129,3 +139,5 @@ void kSch_PrintTask ()
   }
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------

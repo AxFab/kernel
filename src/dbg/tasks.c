@@ -30,7 +30,7 @@ int kFs_Read(kInode_t* ino, void* buffer, off_t offset, size_t count)
 
 int main ()
 {
-  kSch_Initialize();
+  ksch_init();
 
   // Start first logon
   kInode_t* inoShell = kFs_Lookup ("bin/i686/debug/inodes", NULL);

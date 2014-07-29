@@ -72,7 +72,7 @@ int kInt_Clock (kCpuRegs_t* regs)
     ticksCount = 0;
     // kprintf ("System clock: %lld us\n", kSYS.now_);
 
-    kSch_Ticks((kCpuRegs_t*)&regs);
+    ksch_ticks((kCpuRegs_t*)&regs);
   }
 
   if (++clockCount > CLOCK_HZ) {
@@ -162,9 +162,9 @@ int kInt_Protect (unsigned int address, kCpuRegs_t* regs)
     kpanic ("Kernel throw general protection fault at [%x]\n", address);
 
   kprintf ("task throw general protection at [%x]: abort\n", address);
-  kSch_ExitProcess (kCPU.current_->process_, -1);
-  kSch_StopTask (TASK_STATE_ZOMBIE, regs);
-  kSch_PickNext ();
+  ksch_exit (kCPU.current_->process_, -1);
+  ksch_stop (TASK_STATE_ZOMBIE, regs);
+  ksch_pick ();
   return 0;
 }
 
@@ -225,15 +225,15 @@ int kInt_Exception (int no, kCpuRegs_t* regs)
   if (no == 3) {
 
     kprintf ("Breakpoint for task [%d]: continue\n", kCPU.current_->process_->pid_);
-    kCpu_DisplayRegs (regs);
+    kregisters (regs);
 
   } else {
 
     kprintf ("task throw an exception [%d]: abort\n", no);
 
-    kSch_ExitProcess (kCPU.current_->process_, -1);
-    kSch_StopTask (TASK_STATE_ZOMBIE, regs);
-    kSch_PickNext ();
+    ksch_exit (kCPU.current_->process_, -1);
+    ksch_stop (TASK_STATE_ZOMBIE, regs);
+    ksch_pick ();
   }
 
   return 0;

@@ -65,27 +65,27 @@ struct kTask
 
 
 // ---------------------------------------------------------------------------
-void kSch_WaitEvent(kTask_t* task, int event, long param, kCpuRegs_t* regs);
-void kSch_CancelEvent (kTask_t* task);
+void kevt_wait(kTask_t* task, int event, long param, kCpuRegs_t* regs);
+void kevt_cancel (kTask_t* task);
 // ---------------------------------------------------------------------------
-// int kSch_TimeSlice (kTask_t* task);
-void kSch_Ticks (kCpuRegs_t* regs) ;
-void kSch_PickNext ();
+// int ksch_timeslice (kTask_t* task);
+void ksch_ticks (kCpuRegs_t* regs) ;
+void ksch_pick ();
 // ---------------------------------------------------------------------------
-int kSch_NewProcess (kProcess_t* proc, kInode_t* image, kInode_t* dir);
-int kSch_AddThread (kProcess_t* proc, uintptr_t entry, intmax_t arg);
-void kSch_DestroyProcess (kProcess_t* proc);
-void kSch_ExitProcess (kProcess_t* proc, int status);
+int ksch_create_process (kProcess_t* proc, kInode_t* image, kInode_t* dir);
+int ksch_add_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg);
+void ksch_destroy_process (kProcess_t* proc);
+void ksch_exit (kProcess_t* proc, int status);
 // ---------------------------------------------------------------------------
-void kSch_Initialize ();
-int kSch_OnTask ();
-void kSch_WakeUp (kTask_t* task);
-void kSch_StopTask (int state, kCpuRegs_t* regs);
-void kSch_Abort (kTask_t* task);
+void ksch_init ();
+int ksch_ontask ();
+void ksch_wakeup (kTask_t* task);
+void ksch_stop (int state, kCpuRegs_t* regs);
+void ksch_abort (kTask_t* task);
 // ---------------------------------------------------------------------------
-kTask_t* kSch_NewThread (kProcess_t* proc, uintptr_t entry, intmax_t arg);
-void kSch_ResurectTask (kTask_t* task, uintptr_t entry, intmax_t arg) ;
-void kSch_DestroyThread (kTask_t* task) ;
+kTask_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg);
+void ksch_resurect_thread (kTask_t* task, uintptr_t entry, intmax_t arg) ;
+void ksch_destroy_thread (kTask_t* task) ;
 // ---------------------------------------------------------------------------
 
 

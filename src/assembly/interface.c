@@ -38,14 +38,21 @@ void kasm_destroy (kAssembly_t* assembly)
  */
 int kasm_load (kAddSpace_t* mmsp, kInode_t* ino)
 {
+  kSection_t* sec;
   kAssembly_t* assembly = ino->assembly_;
   kVma_t area = { VMA_EXECUTABLE, 0L, 0L, 0, 0, ino, 0 };
 
-  kSection_t* sec = assembly->section_;
+  sec = assembly->section_;
   while (sec != NULL) {
     area.base_ = sec->address_;
     area.limit_ = area.base_ + sec->length_;
     area.offset_ = sec->offset_;
+    area.flags_ = (sec->flags_ & 7) | VMA_EXECUTABLE;
+    if ((sec->flags_ & VMA_WRITE) == 0 )
+      area.flags_ |= VMA_SHARED;
+    // kprintf ("ELF : %x - %x", sec->address_, sec->offset_);
+    assert ((sec->offset_ & (PAGE_SIZE -1)) == 0);
+
     kvma_mmap (mmsp, &area);
     sec = sec->next_;
   }

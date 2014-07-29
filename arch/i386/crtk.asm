@@ -237,7 +237,7 @@ kCpu_Context:
 %define SIZEOF_CPU_REGS 17*4
 ; =============================================
 global kCpu_SwitchContext
-extern kCpu_DisplayRegs, kTty_HexDump
+extern kregisters, kTty_HexDump
 ; void kCpu_SwitchContext (kCpuRegs_t* regs, uint32_t dir)
 
 ; void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);

@@ -1,8 +1,19 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Yield scheduler algorithm.
+ */
 #include <kernel/scheduler.h>
 #include <kernel/info.h>
 
 // ---------------------------------------------------------------------------
-static int kSch_TimeSlice (kTask_t* task)
+static int ksch_timeslice (kTask_t* task)
 {
   ltime_t elapsed = ltime(NULL) - task->execStart_;
   if (elapsed == 0) elapsed = 1;
@@ -17,14 +28,14 @@ static int kSch_TimeSlice (kTask_t* task)
 
 
 // ---------------------------------------------------------------------------
-void kSch_Ticks (kCpuRegs_t* regs)
+void ksch_ticks (kCpuRegs_t* regs)
 {
-  if (!kSch_OnTask()) {
-    kSch_PickNext ();
+  if (!ksch_ontask()) {
+    ksch_pick ();
 
   } else if (kCPU.current_->state_ == TASK_STATE_ABORTING) {
-    kSch_StopTask (TASK_STATE_ZOMBIE, regs);
-    kSch_PickNext ();
+    ksch_stop (TASK_STATE_ZOMBIE, regs);
+    ksch_pick ();
 
   } else if (--kCPU.current_->timeSlice_ > 0) {
     assert (kCPU.current_->state_ == TASK_STATE_EXECUTING);
@@ -32,20 +43,20 @@ void kSch_Ticks (kCpuRegs_t* regs)
 
   } else if (kSYS.tasksCount_[TASK_STATE_WAITING] <= 0) {
     assert (kCPU.current_->state_ == TASK_STATE_EXECUTING);
-    kCPU.current_->timeSlice_ = kSch_TimeSlice (kCPU.current_);
+    kCPU.current_->timeSlice_ = ksch_timeslice (kCPU.current_);
 
   } else {
-    kSch_StopTask (TASK_STATE_WAITING, regs);
-    kSch_PickNext ();
+    ksch_stop (TASK_STATE_WAITING, regs);
+    ksch_pick ();
   }
 }
 
 
 // ---------------------------------------------------------------------------
-void kSch_PickNext ()
+void ksch_pick ()
 {
   kTask_t* pick;
-  assert (!kSch_OnTask());
+  assert (!ksch_ontask());
 
   // FIXME call __asm__ CLI
   asm ("cli");
@@ -73,7 +84,7 @@ void kSch_PickNext ()
       // Run the task
       kCPU.current_ = pick;
       pick->lastWakeUp_ = ltime(NULL);
-      pick->timeSlice_ = kSch_TimeSlice (pick);
+      pick->timeSlice_ = ksch_timeslice (pick);
       pick->state_ = TASK_STATE_EXECUTING;
       atomic_inc_i32 (&kSYS.tasksCount_[pick->state_]);
       pick->execOnCpu_ = kCPU.cpuNo_;
@@ -81,7 +92,6 @@ void kSch_PickNext ()
       kunlock (&pick->lock_);
 
       if (KLOG_SCH) kprintf ("scheduler] calling switch <%x, %x> [%x]\n", &pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
-      // kCpu_DisplayRegs (&pick->regs_);
       kCpu_Switch (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
 
     } while (pick != kCPU.current_);

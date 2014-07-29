@@ -1,9 +1,46 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Routines related to task timers.
+ */
 #include <kernel/scheduler.h>
 #include <kernel/info.h>
 
 
 // ===========================================================================
-int kEvt_RegSleep (kTask_t* task)
+/** Suppress the task form the timer list */
+static int kevt_timer_remove (kTask_t* task)
+{
+  if (task->prevEv_ == NULL)
+    kSYS.timerFrst_ = task->nextEv_;
+  else
+    task->prevEv_->nextEv_ = task->nextEv_;
+
+  if (task->nextEv_ == NULL)
+    kSYS.timerFrst_ = task->prevEv_;
+  else
+    task->nextEv_->prevEv_ = task->prevEv_;
+
+  task->prevEv_ = NULL;
+  task->nextEv_ = NULL;
+  task->eventParam_ = 0;
+  task->eventType_ = 0;
+  return __noerror();
+}
+
+
+// ===========================================================================
+/** Register a task (current one) for a sleeping timer.
+ *  At the end of the timer, the task is re-schedule.
+ *  FIXME this should be handle by a timer object.
+ */
+int kevt_sleep (kTask_t* task)
 {
   task->eventParam_ += ltime(NULL);
   assert (task == kCPU.current_);
@@ -28,38 +65,24 @@ int kEvt_RegSleep (kTask_t* task)
 
 
 // ---------------------------------------------------------------------------
-static int kEvt_RemoveSleep (kTask_t* task)
-{
-  if (task->prevEv_ == NULL)
-    kSYS.timerFrst_ = task->nextEv_;
-  else
-    task->prevEv_->nextEv_ = task->nextEv_;
-
-  if (task->nextEv_ == NULL)
-    kSYS.timerFrst_ = task->prevEv_;
-  else
-    task->nextEv_->prevEv_ = task->prevEv_;
-
-  task->prevEv_ = NULL;
-  task->nextEv_ = NULL;
-  task->eventParam_ = 0;
-  task->eventType_ = 0;
-  return __noerror();
-}
-
-
-// ---------------------------------------------------------------------------
-int kEvt_CancelSleep (kTask_t* task)
+/** Cancel the timer associated with this task
+ */
+int kevt_timer_cancel (kTask_t* task)
 {
   klock (&kSYS.timerLock_, LOCK_TIMER_CANCEL_SLEEP);
-  kEvt_RemoveSleep (task);
+  kevt_timer_remove (task);
   kunlock (&kSYS.timerLock_);
   return __noerror();
 }
 
 
 // ---------------------------------------------------------------------------
-void kEvt_TimeIsUp()
+/** The event ticks check if some timers are expired.
+ * FIXME An improvment will be to sort timers at insertion.
+ *       Indeed, the ticks function will browse all task several time.
+ *       We better to loose time at insertion but not for wakeup.
+ */
+void kevt_ticks()
 {
   ltime_t now = ltime(NULL);
   if (kSYS.timerMin_ > now)
@@ -76,8 +99,8 @@ void kEvt_TimeIsUp()
 
       // wake up the task
       if (task->eventType_ == TASK_EVENT_SLEEP) {
-        kSch_WakeUp (task);
-        kEvt_RemoveSleep (task);
+        ksch_wakeup (task);
+        kevt_timer_remove (task);
       }
 
     } else if ((ltime_t)task->eventParam_ < kSYS.timerMin_) {
@@ -90,3 +113,5 @@ void kEvt_TimeIsUp()
   kunlock (&kSYS.timerLock_);
 }
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------

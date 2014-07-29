@@ -31,6 +31,7 @@ static void elf_read_section (kAssembly_t* assembly, kInode_t* ino, ELF_PhEntry_
       sec->align_ = phe->align_;
       sec->offset_ = phe->fileAddr_;
       sec->next_ = assembly->section_;
+      sec->flags_ = phe->flags_ & 7;
       assembly->section_ = sec;
       break;
 

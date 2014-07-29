@@ -5,7 +5,7 @@
 
 // #error  WHAT !?
 
-void kCpu_DisplayRegs (kCpuRegs_t* regs);
+void kregisters (kCpuRegs_t* regs);
 
 int kCpu_Initialize ();
 int kCpu_Launch ();
