@@ -60,7 +60,7 @@ int kfs_sync(kInode_t* ino, void* buffer, size_t length, off_t offset)
 
 
 // ---------------------------------------------------------------------------
-
+/** Find a page that will correspond to the file page. */
 int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead)
 {
   int i;
@@ -73,6 +73,7 @@ int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead)
 
   if (i == ino->pageCount_) {
 
+
     kPage_t* cache = kalloc (sizeof(kPage_t) * (ino->pageCount_ + 8));
     if (ino->pagesCache_) {
       memcpy (cache, ino->pagesCache_, sizeof(kPage_t) * ino->pageCount_);
@@ -81,15 +82,26 @@ int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead)
 
     ino->pageCount_ += 8;
     ino->pagesCache_ = cache;
-    if (0) {
-      // fs_->map(ino, offset);
+    if (ino->fs_->map != NULL) {
+
+      kunlock (&ino->lock_);
+      MOD_ENTER;
+      uint32_t spg = ino->fs_->map(ino, offset);
+      MOD_LEAVE;
+      klock (&ino->lock_, LOCK_FS_MAP);
+      assert (cache[i].phys_ == 0); // FIXME not an assert.
+      cache[i].phys_ = spg;
+      if (cache[i].phys_ == 0)
+        return __seterrno (EIO);
+      *mustRead = FALSE;
     } else {
       cache[i].phys_ = kpg_alloc();
+    *mustRead = TRUE;
     }
 
     cache[i].offset_ = offset;
     cache[i].flags_ = 0;
-    *mustRead = TRUE;
+
   } else {
     *mustRead = FALSE;
   }

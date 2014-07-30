@@ -55,9 +55,23 @@ struct kPage
 
 
 struct kFileOp {
+
+  // read / write / poll / ioctl / map / allocate
+  // getxattr / setxattr / listxattr
+
+  // lookup / create(mkdir) / remove(rmdir) / rename / setmeta
+  // follow_link / symlink
+  // setacl / getacl
+  // link / unlink... (for compatibility)
+
+  // mount / umount / statfs / check / ioctl
+  // format
+  // defrag !?
+
+
   int (*mount)(kInode_t* dev, kInode_t* mnt);
   int (*umount)();
-  int (*format)(dev_t dev_, ...);
+  int (*format)(dev_t dev_, const char* options);
   // freeze / unfreeze / statfs / umount / options
 
   int (*lookup)(const char* name, kInode_t* dir, kStat_t* file);
@@ -71,17 +85,10 @@ struct kFileOp {
   int (*unlink)();
   int (*symlink)();
 
-  // uint32_t (*map)(kInode_t* fp, off_t offset);
+  uint32_t (*map)(kInode_t* fp, off_t offset);
 };
 
-/*
-  // rename / truncate / allocate / setattr
-  // setxattr / getxattr / lisstxattr / removexattr
-  char name_ [16];
-  size_t block_;
-  size_t cluster_;
-  kDevice_t* dev_;
-*/
+
 
 struct kDevice {
   int (*read)(dev_t fd, void* buffer, off_t offset, size_t length);

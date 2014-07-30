@@ -8,6 +8,7 @@ kFileOp_t ataOperation = {
   NULL, NULL, NULL,
   NULL, ATA_Read, NULL, NULL,
   NULL, ATA_Write, NULL, NULL, NULL,
+  NULL,
 };
 
 // ===========================================================================

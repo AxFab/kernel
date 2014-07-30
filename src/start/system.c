@@ -82,7 +82,7 @@ int kCore_Initialize ()
   ksch_create_process (NULL, master, path);
   ksch_create_process (NULL, deamon, path);
 
-  kfs_log_all();
+  // kfs_log_all();
 
   // VIII. Initialize per-cpu scheduler
   ksch_init ();

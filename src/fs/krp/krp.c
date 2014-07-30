@@ -11,6 +11,7 @@ kFileOp_t krpOps = {
   KRP_Mount, NULL, NULL,
   KRP_Lookup, KRP_Read, NULL, NULL,
   (void*)KRP_Write, (void*)KRP_Write, NULL, (void*)KRP_Write, NULL,
+  NULL,
 };
 
 

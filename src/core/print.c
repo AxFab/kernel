@@ -19,7 +19,6 @@ int kputc (int c)
 
   if (kLogPen >= klogLg) {
     kLogPen = 0;
-    kpanic ("END OF STREAM KLOG\n");
   }
 
   return c;

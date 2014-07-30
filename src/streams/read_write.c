@@ -25,7 +25,7 @@ ssize_t kstm_read_block (kStream_t* stream, void* buf, size_t length, off_t off)
     lg = MIN (length, (vma->limit_ - vma->base_) + vma->offset_ - off);
     lg = MIN (lg, stream->ino_->stat_.length_ - off);
 
-    kprintf ("read %s [%d+%d]\n", stream->ino_->name_, off, lg);
+    if (KLOG_RW) kprintf ("read %s [%d+%d]\n", stream->ino_->name_, off, lg);
 
     memcpy (buf, address, lg);
     buf = (char*)buf + lg;
@@ -57,7 +57,7 @@ ssize_t kstm_write_block (kStream_t* stream, void* buf, size_t length, off_t off
     void* address = (void*)((size_t)vma->base_ + off - vma->offset_);
     size_t lg = MIN (length, (vma->limit_ - vma->base_) + vma->offset_ - off);
 
-    kprintf ("write %s [%d+%d]\n", stream->ino_->name_, off, lg);
+    if (KLOG_RW) kprintf ("write %s [%d+%d]\n", stream->ino_->name_, off, lg);
 
     memcpy (address, buf, lg);
     buf = (char*)buf + lg;
@@ -71,7 +71,7 @@ ssize_t kstm_write_block (kStream_t* stream, void* buf, size_t length, off_t off
   }
 
   stream->position_ = off;
-  kprintf ("fs] write block [%d]\n", count);
+  if (KLOG_RW) kprintf ("fs] write block [%d]\n", count);
   return count;
 }
 
@@ -105,7 +105,7 @@ ssize_t kstm_read_stream (kStream_t* stream, void* buf, size_t length)
     }
 
     available = MIN (length, available);
-    kprintf ("read S %s [%d+%d]\n", stream->ino_->name_, fifo->consumer_, available);
+    if (KLOG_RW) kprintf ("read S %s [%d+%d]\n", stream->ino_->name_, fifo->consumer_, available);
 
     void* address = ((char*)vma->base_) + fifo->consumer_;
     memcpy (buf, address, available);
@@ -151,7 +151,7 @@ ssize_t kstm_write_stream (kStream_t* stream, void* buf, size_t length)
     }
 
     available = MIN (length, available);
-    kprintf ("write S %s [%d+%d]\n", stream->ino_->name_, fifo->producer_, available);
+    if (KLOG_RW) kprintf ("write S %s [%d+%d]\n", stream->ino_->name_, fifo->producer_, available);
 
 
     void* address = ((char*)vma->base_) + fifo->producer_;
@@ -173,7 +173,7 @@ ssize_t kstm_write_stream (kStream_t* stream, void* buf, size_t length)
  */
 ssize_t kstm_read (int fd, void* buf, size_t length, off_t off)
 {
-  kprintf ("syscall %d] kstm_read (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
+  if (KLOG_RW) kprintf ("syscall %d] kstm_read (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
 
   kStream_t* stream = kstm_get_fd (fd, R_OK);
   if (stream == NULL) return -1;
@@ -215,7 +215,7 @@ ssize_t kstm_read (int fd, void* buf, size_t length, off_t off)
  */
 ssize_t kstm_write (int fd, void* buf, size_t length, off_t off)
 {
-  kprintf ("syscall %d] kstm_write  (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
+  if (KLOG_RW) kprintf ("syscall %d] kstm_write  (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
 
   kStream_t* stream = kstm_get_fd (fd, W_OK);
   if (stream == NULL) return -1;

@@ -22,7 +22,7 @@ kStream_t* kstm_get_fd (int fd, int mode)
   kStream_t* stream;
   kProcess_t* proc = kCPU.current_->process_;
 
-  kprintf("get fd %d [%d]  (%d)\n ", fd, proc->pid_, proc->streamCap_);
+  // kprintf("get fd %d [%d]  (%d)\n ", fd, proc->pid_, proc->streamCap_);
 
   if (fd < 0 || fd >= proc->streamCap_) {
     __seterrno (EBADF);

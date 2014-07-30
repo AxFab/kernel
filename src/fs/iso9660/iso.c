@@ -8,6 +8,7 @@ kFileOp_t isoOps = {
   ISO_Mount, NULL, NULL,
   ISO_Lookup, ISO_Read, NULL, NULL,
   (void*)ISO_Write, (void*)ISO_Write, NULL, (void*)ISO_Write, NULL,
+  NULL,
 };
 
 

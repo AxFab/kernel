@@ -3,11 +3,13 @@
 
 int VBA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba);
 int VBA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba);
+uint32_t VBA_map (kInode_t* fp, off_t offset);
 
 kFileOp_t vbaOperation = {
   NULL, NULL, NULL,
-  NULL, VBA_Read, NULL, NULL,
-  NULL, VBA_Write, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL,
+  VBA_map,
 };
 
 
@@ -18,7 +20,7 @@ int vbaDepth;
 
 void VBA_Set (void* address, int width, int height, int depth)
 {
-  vbaAddress = address ;
+  vbaAddress = address;
   vbaWidth = width;
   vbaHeight = height;
   vbaDepth = depth;
@@ -58,5 +60,13 @@ int VBA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba)
   memcpy ((void*)pixels, bucket, count * line);
   // kTty_HexDump (vbaAddress, 0x20);
   return 0;
+}
+
+uint32_t VBA_map (kInode_t* fp, off_t offset)
+{
+  if (offset < 0 || offset >= vbaWidth * vbaHeight * vbaDepth)
+    return 0;
+  offset = ALIGN_DW(offset, PAGE_SIZE);
+  return (uint32_t)vbaAddress + offset;
 }
 

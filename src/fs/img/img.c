@@ -10,6 +10,7 @@ kFileOp_t imgOps = {
   NULL, NULL, NULL,
   NULL, IMG_read, NULL, NULL,
   NULL, IMG_write, NULL, NULL, NULL,
+  NULL,
 };
 
 

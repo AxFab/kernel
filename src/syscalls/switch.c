@@ -46,7 +46,7 @@ void kCore_Syscall(kCpuRegs_t* regs)
 
     case 0x21: // OPEN
       regs->eax = kstm_open (-1, (char*)regs->ecx, (int)regs->edx, (int)regs->ebx);
-      kprintf ("OPEN %d, %d \n", regs->eax, __geterrno());
+      // kprintf ("OPEN %d, %d \n", regs->eax, __geterrno());
       break;
 
     case 0x22: // READ

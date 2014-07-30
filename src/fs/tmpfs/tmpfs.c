@@ -24,5 +24,6 @@ kFileOp_t tmpFsOperation = {
   NULL, NULL, NULL,
   NULL, TMPFS_Read, NULL, NULL,
   TMPFS_Create, NULL, NULL, NULL, NULL,
+  NULL,
 };
 

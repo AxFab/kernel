@@ -19,19 +19,17 @@ int main (int argc, char** argv)
   write (1, "Smoke-krn | devmach01 | core#0 | 0.0.0 | Jul 26 2014 | i386 | i486 | SmokeOS\n", 77);
 
 
+  // char buff [1024];
+  // int sc = open ("/master.log", 0, 0); // O_RDONLY
+  // int lg = read (sc, buff, 1024);
+  // write (1, buff, lg);
 
-  char buff [1024];
+  // write (1, "---\n", 4);
+  // memset (buff, 0, 1024);
 
-  int sc = open ("/master.log", 0, 0); // O_RDONLY
-  int lg = read (sc, buff, 1024);
-  write (1, buff, lg);
-
-  write (1, "---\n", 4);
-  memset (buff, 0, 1024);
-
-  sc = open ("/dev/pts/p1", 0, 0); // O_RDONLY
-  lg = read (sc, buff, 1024);
-  write (1, buff, lg);
+  // sc = open ("/dev/pts/p1", 0, 0); // O_RDONLY
+  // lg = read (sc, buff, 1024);
+  // write (1, buff, lg);
 
   return 0;
 }
