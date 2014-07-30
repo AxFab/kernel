@@ -50,9 +50,11 @@ struct kSysCore
 
   // INODES
   int         autoIno_;
+  int         autoPipe_;
   kInode_t*   rootNd_;
   kInode_t*   devNd_;
   kInode_t*   mntNd_;
+  kInode_t*   pipeNd_;
 
   // MEMORY
 

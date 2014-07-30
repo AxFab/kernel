@@ -36,6 +36,8 @@ int kfs_init()
 
   kSYS.devNd_ = kfs_mknod (FS_DEV_NODE, root, &root->stat_);
   kSYS.mntNd_ = kfs_mknod (FS_MNT_NODE, root, &root->stat_);
+  kSYS.pipeNd_ = kfs_mknod (FS_PIPE_NODE, kSYS.devNd_, &root->stat_);
+
 
   return __noerror();
 }

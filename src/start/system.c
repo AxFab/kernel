@@ -32,11 +32,15 @@ int kCore_Initialize ()
     screen._ptr = (uint32_t*)(4 * _Mb_);
   }
 
-  // kinit ();
-  // kTty_NewTerminal (0x7000, 0x10000 - 0x7000);
-  kTty_Update ();
+
+  // I. Print kernel info
   kprintf ("Kernel Smoke v0.0 Build 0 compiled Jul 26 2014 with gcc 4.7.2\n");
 
+  // II. Initialize system core
+  kinit ();
+  // kTty_NewTerminal (0x7000, 0x10000 - 0x7000);
+
+  // III. Set Date and initiate timer
   char tmp[510];
   struct tm dt = RTC_GetTime ();
   asctime_r (&dt, tmp);
@@ -45,43 +49,42 @@ int kCore_Initialize ()
   // RTC_EnableCMOS ();
   PIT_Initialize(CLOCK_HZ);
 
-  // - - - - - - - - - - - - - - - - - - -
-  //  - - - - - - - - - - - - - - - - - -
-  // - - - - - - - - - - - - - - - - - - -
 
-  kinit ();
-
+  // IV. Start system build
   kCpu_SetStatus (CPU_STATE_SYSCALL);
 
   kfs_init ();
   kvma_init ();
-
   ATA_Initialize (kSYS.devNd_);
   VBA_Initialize (kSYS.devNd_);
 
-  // Mount the system disc ----
+
+  // V. Mount the disc system
   kInode_t* cd = kfs_lookup ("/dev/sdA", NULL);
   kInode_t* mnt = kfs_lookup ("/mnt/", NULL);
   ISO_Mount (cd, mnt);
-
   // KRP_Mount (NULL, mnt);
 
+  // VI. Look for debug symbols
   kInode_t* sym = kfs_lookup ("/mnt/OS_CORE/BOOT/KIMAGE.MAP", NULL);
   if (sym != NULL)
     ksymbols_load(sym);
   else
     kprintf ("We can't found the file kImage.map\n");
 
+  // VII. Start default programs
   kInode_t* path = kfs_lookup ("/mnt/OS_CORE/USR/BIN/", NULL);
   kInode_t* master = kfs_lookup ("MASTER.", path);
   kInode_t* deamon = kfs_lookup ("DEAMON.", path);
 
-  // kfs_log_all ();
 
 
   ksch_create_process (NULL, master, path);
   ksch_create_process (NULL, deamon, path);
 
+  kfs_log_all();
+
+  // VIII. Initialize per-cpu scheduler
   ksch_init ();
 
   return 0;

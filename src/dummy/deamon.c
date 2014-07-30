@@ -53,17 +53,18 @@ int main ()
   int o = 0;
   int m = 4; //sizeof (cmdl) / sizeof (char*);
 
-  write (1, "Deamon v1.0\n", 17);
+  write (1, "Deamon v1.0\n", 12);
 
   for (;;) {
 
     for (j = 0; j < 2; ++j) {
       delay();
-      write (1, "deamon - still here\n", 19);
+      write (1, "deamon - still here\n", 20);
     }
 
     delay();
     execv_s ("HELLO.", cmdl[o % m]);
+    execv_s ("SNAME.", NULL);
     ++o;
   }
 

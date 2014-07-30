@@ -157,11 +157,12 @@ int kInt_PageFault (uint32_t address, kCpuRegs_t* registers)
 
 int kInt_Protect (unsigned int address, kCpuRegs_t* regs)
 {
-  kTty_Write ("Protect...\n");
   if (regs->cs == 0x08)
     kpanic ("Kernel throw general protection fault at [%x]\n", address);
 
-  kprintf ("task throw general protection at [%x]: abort\n", address);
+  kprintf ("task (#%d) throw general protection at [%x]: abort\n",
+      kCPU.current_->process_, address);
+  kregisters (regs);
   ksch_exit (kCPU.current_->process_, -1);
   ksch_stop (TASK_STATE_ZOMBIE, regs);
   ksch_pick ();

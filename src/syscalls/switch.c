@@ -37,6 +37,13 @@ void kCore_Syscall(kCpuRegs_t* regs)
       ksch_create_process (kCPU.current_->process_, ino, kCPU.current_->process_->workingDir_);
       break;
 
+    // case 0x12: //START
+    // case 0x13: //TERMINATE
+    //   break;
+
+    // case 0x14: //SLEEP
+    //   break;
+
     case 0x21: // OPEN
       regs->eax = kstm_open (-1, (char*)regs->ecx, (int)regs->edx, (int)regs->ebx);
       kprintf ("OPEN %d, %d \n", regs->eax, __geterrno());
@@ -47,7 +54,7 @@ void kCore_Syscall(kCpuRegs_t* regs)
       break;
 
     case 0x23: // WRITE
-      if (regs->ecx > 2)
+      if (regs->ecx > 2 || kCPU.current_->process_->pid_ == 3)
         regs->eax = kstm_write ((int)regs->ecx, (void*)regs->edx, (size_t)regs->ebx, (off_t)-1);
       else
         kprintf ("  %d] %s", kCPU.current_->process_->pid_, regs->edx);

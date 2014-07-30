@@ -37,7 +37,10 @@ struct kInode {
   kInode_t*       child_;     ///< First child inode
   spinlock_t      lock_;      ///< Lock
   kFileOp_t*      fs_;        ///< File system driver
-  kAssembly_t*    assembly_;
+  union {
+    kAssembly_t*    assembly_;
+    kFifoPen_t*     fifo_;
+  };
   void*           devinfo_;
   int             pageCount_;  ///< max number of physical pages in cache
   kPage_t*        pagesCache_; ///< physical pages caching

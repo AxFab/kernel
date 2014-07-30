@@ -17,8 +17,9 @@
 
 #define ROOT_UID 0x1593
 
-#define FS_DEV_NODE "dev"
-#define FS_MNT_NODE "mnt"
+#define FS_DEV_NODE   "dev"
+#define FS_MNT_NODE   "mnt"
+#define FS_PIPE_NODE  "pts"
 
 #define FILENAME_SEPARATORS "/\\"
 #define VOLUME_SEPARATOR ':'
@@ -151,7 +152,7 @@ enum LOCK
 #define KLOG_PF 0
 #define KLOG_VFS 0
 #define KLOG_SCH 0
-#define KLOG_SYC 0
+#define KLOG_SYC 1
 
 
 #endif /* KCONFIG_H__ */

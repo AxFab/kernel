@@ -14,6 +14,7 @@
 #include <kernel/memory.h>
 #include <kernel/inodes.h>
 #include <kernel/info.h>
+#include <kernel/streams.h>
 
 
 
@@ -36,6 +37,31 @@ static void ksch_attach_proc (kProcess_t *proc)
 
   kunlock (&kSYS.procLock_);
 }
+
+
+// ---------------------------------------------------------------------------
+static kStream_t* ksch_pipe (int flags, size_t length)
+{
+  char no[10];
+  time_t now = time (NULL);
+  length = ALIGN_UP (length, PAGE_SIZE);
+  kStat_t stat = { 0, S_IFIFO | 0600, 0, 0, length, 0, now, now, now, 0, 0, 0 };
+  snprintf (no, 10, "p%d", kSYS.autoPipe_++);
+  kInode_t* ino = kfs_mknod(no, kSYS.pipeNd_, &stat);
+  assert (ino != NULL);
+
+  kStream_t* stream = KALLOC(kStream_t);
+  stream->ino_ = ino;
+  stream->flags_ = 0;
+
+  if ((flags & O_ACCMODE) == O_RDONLY)        stream->flags_ = R_OK;
+  else if ((flags & O_ACCMODE) == O_WRONLY)   stream->flags_ = W_OK;
+  else                                        stream->flags_ = R_OK | W_OK;
+  stream->flags_ |= (flags & O_STATMSK);
+
+  return stream;
+}
+
 
 // ===========================================================================
 /** Create a new process, ready to start */
@@ -64,9 +90,8 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir)
   proc->streamCap_ = 8;
   proc->openStreams_ = (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
   proc->openStreams_[0] = (kStream_t*)1;
-  proc->openStreams_[1] = (kStream_t*)1;
-  proc->openStreams_[2] = (kStream_t*)1;
-
+  proc->openStreams_[1] = ksch_pipe (O_WRONLY, 4 * _Kb_);
+  proc->openStreams_[2] = proc->openStreams_[1];
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   ksch_attach_proc (proc);
@@ -74,12 +99,8 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir)
   proc->threadFrst_ = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
   proc->threadLast_ = proc->threadFrst_;
 
-
-
   kunlock (&proc->lock_);
-
   kprintf ("Start program [%d - %s - root<0> - /mnt/cd0/USR/BIN]\n", proc->pid_, image->name_);
-
   return proc->pid_;
 }
 

@@ -10,9 +10,10 @@
 ssize_t kstm_read_block (kStream_t* stream, void* buf, size_t length, off_t off)
 {
   ssize_t count = 0;
+  size_t lg = 1;
   kAddSpace_t* addSpace = kCPU.current_->process_->memSpace_;
 
-  while (length > 0) {
+  while (length > 0 && lg > 0) {
 
     kVma_t* vma = kvma_look_ino (addSpace, stream->ino_, off);
     assert (vma != NULL);
@@ -21,7 +22,10 @@ ssize_t kstm_read_block (kStream_t* stream, void* buf, size_t length, off_t off)
 
     // COMPUTE SIZE...
     void* address = (void*)((size_t)vma->base_ + off - vma->offset_);
-    size_t lg = length;
+    lg = MIN (length, (vma->limit_ - vma->base_) + vma->offset_ - off);
+    lg = MIN (lg, stream->ino_->stat_.length_ - off);
+
+    kprintf ("read %s [%d+%d]\n", stream->ino_->name_, off, lg);
 
     memcpy (buf, address, lg);
     buf = (char*)buf + lg;
@@ -30,6 +34,7 @@ ssize_t kstm_read_block (kStream_t* stream, void* buf, size_t length, off_t off)
     count += lg;
   }
 
+  stream->position_ = off;
   return count;
 }
 
@@ -50,17 +55,22 @@ ssize_t kstm_write_block (kStream_t* stream, void* buf, size_t length, off_t off
 
     // COMPUTE SIZE...
     void* address = (void*)((size_t)vma->base_ + off - vma->offset_);
-    size_t lg = length;
+    size_t lg = MIN (length, (vma->limit_ - vma->base_) + vma->offset_ - off);
+
+    kprintf ("write %s [%d+%d]\n", stream->ino_->name_, off, lg);
 
     memcpy (address, buf, lg);
     buf = (char*)buf + lg;
     length -= lg;
     off += lg;
     count += lg;
+    if (stream->ino_->stat_.length_ < (size_t)off)
+      stream->ino_->stat_.length_ = (size_t)off;
 
     // kpg_sync_stream (vma, address);
   }
 
+  stream->position_ = off;
   kprintf ("fs] write block [%d]\n", count);
   return count;
 }
@@ -69,16 +79,91 @@ ssize_t kstm_write_block (kStream_t* stream, void* buf, size_t length, off_t off
 // ---------------------------------------------------------------------------
 ssize_t kstm_read_stream (kStream_t* stream, void* buf, size_t length)
 {
-  __seterrno (ENOSYS);
-  return -1;
+  kFifoPen_t* fifo;
+  size_t fifoLg = stream->ino_->stat_.length_;
+  kAddSpace_t* addSpace = kCPU.current_->process_->memSpace_;
+  kVma_t* vma = kvma_look_ino (addSpace, stream->ino_, 0);
+  assert (vma != NULL);
+
+  if (stream->ino_->fifo_ == 0) {
+    stream->ino_->fifo_ = KALLOC (kFifoPen_t);
+  }
+
+  fifo = stream->ino_->fifo_;
+
+  ssize_t count = 0;
+  while (fifo->consumer_ != fifo->producer_ && length > 0) {
+
+    ssize_t available;
+    if (fifo->consumer_ == fifoLg)
+      fifo->consumer_ = 0;
+
+    if (fifo->consumer_ > fifo->producer_) {
+      available = fifoLg - fifo->consumer_;
+    } else {
+      available = fifo->producer_ - fifo->consumer_;
+    }
+
+    available = MIN (length, available);
+    kprintf ("read S %s [%d+%d]\n", stream->ino_->name_, fifo->consumer_, available);
+
+    void* address = ((char*)vma->base_) + fifo->consumer_;
+    memcpy (buf, address, available);
+
+    fifo->consumer_ += available;
+    buf += available;
+    count += available;
+    length -= available;
+  }
+
+  return count;
 }
 
 
 // ---------------------------------------------------------------------------
 ssize_t kstm_write_stream (kStream_t* stream, void* buf, size_t length)
 {
-  __seterrno (ENOSYS);
-  return -1;
+  kFifoPen_t* fifo;
+  size_t fifoLg = stream->ino_->stat_.length_;
+  kAddSpace_t* addSpace = kCPU.current_->process_->memSpace_;
+  kVma_t* vma = kvma_look_ino (addSpace, stream->ino_, 0);
+  assert (vma != NULL);
+
+  if (stream->ino_->fifo_ == 0) {
+    stream->ino_->fifo_ = KALLOC (kFifoPen_t);
+  }
+
+  fifo = stream->ino_->fifo_;
+
+  ssize_t count = 0;
+  while (fifo->consumer_ != fifo->producer_+1 && length > 0) {
+
+    ssize_t available;
+    if (fifo->producer_ == fifoLg && fifo->consumer_ > 0)
+      fifo->producer_ = 0;
+    else if (fifo->producer_ == fifoLg)
+      break;
+
+    if (fifo->consumer_ > fifo->producer_) {
+      available = fifo->consumer_ - fifo->producer_ - 1;
+    } else {
+      available = fifoLg - fifo->consumer_;
+    }
+
+    available = MIN (length, available);
+    kprintf ("write S %s [%d+%d]\n", stream->ino_->name_, fifo->producer_, available);
+
+
+    void* address = ((char*)vma->base_) + fifo->producer_;
+    memcpy (address,  buf, available);
+
+    fifo->producer_ += available;
+    buf += available;
+    count += available;
+    length -= available;
+  }
+
+  return count;
 }
 
 
@@ -88,7 +173,7 @@ ssize_t kstm_write_stream (kStream_t* stream, void* buf, size_t length)
  */
 ssize_t kstm_read (int fd, void* buf, size_t length, off_t off)
 {
-  if (KLOG_SYC) kprintf ("syscall %d] kstm_read (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
+  kprintf ("syscall %d] kstm_read (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
 
   kStream_t* stream = kstm_get_fd (fd, R_OK);
   if (stream == NULL) return -1;
@@ -130,7 +215,7 @@ ssize_t kstm_read (int fd, void* buf, size_t length, off_t off)
  */
 ssize_t kstm_write (int fd, void* buf, size_t length, off_t off)
 {
-  if (KLOG_SYC) kprintf ("syscall %d] kstm_write  (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
+  kprintf ("syscall %d] kstm_write  (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
 
   kStream_t* stream = kstm_get_fd (fd, W_OK);
   if (stream == NULL) return -1;
@@ -209,13 +294,4 @@ off_t kstm_seek(int fd, off_t offset, int whence)
   return stream->position_;
 }
 
-
-
-// ---------------------------------------------------------------------------
-int kstm_mknod(int dirfd, const char *path, mode_t mode)
-{
-  // FIXME put in other file
-  __seterrno (ENOSYS);
-  return -1;
-}
 

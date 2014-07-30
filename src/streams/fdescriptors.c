@@ -22,6 +22,8 @@ kStream_t* kstm_get_fd (int fd, int mode)
   kStream_t* stream;
   kProcess_t* proc = kCPU.current_->process_;
 
+  kprintf("get fd %d [%d]  (%d)\n ", fd, proc->pid_, proc->streamCap_);
+
   if (fd < 0 || fd >= proc->streamCap_) {
     __seterrno (EBADF);
     return NULL;
@@ -72,7 +74,11 @@ int kstm_set_fd (kInode_t* ino, int flags)
 
   kfs_grab (ino); // TODO if failed !? free readFD cause probably a lock stuff
   openFd[i]->ino_ = ino;
-  openFd[i]->flags_ = flags;
+
+  if ((flags & O_ACCMODE) == O_RDONLY)        openFd[i]->flags_ = R_OK;
+  else if ((flags & O_ACCMODE) == O_WRONLY)   openFd[i]->flags_ = W_OK;
+  else                                        openFd[i]->flags_ = R_OK | W_OK;
+  openFd[i]->flags_ |= (flags & O_STATMSK);
 
   kunlock (&proc->lock_);
   return i;
@@ -130,6 +136,8 @@ int kstm_clear_fd (int fd)
  * \error EWOULDBLOCK The O_NONBLOCK flag was specified, and an incompatible lease was held on the file
  * \error EBADF  dirfd is not a valid file descriptor (flags O_RELATIVE).
  * \error ENOTDIR dirfd is a file descriptor referring to a file other than a directory (flags O_RELATIVE).
+ *
+ * FIXME ensure that we only wr-open file that are on a writable file system.
  */
 int kstm_open(int dirfd, const char *path, int flags, mode_t mode)
 {
@@ -166,8 +174,7 @@ int kstm_open(int dirfd, const char *path, int flags, mode_t mode)
       return -1;
     }
 
-    if (kstm_mknod(dirfd, path, mode | (flags & O_DIRECTORY ? S_IFDIR : S_IFREG)))
-      return -1;
+    return kstm_create(dir, path, flags, (mode & S_IALLUGO) | (flags & O_DIRECTORY ? S_IFDIR : S_IFREG));
 
   } else if ((flags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) {
     __seterrno (EEXIST);
@@ -190,6 +197,50 @@ int kstm_open(int dirfd, const char *path, int flags, mode_t mode)
 int kstm_close (int fd)
 {
   return kstm_clear_fd (fd);
+}
+
+
+// ---------------------------------------------------------------------------
+int kstm_create(kInode_t* dir, const char *path, int flags, mode_t mode)
+{
+
+  if (dir == NULL)
+    dir = kSYS.rootNd_; // FIXME Hey, No!
+  // kprintf ("create stream %x, %s, %d, %x\n", dir, path, flags, mode);
+  // FIXME slit path for no directory
+  // FIXME check rights
+  // FIXME check the mode
+  time_t now = time (NULL);
+  kStat_t stat = { 0, mode, 0, 0, 0, 0, now, now, now, 0, 0, 0 };
+
+  kInode_t* ino = kfs_mknod(&path[1], dir, &stat);
+  if (ino == NULL) {
+    return -1;
+  }
+
+  return kstm_set_fd (ino, flags);
+}
+
+
+// ---------------------------------------------------------------------------
+int kstm_pipe(int flags, mode_t mode, size_t length)
+{
+  // kprintf ("create stream %x, %s, %d, %x\n", dir, path, flags, mode);
+  // FIXME slit path for no directory
+  // FIXME check rights
+  // FIXME check the mode
+  char no[10];
+  time_t now = time (NULL);
+  length = ALIGN_UP (length, PAGE_SIZE);
+  kStat_t stat = { 0, S_IFIFO | (mode & S_IALLUGO), 0, 0, length, 0, now, now, now, 0, 0, 0 };
+
+  snprintf (no, 10, "p%d", kSYS.autoPipe_++);
+  kInode_t* ino = kfs_mknod(no, kSYS.pipeNd_, &stat);
+  if (ino == NULL) {
+    return -1;
+  }
+
+  return kstm_set_fd (ino, flags);
 }
 
 // ---------------------------------------------------------------------------
