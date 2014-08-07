@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/types.h>
+#include <atomic.h>
 
 /* --- MISSING STDLIB --- */
 unsigned long long strtoull (const char * str, char ** endptr, int base);
@@ -131,6 +132,9 @@ int kcpu_state();
 
 #ifndef __KERNEL
 #define PAGE_SIZE 4096
+#define OPEN_MAX 12
+#define O_STATMSK 0x101c00
+
 #define kalloc(s) calloc(s,1)
 #define kfree  free
 #define kprintf printf

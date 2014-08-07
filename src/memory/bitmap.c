@@ -10,6 +10,7 @@
  *      Bitmap page allocation
  */
 #include <kernel/memory.h>
+#include <kernel/info.h>
 
 
 #define MMU_KERNEL                (3)
@@ -26,21 +27,20 @@ extern kTty_t screen;
 void kpg_init (void)
 {
   int i;
-  uint32_t* fpage =         (uint32_t*) 0x3000;
-  uint32_t* kernelPage =    (uint32_t*) 0x2000;
-  uint32_t* pageScreen =    (uint32_t*) 0x4000;
+  uint32_t* kernelPage =    kHDW.kernelDir_;
+  uint32_t* pageScreen =    kHDW.screenTbl_;
 
   kprintf ("Memory detected %s\n", kpsize((uintmax_t)memMax));
   kprintf ("Memory available %s\n", kpsize(pageAvailable * PAGE_SIZE));
 
   memset ((void*)kernelPage, 0, PAGE_SIZE);
-  kernelPage[0] = PHYS (fpage, MMU_KERNEL);
+  kernelPage[0] = PHYS (kHDW.kernelTbl0_, MMU_KERNEL);
   kernelPage[1021] = PHYS (kernelPage, MMU_KERNEL);
   kernelPage[1022] = PHYS (kernelPage, MMU_KERNEL);
   kernelPage[1023] = PHYS (kernelPage, MMU_KERNEL);
   for (i = 0; i< 1024/4; ++i) {
     if (i != 5)
-      fpage[i] = PHYS (i * PAGE_SIZE, MMU_KERNEL);
+      kHDW.kernelTbl0_[i] = PHYS (i * PAGE_SIZE, MMU_KERNEL);
   }
 
 
@@ -68,12 +68,12 @@ void kpg_init (void)
 /** Allocat a 4k page for the system and return it's physical address */
 uintptr_t kpg_alloc (void)
 {
-  uint8_t* bitmap = (uint8_t*)PG_BITMAP_ADD;
+  uint8_t* bitmap = (uint8_t*)kHDW.pageBitmapAdd_;
   int i=0, j=0;
-  while (bitmap[i] == 0xFF && i < PG_BITMAP_LG)
+  while (bitmap[i] == 0xFF && i < kHDW.pageBitmapLg_)
     i++;
 
-  if (i >= PG_BITMAP_LG) {
+  if (i >= kHDW.pageBitmapLg_) {
     kpanic ("Not a single page available\n");
   }
   uint8_t value = bitmap[i];
@@ -93,11 +93,11 @@ uintptr_t kpg_alloc (void)
 /** Mark a physique 4k page, returned by kpg_alloc, as available */
 void kpg_release (uintptr_t page)
 {
-  uint8_t* bitmap = (uint8_t*)PG_BITMAP_ADD;
+  uint8_t* bitmap = (uint8_t*)kHDW.pageBitmapAdd_;
   int i = (page / PAGE_SIZE) / 8;
   int j = (page / PAGE_SIZE) % 8;
 
-  if (i >= PG_BITMAP_LG || (bitmap[i] & (1 << j)) == 0) {
+  if (i >= kHDW.pageBitmapLg_ || (bitmap[i] & (1 << j)) == 0) {
     kpanic ("Release page with wrong args\n");
   }
 
@@ -112,7 +112,7 @@ void kpg_release (uintptr_t page)
 void kpg_ram (uint64_t base, uint64_t length)
 {
   if (kpg_step == 0) {
-    memset ((void*)PG_BITMAP_ADD, 0xff, PG_BITMAP_LG);
+    memset ((void*)kHDW.pageBitmapAdd_, 0xff, kHDW.pageBitmapLg_);
     pageAvailable = 0;
     kpg_step++;
   } else if (kpg_step > 1)
@@ -139,7 +139,7 @@ void kpg_ram (uint64_t base, uint64_t length)
     length = 4ULL * _Gb_ - base;
 
   pageAvailable += length;
-  bclearbytes ((uint8_t*)PG_BITMAP_ADD, base, length);
+  bclearbytes ((uint8_t*)kHDW.pageBitmapAdd_, (int)base, (int)length);
 }
 
 // ---------------------------------------------------------------------------

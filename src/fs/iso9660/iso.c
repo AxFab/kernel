@@ -5,14 +5,14 @@
 
 
 kFileOp_t isoOps = {
-  ISO_Mount, NULL, NULL,
+  NULL, NULL, NULL,
   ISO_Lookup, ISO_Read, NULL, NULL,
   (void*)ISO_Write, (void*)ISO_Write, NULL, (void*)ISO_Write, NULL,
   NULL,
 };
 
 
-int ISO_Mount (kInode_t* dev, kInode_t* mnt)
+int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
 {
   int i;
   int inDesc = 1;
@@ -89,7 +89,10 @@ int ISO_Mount (kInode_t* dev, kInode_t* mnt)
   root.lba_ = volInfo->lbaroot;
   root.length_ = volInfo->lgthroot;
   // FIXME Fill creation date
-  kfs_new_device (name, mnt, &isoOps, (void*)volInfo, &root);
+  if (mpoint)
+    kfs_new_device (mpoint, mnt, &isoOps, (void*)volInfo, &root);
+  else
+    kfs_new_device (name, mnt, &isoOps, (void*)volInfo, &root);
 
   free (buf);
   return __noerror ();

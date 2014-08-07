@@ -11,6 +11,7 @@
  */
 #include <kernel/memory.h>
 #include <kernel/inodes.h>
+#include <kernel/info.h>
 
 // ===========================================================================
 /** */
@@ -18,7 +19,7 @@ static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
 {
   kVma_t* vma = NULL;
   kVma_t* origin = addp->first_;
-  uintptr_t base = USR_SPACE_BASE;
+  uintptr_t base = kHDW.userSpaceBase_;
   area->limit_ = ALIGN_UP(area->limit_, PAGE_SIZE);
   size_t length = (size_t)(area->limit_ - area->base_);
   int maxLoop = MAX_LOOP_BUCKET;
@@ -49,7 +50,7 @@ static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
       continue;
     }
 
-    if (origin->limit_ + length > USR_SPACE_LIMIT) {
+    if (origin->limit_ + length > kHDW.userSpaceLimit_) {
       return NULL;
     }
 

@@ -57,7 +57,15 @@ kVma_t* kvma_look_ino (kAddSpace_t* addp, kInode_t* ino, off_t offset)
     // FIXME eventually freed the old ones.
     // FIXME wrong flags
     kVma_t vma = { VMA_SHARED | VMA_READ | VMA_WRITE, 0, filemap, NULL, NULL, ino, ALIGN_DW (offset, filemap) };
-    return kvma_mmap (addp, &vma);
+    origin = kvma_mmap (addp, &vma);
+
+    // FIXME - Already try to map it...
+
+    size_t add = (size_t)origin->base_;
+    for (;add < (size_t)origin->limit_; add += PAGE_SIZE) {
+      // kprintf ("For inode %s, try to map at %x \n", *((char**)ino), add);
+      kpg_fill_stream (origin, add, PG_USER_RDWR);
+    }
   }
 
   return origin;

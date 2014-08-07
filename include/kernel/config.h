@@ -15,6 +15,10 @@
 #define USR_SPACE_BASE  0x00800000
 #define USR_SPACE_LIMIT 0xD0000000
 
+#define PG_BITMAP_ADD           (0x80000)
+#define PG_BITMAP_LG            (0x20000)
+
+
 #define ROOT_UID 0x1593
 
 #define FS_DEV_NODE   "dev"
@@ -29,10 +33,9 @@
 
 #define FILE_MAP_SIZE  (8 * _Kb_)
 
-#define PG_BITMAP_ADD           (0x80000)
-#define PG_BITMAP_LG            (0x20000)
 
-#define CLOCK_HZ  128
+#define CLOCK_HZ    100
+#define CLOCK_PREC (1000000000LL)   // Nano-second
 
 
 #define PG_KERNEL_ONLY    3

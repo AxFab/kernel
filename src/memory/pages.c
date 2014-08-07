@@ -26,6 +26,7 @@
 
  */
 
+#ifdef __KERNEL
 // ---------------------------------------------------------------------------
 void kpg_dump (uint32_t *table)
 {
@@ -51,6 +52,7 @@ void kpg_dump (uint32_t *table)
   tmp[j++] = '\0';
   kprintf (tmp);
 }
+
 
 // ---------------------------------------------------------------------------
 /** Resolve a soft page fault by allocating a new page in designed context */
@@ -85,12 +87,12 @@ void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, u
 uint32_t last = 0;
 int kpg_fault (uint32_t address)
 {
+  kAddSpace_t* mmspc = kCPU.current_->process_->memSpace_;
   if (KLOG_PF) kprintf ("PF] PF at <%x> \n", address);
 
-  if (address < USR_SPACE_BASE)
+  if (address < kHDW.userSpaceBase_)
     kpanic ("PF] PG NOT ALLOWED <%x> \n", address);
-  else if (address < USR_SPACE_LIMIT) {
-    kAddSpace_t* mmspc = kCPU.current_->process_->memSpace_;
+  else if (address < kHDW.userSpaceLimit_) {
     kVma_t* vma = kvma_look_at (mmspc, address);
     if (vma == NULL ) {
       kpanic ("PF] Page fault in user space <%x> SIGFAULT \n", address);
@@ -127,7 +129,7 @@ uint32_t kpg_new ()
   TABLE_DIR_WIN [0] = TABLE_DIR_THR [0];
   TABLE_DIR_WIN [1] = TABLE_DIR_THR [1];  // FIXME Handle the screen better than that
 
-  int kstart = (USR_SPACE_LIMIT >> 22) & 0x3ff;
+  int kstart = (kHDW.userSpaceLimit_ >> 22) & 0x3ff;
   for (i = kstart; i < 1020; ++i)
     TABLE_DIR_WIN [i] = TABLE_DIR_THR [i];
   TABLE_DIR_WIN [1021] = TABLE_DIR_THR [1021];
@@ -141,5 +143,6 @@ uint32_t kpg_new ()
   return page;
 }
 
+#endif
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

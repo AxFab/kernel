@@ -15,6 +15,9 @@
 // ---------------------------------------------------------------------------
 static int ksch_timeslice (kTask_t* task)
 {
+#ifndef __KERNEL
+  return 1;
+#else
   ltime_t elapsed = ltime(NULL) - task->execStart_;
   if (elapsed == 0) elapsed = 1;
   long weight = (21 - task->niceValue_) * 2;
@@ -24,6 +27,7 @@ static int ksch_timeslice (kTask_t* task)
   if (sliceMicro < kSYS.minTimeSlice_)
       return kSYS.minTimeSlice_ / 1000;
   return (int)sliceMicro / 1000;
+#endif
 }
 
 
@@ -58,9 +62,8 @@ void ksch_pick ()
   kTask_t* pick;
   assert (!ksch_ontask());
 
-  // FIXME call __asm__ CLI
-  asm ("cli");
-  int waiting = atomic_dec_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING]);
+  cli();
+  int waiting = atomic_add_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING], 1);
   if (waiting >= 0) {
 
     pick = kCPU.current_->nextSc_;
@@ -93,6 +96,7 @@ void ksch_pick ()
 
       if (KLOG_SCH) kprintf ("scheduler] calling switch <%x, %x> [%x]\n", &pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
       kCpu_Switch (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
+      return;
 
     } while (pick != kCPU.current_);
 

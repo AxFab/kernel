@@ -104,7 +104,7 @@ ssize_t kstm_read_stream (kStream_t* stream, void* buf, size_t length)
       available = fifo->producer_ - fifo->consumer_;
     }
 
-    available = MIN (length, available);
+    available = MIN ((ssize_t)length, available);
     if (KLOG_RW) kprintf ("read S %s [%d+%d]\n", stream->ino_->name_, fifo->consumer_, available);
 
     void* address = ((char*)vma->base_) + fifo->consumer_;
@@ -150,7 +150,7 @@ ssize_t kstm_write_stream (kStream_t* stream, void* buf, size_t length)
       available = fifoLg - fifo->consumer_;
     }
 
-    available = MIN (length, available);
+    available = MIN ((ssize_t)length, available);
     if (KLOG_RW) kprintf ("write S %s [%d+%d]\n", stream->ino_->name_, fifo->producer_, available);
 
 
@@ -278,9 +278,9 @@ off_t kstm_seek(int fd, off_t offset, int whence)
   else if (whence == SEEK_END)
     stream->position_ = stream->ino_->stat_.length_ - offset;
   else {
-    if (whence == SEEK_DATA || whence == SEEK_HOLE)
-      __seterrno (ENOSYS);
-    else
+    // if (whence == SEEK_DATA || whence == SEEK_HOLE)
+    //   __seterrno (ENOSYS);
+    // else
       __seterrno (EINVAL);
     return -1;
   }

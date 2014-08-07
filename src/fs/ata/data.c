@@ -234,7 +234,8 @@ int kAtapi_Read (kAtaDrive_t* dr, uint32_t lba,  uint8_t sects, uint8_t* buf)
   int i;
   uint8_t packet[12];
   if (KLOG_FS) printf ("ATAPI] read <%d> at lba: %x for %d sectors on %x\n", dr->_pbase, lba, sects, buf);
-  asm ("cli");
+
+  cli();
   outb(dr->_pbase + ATA_REG_CONTROL, 0x0);
 
   // Setup SCSI Packet:

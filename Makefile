@@ -34,6 +34,24 @@ check: all
 
 
 # ---------------------------------------------------------------------------
+# Target: Program  ut
+ut_src = dbg/ut.c \
+             $(patsubst src/%,%,$(wildcard src/syscalls/*.c))  \
+             $(patsubst src/%,%,$(wildcard src/inodes/*.c))  \
+             $(patsubst src/%,%,$(wildcard src/streams/*.c))  \
+             $(patsubst src/%,%,$(wildcard src/assembly/*.c))  \
+             $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
+             $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/fs/tmpfs/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/fs/img/*.c)) \
+             $(patsubst src/%,%,$(wildcard src/core/*.c))
+ut_inc = include/
+ut_cflags = $(std_$(mode)_cflags) --coverage -fprofile-arcs -ftest-coverage
+ut_lflags = $(std_$(mode)_lflags) -fprofile-arcs
+$(eval $(call PROGRAM,ut))
+
+# ---------------------------------------------------------------------------
 # Target: Program  inodes
 inodes_src = $(patsubst src/%,%,$(wildcard src/inodes/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/core/*.c)) \

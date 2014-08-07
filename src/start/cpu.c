@@ -206,17 +206,17 @@ void init_pic(void)
 }
 
 
-void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param)
+void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param, uintptr_t stack)
 {
   regs->gs = 0x2B;
   regs->fs = 0x2B;
   regs->es = 0x2B;
   regs->ds = 0x2B;
-  regs->espx = USR_SPACE_LIMIT - 0x10;
+  regs->espx = stack - 0x10;
   regs->eax = param;
   regs->eip = entry;
   regs->cs = 0x23;
-  regs->esp = USR_SPACE_LIMIT - 0x10;
+  regs->esp = stack - 0x10;
   regs->ss = 0x33;
 }
 

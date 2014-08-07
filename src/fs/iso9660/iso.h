@@ -96,8 +96,8 @@ struct isoVolume {
   kInode_t*   dev;
 };
 
-
-int ISO_Mount (kInode_t* dev, kInode_t* mnt);
+int ISO_Mount (kInode_t* dev, kInode_t* mnt, const char* mpoint);
+// int ISO_Mount (kInode_t* dev, kInode_t* mnt);
 int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file);
 int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba);
 int ISO_Write();

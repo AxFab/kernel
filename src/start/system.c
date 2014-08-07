@@ -62,25 +62,25 @@ int kCore_Initialize ()
   // V. Mount the disc system
   kInode_t* cd = kfs_lookup ("/dev/sdA", NULL);
   kInode_t* mnt = kfs_lookup ("/mnt/", NULL);
-  ISO_Mount (cd, mnt);
+  ISO_mount (cd, mnt, "system");
   // KRP_Mount (NULL, mnt);
 
   // VI. Look for debug symbols
-  kInode_t* sym = kfs_lookup ("/mnt/OS_CORE/BOOT/KIMAGE.MAP", NULL);
+  kInode_t* sym = kfs_lookup ("/mnt/system/BOOT/KIMAGE.MAP", NULL);
   if (sym != NULL)
     ksymbols_load(sym);
   else
     kprintf ("We can't found the file kImage.map\n");
 
   // VII. Start default programs
-  kInode_t* path = kfs_lookup ("/mnt/OS_CORE/USR/BIN/", NULL);
+  kInode_t* path = kfs_lookup ("/mnt/system/USR/BIN/", NULL);
   kInode_t* master = kfs_lookup ("MASTER.", path);
   kInode_t* deamon = kfs_lookup ("DEAMON.", path);
 
 
 
-  ksch_create_process (NULL, master, path);
-  ksch_create_process (NULL, deamon, path);
+  ksch_create_process (NULL, master, path, "");
+  ksch_create_process (NULL, deamon, path, "");
 
   // kfs_log_all();
 

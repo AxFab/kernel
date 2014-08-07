@@ -11,6 +11,7 @@
  */
 #include <kernel/memory.h>
 #include <kernel/inodes.h>
+#include <kernel/info.h>
 
 
 // ===========================================================================
@@ -24,16 +25,16 @@ void kvma_init ()
 
 // ---------------------------------------------------------------------------
 /** Initialize a new address space structure with a first user-stack */
-kAddSpace_t* kvma_new (size_t stack_size)
+kAddSpace_t* kvma_new (size_t peb_size)
 {
   kAddSpace_t* addsp = (kAddSpace_t*)kalloc(sizeof(kAddSpace_t));
-  stack_size = ALIGN_UP(stack_size, PAGE_SIZE);
+  peb_size = ALIGN_UP(peb_size, PAGE_SIZE);
   addsp->first_ = (kVma_t*)kalloc(sizeof(kVma_t));
   addsp->last_ = addsp->first_;
-  addsp->first_->limit_ = USR_SPACE_LIMIT;
-  addsp->first_->base_ = USR_SPACE_LIMIT - stack_size;
-  addsp->first_->flags_ = VMA_STACK | VMA_GROWSDOWN | VMA_READ | VMA_WRITE;
-  addsp->vrtPages_ += stack_size / PAGE_SIZE;
+  addsp->first_->limit_ = kHDW.userSpaceLimit_;
+  addsp->first_->base_ = kHDW.userSpaceLimit_ - peb_size;
+  addsp->first_->flags_ = VMA_READ | VMA_WRITE;
+  addsp->vrtPages_ += peb_size / PAGE_SIZE;
   return addsp;
 }
 

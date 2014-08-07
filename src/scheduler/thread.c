@@ -87,19 +87,22 @@ static void ksch_remove (kTask_t* task)
 kTask_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 {
   assert (proc != NULL);
-  kVma_t area = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
-  area.limit_ = PAGE_SIZE * 2;
+  kVma_t ussk = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
+  ussk.limit_ = 1 * _Mb_;
+kVma_t krns = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
+  krns.limit_ = PAGE_SIZE * 2;
 
   // FIXME load memory
   kTask_t* task = KALLOC (kTask_t);
-  task->kstack_ = kvma_mmap (proc->memSpace_, &area)->base_;
+  task->kstack_ = kvma_mmap (proc->memSpace_, &krns)->base_;
+  task->ustack_ = kvma_mmap (proc->memSpace_, &ussk)->limit_;
   task->tid_ = kSys_NewPid();
   task->execOnCpu_ = -1;
   task->process_ = proc;
   task->state_ = TASK_STATE_WAITING;
   task->niceValue_ = 5;
   task->execStart_ = ltime(NULL);
-  kCpu_Reset (&task->regs_, entry, arg);
+  kCpu_Reset (&task->regs_, entry, arg, task->ustack_);
   atomic_inc_i32 (&proc->runningTask_);
   ksch_insert (task);
   return task;
@@ -112,7 +115,7 @@ void ksch_resurect_thread (kTask_t* task, uintptr_t entry, intmax_t arg)
   assert (task->state_ == TASK_STATE_ZOMBIE);
 
   task->execStart_ = ltime(NULL);
-  kCpu_Reset (&task->regs_, entry, arg);
+  kCpu_Reset (&task->regs_, entry, arg, task->ustack_);
   atomic_inc_i32 (&task->process_->runningTask_);
   ksch_wakeup (task);
 }

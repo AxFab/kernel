@@ -4,6 +4,17 @@
 kCpuCore_t kCPU;
 kSysCore_t kSYS;
 
+kHdwCore_t kHDW = {
+  USR_SPACE_BASE,
+  USR_SPACE_LIMIT,
+  PG_BITMAP_ADD,
+  PG_BITMAP_LG,
+  (uint32_t*)0x2000, // directory mapping of the kernel
+  (uint32_t*)0x3000,
+  (uint32_t*)0x4000, // directory for screen buffer
+};
+
+
 // ===========================================================================
 // ---------------------------------------------------------------------------
 static int kSys_RunnableTasks()
@@ -15,13 +26,13 @@ static int kSys_RunnableTasks()
 // ---------------------------------------------------------------------------
 int kSys_NewPid()
 {
-  return atomic_inc_i32 (&kSYS.autoPid_);
+  return atomic_add_i32 (&kSYS.autoPid_, 1);
 }
 
 // ---------------------------------------------------------------------------
 int kSys_NewIno()
 {
-  return atomic_inc_i32 (&kSYS.autoIno_);
+  return atomic_add_i32 (&kSYS.autoIno_, 1);
 }
 
 // ===========================================================================

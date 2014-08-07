@@ -121,10 +121,11 @@ startup:
 
     call kCore_Initialize
     sti
-  .wait:
-    xor eax, eax
-    mov ebx, 0xb
-    jmp .wait
+    jmp $
+
+
+; =============================================
+; =============================================
 
 ; Data -------------------------------------
 align 4
@@ -136,9 +137,7 @@ align 4
 
 
 ; ------------------------------------------
-
 global krpPack, krpLength
-
 ;align 256
 krpPack:
 ;incbin "krp.tar"
@@ -201,38 +200,10 @@ kcpu_pic:
     ret
 
 
-;; kCpu_Context (0x80000000);
-global kCpu_Context
-extern kTty_HexDump
+; =============================================
+; =============================================
 
-kCpu_Context:
 
-  ; Set Page directory
-    ; mov dword [0x8000000f], 0x0000feeb
-    mov esp, 0x7000 - 0x10
-
-  ; Set user-stack
-    push dword 0x33 ; ss
-    push dword 0xCFFFFFF0 ; esp
-    pushf
-
-  ; Fix flags
-    pop eax
-    or eax, 0x200
-    and eax, 0xFFFFBFFF
-    push eax
-
-  ; Set code and data registers
-    push 0x23
-    push 0x80000000
-    mov ax, 0x2B
-    mov ds, ax
-
-;    push dword 0x50
-;    push esp
-;    call kTty_HexDump
-;    pop eax
-;    pop eax
 
 %define SIZEOF_CPU_REGS 17*4
 ; =============================================
@@ -243,8 +214,16 @@ extern kregisters, kTty_HexDump
 ; void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
 global kCpu_Switch
 extern kpg_new, kTty_HexChar, kDBG
+
+
+; =============================================
+; =============================================
+
+
 kCpu_Switch:
 kCpu_SwitchContext:
+
+kcpuswitch:
 
     cli
     push ebp
@@ -313,16 +292,33 @@ kCpu_SwitchContext:
 
 
 ; =============================================
+; =============================================
 
 
- ; do switch
-    mov al, 0x20
-    out 0x20, al
-    sti
+kcpuhlt:
+
+    cli
+    mov esp, 0x6800
+    mov dword [esp + 16], 0x18        ; ss
+    mov dword [esp + 12], 0x6f00      ; esp
+    mov dword [esp + 8], 0x200        ; eflags
+    mov dword [esp + 4], 0x8          ; cs
+    mov dword [esp], kcpuhlt.go       ; eip
+
+  ; End of interupt
+    mov al,0x20
+    out 0x20,al
+
+  ; Jump
     iret
 
+  .go:
+    hlt
     jmp $
 
+
+; =============================================
+; =============================================
 
 global _geterrno
 errno: dd 0

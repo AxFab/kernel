@@ -1,5 +1,6 @@
 #include <kernel/core.h>
 
+#ifdef __KERNEL
 
 // ----------------------------------------------------------------------------
 typedef struct kSymbol kSymbol_t;
@@ -101,3 +102,5 @@ void kdump (void* ptr, size_t lg)
 
   kprintf ("\n");
 }
+
+#endif

@@ -24,9 +24,11 @@ char* kcopystr (const char* str)
 
 // ============================================================================
 
-ltime_t ltime (ltime_t* ptr) { return 0L; }
+#ifndef __KERNEL
+ltime_t ltime (ltime_t* ptr) { return time(NULL) * CLOCK_PREC; }
+#else
 
-#ifdef __KERNEL
+ltime_t ltime (ltime_t* ptr) { return kSYS.now_; }
 
 // FIXME Why here !?
 time_t time (time_t* ptr) { return 0; }

@@ -65,7 +65,7 @@ static kStream_t* ksch_pipe (int flags, size_t length)
 
 // ===========================================================================
 /** Create a new process, ready to start */
-int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir)
+int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, const char* cmd)
 {
   assert (image != NULL);
 
@@ -75,7 +75,7 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir)
   }
 
   // FIXME load the image
-  kAddSpace_t* mmsp = kvma_new (4 * _Mb_);
+  kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
   kasm_load (mmsp, image);
 
   kProcess_t* proc = KALLOC (kProcess_t);
@@ -84,6 +84,7 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir)
   proc->workingDir_ = dir;
   proc->parent_ = parent;
   proc->image_ = image;
+  proc->command_ = kcopystr(cmd);
   proc->memSpace_ = mmsp;
   if (parent)  atomic_inc_i32 (&parent->childrenCount_);
 

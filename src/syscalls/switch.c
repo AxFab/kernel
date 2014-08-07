@@ -18,7 +18,7 @@
 
 void kCore_Syscall(kCpuRegs_t* regs)
 {
-  asm ("cli");
+  cli();
 
   kInode_t* ino;
 
@@ -29,12 +29,11 @@ void kCore_Syscall(kCpuRegs_t* regs)
     case 0x10: // EXIT
       ksch_exit (kCPU.current_->process_, regs->ecx);
       ksch_stop (TASK_STATE_ZOMBIE, regs);
-      ksch_pick ();
       break;
 
     case 0x11: // EXEC
       ino = kfs_lookup ((char*)regs->ecx, kCPU.current_->process_->workingDir_);
-      ksch_create_process (kCPU.current_->process_, ino, kCPU.current_->process_->workingDir_);
+      ksch_create_process (kCPU.current_->process_, ino, kCPU.current_->process_->workingDir_, regs->edx);
       break;
 
     // case 0x12: //START
@@ -54,10 +53,10 @@ void kCore_Syscall(kCpuRegs_t* regs)
       break;
 
     case 0x23: // WRITE
-      if (regs->ecx > 2 || kCPU.current_->process_->pid_ == 3)
+      // if (regs->ecx > 2 || kCPU.current_->process_->pid_ == 3)
         regs->eax = kstm_write ((int)regs->ecx, (void*)regs->edx, (size_t)regs->ebx, (off_t)-1);
-      else
-        kprintf ("  %d] %s", kCPU.current_->process_->pid_, regs->edx);
+      // else
+      //   kprintf ("  %d] %s", kCPU.current_->process_->pid_, regs->edx);
 
       break;
 
@@ -70,8 +69,12 @@ void kCore_Syscall(kCpuRegs_t* regs)
       break;
   }
 
-  if (KLOG_SYC) kprintf ("syscall] leave {%d} -> <%d> -- \n", kCPU.current_->process_->pid_, regs->eax);
-  kCpu_SetStatus (CPU_STATE_USERMODE);
+  if (!ksch_ontask()) {
+    ksch_pick ();
+  } else {
+    if (KLOG_SYC) kprintf ("syscall] leave {%d} -> <%d> -- \n", kCPU.current_->process_->pid_, regs->eax);
+    kCpu_SetStatus (CPU_STATE_USERMODE);
+  }
 }
 
 

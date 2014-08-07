@@ -28,6 +28,7 @@ struct kProcess
   kInode_t*     image_;
   kInode_t*     workingDir_;
   kAddSpace_t*  memSpace_;
+  const char*   command_;
   uint32_t      dir_;
   kStream_t**   openStreams_;
   int           streamCap_;
@@ -60,6 +61,7 @@ struct kTask
 
   kCpuRegs_t    regs_;
   uint32_t      kstack_;
+  uint32_t      ustack_;
 };
 
 
@@ -72,7 +74,7 @@ void kevt_cancel (kTask_t* task);
 void ksch_ticks (kCpuRegs_t* regs) ;
 void ksch_pick ();
 // ---------------------------------------------------------------------------
-int ksch_create_process (kProcess_t* proc, kInode_t* image, kInode_t* dir);
+int ksch_create_process (kProcess_t* proc, kInode_t* image, kInode_t* dir, const char* cmd);
 int ksch_add_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg);
 void ksch_destroy_process (kProcess_t* proc);
 void ksch_exit (kProcess_t* proc, int status);

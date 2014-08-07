@@ -5,6 +5,7 @@
  */
 int kUserParam_Buffer (kAddSpace_t* addp, void* base, size_t length)
 {
+#ifdef __KERNEL
   kVma_t* start = kvma_look_at (addp, (uintptr_t)base);
   if (start == NULL) {
     __seterrno (EFAULT);
@@ -15,12 +16,13 @@ int kUserParam_Buffer (kAddSpace_t* addp, void* base, size_t length)
     __seterrno (EFAULT);
     return 0;
   }
-
+#endif
   return !0;
 }
 
 int kUserParam_String (kAddSpace_t* addp, const char* str, size_t max)
 {
+#ifdef __KERNEL
   kVma_t* start = kvma_look_at (addp, (uintptr_t)str);
   if (start == NULL) {
     __seterrno (EFAULT);
@@ -31,7 +33,7 @@ int kUserParam_String (kAddSpace_t* addp, const char* str, size_t max)
     __seterrno (ENAMETOOLONG);
     return 0;
   }
-
+#endif
   return !0;
 }
 

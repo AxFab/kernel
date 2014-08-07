@@ -64,6 +64,7 @@ int kInt_Clock (kCpuRegs_t* regs)
   /** PIT - Timers [ +/- 1.73 sec/day ]
 
    */
+  kSYS.now_ += CLOCK_PREC / CLOCK_HZ;
 
 
   // FIXME check kSYS.on_ !?

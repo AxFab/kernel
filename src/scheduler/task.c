@@ -57,7 +57,7 @@ void ksch_stop (int state, kCpuRegs_t* regs)
 
   kTask_t* task = kCPU.current_;
 
-  asm ("cli");
+  cli();
   if (state != TASK_STATE_ZOMBIE)
     kCpu_Save (task, regs); // FIXME Save registers
 

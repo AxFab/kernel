@@ -83,6 +83,20 @@ struct kSysCore
   // kCpuCore_t cpus_ [0];
 };
 
+// ---------------------------------------------------------------------------
+typedef struct kHdwCore kHdwCore_t;
+struct kHdwCore
+{
+  size_t      userSpaceBase_;
+  size_t      userSpaceLimit_;
+
+  size_t      pageBitmapAdd_;
+  ssize_t     pageBitmapLg_;
+
+  uint32_t*   kernelDir_;
+  uint32_t*   kernelTbl0_;
+  uint32_t*   screenTbl_; // FIXME - only for early implement iteration
+};
 
 // ---------------------------------------------------------------------------
 int kCpu_SetStatus (int state);
@@ -93,5 +107,6 @@ int kSys_NewIno();
 // ---------------------------------------------------------------------------
 extern kCpuCore_t kCPU;
 extern kSysCore_t kSYS;
+extern kHdwCore_t kHDW;
 
 #endif /* KINFO_H__ */

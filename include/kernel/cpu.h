@@ -3,10 +3,6 @@
 
 #include <kernel/core.h>
 
-int32_t atomic_xchg_i32 (int32_t* ref, int32_t val);
-int32_t atomic_inc_i32 (int32_t* ref);
-int32_t atomic_dec_i32 (int32_t* ref);
-int32_t atomic_add_i32 (int32_t* ref, int32_t val);
 
 void outb (uint16_t port, uint8_t value);
 void outw (uint16_t port, uint16_t value);
@@ -41,7 +37,7 @@ struct kCpuRegs
   uint16_t    ss, rs5;
 };
 
-void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param);
+void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param, uintptr_t stack);
 void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
 void kCpu_Save (kTask_t* task, kCpuRegs_t* regs);
 
