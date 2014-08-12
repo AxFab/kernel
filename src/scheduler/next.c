@@ -95,6 +95,7 @@ void ksch_pick ()
       kunlock (&pick->lock_);
 
       if (KLOG_SCH) kprintf ("scheduler] calling switch <%x, %x> [%x]\n", &pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
+      kCPU.tmpPageStack_ = 1024;
       kCpu_Switch (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
       return;
 

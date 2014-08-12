@@ -208,7 +208,7 @@ Os.iso: $(kimg) master deamon hello sname
 	$(VV) cp $(bin_dir)/hello iso/usr/bin/hello
 	$(VV) cp $(bin_dir)/sname iso/usr/bin/sname
 
-	$(VV) cp ../axBox/bin/i686/krn/buzybox iso/usr/bin/buzybox
+# $(VV) cp ../axBox/bin/i686/krn/buzybox iso/usr/bin/buzybox
 	$(VV) cp ../axBox/scripts/* iso/usr/bin/
 
 	$(V) grub-mkrescue -o $@ iso -A Os_Core > /dev/null

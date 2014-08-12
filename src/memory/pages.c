@@ -82,6 +82,38 @@ void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, u
   }
 }
 
+// ---------------------------------------------------------------------------
+int kpg_resolve_inode (kVma_t* vma, uint32_t address, int rights)
+{
+  uint32_t page;
+  int read;
+
+  size_t off = (vma->offset_ + (address - vma->base_));
+  if (KLOG_PF) kprintf ("PF] stream at <%x>  [%x-%x-%x]\n", address, vma->offset_, vma->base_, off);
+  size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
+
+  if (rights == PG_USER_RDWR)
+    rights = vma->flags_ & VMA_WRITE ? PG_USER_RDWR : PG_USER_RDONLY;
+
+  if (kfs_map (vma->ino_, off, &page, &read))
+    return __geterrno ();
+
+  if (vma->flags_ & VMA_SHARED) {
+    kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page, read);
+    if (read)
+      kfs_feed (vma->ino_, (void*)address, lg, off / vma->ino_->stat_.cblock_);
+
+  } else {
+    // FIXME Should use copy-on-write (Resolve / PG_USER_RDONLY -> copy after (inval))
+    uint32_t copy = kpg_alloc();
+    kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, copy, read);
+    void* src = kpg_temp_page (&page);
+    memcpy ((void*)address, src, PAGE_SIZE);
+  }
+
+  if (KLOG_PF) kprintf ("PF] fill stream at <%x> \n", address);
+  return __noerror();
+}
 
 // ---------------------------------------------------------------------------
 uint32_t last = 0;
@@ -101,12 +133,13 @@ int kpg_fault (uint32_t address)
       kpg_resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR, 0, TRUE);
       if (KLOG_PF) kprintf ("PF] Extend the stack\n");
     } else if (vma->ino_ != NULL)
-      kpg_fill_stream (vma, ALIGN_DW (address, PAGE_SIZE), PG_USER_RDWR);
+      kpg_resolve_inode (vma, ALIGN_DW (address, PAGE_SIZE), PG_USER_RDWR);
+      // kpanic ("PF] Page fault on mapped file !? <%x> [%x] %s \n", address, vma, vma->ino_->name_);
     else {
       kpanic ("PF] Page fault in user space <%x> [%x] \n", address, vma);
       for (;;);
     }
-  } else if (address < 0xffc00000)
+  } else if (address < 0xff000000)
     kpg_resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY, 0, TRUE);
   else
     kpanic ("PF] PG NOT ALLOWED <%x> \n", address);
@@ -116,25 +149,42 @@ int kpg_fault (uint32_t address)
 }
 
 // ---------------------------------------------------------------------------
+void* kpg_temp_page (uint32_t* pg)
+{
+  // FIXME ASSERT WE ARE INSIDE A LOCK !
+  // FIXME ASSERT kpg_page_stack > 0
+  if (TABLE_DIR_THR [1020] == 0)
+    TABLE_DIR_THR [1020] = kpg_alloc() | PG_KERNEL_ONLY;
+
+  if (*pg == 0)
+    *pg = kpg_alloc();
+  TABLE_PAGE_TH(1020)[--kCPU.tmpPageStack_] = *pg | PG_KERNEL_ONLY;
+  return (void*)(0xff000000 + kCPU.tmpPageStack_ * 0x1000);
+}
+
+
+// ---------------------------------------------------------------------------
 uint32_t kpg_new ()
 {
   int i;
-  uint32_t page = kpg_alloc();
+  uint32_t page = 0;
+  uint32_t* crD = kpg_temp_page (&page);
+
   // FIXME check this operation is possible (sti, realy clean here!)
   if (KLOG_PF) kprintf ("pg] Create a new directory <%X> \n", page);
   // kpg_dump (TABLE_DIR_THR);
-  TABLE_DIR_THR [1020] = page | PG_KERNEL_ONLY;
 
-  memset (TABLE_DIR_WIN, 0, PAGE_SIZE);
-  TABLE_DIR_WIN [0] = TABLE_DIR_THR [0];
-  TABLE_DIR_WIN [1] = TABLE_DIR_THR [1];  // FIXME Handle the screen better than that
+
+  memset (crD, 0, PAGE_SIZE);
+  crD [0] = TABLE_DIR_THR [0];
+  crD [1] = TABLE_DIR_THR [1];  // FIXME Handle the screen better than that
 
   int kstart = (kHDW.userSpaceLimit_ >> 22) & 0x3ff;
   for (i = kstart; i < 1020; ++i)
-    TABLE_DIR_WIN [i] = TABLE_DIR_THR [i];
-  TABLE_DIR_WIN [1021] = TABLE_DIR_THR [1021];
-  TABLE_DIR_WIN [1022] = page | PG_KERNEL_ONLY;
-  TABLE_DIR_WIN [1023] = page | PG_KERNEL_ONLY;
+    crD [i] = TABLE_DIR_THR [i];
+  crD [1021] = TABLE_DIR_THR [1021];
+  crD [1022] = page | PG_KERNEL_ONLY;
+  crD [1023] = page | PG_KERNEL_ONLY;
 
   // kpg_dump (TABLE_DIR_WIN);
   if (KLOG_PF) kprintf ("pg] Directory is ready\n");
@@ -142,6 +192,34 @@ uint32_t kpg_new ()
 
   return page;
 }
+
+// ---------------------------------------------------------------------------
+// uint32_t kpg_new ()
+// {
+//   int i;
+//   uint32_t page = kpg_alloc();
+//   // FIXME check this operation is possible (sti, realy clean here!)
+//   if (KLOG_PF) kprintf ("pg] Create a new directory <%X> \n", page);
+//   // kpg_dump (TABLE_DIR_THR);
+//   TABLE_DIR_THR [1020] = page | PG_KERNEL_ONLY;
+
+//   memset (TABLE_DIR_WIN, 0, PAGE_SIZE);
+//   TABLE_DIR_WIN [0] = TABLE_DIR_THR [0];
+//   TABLE_DIR_WIN [1] = TABLE_DIR_THR [1];  // FIXME Handle the screen better than that
+
+//   int kstart = (kHDW.userSpaceLimit_ >> 22) & 0x3ff;
+//   for (i = kstart; i < 1020; ++i)
+//     TABLE_DIR_WIN [i] = TABLE_DIR_THR [i];
+//   TABLE_DIR_WIN [1021] = TABLE_DIR_THR [1021];
+//   TABLE_DIR_WIN [1022] = page | PG_KERNEL_ONLY;
+//   TABLE_DIR_WIN [1023] = page | PG_KERNEL_ONLY;
+
+//   // kpg_dump (TABLE_DIR_WIN);
+//   if (KLOG_PF) kprintf ("pg] Directory is ready\n");
+//   // TABLE_DIR_THR [1020] = 0;
+
+//   return page;
+// }
 
 #endif
 // ---------------------------------------------------------------------------

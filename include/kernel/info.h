@@ -16,6 +16,7 @@ struct kCpuCore
   int   cpuNo_;
   int   errNo;
   int   lockCounter;
+  int   tmpPageStack_;
 
   // INODES
   // RootInode

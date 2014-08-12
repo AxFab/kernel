@@ -77,6 +77,6 @@ void kpg_ram (uint64_t base, uint64_t length);
 int kpg_fill_stream (kVma_t* vma, uint32_t address, int rights);
 void kpg_sync_stream (kVma_t* vma, uint32_t address);
 
-
+void* kpg_temp_page (uint32_t* pg);
 
 #endif /* MEMORY_H__ */

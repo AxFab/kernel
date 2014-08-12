@@ -1,14 +1,14 @@
 
 
 #define NULL ((void*)0)
-typedef struct axStartInfo axStartInfo_t;
+typedef struct sStartInfo sStartInfo_t;
 
 
 int write(int fd, const void *buf, unsigned int count);
-int exec (const char *path, axStartInfo_t* param);
+int exec (const char *path, sStartInfo_t* param);
 
 
-struct axStartInfo
+struct sStartInfo
 {
   const char*     cmd_;
   const char*     username_;
@@ -33,7 +33,7 @@ const char* cmdl[] = {
 
 int execv_s(const char *path, const char * args)
 {
-  axStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
+  sStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
   return exec (path, &param);
 }
 

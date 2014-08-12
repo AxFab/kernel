@@ -30,6 +30,7 @@ void kpg_init (void)
   uint32_t* kernelPage =    kHDW.kernelDir_;
   uint32_t* pageScreen =    kHDW.screenTbl_;
 
+  kCPU.tmpPageStack_ = 1024;
   kprintf ("Memory detected %s\n", kpsize((uintmax_t)memMax));
   kprintf ("Memory available %s\n", kpsize(pageAvailable * PAGE_SIZE));
 
