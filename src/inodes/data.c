@@ -28,7 +28,9 @@ int kfs_feed(kInode_t* ino, void* buffer, size_t length, off_t offset)
   }
 
   if (KLOG_VFS) kprintf ("FS] Read '%s' on LBA %d using %x\n", ino->name_, offset, ino->fs_->read);
+  MOD_ENTER;
   int err = ino->fs_->read (ino, buffer, length, offset);
+  MOD_LEAVE;
   if (err) {
     __seterrno (err);
     return -1;
@@ -61,7 +63,7 @@ int kfs_sync(kInode_t* ino, void* buffer, size_t length, off_t offset)
 
 // ---------------------------------------------------------------------------
 /** Find a page that will correspond to the file page. */
-int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead)
+int kfs_map (kInode_t*ino, off_t offset, uint32_t* page)
 {
   int i;
   offset = ALIGN_DW (offset, PAGE_SIZE);
@@ -72,7 +74,6 @@ int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead)
   }
 
   if (i == ino->pageCount_) {
-
 
     kPage_t* cache = kalloc (sizeof(kPage_t) * (ino->pageCount_ + 8));
     if (ino->pagesCache_) {
@@ -93,21 +94,19 @@ int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead)
       cache[i].phys_ = spg;
       if (cache[i].phys_ == 0)
         return __seterrno (EIO);
-      *mustRead = FALSE;
+
     } else {
-      cache[i].phys_ = kpg_alloc();
-    *mustRead = TRUE;
+      void* address = kpg_temp_page (&cache[i].phys_);
+      kunlock (&ino->lock_);
+      kfs_feed(ino, address, PAGE_SIZE / ino->stat_.cblock_, offset/ ino->stat_.cblock_);
+      klock (&ino->lock_, LOCK_FS_MAP);
     }
 
     cache[i].offset_ = offset;
     cache[i].flags_ = 0;
-
-  } else {
-    *mustRead = FALSE;
   }
 
   // kprintf ("fs] map {P#%d}  [%d]->0x%x <%s:%d>\n", kCPU.current_->process_->pid_, i, ino->pagesCache_[i].phys_, ino->name_, offset);
-
   *page = ino->pagesCache_[i].phys_;
   kunlock (&ino->lock_);
   return __noerror();

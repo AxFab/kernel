@@ -26,24 +26,19 @@ int kpg_fill_stream (kVma_t* vma, uint32_t address, int rights)
   size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
 
   uint32_t page;
-  int read;
 
   if (vma->flags_ & VMA_SHARED) {
-    if (kfs_map (vma->ino_, off, &page, &read))
+    if (kfs_map (vma->ino_, off, &page))
       return __geterrno ();
 
     if (rights == PG_USER_RDWR)
       rights = vma->flags_ & VMA_WRITE ? PG_USER_RDWR : PG_USER_RDONLY;
   } else {
     // FIXME Copy-on-write
-    read = 1;
     page = kpg_alloc();
   }
 
-  kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page, read);
-  if (read)
-    kfs_feed (vma->ino_, (void*)address, lg, off / vma->ino_->stat_.cblock_);
-
+  kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page, FALSE);
   if (KLOG_PF) kprintf ("PF] fill stream at <%x> \n", address);
   return __noerror();
 }

@@ -144,7 +144,7 @@ int kfs_new_device (const char* name, kInode_t* dir, kFileOp_t* fileops, void* d
 
 int kfs_feed(kInode_t* ino, void* buffer, size_t length, off_t offset);
 int kfs_sync(kInode_t* ino, void* buffer, size_t length, off_t offset);
-int kfs_map (kInode_t*ino, off_t offset, uint32_t* page, int* mustRead);
+int kfs_map (kInode_t*ino, off_t offset, uint32_t* page);
 
 #endif /* INODES_H__ */
 

@@ -86,27 +86,23 @@ void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, u
 int kpg_resolve_inode (kVma_t* vma, uint32_t address, int rights)
 {
   uint32_t page;
-  int read;
 
   size_t off = (vma->offset_ + (address - vma->base_));
   if (KLOG_PF) kprintf ("PF] stream at <%x>  [%x-%x-%x]\n", address, vma->offset_, vma->base_, off);
-  size_t lg = PAGE_SIZE / vma->ino_->stat_.cblock_;
 
   if (rights == PG_USER_RDWR)
     rights = vma->flags_ & VMA_WRITE ? PG_USER_RDWR : PG_USER_RDONLY;
 
-  if (kfs_map (vma->ino_, off, &page, &read))
+  if (kfs_map (vma->ino_, off, &page))
     return __geterrno ();
 
   if (vma->flags_ & VMA_SHARED) {
-    kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page, read);
-    if (read)
-      kfs_feed (vma->ino_, (void*)address, lg, off / vma->ino_->stat_.cblock_);
+    kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, page, FALSE);
 
   } else {
     // FIXME Should use copy-on-write (Resolve / PG_USER_RDONLY -> copy after (inval))
     uint32_t copy = kpg_alloc();
-    kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, copy, read);
+    kpg_resolve (address, TABLE_DIR_PRC, rights, PG_USER_RDWR, copy, FALSE);
     void* src = kpg_temp_page (&page);
     memcpy ((void*)address, src, PAGE_SIZE);
   }
@@ -123,7 +119,7 @@ int kpg_fault (uint32_t address)
   if (KLOG_PF) kprintf ("PF] PF at <%x> \n", address);
 
   if (address < kHDW.userSpaceBase_)
-    kpanic ("PF] PG NOT ALLOWED <%x> \n", address);
+    kpanic ("PF] PG NOT ALLOWED <%x-%d-%d> \n", address, (address >> 22) & 0x3ff, (address >> 12) & 0x3ff);
   else if (address < kHDW.userSpaceLimit_) {
     kVma_t* vma = kvma_look_at (mmspc, address);
     if (vma == NULL ) {
@@ -141,8 +137,9 @@ int kpg_fault (uint32_t address)
     }
   } else if (address < 0xff000000)
     kpg_resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY, 0, TRUE);
-  else
-    kpanic ("PF] PG NOT ALLOWED <%x> \n", address);
+  else {
+    kpanic ("PF] PG NOT ALLOWED <%x-%d-%d> [%d]\n", address, (address >> 22) & 0x3ff, (address >> 12) & 0x3ff, kCPU.tmpPageStack_);
+  }
 
 
   return __noerror();
@@ -159,7 +156,21 @@ void* kpg_temp_page (uint32_t* pg)
   if (*pg == 0)
     *pg = kpg_alloc();
   TABLE_PAGE_TH(1020)[--kCPU.tmpPageStack_] = *pg | PG_KERNEL_ONLY;
+
+  // printf("TMP PAGE at %d\n", kCPU.tmpPageStack_);
+  // kstacktrace(8);
   return (void*)(0xff000000 + kCPU.tmpPageStack_ * 0x1000);
+}
+
+void kpg_reset_stack ()
+{
+  int i;
+  if (TABLE_DIR_THR [1020] != 0) {
+    for (i=0; i<1024; ++i)
+      TABLE_PAGE_TH(1020)[i] = 0;
+  }
+
+  kCPU.tmpPageStack_ = 1024;
 }
 
 

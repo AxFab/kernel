@@ -53,10 +53,10 @@ void kCore_Syscall(kCpuRegs_t* regs)
       break;
 
     case 0x23: // WRITE
-      // if (regs->ecx > 2 || kCPU.current_->process_->pid_ == 3)
+      if (regs->ecx > 2 || kCPU.current_->process_->pid_ == 3)
         regs->eax = kstm_write ((int)regs->ecx, (void*)regs->edx, (size_t)regs->ebx, (off_t)-1);
-      // else
-      //   kprintf ("  %d] %s", kCPU.current_->process_->pid_, regs->edx);
+      else
+        kprintf ("  %d] %s", kCPU.current_->process_->pid_, regs->edx);
 
       break;
 
