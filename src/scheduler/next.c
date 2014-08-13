@@ -11,6 +11,7 @@
  */
 #include <kernel/scheduler.h>
 #include <kernel/info.h>
+#include <kernel/memory.h>
 
 // ---------------------------------------------------------------------------
 static int ksch_timeslice (kTask_t* task)

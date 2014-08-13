@@ -77,7 +77,10 @@ typedef struct kInode       kInode_t;
 typedef struct kStream      kStream_t;
 typedef struct kFileOp      kFileOp_t;
 typedef struct kPage        kPage_t;
-typedef struct kFifoPen     kFifoPen_t;
+typedef struct kPipe        kPipe_t;
+typedef struct kFifoPen       kFifoPen_t;
+typedef struct kNTty       kNTty_t;
+typedef struct kLine      kLine_t;
 // memory.h
 typedef struct kVma         kVma_t;
 typedef struct kAddSpace    kAddSpace_t;

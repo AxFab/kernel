@@ -21,7 +21,7 @@ void RTC_DisableCMOS () ;
 void PIT_Initialize (uint32_t frequency);
 int ATA_Initialize(kInode_t* dev);
 int VBA_Initialize(kInode_t* dev);
-int ISO_Mount (kInode_t* dev, kInode_t* mnt);
+int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* name);
 void ksymbols_load (kInode_t* ino);
 
 

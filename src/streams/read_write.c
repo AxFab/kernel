@@ -10,6 +10,10 @@
 // ===========================================================================
 
 // ---------------------------------------------------------------------------
+ssize_t kstm_read_tty (kStream_t* stream, void* buf, size_t length);
+ssize_t kstm_write_tty (kStream_t* stream, void* buf, size_t length);
+
+
 ssize_t kstm_read_stream (kStream_t* stream, void* buf, size_t length)
 {
   kFifoPen_t* fifo;
@@ -129,7 +133,7 @@ ssize_t kstm_read (int fd, void* buf, size_t length, off_t off)
 
     case S_IFCHR:
     case S_IFIFO:
-      return kstm_read_stream (stream, buf, length);
+      return kstm_read_pipe (stream, buf, length);
 
     case S_IFSOCK:
       __seterrno(ENOSYS);
@@ -172,7 +176,7 @@ ssize_t kstm_write (int fd, void* buf, size_t length, off_t off)
 
     case S_IFCHR:
     case S_IFIFO:
-      return kstm_write_stream (stream, buf, length);
+      return kstm_write_pipe (stream, buf, length);
 
     case S_IFSOCK:
       __seterrno(ENOSYS);
@@ -221,8 +225,10 @@ off_t kstm_seek(int fd, off_t offset, int whence)
   stream->position_ = MIN (stream->ino_->stat_.length_,
                         MAX(0, stream->position_));
 
-  if (stream->position_ != (size_t)((off_t)stream->position_))
-    return __seterrno (EOVERFLOW);
+  if (stream->position_ != (size_t)((off_t)stream->position_)) {
+    __seterrno (EOVERFLOW);
+    return -1;
+  }
 
   return stream->position_;
 }

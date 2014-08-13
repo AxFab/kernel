@@ -40,6 +40,7 @@ struct kInode {
   union {
     kAssembly_t*    assembly_;
     kFifoPen_t*     fifo_;
+    kPipe_t*        pipe_;
   };
   void*           devinfo_;
   int             pageCount_;  ///< max number of physical pages in cache

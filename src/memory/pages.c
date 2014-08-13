@@ -162,6 +162,7 @@ void* kpg_temp_page (uint32_t* pg)
   return (void*)(0xff000000 + kCPU.tmpPageStack_ * 0x1000);
 }
 
+// ---------------------------------------------------------------------------
 void kpg_reset_stack ()
 {
   int i;
@@ -203,34 +204,6 @@ uint32_t kpg_new ()
 
   return page;
 }
-
-// ---------------------------------------------------------------------------
-// uint32_t kpg_new ()
-// {
-//   int i;
-//   uint32_t page = kpg_alloc();
-//   // FIXME check this operation is possible (sti, realy clean here!)
-//   if (KLOG_PF) kprintf ("pg] Create a new directory <%X> \n", page);
-//   // kpg_dump (TABLE_DIR_THR);
-//   TABLE_DIR_THR [1020] = page | PG_KERNEL_ONLY;
-
-//   memset (TABLE_DIR_WIN, 0, PAGE_SIZE);
-//   TABLE_DIR_WIN [0] = TABLE_DIR_THR [0];
-//   TABLE_DIR_WIN [1] = TABLE_DIR_THR [1];  // FIXME Handle the screen better than that
-
-//   int kstart = (kHDW.userSpaceLimit_ >> 22) & 0x3ff;
-//   for (i = kstart; i < 1020; ++i)
-//     TABLE_DIR_WIN [i] = TABLE_DIR_THR [i];
-//   TABLE_DIR_WIN [1021] = TABLE_DIR_THR [1021];
-//   TABLE_DIR_WIN [1022] = page | PG_KERNEL_ONLY;
-//   TABLE_DIR_WIN [1023] = page | PG_KERNEL_ONLY;
-
-//   // kpg_dump (TABLE_DIR_WIN);
-//   if (KLOG_PF) kprintf ("pg] Directory is ready\n");
-//   // TABLE_DIR_THR [1020] = 0;
-
-//   return page;
-// }
 
 #endif
 // ---------------------------------------------------------------------------
