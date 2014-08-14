@@ -1,0 +1,3 @@
+[submodule "3rdparty/axlibc"]
+	path = 3rdparty/axlibc
+	url = https://github.com/AxFab/axlibc
