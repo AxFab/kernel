@@ -1,4 +1,5 @@
 #include <kernel/info.h>
+#include <stdarg.h>
 
 #ifdef __KERNEL
 #  include <format.h>
@@ -37,10 +38,13 @@ void kTty_Update(); // TODO Fix header mess
 /**
     The kernel enter on Panic mode, when suite of operations is compromized.
  */
+
 int kpanic (const char *str, ...)
 {
-  const char** args = &str;
-  format ((_putc_f)kputc, 0, str, ++args);
+  va_list ap;
+  va_start(ap, str);
+  kvprintf (str, ap);
+  va_end(ap);
 
   kstacktrace (5);
   kTty_Update();

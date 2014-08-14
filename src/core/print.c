@@ -2,37 +2,59 @@
 
 #ifdef __KERNEL
 
-#include <format.h>
+#include <ax/file.h>
 void kTty_Update();
 
 char* klogStart = (char*)0x7000;
 int klogLg = (0x10000 - 0x7000);
 int kLogPen = 0;
 
-int kputc (int c)
+int _kwrite (FILE* fp, const char* buf, size_t length)
 {
-  if (c <= 0 || c >= 0x80) {
-    c = 0x7f;
+  int lg = length;
+  while (lg--) {
+    int c = *buf;
+    if (c <= 0 || c >= 0x80) {
+      c = 0x7f;
+    }
+
+    klogStart[kLogPen++] = (c & 0x7f);
+
+    if (kLogPen >= klogLg) {
+      kLogPen = 0;
+    }
   }
 
-  klogStart[kLogPen++] = (c & 0x7f);
-
-  if (kLogPen >= klogLg) {
-    kLogPen = 0;
-  }
-
-  return c;
+  fp->count_ += length;
+  return length;
 }
 
 
 #undef kprintf
 
+
+int kvprintf (const char* str, va_list ap)
+{
+  FILE fp = {
+    .count_ = 0,
+    .lbuf_ = 0,
+    .write_ = _kwrite,
+    .lock_ = -1,
+  };
+
+  int res = vfprintf (&fp, str, ap);
+  kTty_Update(); // FIXME this is only for kernel raw debugging
+  return res;
+}
+
 int kprintf (const char* str, ...)
 {
-  const char** args = &str;
-  int v =  format ((_putc_f)kputc, 0, str, ++args);
-  kTty_Update(); // FIXME this is only for kernel raw debugging
+  va_list ap;
+  va_start(ap, str);
+  int v = kvprintf (str, ap);
+  va_end(ap);
   return v;
+
 }
 
 #endif /* __KERNEL */

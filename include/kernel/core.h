@@ -7,11 +7,13 @@
 #endif
 
 // Standard includes
+#include <ax/core.h>
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <time.h>
 #include <sys/types.h>
@@ -112,6 +114,7 @@ void kregisters (kCpuRegs_t* regs);
 // Print ------------------------------------------------
 int kputc(int c);
 int kprintf(const char* str, ...);
+int kvprintf (const char* str, va_list ap);
 const char* kpsize (uintmax_t number);
 
 // Alloc ------------------------------------------------
@@ -130,8 +133,6 @@ int klockcount ();
 int kcpu_state();
 
 // ======================================================
-#define MIN(a,b)  ((a) <= (b) ? (a) : (b))
-#define MAX(a,b)  ((a) >= (b) ? (a) : (b))
 
 #ifndef __KERNEL
 #define PAGE_SIZE 4096

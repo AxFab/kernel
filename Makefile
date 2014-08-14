@@ -52,6 +52,16 @@ ut_lflags = $(std_$(mode)_lflags) -fprofile-arcs
 $(eval $(call PROGRAM,ut))
 
 # ---------------------------------------------------------------------------
+# Target: Program  main
+main_src = dbg/main.c \
+			       $(patsubst src/%,%,$(wildcard src/core/*.c)) \
+             $(patsubst src/%,%,$(wildcard src/assembly/*.c))
+main_inc = include/
+main_cflags = $(std_$(mode)_cflags) --coverage -fprofile-arcs -ftest-coverage
+main_lflags = $(std_$(mode)_lflags) -fprofile-arcs
+$(eval $(call PROGRAM,main))
+
+# ---------------------------------------------------------------------------
 # Target: Program  inodes
 inodes_src = $(patsubst src/%,%,$(wildcard src/inodes/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/core/*.c)) \

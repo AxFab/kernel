@@ -20,7 +20,7 @@ ssize_t kstm_read_block (kStream_t* stream, void* buf, size_t length, off_t off)
 
     void* address = kpg_temp_page (&page);
     address = ((char*)address) + (off - poff);
-    ssize_t lg = PAGESIZE + poff - off;
+    ssize_t lg = PAGE_SIZE + poff - off;
     lg = MIN (lg, (ssize_t)length);
     lg = MIN (lg, (ssize_t)(stream->ino_->stat_.length_ - off));
     if (lg == 0)
@@ -53,7 +53,7 @@ ssize_t kstm_write_block (kStream_t* stream, void* buf, size_t length, off_t off
 
     void* address = kpg_temp_page (&page);
     address = ((char*)address) + (off - poff);
-    ssize_t lg = PAGESIZE + poff - off;
+    ssize_t lg = PAGE_SIZE + poff - off;
     lg = MIN (lg, (ssize_t)length);
     if (lg == 0)
       break;

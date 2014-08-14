@@ -34,8 +34,10 @@ struct kNTty
   int         height_;
   uint32_t    txColor_;
   uint32_t    bgColor_;
-  int         row_;
   uint32_t*   pixels_;
+
+
+  int         row_;
   kStream_t*  input_;
   kStream_t*  output_;
   kLine_t*    first_;
@@ -57,6 +59,16 @@ struct kLine
   uint32_t    bgColor_;
   kLine_t*    next_;
   kLine_t*    prev_;
+};
+
+
+struct kFrameBuffer
+{
+  int         width_;
+  int         height_;
+  uint32_t    txColor_;
+  uint32_t    bgColor_;
+  uint32_t*   pixels_;
 };
 
 

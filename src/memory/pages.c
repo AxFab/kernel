@@ -137,13 +137,12 @@ int kpg_fault (uint32_t address)
     }
   } else if (address < 0xff000000)
     kpg_resolve (address, TABLE_DIR_KRN, PG_KERNEL_ONLY, PG_KERNEL_ONLY, 0, TRUE);
-  else {
+  else
     kpanic ("PF] PG NOT ALLOWED <%x-%d-%d> [%d]\n", address, (address >> 22) & 0x3ff, (address >> 12) & 0x3ff, kCPU.tmpPageStack_);
-  }
-
 
   return __noerror();
 }
+
 
 // ---------------------------------------------------------------------------
 void* kpg_temp_page (uint32_t* pg)
@@ -161,6 +160,7 @@ void* kpg_temp_page (uint32_t* pg)
   // kstacktrace(8);
   return (void*)(0xff000000 + kCPU.tmpPageStack_ * 0x1000);
 }
+
 
 // ---------------------------------------------------------------------------
 void kpg_reset_stack ()

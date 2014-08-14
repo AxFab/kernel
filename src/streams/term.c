@@ -250,8 +250,6 @@ kNTty_t tty0;
  */
 void ktty_set_tty0 (uint32_t* base, int width, int height, int depth)
 {
-  int lg;
-
   tty0.pixels_ = base;
   tty0.width_ = width;
   tty0.height_ = height;
