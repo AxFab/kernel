@@ -4,7 +4,7 @@
 #include <kernel/core.h>
 #include <kernel/cpu.h>
 #ifdef __KERNEL
-#  include <alloc.h>
+#  include <ax/alloc.h>
 #endif
 
 

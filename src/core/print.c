@@ -13,7 +13,7 @@ int _kwrite (FILE* fp, const char* buf, size_t length)
 {
   int lg = length;
   while (lg--) {
-    int c = *buf;
+    int c = *(buf++);
     if (c <= 0 || c >= 0x80) {
       c = 0x7f;
     }

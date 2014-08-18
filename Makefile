@@ -12,7 +12,7 @@
 
 linuxname = $(shell uname -sr)
 date = $(shell date '+%d %b %Y')
-AXLIBC = ../axlibc
+AXLIBC = ./3rdparty/axlibc
 
 pack_cflags =  -D_DATE_=\"'$(date)'\" -D_OS_FULLNAME_=\"'$(linuxname)'\"
 

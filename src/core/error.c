@@ -1,9 +1,6 @@
 #include <kernel/info.h>
 #include <stdarg.h>
 
-#ifdef __KERNEL
-#  include <format.h>
-#endif
 // ----------------------------------------------------------------------------
 /**
     Change the kernel error status.
