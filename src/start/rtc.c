@@ -106,6 +106,7 @@ struct tm RTC_GetTime ()
     date.tm_min = (date.tm_min & 0x0F) + ((date.tm_min / 16) * 10);
     date.tm_hour = ( (date.tm_hour & 0x0F) + (((date.tm_hour & 0x70) / 16) * 10) ) | (date.tm_hour & 0x80);
     date.tm_mday = (date.tm_mday & 0x0F) + ((date.tm_mday / 16) * 10);
+    date.tm_mon = (date.tm_mon & 0x0F) + ((date.tm_mon / 16) * 10);
     date.tm_year = (date.tm_year & 0x0F) + ((date.tm_year / 16) * 10);
     if (RTC_CENTURY)
       century = (century & 0x0F) + ((century / 16) * 10);

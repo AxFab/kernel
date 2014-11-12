@@ -11,6 +11,8 @@ void kinit()
 {
   meminit_r(&kSYS.kheap, (void*)0xD0000000, 0x20000000);
   // kCPU.asp = kMem_Create (4 * _Mb_);
+
+  // kTty_NewTerminal (0x7000, 0x10000 - 0x7000);
 }
 
 
@@ -25,6 +27,15 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* name);
 void ksymbols_load (kInode_t* ino);
 
 
+  // int    tm_sec;   /**< seconds [0,61] */
+  // int    tm_min;   /**< minutes [0,59] */
+  // int    tm_hour;  /**< hour [0,23] */
+  // int    tm_mday;  /**< day of month [1,31] */
+  // int    tm_mon;   *< month of year [0,11] 
+  // int    tm_year;  /**< years since 1900 */
+  // int    tm_wday;  /**< day of week [0,6] (Sunday = 0) */
+  // int    tm_yday;  /**< day of year [0,365] */
+  // int    tm_isdst; /**< daylight savings flag */
 
 int kCore_Initialize ()
 {
@@ -38,14 +49,24 @@ int kCore_Initialize ()
 
   // II. Initialize system core
   kinit ();
-  // kTty_NewTerminal (0x7000, 0x10000 - 0x7000);
+
 
   // III. Set Date and initiate timer
   char tmp[510];
   struct tm dt = RTC_GetTime ();
-  asctime_r (&dt, tmp);
-  kprintf ("Date: %s", tmp);
 
+// kprintf("Dt sec: %d \n", dt.tm_sec);
+// kprintf("Dt min: %d \n", dt.tm_min);
+// kprintf("Dt hour: %d \n", dt.tm_hour);
+// kprintf("Dt tm_mday: %d \n", dt.tm_mday);
+// kprintf("Dt tm_mon: %d \n", dt.tm_mon);
+// kprintf("Dt tm_year: %d \n", dt.tm_year);
+// kprintf("Dt tm_wday: %d \n", dt.tm_wday);
+// kprintf("Dt tm_yday: %d \n", dt.tm_yday);
+// kprintf("Dt tm_isdst: %d \n", dt.tm_mday);
+
+  asctime_r (&dt, tmp);
+  kprintf ("Date: %s\n", tmp);
   // RTC_EnableCMOS ();
   PIT_Initialize(CLOCK_HZ);
 
