@@ -7,6 +7,8 @@ global _errno
 
 extern main
 
+global syscall_1A, syscall_2A, syscall_3A, syscall_4A, syscall_5A
+
 
 start:
 _start:
@@ -61,27 +63,45 @@ write:
 
 ; ----------------------------------------------------------------------------
 ; ----------------------------------------------------------------------------
+syscall_1A:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 12]
+    jmp os_syscall_1.push
 os_syscall_1:
     push ebp
     mov ebp, esp
+  .push:
     mov ecx, [ebp + 8]   ; arg1
     int 0x30
     leave
     ret
 
+syscall_2A:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 16]
+    jmp os_syscall_2.push
 os_syscall_2:
     push ebp
     mov ebp, esp
+  .push:
     mov ecx, [ebp + 8]   ; arg1
     mov edx, [ebp + 12]  ; arg2
     int 0x30
     leave
     ret
 
+syscall_3A:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 20]
+    jmp os_syscall_3.push
 os_syscall_3:
     push ebp
     mov ebp, esp
     push ebx
+  .push:
     mov ecx, [ebp + 8]   ; arg1
     mov edx, [ebp + 12]  ; arg2
     mov ebx, [ebp + 16]  ; arg3
@@ -90,11 +110,17 @@ os_syscall_3:
     leave
     ret
 
+syscall_4A:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 24]
+    jmp os_syscall_4.push
 os_syscall_4:
     push ebp
     mov ebp, esp
     push ebx
     push esi
+  .push:
     mov ecx, [ebp + 8]   ; arg1
     mov edx, [ebp + 12]  ; arg2
     mov ebx, [ebp + 16]  ; arg3
@@ -105,12 +131,18 @@ os_syscall_4:
     leave
     ret
 
+syscall_5A:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 28]
+    jmp os_syscall_5.push
 os_syscall_5:
     push ebp
     mov ebp, esp
     push ebx
     push esi
     push edi
+  .push:
     mov ecx, [ebp + 8]   ; arg1
     mov edx, [ebp + 12]  ; arg2
     mov ebx, [ebp + 16]  ; arg3

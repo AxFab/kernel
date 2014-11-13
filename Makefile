@@ -176,7 +176,7 @@ $(eval $(call KPROGRAM,master))
 # ---------------------------------------------------------------------------
 deamon_src = dummy/deamon.c
 deamon_crt = $(obj_dir)/crt0.o
-deamon_inc = $(AXLIBC)/include/
+deamon_inc = $(AXLIBC)/include/ include
 deamon_cflags = $(std_$(mode)_cflags) -nostdinc
 deamon_lflags = $(AXLIBC)/lib/libaxc.a
 $(eval $(call KPROGRAM,deamon))
@@ -194,30 +194,32 @@ sname_inc = $(AXLIBC)/include/
 sname_cflags = $(std_$(mode)_cflags) -nostdinc
 sname_lflags = $(AXLIBC)/lib/libaxc.a
 $(eval $(call KPROGRAM,sname))
+# ---------------------------------------------------------------------------
+kt_itimer_src = dummy/kt_itimer.c
+kt_itimer_crt = $(obj_dir)/crt0.o
+kt_itimer_inc = $(AXLIBC)/include/ include
+kt_itimer_cflags = $(std_$(mode)_cflags) -nostdinc
+kt_itimer_lflags = $(AXLIBC)/lib/libaxc.a
+$(eval $(call KPROGRAM,kt_itimer))
 
 # ===========================================================================
 # ===========================================================================
 kimg = kImage
 
 cdrom: Os.iso
-Os.iso: $(kimg) master deamon hello sname
+Os.iso: $(kimg) master deamon hello sname kt_itimer
 	$(VVV) mkdir -p iso/boot/grub
-#	$(VVV) mkdir -p iso/usr/{,local/}{bin,lib,sbin}
-	$(VVV) mkdir -p iso/usr/bin
-	$(VVV) mkdir -p iso/usr/lib
-	$(VVV) mkdir -p iso/usr/sbin
-	$(VVV) mkdir -p iso/usr/local/bin
-	$(VVV) mkdir -p iso/usr/local/lib
-	$(VVV) mkdir -p iso/usr/local/sbin
+	$(VVV) mkdir -p iso/bin iso/lib iso/sbin
 
 	$(VV) cp tools/grub/grub.cfg  iso/boot/grub/grub.cfg
 	$(VV) cp $(bin_dir)/$(kimg) iso/boot/kImage
 	$(VV) cp kImage.map iso/boot/kImage.map
 
-	$(VV) cp $(bin_dir)/master iso/usr/bin/master
-	$(VV) cp $(bin_dir)/deamon iso/usr/bin/deamon
-	$(VV) cp $(bin_dir)/hello iso/usr/bin/hello
-	$(VV) cp $(bin_dir)/sname iso/usr/bin/sname
+	$(VV) cp $(bin_dir)/master iso/bin/master
+	$(VV) cp $(bin_dir)/deamon iso/bin/deamon
+	$(VV) cp $(bin_dir)/hello iso/bin/hello
+	$(VV) cp $(bin_dir)/sname iso/bin/sname
+	$(VV) cp $(bin_dir)/kt_itimer iso/bin/kt_itimer
 
 # $(VV) cp ../axBox/bin/i686/krn/buzybox iso/usr/bin/buzybox
 #	$(VV) cp ../axBox/scripts/* iso/usr/bin/

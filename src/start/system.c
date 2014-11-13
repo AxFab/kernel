@@ -58,7 +58,7 @@ int core_master (void)
   // term_write(tty0, "\e[31mBonjour\e[0m", 16);
 
   // Search start directory
-  kInode_t* dir = kfs_lookup ("/usr/USR/BIN/", NULL);
+  kInode_t* dir = kfs_lookup ("/usr/BIN/", NULL);
 
   // Search program
   kInode_t* msr = kfs_lookup ("MASTER.", dir);

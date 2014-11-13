@@ -65,7 +65,7 @@ int kInt_Clock (kCpuRegs_t* regs)
 
    */
   kSYS.now_ += CLOCK_PREC / CLOCK_HZ;
-
+  //kprintf ("== %lld ==\n", kSYS.now_);
 
   // FIXME check kSYS.on_ !?
   // kTty_Putc ('.');
@@ -73,6 +73,7 @@ int kInt_Clock (kCpuRegs_t* regs)
     ticksCount = 0;
     // kprintf ("System clock: %lld us\n", kSYS.now_);
 
+    kevt_ticks();
     ksch_ticks((kCpuRegs_t*)&regs);
   }
 

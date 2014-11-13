@@ -14,115 +14,140 @@
 #include <kernel/memory.h>
 #include <kernel/scheduler.h>
 #include <kernel/info.h>
+#include <smoke/syscall.h>
+
+typedef int (*sys_func)(kCpuRegs_t* regs, ...);
+
+int sys_reboot(kCpuRegs_t* regs, int code);
+int sys_exec(kCpuRegs_t* regs, void* param);
+int sys_exit(kCpuRegs_t* regs, int code);
+
+int sys_open(kCpuRegs_t* regs, const char* path, int flags, int mode);
+int sys_close(kCpuRegs_t* regs, int fd);
+ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset);
+ssize_t sys_write(kCpuRegs_t* regs, int fd, const void* buf, size_t count, off_t offset);
 
 
-typedef int (*sys_func)();
 
-int sys_reboot(int code);
-int sys_exec(int type, void* param);
-int sys_exit(int code);
+int sys_itimer(kCpuRegs_t* regs, int miliseconds);
+time_t sys_time(kCpuRegs_t* regs, time_t* now);
+int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags);
 
-#define SYS_REBOOT  0
-#define SYS_EXEC    1
-#define SYS_EXIT    2
 
-#define _SYS(n,f)  [n] = f
+
+#define _SYS(n,f)  [n] = (sys_func)f
 
 sys_func sys_table [] = {
+
   _SYS(SYS_REBOOT, sys_reboot),
+  // START / STOP
+  // SLEEP / ITIMER
+  // OPEN / CLOSE
   _SYS(SYS_EXEC, sys_exec),
   _SYS(SYS_EXIT, sys_exit),
 
-  [5] = NULL,
+  _SYS(SYS_OPEN, sys_open),
+  // _SYS(SYS_CLOSE, sys_close),
+  _SYS(SYS_READ, sys_read),
+  _SYS(SYS_WRITE, sys_write),
+
+
+  _SYS(SYS_TIME, sys_time),
+  _SYS(SYS_ITIMER, sys_itimer),
+  _SYS(SYS_WAIT, sys_waitobj),
 };
 
 
-int sys_reboot(int code)
+int sys_reboot(kCpuRegs_t* regs, int code)
+{
+  __seterrno(EPERM);
+  return -1;
+}
+
+int sys_itimer(kCpuRegs_t* regs, int miliseconds) 
 {
   return -1;
 }
 
-int sys_exec(int type, void* param)
+time_t sys_time(kCpuRegs_t* regs, time_t* now)
 {
+  kprintf ("Time is: %lld\n", kSYS.now_);
+  return kSYS.now_ * CLOCK_HZ / 1000000;
+}
+
+int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags) 
+{
+  kevt_wait(kCPU.current_, TASK_EVENT_SLEEP, (1000LL * 1000LL * 1000LL * 10LL) * 3LL, regs);
   return -1;
 }
-int sys_exit(int code)
+
+
+
+
+int sys_exec(kCpuRegs_t* regs, void* param)
 {
+  kInode_t* ino = kfs_lookup ((char*)regs->ecx, kCPU.current_->process_->workingDir_);
+  if (ino == NULL)
+    return -1;  
+  ksch_create_process (kCPU.current_->process_, ino, kCPU.current_->process_->workingDir_, regs->edx);
   return -1;
 }
+
+int sys_exit(kCpuRegs_t* regs, int code)
+{
+  ksch_exit (kCPU.current_->process_, code);
+  ksch_stop (TASK_STATE_ZOMBIE, regs);
+  return -1;
+}
+
+
+
+int sys_open(kCpuRegs_t* regs, const char* path, int flags, int mode)
+{
+  return kstm_open (-1, path, flags, mode);
+}
+
+ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset)
+{
+  return kstm_read (fd, buf, count, (off_t)-1);
+}
+
+ssize_t sys_write(kCpuRegs_t* regs, int fd, const void* buf, size_t count, off_t offset)
+{
+  return kstm_write (fd, buf, count, (off_t)-1);
+}
+
+
 
 
 void kCore_Syscall(kCpuRegs_t* regs)
 {
+  const int max = (int)(sizeof(sys_table) / sizeof(sys_func));
   cli();
 
-  kInode_t* ino;
+  int no = (int)regs->eax;
+  if (no >= max || sys_table[no] == NULL) {
+    kprintf("Sys] Try to call syscall function number %d (max %d).\n", no, max);
+    regs->eax = -1;
+    regs->edx = ENOSYS;
+    return;
+  }
 
   kCpu_SetStatus (CPU_STATE_SYSCALL);
-  if (KLOG_SYC) kprintf ("syscall] enter {%d} -> <%d> -- \n", kCPU.current_->process_->pid_, regs->eax);
-
-  switch (regs->eax) {
-    case 0x10: // EXIT
-      ksch_exit (kCPU.current_->process_, regs->ecx);
-      ksch_stop (TASK_STATE_ZOMBIE, regs);
-      break;
-
-    case 0x11: // EXEC
-      ino = kfs_lookup ((char*)regs->ecx, kCPU.current_->process_->workingDir_);
-      ksch_create_process (kCPU.current_->process_, ino, kCPU.current_->process_->workingDir_, regs->edx);
-      break;
-
-    // case 0x12: //START
-    // case 0x13: //TERMINATE
-    //   break;
-
-    // case 0x14: //SLEEP
-    //   break;
-
-    case 0x21: // OPEN
-      regs->eax = kstm_open (-1, (char*)regs->ecx, (int)regs->edx, (int)regs->ebx);
-      // kprintf ("OPEN %d, %d \n", regs->eax, __geterrno());
-      break;
-
-    case 0x22: // READ
-      regs->eax = kstm_read ((int)regs->ecx, (void*)regs->edx, (size_t)regs->ebx, (off_t)-1);
-      break;
-
-    case 0x23: // WRITE
-      //if (regs->ecx > 2 || kCPU.current_->process_->pid_ == 3)
-        regs->eax = kstm_write ((int)regs->ecx, (void*)regs->edx, (size_t)regs->ebx, (off_t)-1);
-      //else
-        // kprintf ("  %d] %s", kCPU.current_->process_->pid_, regs->edx);
-
-      break;
-
-    default:
-      if (KLOG_SYC) {
-        kprintf ("SYSCALL] [#%d] Unknown %d \n", kCPU.current_->tid_, regs->eax);
-        kregisters (regs);
-      }
-
-      break;
-  }
+  int ret = sys_table[no](regs, 
+                (void*)regs->ecx, 
+                (void*)regs->edx, 
+                (void*)regs->ebx, 
+                (void*)regs->esi, 
+                (void*)regs->edi);
 
   if (!ksch_ontask()) {
     ksch_pick ();
   } else {
-    if (KLOG_SYC) kprintf ("syscall] leave {%d} -> <%d> -- \n", kCPU.current_->process_->pid_, regs->eax);
+    regs->eax = ret;
+    regs->edx = __geterrno();
     kCpu_SetStatus (CPU_STATE_USERMODE);
   }
+
 }
-
-
-
-// ssize_t read (int fd, size_t length, void* buf);
-
-// ssize_t read_sy (int sy, int fd, size_t length, void* buf);
-// #define read(fd,lg,buf)  read_sy(0x22, fd, length, buf);
-
-// ssize_t read (int fd, size_t length, void* buf)
-// {
-//   return read_sy (0x22, fd, length, buf);
-// }
-
 

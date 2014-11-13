@@ -1,24 +1,24 @@
+#include <smoke/syscall.h>
+
+// #define NULL ((void*)0)
+// typedef struct sStartInfo sStartInfo_t;
 
 
-#define NULL ((void*)0)
-typedef struct sStartInfo sStartInfo_t;
+// int write(int fd, const void *buf, unsigned int count);
+// int exec (const char *path, sStartInfo_t* param);
 
 
-int write(int fd, const void *buf, unsigned int count);
-int exec (const char *path, sStartInfo_t* param);
-
-
-struct sStartInfo
-{
-  const char*     cmd_;
-  const char*     username_;
-  int             output_;
-  int             input_;
-  int             error_;
-  int             workingDir_;  ///
-  int             flags_;       ///
-  int             mainWindow_;  /// Give a window/tty handler for the program
-};
+// struct sStartInfo
+// {
+//   const char*     cmd_;
+//   const char*     username_;
+//   int             output_;
+//   int             input_;
+//   int             error_;
+//   int             workingDir_;  ///
+//   int             flags_;       ///
+//   int             mainWindow_;  /// Give a window/tty handler for the program
+// };
 
 
 
@@ -51,9 +51,11 @@ int main ()
 {
   int j;
   int o = 0;
-  int m = 4; //sizeof (cmdl) / sizeof (char*);
+  int m = 4; // sizeof (cmdl) / sizeof (char*);
 
   write (1, "Deamon v1.0\n", 12);
+
+  execv_s ("KT_ITIME.", NULL);
 
   for (;;) {
 
@@ -63,8 +65,8 @@ int main ()
     }
 
     delay();
-    // execv_s ("HELLO.", cmdl[o % m]);
-    // execv_s ("SNAME.", NULL);
+    execv_s ("HELLO.", cmdl[o % m]);
+    execv_s ("SNAME.", NULL);
     ++o;
   }
 
