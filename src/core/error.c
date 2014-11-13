@@ -43,7 +43,7 @@ int kpanic (const char *str, ...)
   kvprintf (str, ap);
   va_end(ap);
 
-  kstacktrace (5);
+  kstacktrace (10);
   kTty_Update();
   for (;;);
 }

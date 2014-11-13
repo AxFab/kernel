@@ -28,7 +28,7 @@ int main ()
 
   IMG_init (kSYS.devNd_); // REPLACE BY ATA !?
 
-  kInode_t* iso = kfs_lookup ("/dev/sdA", NULL);
+  kInode_t* iso = search_inode ("/dev/sdA", NULL);
   int err = ISO_Mount (iso, kSYS.mntNd_);
   kprintf ("ISO mount %d \n", err);
 
@@ -38,11 +38,11 @@ int main ()
   // kfs_feed(iso, buffer, 1, 17);
   // kdump (buffer, 2048);
 
-  kInode_t* kimg = kfs_lookup ("/mnt/OS_CORE/BOOT/KIMAGE.", NULL);
+  kInode_t* kimg = search_inode ("/mnt/OS_CORE/BOOT/KIMAGE.", NULL);
   kfs_log_all();
 
-  // kfs_lookup ("cdrom:\\BOOT\\GRUB\\I386_PC/FAT.MOD", NULL);
-  // kfs_lookup ("cdrom:/BOOT/GRUB/I386_PC/FIT.MOD", NULL);
+  // search_inode ("cdrom:\\BOOT\\GRUB\\I386_PC/FAT.MOD", NULL);
+  // search_inode ("cdrom:/BOOT/GRUB/I386_PC/FIT.MOD", NULL);
 
   kfs_grab (kimg);
 

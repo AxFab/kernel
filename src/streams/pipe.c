@@ -34,7 +34,7 @@ ssize_t kstm_read_pipe (kStream_t* stream, void* buf, size_t length)
       pipe->outPen_ = 0;
 
     ssize_t poff = ALIGN_DW(pipe->outPen_, PAGE_SIZE);
-    kfs_map (stream->ino_, poff, &page);
+    inode_page (stream->ino_, poff, &page);
     if (KLOG_RW) kprintf ("PIPE R %s, at %d  [%x]\n", stream->ino_->name_, poff, page);
     void* address = kpg_temp_page (&page);
     address = ((char*)address) + (pipe->outPen_ - poff);
@@ -85,7 +85,7 @@ ssize_t kstm_write_pipe (kStream_t* stream, void* buf, size_t length)
       pipe->inPen_ = 0;
 
     ssize_t poff = ALIGN_DW(pipe->inPen_, PAGE_SIZE);
-    kfs_map (stream->ino_, poff, &page);
+    inode_page (stream->ino_, poff, &page);
     if (KLOG_RW) kprintf ("PIPE W %s, at %d  [%x]\n", stream->ino_->name_, poff, page);
     void* address = kpg_temp_page (&page);
     address = ((char*)address) + (pipe->inPen_ - poff);
@@ -131,7 +131,7 @@ ssize_t kstm_read_pipe_line  (kStream_t* stream, void* buf, size_t length)
       pipe->outPen_ = 0;
 
     ssize_t poff = ALIGN_DW(pipe->outPen_, PAGE_SIZE);
-    kfs_map (stream->ino_, poff, &page);
+    inode_page (stream->ino_, poff, &page);
     if (KLOG_RW) kprintf ("PIPE R %s, at %d  [%x]\n", stream->ino_->name_, poff, page);
     void* address = kpg_temp_page (&page);
     address = ((char*)address) + (pipe->outPen_ - poff);
@@ -193,7 +193,7 @@ ssize_t kstm_available_data_pipe (kStream_t* stream)
     pipe->outPen_ = 0;
 
   ssize_t poff = ALIGN_DW(pipe->outPen_, PAGE_SIZE);
-  kfs_map (stream->ino_, poff, &page);
+  inode_page (stream->ino_, poff, &page);
   if (KLOG_RW) kprintf ("PIPE R %s, at %d  [%x]\n", stream->ino_->name_, poff, page);
   void* address = kpg_temp_page (&page);
   address = ((char*)address) + (pipe->outPen_ - poff);
@@ -222,13 +222,8 @@ kStream_t* kstm_create_pipe (int flags, size_t length)
   char no[10];
   length = ALIGN_UP (length, PAGE_SIZE);
 
-  kStat_t stat = { 0 };
-  stat.mode_ = S_IFIFO | 0600;
-  stat.atime_ = stat.ctime_ = stat.mtime_ = time (NULL);
-  stat.length_ = length;
-
   snprintf (no, 10, "p%d", kSYS.autoPipe_++);
-  kInode_t* ino = kfs_mknod(no, kSYS.pipeNd_, &stat);
+  kInode_t* ino = create_inode(no, kSYS.pipeNd_, S_IFIFO | 0600, length);
   assert (ino != NULL);
 
   ino->fifo_ = KALLOC(kFifo_t);

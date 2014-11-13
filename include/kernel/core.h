@@ -24,10 +24,16 @@ unsigned long long strtoull (const char * str, char ** endptr, int base);
 int snprintf(char* s, size_t n, const char* format, ... );
 
 typedef struct spinlock     spinlock_t;
+typedef struct list     list_t;
 struct spinlock {
   int32_t       key_;
   int           cpu_;
   const char*   where_;
+};
+
+struct list {
+  void* f_;
+  void* l_;
 };
 
 /** ltime_t is an accurate time storage

@@ -103,6 +103,7 @@ struct kBucket
   size_t    length_;  ///< Length of the page bucket.
   off_t     offset_;  ///< Offset on the file.
   int       flags_;   ///< Flags for this bucket properties.
+  list_t    lru_;     ///< List of bucket for Last-Recently-Used policy.
 };
 
 
@@ -117,11 +118,11 @@ int feed_inode(kInode_t* ino, void* buffer, size_t length, off_t offset);
 /** Request the file system to synchronize against the inode page buffer. */
 int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset);
 /** Find a memory bucket for the content of an inode. */
-int inode_bucket(kInode_t* ino, off_t offset, uint32_t* page);
+kBucket_t* inode_bucket(kInode_t* ino, off_t offset);
 /** Find a physique page for the content of an inode. */
 int inode_page(kInode_t* ino, off_t offset, uint32_t* page);
 
-// VFS/DEVICES ===============================================================
+// VFS/DEVICE ================================================================
 /** Create and register a new device. */
 id_t create_device(const char* nm, kInode_t* ino, kDevice_t* dev, 
                    kStat_t* stat);
@@ -146,7 +147,9 @@ kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat);
 /** Release an inode form the inode cache. */
 int unregister_inode (kInode_t* ino);
 /** Call the inode scavanger which will try to free cached data. */
-int scavenge_inodes(int nodes, int pages);
+int scavenge_inodes(int nodes);
+/** Call the bucket scavanger which will try to free cached page. */
+int scavenge_bucket(int pages);
 
 
 // VFS/SEARCH ================================================================
@@ -158,7 +161,7 @@ kInode_t* follow_symlink(kInode_t* ino, int* links);
 
 // VFS/WMETA =================================================================
 /** Request the file system for the creation of a new inode. */
-kInode_t* create_inode(const char* name, kInode_t* dir, mode_t mode, dev_t dev);
+kInode_t* create_inode(const char* name, kInode_t* dir, mode_t mode, size_t lg);
 /** Request the file system to remove an inode. */
 int remove_inode(kInode_t* ino);
 /** Request the file system to update the inode metadata. */

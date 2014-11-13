@@ -62,7 +62,7 @@ kAssembly_t* elf_open (kInode_t* ino)
 
   // head = (ELF_Header_t*)kalloc(4096);
   kfs_grab (ino);
-  kfs_map (ino, 0, &page);
+  inode_page (ino, 0, &page);
   // kfs_feed (ino, head, 4096 / ino->stat_.cblock_, 0);
   head = (ELF_Header_t*)kpg_temp_page (&page);
   if (0) {

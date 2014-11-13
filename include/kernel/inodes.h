@@ -112,7 +112,7 @@ struct kResxFile {
 
 int kfs_init();
 
-kInode_t* kfs_lookup(const char* path, kInode_t* dir);
+kInode_t* search_inode(const char* path, kInode_t* dir);
 kInode_t* kfs_register(const char* name, kInode_t* dir, kStat_t* stat);
 int kfs_unregister(kInode_t* ino);
 
@@ -148,7 +148,7 @@ int kfs_new_device (const char* name, kInode_t* dir, kDevice_t* fileops, void* d
 
 int kfs_feed(kInode_t* ino, void* buffer, size_t length, off_t offset);
 int kfs_sync(kInode_t* ino, void* buffer, size_t length, off_t offset);
-int kfs_map (kInode_t*ino, off_t offset, uint32_t* page);
+int inode_page (kInode_t*ino, off_t offset, uint32_t* page);
 
 #endif /* INODES_H__ */
 

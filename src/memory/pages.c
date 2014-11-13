@@ -93,7 +93,7 @@ int kpg_resolve_inode (kVma_t* vma, uint32_t address, int rights)
   if (rights == PG_USER_RDWR)
     rights = vma->flags_ & VMA_WRITE ? PG_USER_RDWR : PG_USER_RDONLY;
 
-  if (kfs_map (vma->ino_, off, &page))
+  if (inode_page (vma->ino_, off, &page))
     return __geterrno ();
 
   if (vma->flags_ & VMA_SHARED) {

@@ -29,7 +29,7 @@ ssize_t fifo_read (kInode_t* ino, void* buf, size_t count)
     // Get the current page
     // @todo, rename kpg_temp_page
     ssize_t poff = ALIGN_DW(fifo->rpen_, PAGE_SIZE);
-    kfs_map (ino, poff, &page);
+    inode_page (ino, poff, &page);
     void* address = (char*)kpg_temp_page(&page) + (fifo->rpen_ - poff);
 
     // Capacity ahead
@@ -74,7 +74,7 @@ ssize_t fifo_write (kInode_t* ino, const void* buf, size_t count)
     // Get the current page
     // @todo, rename kpg_temp_page
     ssize_t poff = ALIGN_DW(fifo->wpen_, PAGE_SIZE);
-    kfs_map (ino, poff, &page);
+    inode_page (ino, poff, &page);
     void* address = (char*)kpg_temp_page(&page) + (fifo->wpen_ - poff);
 
     // Capacity ahead

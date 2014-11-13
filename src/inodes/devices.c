@@ -34,9 +34,9 @@ int kfs_init()
   root->stat_.block_ = PAGE_SIZE;
   root->dev_ = &tmpFsOperation;
 
-  kSYS.devNd_ = kfs_mknod (FS_DEV_NODE, root, &root->stat_);
-  kSYS.mntNd_ = kfs_mknod (FS_MNT_NODE, root, &root->stat_);
-  kSYS.pipeNd_ = kfs_mknod (FS_PIPE_NODE, kSYS.devNd_, &root->stat_);
+  kSYS.devNd_ = create_inode(FS_DEV_NODE, root, S_IFDIR | 0755, 0);
+  kSYS.mntNd_ = create_inode(FS_MNT_NODE, root, S_IFDIR | 0755, 0);
+  kSYS.pipeNd_ = create_inode(FS_PIPE_NODE, kSYS.devNd_, S_IFDIR | 0755, 0);
 
 
   return __noerror();
@@ -49,7 +49,7 @@ int kfs_new_device (const char* name, kInode_t* dir, kDevice_t* fileops, void* d
 {
   stat->atime_ = time(NULL);
   klock(&dir->lock_);
-  kInode_t* dev = kfs_register (name, dir, stat);
+  kInode_t* dev = register_inode (name, dir, stat);
   if (!dev)
     return __geterrno();
 

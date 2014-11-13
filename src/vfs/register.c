@@ -88,11 +88,12 @@ kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat)
 
   ino->name_ = kcopystr(name);
   ino->dev_ = dir->dev_;
+  ino->devinfo_ = dir->devinfo_; // @todo should be include on dev_ !
   memcpy (&ino->stat_, stat, sizeof(kStat_t));
   ino->stat_.dev_ = dir->stat_.dev_;
   ino->stat_.ino_ = ++auto_incr; // SYS_HANDLE();
   ino->stat_.mode_ &= (S_IALLUGO | S_IFMT);
-  klock(&dir->lock_);
+  // klock(&dir->lock_);
   klock(&ino->lock_);
   if (attach_inode(ino, dir, name)) {
     kunlock (&dir->lock_);
@@ -110,15 +111,23 @@ kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat)
 /** Release an inode form the inode cache. */
 int unregister_inode (kInode_t* ino)
 {
-
+  return __seterrno (ENOSYS);
 }
 
 
 // ---------------------------------------------------------------------------
 /** Call the inode scavanger which will try to free cached data. */
-int scavenge_inodes(int nodes, int pages)
+int scavenge_inodes(int nodes)
 {
+  return __seterrno (ENOSYS);
+}
 
+
+// ---------------------------------------------------------------------------
+/** Call the bucket scavanger which will try to free cached page. */
+int scavenge_bucket(int pages)
+{
+  return __seterrno (ENOSYS);
 }
 
 

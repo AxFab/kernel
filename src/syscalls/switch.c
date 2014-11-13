@@ -87,7 +87,7 @@ int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags)
 
 int sys_exec(kCpuRegs_t* regs, void* param)
 {
-  kInode_t* ino = kfs_lookup ((char*)regs->ecx, kCPU.current_->process_->workingDir_);
+  kInode_t* ino = search_inode ((char*)regs->ecx, kCPU.current_->process_->workingDir_);
   if (ino == NULL)
     return -1;  
   ksch_create_process (kCPU.current_->process_, ino, kCPU.current_->process_->workingDir_, regs->edx);

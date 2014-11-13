@@ -188,10 +188,10 @@ kTty_t screen;
 const char* sysvolume_name = NULL;
 void ksysvolume ()
 {
-  kInode_t* disc = kfs_lookup (sysvolume_name, kSYS.devNd_);
+  kInode_t* disc = search_inode (sysvolume_name, kSYS.devNd_);
   if (0/* HDD */) {
     // MBR_init (disc, kSYS.devNd_);
-    disc = kfs_lookup (sysvolume_name, kSYS.devNd_);
+    disc = search_inode (sysvolume_name, kSYS.devNd_);
     // FAT_init(disc, kSYS.rootNd_, "system");
   } else if (1/* CD */) {
     ISO_mount(disc, kSYS.rootNd_, "system");
@@ -312,9 +312,9 @@ int main ()
   ksysvolume ();
     // 3.6. Look for debug symbols
     // 3.7. Start Master program
-  path = kfs_lookup ("/system/", NULL);
+  path = search_inode ("/system/", NULL);
   while (!master && i < m)
-    master = kfs_lookup (masterNames[i++], path);
+    master = search_inode (masterNames[i++], path);
   if (!master) kpanic ("Unable to find the master program\n");
   ksch_create_process (NULL, master, path, "master");
     // 3.8. Initialize Scheduler

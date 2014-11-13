@@ -160,8 +160,9 @@ enum LOCK
 
 
 #define LOG_VFS 0
-
-
 #define LOG_VFS_PFX  "VFS] "
+
+#define LOG 1
+#define LOG_PFX  "LOG] "
 
 #endif /* KCONFIG_H__ */

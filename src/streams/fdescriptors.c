@@ -163,7 +163,7 @@ int kstm_open(int dirfd, const char *path, int flags, mode_t mode)
     return -1;
   }
 
-  ino = kfs_lookup (path, dir);
+  ino = search_inode (path, dir);
   if (ino == NULL) {
 
     if (__geterrno() == ELOOP || __geterrno() == ENOTDIR)
@@ -219,12 +219,8 @@ int kstm_create(kInode_t* dir, const char *path, int flags, mode_t mode)
   // FIXME slit path for no directory
   // FIXME check rights
   // FIXME check the mode
-  time_t now = time (NULL);
-  kStat_t stat = { 0 };
-  stat.mode_ = mode;
-  stat.atime_ = stat.ctime_ = stat.mtime_ = now;
 
-  kInode_t* ino = kfs_mknod(&path[1], dir, &stat);
+  kInode_t* ino = create_inode(&path[1], dir, mode, 0);
   if (ino == NULL) {
     return -1;
   }
@@ -244,13 +240,8 @@ int kstm_pipe(int flags, mode_t mode, size_t length)
   time_t now = time (NULL);
   length = ALIGN_UP (length, PAGE_SIZE);
 
-  kStat_t stat = { 0 };
-  stat.mode_ = S_IFIFO | (mode & S_IALLUGO);
-  stat.atime_ = stat.ctime_ = stat.mtime_ = now;
-  stat.length_ = length;
-
   snprintf (no, 10, "p%d", kSYS.autoPipe_++);
-  kInode_t* ino = kfs_mknod(no, kSYS.pipeNd_, &stat);
+  kInode_t* ino = create_inode(no, kSYS.pipeNd_, S_IFIFO | (mode & S_IALLUGO), length);
   if (ino == NULL) {
     return -1;
   }

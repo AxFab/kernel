@@ -26,7 +26,7 @@ int main ()
   img_Initialize (devIno, mntIno); // REPLACE BY ATA !?
 
   // TESTING
-  kInode_t* bbx = kfs_lookup ("/mnt/cdrom/USR/BIN/BUZYBOX.", NULL);
+  kInode_t* bbx = search_inode ("/mnt/cdrom/USR/BIN/BUZYBOX.", NULL);
   kfs_grab (bbx);
   // memset (buffer, 0, 2048);
   // kFs_Feed (bbx, buffer, 0, 2048);

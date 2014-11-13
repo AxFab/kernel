@@ -71,10 +71,44 @@ int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset)
 // ---------------------------------------------------------------------------
 /** Find a memory bucket for the content of an inode. 
   */
-int inode_bucket(kInode_t* ino, off_t offset, uint32_t* page)
+kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
 {
+  assert (PARAM_KOBJECT (ino, kInode_t));
+  assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);
+
+  // klock (&ino->lock_);
+
+  // // Look on already cached buckets
+  // kBucket_t* buck = ino->buckets.f_;
+  // while (buck != NULL) {
+  //   if (buck->offset_ == offset) {
+  //     return buck;
+  //   }
+
+  //   buck = buck->l_;
+  // };
+
+
+  // // @todo Search physique pages !
+
+  // buck = KALLOC(kBucket_t);
+  // buck->offset_ = offset;
+  // buck->flags_ = 1;
+  // buck->length_ = PAGE_SIZE;
+
+  // // Attach at the end
+  // buck->file_.l_ = NULL;
+  // buck->file_.f_ = ino->buckets.l_;
+  // ino->buckets.l_->l_ = buck;
+  // ino->buckets.l_ = buck;
+
+  // // Attach at the begining
+  // buck->file_.f_ = NULL;
+  // buck->file_.l_ =  ino->buckets_.f_;
+  // if (ino->buckets_.f_) ino->buckets_.f_->l_;
+
   __seterrno(ENOSYS);
-  return -1;
+  return NULL;
 }
 
 

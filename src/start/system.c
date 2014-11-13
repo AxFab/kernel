@@ -49,7 +49,7 @@ void ksymbols_load (kInode_t* ino);
 int core_master (void) 
 {
   // Create TTY0
-  // kInode_t* fb0 = kfs_lookup ("/dev/fb0", NULL);
+  // kInode_t* fb0 = search_inode ("/dev/fb0", NULL);
   kInode_t* tty0 = term_create(4 * _Mb_, 800, 600);
   if (tty0 == NULL)
     return -1;
@@ -58,10 +58,10 @@ int core_master (void)
   // term_write(tty0, "\e[31mBonjour\e[0m", 16);
 
   // Search start directory
-  kInode_t* dir = kfs_lookup ("/usr/BIN/", NULL);
+  kInode_t* dir = search_inode ("/usr/BIN/", NULL);
 
   // Search program
-  kInode_t* msr = kfs_lookup ("MASTER.", dir);
+  kInode_t* msr = search_inode ("MASTER.", dir);
 
   // Start program
   return process_login (NULL, msr, dir, tty0, ""); 
@@ -118,15 +118,15 @@ int kCore_Initialize ()
 
 
   // V. Mount the disc system
-  kInode_t* cd = kfs_lookup ("/dev/sdA", NULL);
-  kInode_t* mnt = kfs_lookup ("/", NULL);
+  kInode_t* cd = search_inode ("/dev/sdA", NULL);
+  kInode_t* mnt = search_inode ("/", NULL);
   klock (&cd->lock_);
   ISO_mount (cd, mnt, "usr");
   kunlock (&cd->lock_);
   // KRP_Mount (NULL, mnt);
 
   // VI. Look for debug symbols
-  kInode_t* sym = kfs_lookup ("/usr/BOOT/KIMAGE.MAP", NULL);
+  kInode_t* sym = search_inode ("/usr/BOOT/KIMAGE.MAP", NULL);
   if (sym != NULL)
     ksymbols_load(sym);
   else
@@ -136,9 +136,9 @@ int kCore_Initialize ()
 
 
   // VII. Start default programs
-  // kInode_t* path = kfs_lookup ("/usr/USR/BIN/", NULL);
-  // kInode_t* master = kfs_lookup ("MASTER.", path);
-  // kInode_t* deamon = kfs_lookup ("DEAMON.", path);
+  // kInode_t* path = search_inode ("/usr/USR/BIN/", NULL);
+  // kInode_t* master = search_inode ("MASTER.", path);
+  // kInode_t* deamon = search_inode ("DEAMON.", path);
   // ksch_create_process (NULL, master, path, "");
   // ksch_create_process (NULL, deamon, path, "");
 

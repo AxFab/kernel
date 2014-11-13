@@ -16,7 +16,7 @@ ssize_t kstm_read_block (kStream_t* stream, void* buf, size_t length, off_t off)
   while (length > 0) {
 
     ssize_t poff = ALIGN_DW(off, PAGE_SIZE);
-    kfs_map (stream->ino_, poff, &page);
+    inode_page (stream->ino_, poff, &page);
 
     void* address = kpg_temp_page (&page);
     address = ((char*)address) + (off - poff);
@@ -49,7 +49,7 @@ ssize_t kstm_write_block (kStream_t* stream, void* buf, size_t length, off_t off
   while (length > 0) {
 
     ssize_t poff = ALIGN_DW(off, PAGE_SIZE);
-    kfs_map (stream->ino_, poff, &page);
+    inode_page (stream->ino_, poff, &page);
 
     void* address = kpg_temp_page (&page);
     address = ((char*)address) + (off - poff);
