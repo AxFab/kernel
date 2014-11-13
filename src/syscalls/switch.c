@@ -16,6 +16,42 @@
 #include <kernel/info.h>
 
 
+typedef int (*sys_func)();
+
+int sys_reboot(int code);
+int sys_exec(int type, void* param);
+int sys_exit(int code);
+
+#define SYS_REBOOT  0
+#define SYS_EXEC    1
+#define SYS_EXIT    2
+
+#define _SYS(n,f)  [n] = f
+
+sys_func sys_table [] = {
+  _SYS(SYS_REBOOT, sys_reboot),
+  _SYS(SYS_EXEC, sys_exec),
+  _SYS(SYS_EXIT, sys_exit),
+
+  [5] = NULL,
+};
+
+
+int sys_reboot(int code)
+{
+  return -1;
+}
+
+int sys_exec(int type, void* param)
+{
+  return -1;
+}
+int sys_exit(int code)
+{
+  return -1;
+}
+
+
 void kCore_Syscall(kCpuRegs_t* regs)
 {
   cli();
@@ -53,10 +89,10 @@ void kCore_Syscall(kCpuRegs_t* regs)
       break;
 
     case 0x23: // WRITE
-      if (regs->ecx > 2 || kCPU.current_->process_->pid_ == 3)
+      //if (regs->ecx > 2 || kCPU.current_->process_->pid_ == 3)
         regs->eax = kstm_write ((int)regs->ecx, (void*)regs->edx, (size_t)regs->ebx, (off_t)-1);
-      else
-        kprintf ("  %d] %s", kCPU.current_->process_->pid_, regs->edx);
+      //else
+        // kprintf ("  %d] %s", kCPU.current_->process_->pid_, regs->edx);
 
       break;
 

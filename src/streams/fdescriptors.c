@@ -191,6 +191,15 @@ int kstm_open(int dirfd, const char *path, int flags, mode_t mode)
 }
 
 
+kStream_t* stream_open (kInode_t* ino)
+{
+  kStream_t* stm = KALLOC (kStream_t);
+  stm->ino_ = ino;
+  stm->flags_ = 0xfff |  O_RDONLY | O_WRONLY;
+  return stm;
+}
+
+
 // ---------------------------------------------------------------------------
 /**
  */

@@ -40,11 +40,59 @@ static void ksch_attach_proc (kProcess_t *proc)
 
 
 
+int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const char* cmd)
+{
+  // assert (user != NULL);
+  assert (prg != NULL);
+  assert (dir != NULL);
+  assert (tty != NULL);
+  assert (cmd != NULL);
+
+  if (!kasm_open (prg)) {
+    __seterrno (ENOEXEC);
+    return -1;
+  }
+
+  // FIXME load the image
+  kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
+  kasm_load (mmsp, prg);
+
+  kProcess_t* proc = KALLOC (kProcess_t);
+  proc->pid_ = kSys_NewPid();
+  proc->execStart_ = ltime(NULL);
+  proc->workingDir_ = dir;
+  proc->parent_ = NULL;
+  proc->image_ = prg;
+  proc->command_ = kcopystr(cmd);
+  proc->memSpace_ = mmsp;
+
+  proc->streamCap_ = 8;
+  proc->openStreams_ = (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
+  proc->openStreams_[0] = stream_open(tty);
+  proc->openStreams_[1] = stream_open(tty);
+  proc->openStreams_[2] = stream_open(tty);
+
+  klock (&proc->lock_, LOCK_PROCESS_CREATION);
+  ksch_attach_proc (proc);
+  proc->threadCount_++;
+  proc->threadFrst_ = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
+  proc->threadLast_ = proc->threadFrst_;
+
+  kunlock (&proc->lock_);
+  kprintf ("Start login program [%d - %s - root<0> ]\n", proc->pid_, prg->name_);
+  return proc->pid_;
+
+
+  return 1;
+}
+
+
 // ===========================================================================
 /** Create a new process, ready to start */
 int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, const char* cmd)
 {
   assert (image != NULL);
+  assert (parent != NULL);
 
   if (!kasm_open (image)) {
     __seterrno (ENOEXEC);
@@ -63,13 +111,14 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
   proc->image_ = image;
   proc->command_ = kcopystr(cmd);
   proc->memSpace_ = mmsp;
-  if (parent)  atomic_inc_i32 (&parent->childrenCount_);
+  atomic_inc_i32 (&parent->childrenCount_);
 
   proc->streamCap_ = 8;
   proc->openStreams_ = (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
-  proc->openStreams_[0] = (kStream_t*)1;
-  proc->openStreams_[1] = kstm_create_pipe (O_WRONLY, 4 * _Kb_);
-  proc->openStreams_[2] = proc->openStreams_[1];
+  // @todo we must clone the stream and check if still here !
+  proc->openStreams_[0] = parent->openStreams_[0]; // (kStream_t*)1;
+  proc->openStreams_[1] = parent->openStreams_[1]; // kstm_create_pipe (O_WRONLY, 4 * _Kb_);
+  proc->openStreams_[2] = parent->openStreams_[2]; // proc->openStreams_[1];
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   ksch_attach_proc (proc);

@@ -8,6 +8,12 @@
 
 
 
+ssize_t fifo_read (kInode_t* ino, void* buf, size_t count);
+ssize_t fifo_write (kInode_t* ino, const void* buf, size_t count);
+
+ssize_t term_read (kInode_t* ino, void* buf, size_t count);
+ssize_t term_write (kInode_t* ino, const void* buf, size_t count);
+
 // ===========================================================================
 /**
  *  \note Read and write are copy-code, try to merge them.
@@ -37,7 +43,11 @@ ssize_t kstm_read (int fd, void* buf, size_t length, off_t off)
 
     case S_IFCHR:
     case S_IFIFO:
-      return kstm_read_pipe (stream, buf, length);
+      return fifo_read (stream->ino_, buf, length);
+      // return kstm_read_pipe (stream, buf, length);
+
+    case S_IFTTY:
+      return term_read (stream->ino_, buf, length);
 
     case S_IFSOCK:
       __seterrno(ENOSYS);
@@ -80,7 +90,12 @@ ssize_t kstm_write (int fd, void* buf, size_t length, off_t off)
 
     case S_IFCHR:
     case S_IFIFO:
-      return kstm_write_pipe (stream, buf, length);
+      return fifo_write (stream->ino_, buf, length);
+      // return kstm_write_pipe (stream, buf, length);
+
+    case S_IFTTY:
+      // kprintf ("-- %s\n", buf);
+      return term_write (stream->ino_, buf, length);
 
     case S_IFSOCK:
       __seterrno(ENOSYS);

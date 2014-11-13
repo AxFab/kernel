@@ -1,8 +1,8 @@
 #include <kernel/cpu.h>
 // #include <prv/format.h>
 
-int fontW = 6;
-int fontH = 9;
+static int fontW = 6;
+static int fontH = 9;
 
 int kTty_offsetIn = 0; // TODO remove this lame input
 

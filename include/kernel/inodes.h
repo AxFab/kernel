@@ -7,6 +7,7 @@
 #include <fcntl.h>
 
 #define S_IALLUGO (0777)
+#define S_IFTTY (8 << 16)
 
 // ============================================================================
 
@@ -39,7 +40,9 @@ struct kInode {
   kFileOp_t*      fs_;        ///< File system driver
   union {
     kAssembly_t*    assembly_;
-    kFifoPen_t*     fifo_;
+    kFifo_t*        fifo_;
+    kTerm_t*        term_;
+    // kFifoPen_t*     fifo_;
     kPipe_t*        pipe_;
   };
   void*           devinfo_;

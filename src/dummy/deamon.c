@@ -63,8 +63,8 @@ int main ()
     }
 
     delay();
-    execv_s ("HELLO.", cmdl[o % m]);
-    execv_s ("SNAME.", NULL);
+    // execv_s ("HELLO.", cmdl[o % m]);
+    // execv_s ("SNAME.", NULL);
     ++o;
   }
 

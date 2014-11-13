@@ -1,7 +1,31 @@
 
 
+#define NULL ((void*)0)
+typedef struct sStartInfo sStartInfo_t;
+
 int write(int fd, const void *buf, unsigned int count);
 int open(const char* path, int flag, int mode);
+int exec (const char *path, sStartInfo_t* param);
+
+struct sStartInfo
+{
+  const char*     cmd_;
+  const char*     username_;
+  int             output_;
+  int             input_;
+  int             error_;
+  int             workingDir_;  ///
+  int             flags_;       ///
+  int             mainWindow_;  /// Give a window/tty handler for the program
+};
+
+
+int execv_s(const char *path, const char * args)
+{
+  sStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
+  return exec (path, &param);
+}
+
 
 int main ()
 {
@@ -14,11 +38,13 @@ int main ()
      "I'll better continue. \n",
   };
 
-  write (0, "Kernel master v1.0\n", 19);
+  write (0, "\e[53,38mKernel master\e[0m] v1.0\n", 32);
   int sc = open ("/master.log", 0x41, 0644); // O_WRONLY | O_CREAT
   int s1 = open ("/dev/vba", 0x01, 0644); // O_WRONLY
 
   int j=0;
+
+  execv_s ("DEAMON.", NULL);
 
   for (;;) {
 
@@ -27,7 +53,7 @@ int main ()
       k  = (k | (i >> 3)) * 0x75f;
     }
 
-    write (0, "Master - still here\n", 20);
+    write (0, "\e[31mMaster\e[0m - still here\n", 29);
 
     int buf[] = {0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010,
       0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010,
@@ -64,7 +90,14 @@ int main ()
     };
     if (s1) {
       // for (i=50; i>0;++i)
-        write (s1, buf, 16 * 16 * 4);
+        // write (s1, buf, 16 * 16 * 4 );
+        // write (s1, buf, 16 * 16 * 4 );
+        // write (s1, buf, 16 * 16 * 4 );
+        // write (s1, buf, 16 * 16 * 4 );
+        // write (s1, buf, 16 * 16 * 4 );
+        // write (s1, buf, 16 * 16 * 4 );
+        // write (s1, buf, 16 * 16 * 4 );
+        // write (s1, buf, 16 * 16 * 4 );
     }
 
 

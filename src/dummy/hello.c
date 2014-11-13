@@ -48,6 +48,13 @@ int main (int argc, char** argv)
   delay();
 
   int lg = strhl (tmp, who);
+  char tsw[5];
+  tsw[0] = 'N';
+  tsw[1] = '0' + where;
+  tsw[2] = '\n';
+  tsw[3] = '\0';
+
+  write (0, tsw, 3);
   write (where, tmp, lg);
 
   return 0;

@@ -60,6 +60,7 @@ ltime_t ltime (ltime_t* ptr);
 #define __noerror()     kseterrno(0,__FILE__,__LINE__, __func__)
 #define __seterrno(e)   kseterrno(e,__FILE__,__LINE__, __func__)
 #define __geterrno()    kgeterrno()
+#define __nounused(a)  ((void)a)
 
 // Macro
 #define KALLOC(T)     ((T*)kalloc (sizeof(T)))
@@ -80,6 +81,9 @@ typedef struct kStream      kStream_t;
 typedef struct kFileOp      kFileOp_t;
 typedef struct kPage        kPage_t;
 typedef struct kPipe        kPipe_t;
+typedef struct kFifo        kFifo_t;
+typedef struct kTerm        kTerm_t;
+
 typedef struct kFifoPen       kFifoPen_t;
 typedef struct kNTty       kNTty_t;
 typedef struct kLine      kLine_t;

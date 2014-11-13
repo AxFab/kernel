@@ -227,6 +227,8 @@ kStream_t* kstm_create_pipe (int flags, size_t length)
   kInode_t* ino = kfs_mknod(no, kSYS.pipeNd_, &stat);
   assert (ino != NULL);
 
+  ino->fifo_ = KALLOC(kFifo_t);
+  ino->fifo_->size_ = length;
   kStream_t* stream = KALLOC(kStream_t);
   stream->ino_ = ino;
   stream->flags_ = 0;

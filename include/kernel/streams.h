@@ -10,6 +10,13 @@ struct kStream
   int           flags_;
 };
 
+struct kStreamType
+{
+  ssize_t (*read)(kInode_t* ino, void* buf, size_t count, off_t offset);
+  ssize_t (*write)(kInode_t* ino, const void* buf, size_t count, off_t offset);
+  // sync
+};
+
 struct kPipe
 {
   ssize_t  outPen_;
@@ -20,6 +27,17 @@ struct kPipe
   size_t consumer_;
   // Add pending reading... (would block)
 };
+
+
+struct kFifo
+{
+  ssize_t rpen_;      ///< Offset of the consumer(read) cursor
+  ssize_t wpen_;      ///< Offset of the producer(write) cursor
+  ssize_t size_;      ///< Total size of the buffers
+  ssize_t avail_;     ///< Byte available to reading
+};
+
+
 
 struct kFifoPen
 {
@@ -35,7 +53,6 @@ struct kNTty
   uint32_t    txColor_;
   uint32_t    bgColor_;
   uint32_t*   pixels_;
-
 
   int         row_;
   kStream_t*  input_;

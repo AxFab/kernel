@@ -16,6 +16,19 @@ void kinit()
 }
 
 
+struct sStartInfo
+{
+  const char*     cmd_;
+  const char*     username_;
+  int             output_;
+  int             input_;
+  int             error_;
+  int             workingDir_;  ///
+  int             flags_;       ///
+  int             mainWindow_;  /// Give a window/tty handler for the program
+}sStartInfo_t;
+
+
 
 struct tm RTC_GetTime ();
 void RTC_EnableCMOS () ;
@@ -27,21 +40,43 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* name);
 void ksymbols_load (kInode_t* ino);
 
 
-  // int    tm_sec;   /**< seconds [0,61] */
-  // int    tm_min;   /**< minutes [0,59] */
-  // int    tm_hour;  /**< hour [0,23] */
-  // int    tm_mday;  /**< day of month [1,31] */
-  // int    tm_mon;   *< month of year [0,11] 
-  // int    tm_year;  /**< years since 1900 */
-  // int    tm_wday;  /**< day of week [0,6] (Sunday = 0) */
-  // int    tm_yday;  /**< day of year [0,365] */
-  // int    tm_isdst; /**< daylight savings flag */
+// ---------------------------------------------------------------------------
+/** Build the environment for and create the 'master' program.
+  * This program is the most thrusted process on the system.
+  * It should be started by ROOT only, on directory '/usr' and be attach to 
+  * TTY0.
+  */
+int core_master (void) 
+{
+  // Create TTY0
+  // kInode_t* fb0 = kfs_lookup ("/dev/fb0", NULL);
+  kInode_t* tty0 = term_create(4 * _Mb_, 800, 600);
+  if (tty0 == NULL)
+    return -1;
 
+
+  // term_write(tty0, "\e[31mBonjour\e[0m", 16);
+
+  // Search start directory
+  kInode_t* dir = kfs_lookup ("/usr/USR/BIN/", NULL);
+
+  // Search program
+  kInode_t* msr = kfs_lookup ("MASTER.", dir);
+
+  // Start program
+  return process_login (NULL, msr, dir, tty0, ""); 
+  // The first arg must be the user!
+  // cmd can be ovewrite by grub
+}
+
+
+// ---------------------------------------------------------------------------
 int kCore_Initialize ()
 {
   if (screen._mode == 1) {
     screen._ptr = (uint32_t*)(4 * _Mb_);
   }
+
 
 
   // I. Print kernel info
@@ -76,32 +111,34 @@ int kCore_Initialize ()
 
   kfs_init ();
   kvma_init ();
-  ATA_Initialize (kSYS.devNd_);
   VBA_Initialize (kSYS.devNd_);
+
+
+  ATA_Initialize (kSYS.devNd_);
 
 
   // V. Mount the disc system
   kInode_t* cd = kfs_lookup ("/dev/sdA", NULL);
-  kInode_t* mnt = kfs_lookup ("/mnt/", NULL);
-  ISO_mount (cd, mnt, "system");
+  kInode_t* mnt = kfs_lookup ("/", NULL);
+  ISO_mount (cd, mnt, "usr");
   // KRP_Mount (NULL, mnt);
 
   // VI. Look for debug symbols
-  kInode_t* sym = kfs_lookup ("/mnt/system/BOOT/KIMAGE.MAP", NULL);
+  kInode_t* sym = kfs_lookup ("/usr/BOOT/KIMAGE.MAP", NULL);
   if (sym != NULL)
     ksymbols_load(sym);
   else
     kprintf ("We can't found the file kImage.map\n");
 
+  core_master();
+
+
   // VII. Start default programs
-  kInode_t* path = kfs_lookup ("/mnt/system/USR/BIN/", NULL);
-  kInode_t* master = kfs_lookup ("MASTER.", path);
-  kInode_t* deamon = kfs_lookup ("DEAMON.", path);
-
-
-
-  ksch_create_process (NULL, master, path, "");
-  ksch_create_process (NULL, deamon, path, "");
+  // kInode_t* path = kfs_lookup ("/usr/USR/BIN/", NULL);
+  // kInode_t* master = kfs_lookup ("MASTER.", path);
+  // kInode_t* deamon = kfs_lookup ("DEAMON.", path);
+  // ksch_create_process (NULL, master, path, "");
+  // ksch_create_process (NULL, deamon, path, "");
 
   // kfs_log_all();
 
