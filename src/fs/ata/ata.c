@@ -5,7 +5,7 @@
 kAtaDrive_t sdx[4];
 
 kDevice_t ataOperation = {
-  {0}, 
+  0, {0}, NULL,
   NULL, ATA_Read, NULL, NULL,
   NULL, ATA_Write,
   NULL

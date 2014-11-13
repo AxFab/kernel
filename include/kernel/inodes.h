@@ -59,8 +59,10 @@ struct kPage
 // ---------------------------------------------------------------------------
 struct kDevice {
 
+  id_t id_;
   spinlock_t      lock_;      ///< Lock
-
+  kInode_t*       ino_;
+  
   // read / write / poll / ioctl / map / allocate
   // getxattr / setxattr / listxattr
 

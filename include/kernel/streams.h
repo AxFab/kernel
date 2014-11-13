@@ -114,6 +114,6 @@ ssize_t kstm_read (int fd, void* buf, size_t length, off_t off);
 ssize_t kstm_write (int fd, void* buf, size_t length, off_t off);
 off_t kstm_seek(int fd, off_t offset, int whence);
 
-
+kInode_t* term_create (void* pixels, int width, int height);
 
 #endif /* STREAMS_H__ */

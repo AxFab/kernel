@@ -9,7 +9,7 @@ int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba);
 
 
 kDevice_t krpOps = {
-  {0}, 
+  0, {0}, NULL, 
   KRP_Lookup, KRP_Read, NULL, NULL,
   NULL, KRP_Write,
   NULL

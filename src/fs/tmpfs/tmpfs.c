@@ -21,7 +21,7 @@ int TMPFS_Create (const char* name, kInode_t* dir, kStat_t* file)
 
 
 kDevice_t tmpFsOperation = {
-  {0}, 
+  0, {0}, NULL, 
   NULL, TMPFS_Read, NULL, NULL,
   TMPFS_Create, NULL,
   NULL

@@ -58,7 +58,9 @@ struct kInode {
 // ---------------------------------------------------------------------------
 struct kDevice {
 
+  id_t id_;
   spinlock_t      lock_;      ///< Lock
+  kInode_t*       ino_;
 
   // read / write / poll / ioctl / map / allocate
   // getxattr / setxattr / listxattr
@@ -121,7 +123,8 @@ int inode_page(kInode_t* ino, off_t offset, uint32_t* page);
 
 // VFS/DEVICES ===============================================================
 /** Create and register a new device. */
-kDevice_t* create_device(const char* nm);
+id_t create_device(const char* nm, kInode_t* ino, kDevice_t* dev, 
+                   kStat_t* stat);
 /** Search for device by it's handle. */
 kInode_t* search_device(dev_t dev);
 /** Try to initalize a driver for a specific device. */
@@ -162,20 +165,6 @@ int remove_inode(kInode_t* ino);
 int chmeta_inode(kInode_t* ino, kStat_t* stat);
 /** Request the file system to change the path of the inode. */
 int rename_inode(kInode_t* ino, const char* name, kInode_t* dir);
-
-
-
-
-
-
-
-/** Attach an inode to its parent. */
-static int attach_inode (kInode_t* ino, kInode_t* dir, const char* name);
-/** Detach an inode from its parent. */
-static int detach_inode (kInode_t* ino);
-
-/** Search an inode on a directory. */
-static kInode_t* search_child (const char* name, kInode_t* dir);
 
 
 #endif /* KERNEL_VFS_H__ */

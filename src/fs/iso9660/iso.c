@@ -6,7 +6,7 @@
 
 
 kDevice_t isoOps = {
-  {0}, 
+  0, {0}, NULL, 
   ISO_Lookup, ISO_Read, NULL, NULL,
   NULL, ISO_Write,
   NULL

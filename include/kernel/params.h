@@ -4,6 +4,7 @@
 #include <kernel/config.h>
 
 #define PARAM_KOBJECT(p,t)          1
+#define PARAM_FILENAME(n)           1
 #define PARAM_KERNEL_BUFFER(b,s,a)  1
 
 

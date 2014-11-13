@@ -7,7 +7,7 @@ uint32_t VBA_map (kInode_t* fp, off_t offset);
 
 
 kDevice_t vbaOperation = {
-  {0}, 
+  0, {0}, NULL, 
   NULL, NULL, NULL, NULL,
   NULL, NULL,
   VBA_map
