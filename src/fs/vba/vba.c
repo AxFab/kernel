@@ -54,7 +54,7 @@ int VBA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba)
 {
   // kTty_HexDump (bucket, 0x20);
   kprintf ("vba] write %x, %d, %d\n", bucket, count, lba);
-  size_t line = ino->stat_.cblock_;
+  size_t line = ino->stat_.block_;
   uint32_t pixels = (uint32_t)vbaAddress;
   pixels += lba * line;
   memcpy ((void*)pixels, bucket, count * line);

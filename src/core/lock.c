@@ -7,23 +7,23 @@
  * When the counter fall back to zero, interruption are restored.
  * The counter must reach zero before starting any asynchrones jobs.
  */
-
-void klock (spinlock_t* lock, int why)
+#undef klock
+void klock (spinlock_t* lock, const char* where)
 {
   while (atomic_xchg_i32 (&lock->key_, 1) != 0);
 
   atomic_inc_i32 (&kCPU.lockCounter);
   lock->cpu_ = kCPU.cpuNo_;
-  lock->why_ = why;
+  lock->where_ = where;
 }
 
-int ktrylock (spinlock_t* lock, int why)
+int ktrylock (spinlock_t* lock, const char* where)
 {
   if (atomic_xchg_i32 (&lock->key_, 1) != 0)
     return 0;
 
   lock->cpu_ = kCPU.cpuNo_;
-  lock->why_ = why;
+  lock->where_ = where;
   atomic_inc_i32 (&kCPU.lockCounter);
   return 1;
 }
@@ -34,7 +34,7 @@ void kunlock (spinlock_t* lock)
   assert (lock->cpu_ == kCPU.cpuNo_);
   lock->key_ = 0;
   lock->cpu_ = 0;
-  lock->why_ = 0;
+  lock->where_ = NULL;
   atomic_dec_i32 (&kCPU.lockCounter);
 }
 

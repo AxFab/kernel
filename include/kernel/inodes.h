@@ -11,20 +11,18 @@
 
 // ============================================================================
 
-
 struct kStat {
-  ino_t           ino_;       ///< Inode number
+  id_t            ino_;       ///< Inode number
   mode_t          mode_;      ///< File mode
-  uid_t           uid_;       ///< User ID
-  gid_t           gid_;       ///< Group ID
+  id_t            uid_;       ///< User ID
+  // id_t            gid_;       ///< Group ID
   uint64_t        length_;    ///< Length of the file
   uint64_t        lba_;       ///< Linear base address
   time_t          atime_;     ///< Hour of last access
   time_t          mtime_;     ///< Hour of last update
   time_t          ctime_;     ///< Hour of last state change
-  ino_t           dev_;       ///< Device handle
-  size_t          dblock_;
-  size_t          cblock_;
+  id_t            dev_;       ///< Device handle
+  size_t          block_;     ///< Number of block on the device
 };
 
 
@@ -84,7 +82,7 @@ struct kFileOp {
   int (*readlink)();
 
   int (*create)(const char* name, kInode_t* dir, kStat_t* file);
-  int (*write)(kInode_t* fp, void* buffer, size_t length, size_t offset);
+  int (*write)(kInode_t* fp, const void* buffer, size_t length, size_t offset);
   int (*link)();
   int (*unlink)();
   int (*symlink)();
@@ -94,15 +92,15 @@ struct kFileOp {
 
 
 
-struct kDevice {
-  int (*read)(dev_t fd, void* buffer, off_t offset, size_t length);
-  int (*write)(dev_t fd, void* buffer, off_t offset, size_t length);
-  char name_ [16];
-  size_t block_;
-  size_t size_;
-  dev_t fd_;
-  //
-};
+// struct kDevice {
+//   int (*read)(dev_t fd, void* buffer, off_t offset, size_t length);
+//   int (*write)(dev_t fd, void* buffer, off_t offset, size_t length);
+//   char name_ [16];
+//   size_t block_;
+//   size_t size_;
+//   dev_t fd_;
+//   //
+// };
 
 struct kResxFile {
   //

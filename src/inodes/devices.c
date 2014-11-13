@@ -30,8 +30,8 @@ int kfs_init()
   root->stat_.atime_ = now;
   root->stat_.mtime_ = now;
   root->stat_.ctime_ = now;
-  root->stat_.dblock_ = 1;
-  root->stat_.cblock_ = PAGE_SIZE;
+  // root->stat_.dblock_ = 1;
+  root->stat_.block_ = PAGE_SIZE;
   root->fs_ = &tmpFsOperation;
 
   kSYS.devNd_ = kfs_mknod (FS_DEV_NODE, root, &root->stat_);

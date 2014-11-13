@@ -144,6 +144,7 @@ $(eval $(call KERNEL,kMin))
 			       # $(patsubst src/%,%,$(wildcard src/fs/krp/*.c))
 kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/syscalls/*.c))  \
+             $(patsubst src/%,%,$(wildcard src/vfs/*.c))  \
              $(patsubst src/%,%,$(wildcard src/inodes/*.c))  \
              $(patsubst src/%,%,$(wildcard src/streams/*.c))  \
              $(patsubst src/%,%,$(wildcard src/assembly/*.c))  \

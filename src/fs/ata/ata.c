@@ -39,7 +39,7 @@ void ATA_Initialize (kInode_t* dev)
     printf ("%s: ", name[i]);
     if (ATA_Detect(&sdx[i])) {
       int block = sdx[i]._type == IDE_ATA ? 512 : 2048;
-      stat.dblock_ = stat.cblock_ = block;
+      stat.block_ = block;
       kfs_new_device (name[i], dev, &ataOperation, &sdx[i], &stat);
     }
   }

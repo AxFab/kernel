@@ -98,7 +98,7 @@ int kfs_map (kInode_t*ino, off_t offset, uint32_t* page)
     } else {
       void* address = kpg_temp_page (&cache[i].phys_);
       kunlock (&ino->lock_);
-      kfs_feed(ino, address, PAGE_SIZE / ino->stat_.cblock_, offset/ ino->stat_.cblock_);
+      kfs_feed(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_);
       klock (&ino->lock_, LOCK_FS_MAP);
     }
 

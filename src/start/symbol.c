@@ -19,7 +19,7 @@ void ksymbols_load (kInode_t* ino)
   char *add = kalloc (20);
 
   kfs_grab (ino);
-  kfs_feed (ino, tmp, ALIGN_UP (lg, ino->stat_.cblock_) / ino->stat_.cblock_, 0);
+  kfs_feed (ino, tmp, ALIGN_UP (lg, ino->stat_.block_) / ino->stat_.block_, 0);
 
   while (i < lg) {
 

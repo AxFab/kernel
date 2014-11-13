@@ -121,7 +121,7 @@ void kfs_log_ino (kInode_t* ino, int depth)
 
   kprintf("%c%s%s%s %3d", type, rights[u], rights[g], rights[o], 1);
   kprintf(" %-5s", ino->stat_.uid_ == ROOT_UID ? "root" : " -");
-  kprintf(" %-5s", ino->stat_.gid_ == ROOT_UID ? "root" : " -");
+  // kprintf(" %-5s", ino->stat_.gid_ == ROOT_UID ? "root" : " -");
   //kprintf(" %-12s", kSizeFormat(ino->stat_._length));
   kprintf(" <%s>", kpsize(ino->stat_.length_));
 

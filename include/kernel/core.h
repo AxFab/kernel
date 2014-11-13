@@ -25,9 +25,9 @@ int snprintf(char* s, size_t n, const char* format, ... );
 
 typedef struct spinlock     spinlock_t;
 struct spinlock {
-  int32_t   key_;
-  int       cpu_;
-  int       why_;
+  int32_t       key_;
+  int           cpu_;
+  const char*   where_;
 };
 
 /** ltime_t is an accurate time storage
@@ -69,6 +69,7 @@ ltime_t ltime (ltime_t* ptr);
 #define MOD_ENTER     NO_LOCK
 #define MOD_LEAVE     NO_LOCK
 
+
 // ======================================================
 // Kernel types
 typedef struct kCpuRegs     kCpuRegs_t;
@@ -95,6 +96,8 @@ typedef struct kProcess     kProcess_t;
 typedef struct kTask        kTask_t;
 typedef struct kAssembly    kAssembly_t;
 typedef struct kSection     kSection_t;
+typedef struct kBucket     kBucket_t;
+typedef struct kDevice     kDevice_t;
 
 
 // ======================================================
@@ -111,6 +114,7 @@ int kpanic(const char* str, ...);
 
 // Debug ------------------------------------------------
 void ksymreg (uintptr_t ptr, const char* sym);
+const char* ksymbol (void* address);
 void kstacktrace(uintptr_t MaxFrames);
 void kdump (void* ptr, size_t lg);
 void kregisters (kCpuRegs_t* regs);
@@ -127,11 +131,16 @@ void kfree(void* addr);
 char* kcopystr(const char* str);
 
 // Lock -------------------------------------------------
-void klock (spinlock_t* lock, int why);
-int ktrylock (spinlock_t* lock, int why);
+void klock (spinlock_t* lock, const char* where);
+int ktrylock (spinlock_t* lock, const char* where);
 void kunlock (spinlock_t* lock) ;
 int kislocked (spinlock_t* lock);
 int klockcount ();
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define __AT__  __FILE__ ":" TOSTRING(__LINE__)
+#define klock(l,...)  klock(l,__AT__)
 
 // CPU -------------------------------------------------
 int kcpu_state();

@@ -14,8 +14,8 @@ int TMPFS_Create (const char* name, kInode_t* dir, kStat_t* file)
   file->atime_ = now;
   file->mtime_ = now;
   file->ctime_ = now;
-  file->dblock_ = 1;
-  file->cblock_ = PAGE_SIZE;
+  // file->dblock_ = 1;
+  file->block_ = PAGE_SIZE;
   return 0;
 }
 

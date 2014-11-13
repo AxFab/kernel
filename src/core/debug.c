@@ -32,13 +32,13 @@ void ksymreg (uintptr_t ptr, const char* sym)
 }
 
 // ----------------------------------------------------------------------------
-const char* ksymbol (uintptr_t address)
+const char* ksymbol (void* address)
 {
   kSymbol_t* iter = first;
-  if (address < first->address_)
+  if ((uintptr_t)address < first->address_)
     return "<<<<<";
   while (iter->next_) {
-    if (iter->next_->address_ > address)
+    if (iter->next_->address_ > (uintptr_t)address)
       return iter->name_;
     iter = iter->next_;
   }

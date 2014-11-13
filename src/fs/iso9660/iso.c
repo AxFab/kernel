@@ -24,7 +24,7 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
   kStat_t root = { 0, S_IFDIR | 0555, 0, 0, 0L, 0L, 0U, 0U, 0U, 0, 0, 0 };
   isoVolume_t* volInfo;
 
-  if (dev->stat_.cblock_ != 2048)
+  if (dev->stat_.block_ != 2048)
     return EBADF;
 
 
@@ -132,8 +132,8 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
     if (KLOG_FS) kprintf ("iso9660] See entry: '%s' \n", filename);
     if (strcmp(name, filename) == 0) {
       file->dev_ = volInfo->dev->stat_.ino_;
-      file->dblock_ = volInfo->dev->stat_.cblock_;
-      file->cblock_ = 2048;
+      // file->dblock_ = volInfo->dev->stat_.cblock_;
+      file->block_ = 2048;
 
       if (entry->fileFlag & 2)
         file->mode_ = S_IFDIR | 0555;
@@ -158,7 +158,7 @@ int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 {
   isoVolume_t* volInfo = (isoVolume_t*)fp->devinfo_;
   size_t sec = fp->stat_.lba_;
-  size_t lg = ALIGN_UP (fp->stat_.length_, fp->stat_.cblock_) / fp->stat_.cblock_;
+  size_t lg = ALIGN_UP (fp->stat_.length_, fp->stat_.block_) / fp->stat_.block_;
   if (lg < lba + count )
     count = lg - lba;
 

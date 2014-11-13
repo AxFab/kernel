@@ -77,7 +77,7 @@ time_t sys_time(kCpuRegs_t* regs, time_t* now)
 
 int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags) 
 {
-  kevt_wait(kCPU.current_, TASK_EVENT_SLEEP, (1000LL * 1000LL * 1000LL * 10LL) * 3LL, regs);
+  kevt_wait(kCPU.current_, TASK_EVENT_SLEEP, (1000ULL * 1000ULL * 100ULL) * 3ULL, regs);
   return -1;
 }
 
