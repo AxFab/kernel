@@ -11,6 +11,7 @@
  */
 #include <kernel/inodes.h>
 #include <kernel/info.h>
+#include <kernel/params.h>
 
 // ===========================================================================
 /**
@@ -69,21 +70,20 @@ static int kfs_attach (kInode_t* ino, kInode_t* top, const char* name)
 /** */
 static kInode_t* kfs_stat (const char* name, kInode_t* dir)
 {
-  int err;
-  kStat_t stat;
-
-  if (!dir->fs_->lookup) {
+  if (!dir->dev_->lookup) {
+    kunlock(&dir->lock_);
     __seterrno (ENOENT);
     return NULL;
   }
 
   // kprintf ("FS] REQ FS LookChild %s \n", name);
   // Request the file system
-  MOD_ENTER;
-  memset (&stat, 0, sizeof(kStat_t));
-  err = dir->fs_->lookup (name, dir, &stat);
-  MOD_LEAVE;
+  kStat_t stat = { 0 };
+  MODULE_ENTER(&dir->lock_, &dir->dev_->lock_);
+  int err = dir->dev_->lookup (name, dir, &stat);
+  MODULE_LEAVE(&dir->lock_, &dir->dev_->lock_);
   if (err) {
+    kunlock(&dir->lock_);
     __seterrno (err);
     return NULL;
   }
@@ -118,8 +118,9 @@ kInode_t* kfs_lookup(const char* path, kInode_t* dir)
   // Look the first node file
   strncpy (uri, path, PATH_MAX);
   name = strtok_r (uri, FILENAME_SEPARATORS, &rentTok);
-  klock (&dir->lock_, LOCK_FS_LOOK);
+  klock (&dir->lock_);
   while (name != NULL) {
+    assert (kislocked(&dir->lock_));
 
     // Follow symlink
     if (S_ISLNK(dir->stat_.mode_)) {
@@ -144,10 +145,12 @@ kInode_t* kfs_lookup(const char* path, kInode_t* dir)
 
     // If no child, request the file system
     if (dir->child_ == NULL) {
-      kunlock (&dir->lock_);
+      // 
       dir = kfs_stat (name, dir);
-      if (dir == NULL)
+      if (dir == NULL)  {
+        NO_LOCK;
         return NULL;
+      }
       // kprintf ("FS] Request %s, get %s\n", name, dir->name_);
 
     } else {
@@ -163,11 +166,13 @@ kInode_t* kfs_lookup(const char* path, kInode_t* dir)
 
           } else {
             // kprintf ("FS] Browse LOOK %s - %s, get %x\n", ino->name_, name, ino->next_);
-            kunlock (&dir->lock_);
+            assert (klockcount() == 1);
+            assert (kislocked(&dir->lock_));
             dir = kfs_stat (name, dir);
-            if (dir == NULL)
+            if (dir == NULL) {
+              NO_LOCK;
               return NULL;
-
+            }
             // kprintf ("FS] Browse FIND %s - %s\n", ino->name_, name);
             break;
           }
@@ -195,6 +200,8 @@ kInode_t* kfs_lookup(const char* path, kInode_t* dir)
  */
 kInode_t* kfs_register(const char* name, kInode_t* dir, kStat_t* stat)
 {
+  assert (kislocked(&dir->lock_));
+
   kInode_t* ino;
   __noerror ();
 
@@ -210,12 +217,12 @@ kInode_t* kfs_register(const char* name, kInode_t* dir, kStat_t* stat)
 
   ino = (kInode_t*) kalloc(sizeof(kInode_t));
   ino->name_ = kcopystr(name);
-  ino->fs_ = dir->fs_;
+  ino->dev_ = dir->dev_;
   ino->devinfo_ = dir->devinfo_;
   memcpy (&ino->stat_, stat, sizeof(kStat_t));
   ino->stat_.ino_ = kSys_NewIno();
   ino->stat_.mode_ &= (S_IALLUGO | S_IFMT);
-  klock(&dir->lock_, LOCK_FS_REGISTER);
+  // klock(&dir->lock_, LOCK_FS_REGISTER);
   klock(&ino->lock_, LOCK_FS_REGISTER);
   if (kfs_attach (ino, dir, name)) {
     kunlock (&dir->lock_);

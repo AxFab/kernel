@@ -5,11 +5,12 @@ int VBA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba);
 int VBA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba);
 uint32_t VBA_map (kInode_t* fp, off_t offset);
 
-kFileOp_t vbaOperation = {
-  NULL, NULL, NULL,
+
+kDevice_t vbaOperation = {
+  {0}, 
   NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL,
-  VBA_map,
+  NULL, NULL,
+  VBA_map
 };
 
 
@@ -32,10 +33,17 @@ void VBA_Initialize (kInode_t* dev)
   if (vbaAddress == NULL)
     return;
 
-  time_t now = time(NULL);
   size_t lg = vbaWidth * vbaHeight * vbaDepth;
   size_t line = vbaWidth * vbaDepth;
-  kStat_t stat = { 0, S_IFBLK | 0700, 0, 0, lg, (size_t)vbaAddress, now, now, now, 0, vbaDepth, line };
+
+  kStat_t stat = { 0 };
+  stat.mode_ = S_IFBLK | 0700;
+  stat.atime_ = stat.ctime_ = stat.mtime_ = time (NULL);
+  stat.length_ = lg;
+  stat.lba_ = (size_t)vbaAddress;
+  stat.block_ = line;
+  
+  // kStat_t stat = { 0, , 0, 0, lg, , now, now, now, 0, vbaDepth, line };
   kfs_new_device ("vba", dev, &vbaOperation, NULL, &stat);
 }
 

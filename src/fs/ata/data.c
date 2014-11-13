@@ -325,7 +325,7 @@ int ATA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba)
 }
 
 
-int ATA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba)
+int ATA_Write (kInode_t* ino, const void* bucket, size_t count, size_t lba)
 {
   kAtaDrive_t* dr = (kAtaDrive_t*)ino->devinfo_;
 
@@ -342,7 +342,7 @@ int ATA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba)
       if (lba + count > dr->_size)
         return __seterrno (ERANGE);
 
-      return kAta_Data (ATA_WRITE, dr, lba, count, bucket);
+      return kAta_Data (ATA_WRITE, dr, lba, count, (void*)bucket);
     default:
       return __seterrno (ENOSYS);
   }

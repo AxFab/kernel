@@ -26,6 +26,7 @@ struct kStat {
 };
 
 
+
 struct kInode {
   const char*     name_;      ///< Name of the inode
   kStat_t         stat_;      ///<
@@ -35,17 +36,16 @@ struct kInode {
   kInode_t*       next_;      ///< Next inode
   kInode_t*       child_;     ///< First child inode
   spinlock_t      lock_;      ///< Lock
-  kFileOp_t*      fs_;        ///< File system driver
+  kDevice_t*      dev_;       ///< Device driver
   union {
-    kAssembly_t*    assembly_;
-    kFifo_t*        fifo_;
-    kTerm_t*        term_;
-    // kFifoPen_t*     fifo_;
-    kPipe_t*        pipe_;
+    kAssembly_t*  assembly_;
+    kFifo_t*      fifo_;
+    kTerm_t*      term_;
+    kPipe_t*      pipe_;
   };
   void*           devinfo_;
   int             pageCount_;  ///< max number of physical pages in cache
-  kPage_t*        pagesCache_; ///< physical pages caching
+  kPage_t*      pagesCache_; ///< physical pages caching
 };
 
 struct kPage
@@ -56,7 +56,10 @@ struct kPage
 };
 
 
-struct kFileOp {
+// ---------------------------------------------------------------------------
+struct kDevice {
+
+  spinlock_t      lock_;      ///< Lock
 
   // read / write / poll / ioctl / map / allocate
   // getxattr / setxattr / listxattr
@@ -70,10 +73,7 @@ struct kFileOp {
   // format
   // defrag !?
 
-
-  int (*mount)(kInode_t* dev, kInode_t* mnt);
-  int (*umount)();
-  int (*format)(dev_t dev_, const char* options);
+  // int (*format)(dev_t dev_, const char* options);
   // freeze / unfreeze / statfs / umount / options
 
   int (*lookup)(const char* name, kInode_t* dir, kStat_t* file);
@@ -83,13 +83,13 @@ struct kFileOp {
 
   int (*create)(const char* name, kInode_t* dir, kStat_t* file);
   int (*write)(kInode_t* fp, const void* buffer, size_t length, size_t offset);
-  int (*link)();
-  int (*unlink)();
-  int (*symlink)();
+  
+  // int (*link)();
+  // int (*unlink)();
+  // int (*symlink)();
 
   uint32_t (*map)(kInode_t* fp, off_t offset);
 };
-
 
 
 // struct kDevice {
@@ -135,9 +135,9 @@ void kfs_log_all ();
 // kInode_t* kFs_Mount (const char* name, kInode_t* dir, kInode_t* dev, int (*fsEntry)(kFsys_t* fs, kStat_t* file));
 // kInode_t* kFs_CreateBlock (const char* name, kInode_t* dir, dev_t fd, int (*driverEntry)(kDevice_t* dev));
 
-int kfs_new_device (const char* name, kInode_t* dir, kFileOp_t* fileops, void* devinfo, kStat_t* stat);
+int kfs_new_device (const char* name, kInode_t* dir, kDevice_t* fileops, void* devinfo, kStat_t* stat);
 
-// int kFs_CreateBlock (const char* name, kFileOp_t* fileops, void* devinfo, size_t block);
+// int kFs_CreateBlock (const char* name, kDevice_t* fileops, void* devinfo, size_t block);
 
 
 // int kFs_ReadBlock (kDevice_t* dev, void* buffer, off_t offset, size_t count);

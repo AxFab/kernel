@@ -52,7 +52,8 @@ int main ()
   kfs_puri (kimg, buffer, 2048);
   kprintf ("Found - %s \n", buffer);
 
-  kfs_feed(kimg, buffer, 0, 2048);
+  feed_inode(kimg, buffer, 0, 2048);
+  // kfs_feed(kimg, buffer, 0, 2048);
   kdump (buffer, 2048);
 
   kfs_release (kimg);

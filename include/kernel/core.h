@@ -31,7 +31,10 @@ struct spinlock {
 };
 
 /** ltime_t is an accurate time storage
- *  it hold the number of microsecond since 1st Jan 1900 */
+  * It hold the number of microsecond since 1st Jan 1970..
+  * This type can hold up to "7000 years" in nanosecond count, (signed). 
+  * The counter start at Epoch, for a range from - 5041 BC - to - 8981 AD -
+  */
 typedef int64_t ltime_t;
 ltime_t ltime (ltime_t* ptr);
 
@@ -79,7 +82,7 @@ typedef struct kUser        kUser_t;
 typedef struct kStat        kStat_t;
 typedef struct kInode       kInode_t;
 typedef struct kStream      kStream_t;
-typedef struct kFileOp      kFileOp_t;
+// typedef struct kFileOp      kDevice_t;
 typedef struct kPage        kPage_t;
 typedef struct kPipe        kPipe_t;
 typedef struct kFifo        kFifo_t;
@@ -141,6 +144,7 @@ int klockcount ();
 #define TOSTRING(x) STRINGIFY(x)
 #define __AT__  __FILE__ ":" TOSTRING(__LINE__)
 #define klock(l,...)  klock(l,__AT__)
+#define ktrylock(l,...)  ktrylock(l,__AT__)
 
 // CPU -------------------------------------------------
 int kcpu_state();

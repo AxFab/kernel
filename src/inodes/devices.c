@@ -13,7 +13,7 @@
 #include <kernel/info.h>
 
 
-extern kFileOp_t tmpFsOperation;
+extern kDevice_t tmpFsOperation;
 
 // ===========================================================================
 /** Initialize the FS kernel module
@@ -32,7 +32,7 @@ int kfs_init()
   root->stat_.ctime_ = now;
   // root->stat_.dblock_ = 1;
   root->stat_.block_ = PAGE_SIZE;
-  root->fs_ = &tmpFsOperation;
+  root->dev_ = &tmpFsOperation;
 
   kSYS.devNd_ = kfs_mknod (FS_DEV_NODE, root, &root->stat_);
   kSYS.mntNd_ = kfs_mknod (FS_MNT_NODE, root, &root->stat_);
@@ -45,14 +45,15 @@ int kfs_init()
 
 // ---------------------------------------------------------------------------
 /** */
-int kfs_new_device (const char* name, kInode_t* dir, kFileOp_t* fileops, void* devinfo, kStat_t* stat)
+int kfs_new_device (const char* name, kInode_t* dir, kDevice_t* fileops, void* devinfo, kStat_t* stat)
 {
   stat->atime_ = time(NULL);
+  klock(&dir->lock_);
   kInode_t* dev = kfs_register (name, dir, stat);
   if (!dev)
     return __geterrno();
 
-  dev->fs_ = fileops;
+  dev->dev_ = fileops;
   dev->devinfo_ = devinfo;
   kunlock (&dev->lock_);
   return __noerror();

@@ -115,9 +115,9 @@ int feed_inode(kInode_t* ino, void* buffer, size_t length, off_t offset);
 /** Request the file system to synchronize against the inode page buffer. */
 int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset);
 /** Find a memory bucket for the content of an inode. */
-int inode_bucket(kInode_t*ino, off_t offset, uint32_t* page);
+int inode_bucket(kInode_t* ino, off_t offset, uint32_t* page);
 /** Find a physique page for the content of an inode. */
-int inode_page(kInode_t*ino, off_t offset, uint32_t* page);
+int inode_page(kInode_t* ino, off_t offset, uint32_t* page);
 
 // VFS/DEVICES ===============================================================
 /** Create and register a new device. */

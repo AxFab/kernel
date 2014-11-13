@@ -71,13 +71,14 @@ int sys_itimer(kCpuRegs_t* regs, int miliseconds)
 
 time_t sys_time(kCpuRegs_t* regs, time_t* now)
 {
-  kprintf ("Time is: %lld\n", kSYS.now_);
-  return kSYS.now_ * CLOCK_HZ / 1000000;
+  kprintf ("Time is: %lld\n", kSYS.now_ / CLOCK_PREC);
+  return kSYS.now_ / CLOCK_PREC;
 }
 
 int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags) 
 {
-  kevt_wait(kCPU.current_, TASK_EVENT_SLEEP, (1000ULL * 1000ULL * 100ULL) * 3ULL, regs);
+  // Micro second
+  kevt_wait(kCPU.current_, TASK_EVENT_SLEEP, (1000ULL * 1000ULL) * 3ULL, regs);
   return -1;
 }
 

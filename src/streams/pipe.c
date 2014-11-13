@@ -220,9 +220,13 @@ ssize_t kstm_available_data_pipe (kStream_t* stream)
 kStream_t* kstm_create_pipe (int flags, size_t length)
 {
   char no[10];
-  time_t now = time (NULL);
   length = ALIGN_UP (length, PAGE_SIZE);
-  kStat_t stat = { 0, S_IFIFO | 0600, 0, 0, length, 0, now, now, now, 0, 0, 0 };
+
+  kStat_t stat = { 0 };
+  stat.mode_ = S_IFIFO | 0600;
+  stat.atime_ = stat.ctime_ = stat.mtime_ = time (NULL);
+  stat.length_ = length;
+
   snprintf (no, 10, "p%d", kSYS.autoPipe_++);
   kInode_t* ino = kfs_mknod(no, kSYS.pipeNd_, &stat);
   assert (ino != NULL);

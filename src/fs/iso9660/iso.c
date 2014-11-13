@@ -4,11 +4,12 @@
 #include <fcntl.h>
 
 
-kFileOp_t isoOps = {
-  NULL, NULL, NULL,
+
+kDevice_t isoOps = {
+  {0}, 
   ISO_Lookup, ISO_Read, NULL, NULL,
-  (void*)ISO_Write, (void*)ISO_Write, NULL, (void*)ISO_Write, NULL,
-  NULL,
+  NULL, ISO_Write,
+  NULL
 };
 
 
@@ -21,7 +22,8 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
   uint8_t* buf;
   uint32_t* bufi;
   isoFstDescriptor_t* firstDesc;
-  kStat_t root = { 0, S_IFDIR | 0555, 0, 0, 0L, 0L, 0U, 0U, 0U, 0, 0, 0 };
+  kStat_t root = { 0 };
+  root.mode_ = S_IFDIR | 0555;
   isoVolume_t* volInfo;
 
   if (dev->stat_.block_ != 2048)
@@ -31,7 +33,7 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
   buf = (uint8_t*) malloc (2048);
   bufi = (uint32_t*)buf;
   while (inDesc) {
-    kfs_feed (dev, buf, 1, sec);
+    feed_inode (dev, buf, 1, sec);
 
     if ((bufi[0] & 0xFFFFFF00) != ISO9660_STD_ID1 ||
         (bufi[1] & 0x0000FFFF) != ISO9660_STD_ID2 ||
@@ -114,7 +116,8 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   if (KLOG_FS) kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
   if (KLOG_FS) kprintf ("iso9660] Read sector %d on %s \n", sec, volInfo->dev->name_);
 
-  kfs_feed (volInfo->dev, buf, 1, sec);
+  klock(&volInfo->dev->lock_);
+  feed_inode (volInfo->dev, buf, 1, sec);
   if (KLOG_FS) kprintf ("iso9660] Done\n");
 
   // Skip the first two entries
@@ -144,6 +147,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
       file->lba_ = entry->locExtendLE;
       file->length_ = entry->dataLengthLE;
       free (buf);
+      kunlock(&volInfo->dev->lock_); 
       return 0;
     }
 
@@ -151,6 +155,8 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   }
 
   free (buf);
+  // @todo Pre-lock underlaying devices... brainstorming needed.
+  kunlock(&volInfo->dev->lock_); 
   return ENOENT;
 }
 
@@ -168,7 +174,10 @@ int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
   }
 
   if (KLOG_FS) kprintf ("iso9660] File %s, read dev %s at %d \n", fp->name_, volInfo->dev->name_, sec + lba );
-  kfs_feed (volInfo->dev, buffer, count, sec + lba);
+
+  klock(&volInfo->dev->lock_);
+  feed_inode (volInfo->dev, buffer, count, sec + lba);
+  kunlock(&volInfo->dev->lock_);
   return 0;
 }
 
@@ -208,3 +217,4 @@ int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 //   free (buff);
 //   return __Err_None_;
 // }
+

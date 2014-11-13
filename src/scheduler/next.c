@@ -35,6 +35,7 @@ static int ksch_timeslice (kTask_t* task)
 // ---------------------------------------------------------------------------
 void ksch_ticks (kCpuRegs_t* regs)
 {
+  kevt_ticks();
   if (!ksch_ontask()) {
     ksch_pick ();
 

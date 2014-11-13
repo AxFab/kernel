@@ -35,6 +35,8 @@ void ksymreg (uintptr_t ptr, const char* sym)
 const char* ksymbol (void* address)
 {
   kSymbol_t* iter = first;
+  if (first == NULL) 
+    return "__unamed__";
   if ((uintptr_t)address < first->address_)
     return "<<<<<";
   while (iter->next_) {

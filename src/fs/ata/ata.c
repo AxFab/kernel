@@ -4,19 +4,22 @@
 // ===========================================================================
 kAtaDrive_t sdx[4];
 
-kFileOp_t ataOperation = {
-  NULL, NULL, NULL,
+kDevice_t ataOperation = {
+  {0}, 
   NULL, ATA_Read, NULL, NULL,
-  NULL, ATA_Write, NULL, NULL, NULL,
-  NULL,
+  NULL, ATA_Write,
+  NULL
 };
+
 
 // ===========================================================================
 void ATA_Initialize (kInode_t* dev)
 {
   int i;
-  time_t now = time(NULL);
-  kStat_t stat = { 0, S_IFBLK | 0755, 0, 0, 0L, 0L, now, now, now, 0, 0, 0 };
+
+  kStat_t stat = { 0 };
+  stat.mode_ = S_IFBLK | 0755;
+  stat.atime_ = stat.ctime_ = stat.mtime_ = time (NULL);
   const char* name[] = { "sdA", "sdB", "sdC", "sdD" };
 
   sdx[0]._pbase = 0x1f0;
@@ -44,5 +47,4 @@ void ATA_Initialize (kInode_t* dev)
     }
   }
 }
-
 

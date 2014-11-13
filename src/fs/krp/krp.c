@@ -7,11 +7,12 @@ int KRP_Write();
 int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file);
 int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba);
 
-kFileOp_t krpOps = {
-  KRP_Mount, NULL, NULL,
+
+kDevice_t krpOps = {
+  {0}, 
   KRP_Lookup, KRP_Read, NULL, NULL,
-  (void*)KRP_Write, (void*)KRP_Write, NULL, (void*)KRP_Write, NULL,
-  NULL,
+  NULL, KRP_Write,
+  NULL
 };
 
 

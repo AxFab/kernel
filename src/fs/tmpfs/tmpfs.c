@@ -20,10 +20,10 @@ int TMPFS_Create (const char* name, kInode_t* dir, kStat_t* file)
 }
 
 
-kFileOp_t tmpFsOperation = {
-  NULL, NULL, NULL,
+kDevice_t tmpFsOperation = {
+  {0}, 
   NULL, TMPFS_Read, NULL, NULL,
-  TMPFS_Create, NULL, NULL, NULL, NULL,
-  NULL,
+  TMPFS_Create, NULL,
+  NULL
 };
 

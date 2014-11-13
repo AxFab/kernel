@@ -20,26 +20,21 @@ int feed_inode(kInode_t* ino, void* buffer, size_t length, off_t offset)
 {
   assert (PARAM_KOBJECT (ino, kInode_t));
   assert (PARAM_KERNEL_BUFFER(buffer, length, PAGE_SIZE));
-  assert ((size_t)offset < ino->stat_.length_);
+  // kprintf (LOG_VFS, "FEED_INODE %d, / %d - %d locks\n", offset, (int)ino->stat_.length_, klockcount());
+  assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);
   assert (kislocked(&ino->lock_));
 
-  if (ino->dev_->read == NULL) {
-    __seterrno (EINVAL);
-    return -1;
-  }
+  if (ino->dev_->read == NULL)
+    return __seterrno (EINVAL);
 
-  kprintf (LOG_VFS, "Read '%s' on LBA %d using %x\n", 
+  kprintf (LOG_VFS, "Read '%s' on LBA %d using %s()\n", 
     ino->name_, offset, ksymbol(ino->dev_->read));
 
   MODULE_ENTER(&ino->lock_, &ino->dev_->lock_);
   int err = ino->dev_->read (ino, buffer, length, offset);
   MODULE_LEAVE(&ino->lock_, &ino->dev_->lock_);
-  if (err) {
-    __seterrno (err);
-    return -1;
-  }
-
-  return 0;
+  // kprintf (LOG_VFS, "End reading...\n");
+  return __seterrno (err);
 }
 
 
@@ -50,7 +45,7 @@ int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset)
 {
   assert (PARAM_KOBJECT (ino, kInode_t));
   assert (PARAM_KERNEL_BUFFER(buffer, length, PAGE_SIZE));
-  assert ((size_t)offset < ino->stat_.length_);
+  assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);
   assert (kislocked(&ino->lock_));
 
   if (ino->dev_->write == NULL) {
@@ -76,7 +71,7 @@ int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset)
 // ---------------------------------------------------------------------------
 /** Find a memory bucket for the content of an inode. 
   */
-int inode_bucket(kInode_t*ino, off_t offset, uint32_t* page)
+int inode_bucket(kInode_t* ino, off_t offset, uint32_t* page)
 {
   __seterrno(ENOSYS);
   return -1;
@@ -87,19 +82,34 @@ int inode_bucket(kInode_t*ino, off_t offset, uint32_t* page)
 /** Find a physique page for the content of an inode. 
   * @note Legacy, should be replace progressively by inode_bucket.
   */
-int inode_page(kInode_t*ino, off_t offset, uint32_t* page)
+int inode_page(kInode_t* ino, off_t offset, uint32_t* page)
 {
+  // kprintf (LOG_VFS, "Map '%s' on LBA %d using %s()\n", ino->name_, offset);
+  assert (PARAM_KOBJECT (ino, kInode_t));
+  assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);
+
+  klock (&ino->lock_);
+
   int i;
+  int fr = -1;
+  kBucket_t* cache = ino->pagesCache_;
   offset = ALIGN_DW (offset, PAGE_SIZE);
-  klock (&ino->lock_, LOCK_FS_MAP);
+
+  // Look on already cached buckets
   for (i = 0; i < ino->pageCount_; ++i) {
-    if (ino->pagesCache_[i].offset_ == offset && ino->pagesCache_[i].phys_ != 0)
-      break;
+    if (cache[i].offset_ == offset && cache[i].phys_ != 0) {
+      *page = cache[i].phys_;
+      kunlock (&ino->lock_);
+      return 0;
+    } else if (fr < 0 && cache[i].flags_ == 0) {
+      fr = i;
+    }
   }
 
-  if (i == ino->pageCount_) {
-
-    kBucket_t* cache = kalloc (sizeof(kBucket_t) * (ino->pageCount_ + 8));
+  if (fr < 0) {
+    // Allocate a new bucket array
+    fr = ino->pageCount_;
+    cache = kalloc (sizeof(kBucket_t) * (ino->pageCount_ + 8));
     if (ino->pagesCache_) {
       memcpy (cache, ino->pagesCache_, sizeof(kBucket_t) * ino->pageCount_);
       kfree(ino->pagesCache_);
@@ -107,32 +117,35 @@ int inode_page(kInode_t*ino, off_t offset, uint32_t* page)
 
     ino->pageCount_ += 8;
     ino->pagesCache_ = cache;
-    if (ino->dev_->map != NULL) {
-
-      MODULE_ENTER(&ino->lock_, &ino->dev_->lock_);
-      uint32_t spg = ino->dev_->map(ino, offset);
-      MODULE_LEAVE(&ino->lock_, &ino->dev_->lock_);
-      assert (cache[i].phys_ == 0); // FIXME not an assert.
-      cache[i].phys_ = spg;
-      if (cache[i].phys_ == 0)
-        return __seterrno (EIO);
-
-    } else {
-      void* address = kpg_temp_page (&cache[i].phys_);
-      kunlock (&ino->lock_);
-      feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_);
-      klock (&ino->lock_, LOCK_FS_MAP);
-    }
-
-    cache[i].offset_ = offset;
-    cache[i].flags_ = 0;
-    cache[i].length_ = PAGE_SIZE;
   }
 
-  // kprintf ("fs] map {P#%d}  [%d]->0x%x <%s:%d>\n", kCPU.current_->process_->pid_, i, ino->pagesCache_[i].phys_, ino->name_, offset);
-  *page = ino->pagesCache_[i].phys_;
+  assert (cache[fr].phys_ == 0 && cache[fr].flags_ == 0);
+
+  if (ino->dev_->map != NULL) {
+
+    MODULE_ENTER(&ino->lock_, &ino->dev_->lock_);
+    uint32_t spg = ino->dev_->map(ino, offset);
+    MODULE_LEAVE(&ino->lock_, &ino->dev_->lock_);
+
+    cache[fr].phys_ = spg;
+    if (cache[fr].phys_ == 0) {
+      kunlock (&ino->lock_);
+      return __seterrno (EIO);
+    }
+
+  } else {
+    void* address = kpg_temp_page (&cache[fr].phys_);
+    feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_);
+    // kprintf (LOG_VFS, "Map complete the feed...\n");
+  }
+
+  cache[fr].offset_ = offset;
+  cache[fr].flags_ = 1;
+  cache[fr].length_ = PAGE_SIZE;
+
+  *page = cache[fr].phys_;
   kunlock (&ino->lock_);
-  return __noerror();
+  return 0;
 
 }
 

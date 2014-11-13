@@ -7,21 +7,22 @@
 #define PARAM_KERNEL_BUFFER(b,s,a)  1
 
 
-#define kprintf(n,s,...)    kprintf(s,##__VA_ARGS__)
-
+#define kprintf(n,s,...) do {                       \
+          if (n) kprintf(n##_PFX s,##__VA_ARGS__);  \
+        } while(0)
 
 // On module, we should have mutex on drivers, in order to restore interupt.
 #define MODULE_ENTER(i,d)   do {          \
           klock(d);                       \
-          kunlock(d);                     \
-          assert (klockcount() == 1); \
+          kunlock(i);                     \
         } while (0);
+          // assert (klockcount() == 1);
 
 #define MODULE_LEAVE(i,d)   do {          \
           klock(i);                       \
           kunlock(d);                     \
-          assert (klockcount() == 1); \
         } while (0);
+          // assert (klockcount() == 1);
 
 
 #endif /* PARAMS_H__ */

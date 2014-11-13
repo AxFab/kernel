@@ -11,6 +11,7 @@
  */
 #include <kernel/inodes.h>
 #include <kernel/cpu.h>
+#include <kernel/params.h>
 
 
 // ===========================================================================
@@ -20,26 +21,23 @@
  */
 kInode_t* kfs_mknod(const char* name, kInode_t* dir, kStat_t* stat)
 {
-  int err;
-  kInode_t* ino;
-
   assert (kcpu_state() == CPU_STATE_SYSCALL);
-
-  if (!dir->fs_->create) {
+  if (!dir->dev_->create) {
     __seterrno(EROFS);
     return NULL;
   }
 
-  MOD_ENTER;
-  err = dir->fs_->create(name, dir, stat);
-  MOD_LEAVE;
+  klock(&dir->lock_);
+  MODULE_ENTER(&dir->lock_, &dir->dev_->lock_);
+  int err = dir->dev_->create(name, dir, stat);
+  MODULE_LEAVE(&dir->lock_, &dir->dev_->lock_);
 
   if (err) {
     __seterrno(err);
     return NULL;
   }
 
-  ino = kfs_register (name, dir, stat);
+  kInode_t* ino = kfs_register (name, dir, stat);
   if (ino)
     kunlock (&ino->lock_);
   return ino;

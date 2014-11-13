@@ -22,14 +22,14 @@ int kfs_feed(kInode_t* ino, void* buffer, size_t length, off_t offset)
 {
   assert (ino != NULL && buffer != NULL);
 
-  if (ino->fs_->read == NULL) {
+  if (ino->dev_->read == NULL) {
     __seterrno (EINVAL);
     return -1;
   }
 
-  if (KLOG_VFS) kprintf ("FS] Read '%s' on LBA %d using %x\n", ino->name_, offset, ino->fs_->read);
+  if (KLOG_VFS) kprintf ("FS] Read '%s' on LBA %d using %x\n", ino->name_, offset, ino->dev_->read);
   MOD_ENTER;
-  int err = ino->fs_->read (ino, buffer, length, offset);
+  int err = ino->dev_->read (ino, buffer, length, offset);
   MOD_LEAVE;
   if (err) {
     __seterrno (err);
@@ -40,31 +40,13 @@ int kfs_feed(kInode_t* ino, void* buffer, size_t length, off_t offset)
 }
 
 
-// ---------------------------------------------------------------------------
-int kfs_sync(kInode_t* ino, void* buffer, size_t length, off_t offset)
-{
-  assert (ino != NULL && buffer != NULL);
-
-  if (ino->fs_->write == NULL) {
-    __seterrno (EINVAL);
-    return -1;
-  }
-
-  if (KLOG_VFS) kprintf ("FS] Write '%s' on LBA %d using %x\n", ino->name_, offset, ino->fs_->write);
-  int err = ino->fs_->write (ino, buffer, length, offset);
-  if (err) {
-    __seterrno (err);
-    return -1;
-  }
-
-  return length;
-}
-
 
 // ---------------------------------------------------------------------------
 /** Find a page that will correspond to the file page. */
 int kfs_map (kInode_t*ino, off_t offset, uint32_t* page)
 {
+  return inode_page(ino, offset, page);
+
   int i;
   offset = ALIGN_DW (offset, PAGE_SIZE);
   klock (&ino->lock_, LOCK_FS_MAP);
@@ -83,11 +65,11 @@ int kfs_map (kInode_t*ino, off_t offset, uint32_t* page)
 
     ino->pageCount_ += 8;
     ino->pagesCache_ = cache;
-    if (ino->fs_->map != NULL) {
+    if (ino->dev_->map != NULL) {
 
       kunlock (&ino->lock_);
       MOD_ENTER;
-      uint32_t spg = ino->fs_->map(ino, offset);
+      uint32_t spg = ino->dev_->map(ino, offset);
       MOD_LEAVE;
       klock (&ino->lock_, LOCK_FS_MAP);
       assert (cache[i].phys_ == 0); // FIXME not an assert.

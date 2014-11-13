@@ -120,7 +120,9 @@ int kCore_Initialize ()
   // V. Mount the disc system
   kInode_t* cd = kfs_lookup ("/dev/sdA", NULL);
   kInode_t* mnt = kfs_lookup ("/", NULL);
+  klock (&cd->lock_);
   ISO_mount (cd, mnt, "usr");
+  kunlock (&cd->lock_);
   // KRP_Mount (NULL, mnt);
 
   // VI. Look for debug symbols
@@ -143,6 +145,7 @@ int kCore_Initialize ()
   // kfs_log_all();
 
   // VIII. Initialize per-cpu scheduler
+  kprintf ("Starting...\n");
   ksch_init ();
 
   return 0;

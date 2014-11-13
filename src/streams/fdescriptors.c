@@ -220,7 +220,9 @@ int kstm_create(kInode_t* dir, const char *path, int flags, mode_t mode)
   // FIXME check rights
   // FIXME check the mode
   time_t now = time (NULL);
-  kStat_t stat = { 0, mode, 0, 0, 0, 0, now, now, now, 0, 0, 0 };
+  kStat_t stat = { 0 };
+  stat.mode_ = mode;
+  stat.atime_ = stat.ctime_ = stat.mtime_ = now;
 
   kInode_t* ino = kfs_mknod(&path[1], dir, &stat);
   if (ino == NULL) {
@@ -241,7 +243,11 @@ int kstm_pipe(int flags, mode_t mode, size_t length)
   char no[10];
   time_t now = time (NULL);
   length = ALIGN_UP (length, PAGE_SIZE);
-  kStat_t stat = { 0, S_IFIFO | (mode & S_IALLUGO), 0, 0, length, 0, now, now, now, 0, 0, 0 };
+
+  kStat_t stat = { 0 };
+  stat.mode_ = S_IFIFO | (mode & S_IALLUGO);
+  stat.atime_ = stat.ctime_ = stat.mtime_ = now;
+  stat.length_ = length;
 
   snprintf (no, 10, "p%d", kSYS.autoPipe_++);
   kInode_t* ino = kfs_mknod(no, kSYS.pipeNd_, &stat);

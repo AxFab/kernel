@@ -7,7 +7,7 @@ int IMG_read (kInode_t* ino, void* buf, size_t count, size_t lba);
 int IMG_write (kInode_t* ino, void* buf, size_t count, size_t lba);
 
 
-kFileOp_t imgOps = {
+kDevice_t imgOps = {
   NULL, NULL, NULL,
   NULL, IMG_read, NULL, NULL,
   NULL, IMG_write, NULL, NULL, NULL,

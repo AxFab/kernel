@@ -62,7 +62,6 @@ int ticksCount = 0;
 int kInt_Clock (kCpuRegs_t* regs)
 {
   /** PIT - Timers [ +/- 1.73 sec/day ]
-
    */
   kSYS.now_ += CLOCK_PREC / CLOCK_HZ;
   //kprintf ("== %lld ==\n", kSYS.now_);
@@ -73,7 +72,6 @@ int kInt_Clock (kCpuRegs_t* regs)
     ticksCount = 0;
     // kprintf ("System clock: %lld us\n", kSYS.now_);
 
-    kevt_ticks();
     ksch_ticks((kCpuRegs_t*)&regs);
   }
 
@@ -81,17 +79,6 @@ int kInt_Clock (kCpuRegs_t* regs)
     clockCount = 0;
     // kprintf ("System clock: %lld us\n", kSYS.now_);
   }
-
-
-
-  // if (_dotCount == 4) {
-
-  //   kprintf ("TICKS]  stack at 0x%x\n", &registers);
-  //   kTty_HexDump ((void*)((int)((&registers)-20) & ~0xf), 0x100);
-  //   kTty_HexDump ((void*)registers, 0x60);
-  //   kTty_StackTrace (8);
-  //   for (;;);
-  // }
 
 	return 0;
 }

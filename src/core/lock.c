@@ -10,13 +10,21 @@
 #undef klock
 void klock (spinlock_t* lock, const char* where)
 {
-  while (atomic_xchg_i32 (&lock->key_, 1) != 0);
+  int t = 100000000;
+  while (atomic_xchg_i32 (&lock->key_, 1) != 0) {
+    if (!t--) {
+      kprintf("Stuck at %s by %s\n", where, lock->where_);
+      kstacktrace (5);
+      t = 100000000;
+    }
+  };
 
   atomic_inc_i32 (&kCPU.lockCounter);
   lock->cpu_ = kCPU.cpuNo_;
   lock->where_ = where;
 }
 
+#undef ktrylock
 int ktrylock (spinlock_t* lock, const char* where)
 {
   if (atomic_xchg_i32 (&lock->key_, 1) != 0)

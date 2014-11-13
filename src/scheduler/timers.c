@@ -42,7 +42,7 @@ static int kevt_timer_remove (kTask_t* task)
  */
 int kevt_sleep (kTask_t* task)
 {
-  task->eventParam_ += ltime(NULL);
+  task->eventParam_ = ltime(NULL) + task->eventParam_ * 1000ULL; // Nano to Micro second
   assert (task == kCPU.current_);
   klock (&kSYS.timerLock_, LOCK_TIMER_REGISTER_SLEEP);
 

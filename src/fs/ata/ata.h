@@ -124,7 +124,7 @@ int ATA_Mount(int dev, kStat_t* root);
 int ATA_Unmount(void);
 
 int ATA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba);
-int ATA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba);
+int ATA_Write (kInode_t* ino, const void* bucket, size_t count, size_t lba);
 
 int ATA_Detect (kAtaDrive_t* dr);
 
