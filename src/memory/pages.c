@@ -11,7 +11,7 @@
  */
 #include <kernel/memory.h>
 #include <kernel/scheduler.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/info.h>
 
 /**

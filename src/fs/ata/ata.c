@@ -4,14 +4,6 @@
 // ===========================================================================
 kAtaDrive_t sdx[4];
 
-kDevice_t ataOperation = {
-  0, {0}, NULL,
-  NULL, ATA_Read, NULL, NULL,
-  NULL, ATA_Write,
-  NULL
-};
-
-
 // ===========================================================================
 void ATA_Initialize (kInode_t* dev)
 {
@@ -22,6 +14,7 @@ void ATA_Initialize (kInode_t* dev)
   stat.atime_ = stat.ctime_ = stat.mtime_ = time (NULL);
   const char* name[] = { "sdA", "sdB", "sdC", "sdD" };
 
+  memset (sdx, 0, 4 * sizeof(kAtaDrive_t));
   sdx[0]._pbase = 0x1f0;
   sdx[0]._pctrl = 0x3f6;
   sdx[0]._disc = 0xa0;
@@ -35,6 +28,11 @@ void ATA_Initialize (kInode_t* dev)
   sdx[3]._pctrl = 0x376;
   sdx[3]._disc = 0xb0;
 
+  for (i = 0; i < 4; ++i) {
+    sdx[i].dev_.read = ATA_Read;
+    sdx[i].dev_.write = ATA_Write;
+  }
+
   outb(0x3f6 + ATA_REG_CONTROL - 0x0A, 2);
   outb(0x376 + ATA_REG_CONTROL - 0x0A, 2);
 
@@ -43,7 +41,7 @@ void ATA_Initialize (kInode_t* dev)
     if (ATA_Detect(&sdx[i])) {
       int block = sdx[i]._type == IDE_ATA ? 512 : 2048;
       stat.block_ = block;
-      kfs_new_device (name[i], dev, &ataOperation, &sdx[i], &stat);
+      create_device(name[i], dev, &sdx[i].dev_, &stat);
     }
   }
 }

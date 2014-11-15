@@ -42,7 +42,6 @@ ut_src = dbg/ut.c \
              $(patsubst src/%,%,$(wildcard src/assembly/*.c))  \
              $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
-			       $(patsubst src/%,%,$(wildcard src/fs/tmpfs/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/img/*.c)) \
              $(patsubst src/%,%,$(wildcard src/core/*.c))
@@ -151,7 +150,6 @@ kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/term/*.c)) \
              $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
-			       $(patsubst src/%,%,$(wildcard src/fs/tmpfs/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/ata/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/vba/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \

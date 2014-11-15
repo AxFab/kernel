@@ -2,7 +2,7 @@
 #include <kernel/memory.h>
 #include <kernel/info.h>
 #include <kernel/scheduler.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/uparams.h>
 #include <stdio.h>
 
@@ -41,7 +41,7 @@ ssize_t kstm_read_block (kStream_t* stream, void* buf, size_t length, off_t off)
 
 
 // ---------------------------------------------------------------------------
-ssize_t kstm_write_block (kStream_t* stream, void* buf, size_t length, off_t off)
+ssize_t kstm_write_block (kStream_t* stream, const void* buf, size_t length, off_t off)
 {
   uint32_t page;
   ssize_t count = 0;

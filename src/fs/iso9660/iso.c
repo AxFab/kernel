@@ -4,15 +4,6 @@
 #include <fcntl.h>
 
 
-
-kDevice_t isoOps = {
-  0, {0}, NULL, 
-  ISO_Lookup, ISO_Read, NULL, NULL,
-  NULL, ISO_Write,
-  NULL
-};
-
-
 int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
 {
   int i;
@@ -45,7 +36,10 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
     switch (buf[0]) {
       case ISO9660_VOLDESC_PRIM:
         firstDesc =  (isoFstDescriptor_t*)&buf[8];
-        volInfo = (isoVolume_t*)malloc (sizeof(isoVolume_t));
+        volInfo = (isoVolume_t*)kalloc (sizeof(isoVolume_t));
+        volInfo->fs_.lookup = ISO_Lookup;
+        volInfo->fs_.read = ISO_Read;
+        volInfo->fs_.write = ISO_Write;
         volInfo->dev = dev;
         volInfo->bootable = 0;
         volInfo->created = 0;
@@ -92,9 +86,11 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
   root.length_ = volInfo->lgthroot;
   // FIXME Fill creation date
   if (mpoint)
-    kfs_new_device (mpoint, mnt, &isoOps, (void*)volInfo, &root);
+    create_device (mpoint, mnt, &volInfo->fs_, &root);
+    // kfs_new_device (mpoint, mnt, &isoOps, (void*)volInfo, &root);
   else
-    kfs_new_device (name, mnt, &isoOps, (void*)volInfo, &root);
+    create_device (name, mnt, &volInfo->fs_, &root);
+    // kfs_new_device (name, mnt, &isoOps, (void*)volInfo, &root);
 
   free (buf);
   return __noerror ();
@@ -111,7 +107,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   size_t sec = dir->stat_.lba_;
   isoDirEntry_t* entry;
   char* buf = malloc (2048);
-  isoVolume_t* volInfo = (isoVolume_t*)dir->devinfo_;
+  isoVolume_t* volInfo = (isoVolume_t*)dir->dev_;
 
   if (KLOG_FS) kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
   if (KLOG_FS) kprintf ("iso9660] Read sector %d on %s \n", sec, volInfo->dev->name_);
@@ -162,7 +158,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
 
 int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 {
-  isoVolume_t* volInfo = (isoVolume_t*)fp->devinfo_;
+  isoVolume_t* volInfo = (isoVolume_t*)fp->dev_;
   size_t sec = fp->stat_.lba_;
   size_t lg = ALIGN_UP (fp->stat_.length_, fp->stat_.block_) / fp->stat_.block_;
   if (lg < lba + count )

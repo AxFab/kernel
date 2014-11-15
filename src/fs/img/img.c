@@ -1,4 +1,4 @@
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <stdio.h>
 #include <fcntl.h>
 

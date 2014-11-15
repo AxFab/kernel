@@ -1,4 +1,4 @@
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 
 #define TAR_RECORDSIZE 512
 
@@ -6,14 +6,6 @@ int KRP_Mount (kInode_t* dev, kInode_t* mnt);
 int KRP_Write();
 int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file);
 int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba);
-
-
-kDevice_t krpOps = {
-  0, {0}, NULL, 
-  KRP_Lookup, KRP_Read, NULL, NULL,
-  NULL, KRP_Write,
-  NULL
-};
 
 
 const char* krpPrefix = "./";

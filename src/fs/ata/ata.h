@@ -4,7 +4,7 @@
 #include <kernel/core.h>
 // #include <kernel/fs.h>
 #include <kernel/cpu.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 // #include <sys/stat.h>
 
 #define ATA_SR_BSY     0x80
@@ -97,6 +97,7 @@ typedef  struct kAtaDrive    kAtaDrive_t;
 
 struct kAtaDrive
 {
+  kDevice_t dev_;
   uint8_t   _type; // ATA
   uint16_t  _pbase; // 0x1f0 - 0x170
   uint16_t  _pctrl; // 0x3f6 - 0x376

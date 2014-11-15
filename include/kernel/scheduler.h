@@ -91,7 +91,8 @@ void ksch_resurect_thread (kTask_t* task, uintptr_t entry, intmax_t arg) ;
 void ksch_destroy_thread (kTask_t* task) ;
 // ---------------------------------------------------------------------------
 
-
+/** The event ticks check if some timers are expired. */
+void kevt_ticks();
 
 
 #endif /* SCHEDULER_H__ */

@@ -1,5 +1,5 @@
 #include <kernel/streams.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 
 
 #include <kernel/info.h>

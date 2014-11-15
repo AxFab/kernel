@@ -4,7 +4,7 @@
 #include <sys/mman.h>
 #include <kernel/core.h>
 #include <kernel/info.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/scheduler.h>
 
 

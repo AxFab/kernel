@@ -2,7 +2,7 @@
 #include <kernel/memory.h>
 #include <kernel/info.h>
 #include <kernel/scheduler.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/uparams.h>
 #include <stdio.h>
 
@@ -64,7 +64,7 @@ ssize_t kstm_read (int fd, void* buf, size_t length, off_t off)
 /**
  *  \note Read and write are copy-code, try to merge them.
  */
-ssize_t kstm_write (int fd, void* buf, size_t length, off_t off)
+ssize_t kstm_write (int fd, const void* buf, size_t length, off_t off)
 {
   if (KLOG_RW) kprintf ("syscall %d] kstm_write  (%d, 0x%x, %d, %d);\n", kCPU.current_->process_->pid_, fd, buf, length, off);
 

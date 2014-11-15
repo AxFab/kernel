@@ -99,10 +99,10 @@ int kstm_create(kInode_t* dir, const char *path, int flags, mode_t mode);
 int kstm_pipe(int flags, mode_t mode, size_t length);
 
 ssize_t kstm_read_block (kStream_t* stream, void* buf, size_t length, off_t off);
-ssize_t kstm_write_block (kStream_t* stream, void* buf, size_t length, off_t off);
+ssize_t kstm_write_block (kStream_t* stream, const void* buf, size_t length, off_t off);
 
 ssize_t kstm_read_pipe (kStream_t* stream, void* buf, size_t length);
-ssize_t kstm_write_pipe (kStream_t* stream, void* buf, size_t length);
+ssize_t kstm_write_pipe (kStream_t* stream, const void* buf, size_t length);
 ssize_t kstm_read_pipe_line  (kStream_t* stream, void* buf, size_t length);
 ssize_t kstm_available_data_pipe (kStream_t* stream);
 kStream_t* kstm_create_pipe (int flags, size_t length);
@@ -111,9 +111,10 @@ kStream_t* kstm_create_pipe (int flags, size_t length);
 // ssize_t kstm_write_tty (kStream_t* stream, void* buf, size_t length);
 
 ssize_t kstm_read (int fd, void* buf, size_t length, off_t off);
-ssize_t kstm_write (int fd, void* buf, size_t length, off_t off);
+ssize_t kstm_write (int fd, const void* buf, size_t length, off_t off);
 off_t kstm_seek(int fd, off_t offset, int whence);
 
+kStream_t* stream_open (kInode_t* ino);
 kInode_t* term_create (void* pixels, int width, int height);
 
 #endif /* STREAMS_H__ */

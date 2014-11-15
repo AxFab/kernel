@@ -1,4 +1,4 @@
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/info.h>
 
 uint32_t kpg_alloc() {

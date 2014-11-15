@@ -1,10 +1,11 @@
 #include <kernel/streams.h>
 #include <kernel/memory.h>
-#include <kernel/info.h>
-#include <kernel/scheduler.h>
-#include <kernel/inodes.h>
-#include <kernel/uparams.h>
-#include <stdio.h>
+#include <kernel/vfs.h>
+// #include <kernel/info.h>
+// #include <kernel/scheduler.h>
+// #include <kernel/vfs.h>
+// #include <kernel/uparams.h>
+// #include <stdio.h>
 
 
 // ===========================================================================

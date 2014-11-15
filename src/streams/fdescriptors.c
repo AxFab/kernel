@@ -11,7 +11,7 @@
  */
 #include <kernel/streams.h>
 #include <kernel/uparams.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/scheduler.h>
 #include <kernel/info.h>
 
@@ -237,7 +237,6 @@ int kstm_pipe(int flags, mode_t mode, size_t length)
   // FIXME check rights
   // FIXME check the mode
   char no[10];
-  time_t now = time (NULL);
   length = ALIGN_UP (length, PAGE_SIZE);
 
   snprintf (no, 10, "p%d", kSYS.autoPipe_++);

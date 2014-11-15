@@ -1,7 +1,7 @@
 #ifndef FS_ISO9660_ISO_H__
 #define FS_ISO9660_ISO_H__
 
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 
 // Identificators for volume descriptors
 #define ISO9660_STD_ID1    0x30444300
@@ -86,6 +86,7 @@ struct __attribute__ ((__packed__)) isoFstDescriptor {
 
 // Store info about the volume
 struct isoVolume {
+  kDevice_t   fs_;
   time_t      created;
   char        bootable;
   char*       name;

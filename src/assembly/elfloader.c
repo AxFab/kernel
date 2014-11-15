@@ -9,7 +9,8 @@
  *
  *      Extract assembly information form an ELF file.
  */
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
+#include <kernel/memory.h>
 #include "assembly.h"
 #include "elf.h"
 

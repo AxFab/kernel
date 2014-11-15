@@ -1,17 +1,9 @@
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 
 
 int VBA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba);
 int VBA_Write (kInode_t* ino, void* bucket, size_t count, size_t lba);
 uint32_t VBA_map (kInode_t* fp, off_t offset);
-
-
-kDevice_t vbaOperation = {
-  0, {0}, NULL, 
-  NULL, NULL, NULL, NULL,
-  NULL, NULL,
-  VBA_map
-};
 
 
 void *vbaAddress = NULL;
@@ -30,11 +22,15 @@ void VBA_Set (void* address, int width, int height, int depth)
 
 void VBA_Initialize (kInode_t* dev)
 {
+  static int auto_incr = 0;
   if (vbaAddress == NULL)
     return;
 
   size_t lg = vbaWidth * vbaHeight * vbaDepth;
   size_t line = vbaWidth * vbaDepth;
+
+  kDevice_t* ops = KALLOC(kDevice_t);
+  ops->map = VBA_map;
 
   kStat_t stat = { 0 };
   stat.mode_ = S_IFBLK | 0700;
@@ -42,9 +38,12 @@ void VBA_Initialize (kInode_t* dev)
   stat.length_ = lg;
   stat.lba_ = (size_t)vbaAddress;
   stat.block_ = line;
-  
   // kStat_t stat = { 0, , 0, 0, lg, , now, now, now, 0, vbaDepth, line };
-  kfs_new_device ("vba", dev, &vbaOperation, NULL, &stat);
+
+  char tmp [8];
+  snprintf (tmp, 8, "fb%d", ++auto_incr);
+  create_device (tmp, dev, ops, &stat);  
+  //kfs_new_device ("vba", dev, &vbaOperation, NULL, &stat);
 }
 
 

@@ -23,18 +23,11 @@
 unsigned long long strtoull (const char * str, char ** endptr, int base);
 int snprintf(char* s, size_t n, const char* format, ... );
 
-typedef struct spinlock     spinlock_t;
-typedef struct list     list_t;
-struct spinlock {
-  int32_t       key_;
-  int           cpu_;
-  const char*   where_;
-};
 
-struct list {
-  void* f_;
-  void* l_;
-};
+#include <kernel/spinlock.h>
+#include <kernel/list.h>
+
+#define LOCK_INIT  {0, 0, NULL}
 
 /** ltime_t is an accurate time storage
   * It hold the number of microsecond since 1st Jan 1970..
@@ -138,19 +131,6 @@ const char* kpsize (uintmax_t number);
 void* kalloc(size_t size);
 void kfree(void* addr);
 char* kcopystr(const char* str);
-
-// Lock -------------------------------------------------
-void klock (spinlock_t* lock, const char* where);
-int ktrylock (spinlock_t* lock, const char* where);
-void kunlock (spinlock_t* lock) ;
-int kislocked (spinlock_t* lock);
-int klockcount ();
-
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
-#define __AT__  __FILE__ ":" TOSTRING(__LINE__)
-#define klock(l,...)  klock(l,__AT__)
-#define ktrylock(l,...)  ktrylock(l,__AT__)
 
 // CPU -------------------------------------------------
 int kcpu_state();

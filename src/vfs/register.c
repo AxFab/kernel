@@ -66,7 +66,30 @@ static int attach_inode (kInode_t* ino, kInode_t* dir, const char* name)
 /** Detach an inode from its parent. */
 static int detach_inode (kInode_t* ino)
 {
+  assert (kislocked (&ino->parent_->lock_));
+  assert (kislocked (&ino->lock_));
+  assert (ino->child_ == NULL);
+  assert (ino->readers_ == NULL);
   
+  // @todo ino->lock_.flags |= LK_DELETED;
+  if (ino->prev_ != NULL) {
+    klock(&ino->prev_->lock_);
+    ino->prev_->next_ = ino->next_;
+    kunlock(&ino->prev_->lock_);
+  } else {
+    ino->parent_->child_ = ino->next_;
+  }
+
+  if (ino->next_ != NULL) {
+    klock(&ino->next_->lock_);
+    ino->next_->prev_ = ino->prev_;
+    kunlock(&ino->next_->lock_);
+  }
+
+  // @todo Free all buckets and stream objects...
+  // @todo Push to garbadge candidate
+  // @todo Free name
+  return __noerror (); 
 }
 
 
@@ -74,7 +97,7 @@ static int detach_inode (kInode_t* ino)
 /** Try to add a new inode on the VFS tree. */
 kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat)
 {
-  static id_t auto_incr = 0;
+  static id_t auto_incr = 1;
   assert (PARAM_FILENAME(name));
   assert (dir != NULL && stat != NULL);
   assert (S_ISDIR (dir->stat_.mode_));
@@ -88,7 +111,6 @@ kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat)
 
   ino->name_ = kcopystr(name);
   ino->dev_ = dir->dev_;
-  ino->devinfo_ = dir->devinfo_; // @todo should be include on dev_ !
   memcpy (&ino->stat_, stat, sizeof(kStat_t));
   ino->stat_.dev_ = dir->stat_.dev_;
   ino->stat_.ino_ = ++auto_incr; // SYS_HANDLE();

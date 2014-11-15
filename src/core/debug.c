@@ -69,7 +69,7 @@ void kstacktrace(uintptr_t MaxFrames)
     // Unwind to previous stack frame
     ebp = (uintptr_t*)(ebp[0]);
     uintptr_t* arguments = &ebp[2];
-    kprintf("  0x%x - %s ()         [args: %x] \n", eip, ksymbol(eip), (uintptr_t)arguments);
+    kprintf("  0x%x - %s ()         [args: %x] \n", eip, ksymbol((void*)eip), (uintptr_t)arguments);
   }
 }
 

@@ -2,10 +2,13 @@
 #include "cpu.h"
 #include <kernel/info.h>
 
-#include "kernel/inodes.h"
+#include "kernel/vfs.h"
 #include "kernel/memory.h"
 #include "kernel/scheduler.h"
 #include <kernel/assembly.h>
+#include <kernel/streams.h>
+
+
 
 void kinit()
 {
@@ -50,7 +53,7 @@ int core_master (void)
 {
   // Create TTY0
   // kInode_t* fb0 = search_inode ("/dev/fb0", NULL);
-  kInode_t* tty0 = term_create(4 * _Mb_, 800, 600);
+  kInode_t* tty0 = term_create((void*)(4 * _Mb_), 800, 600);
   if (tty0 == NULL)
     return -1;
 
@@ -109,7 +112,7 @@ int kCore_Initialize ()
   // IV. Start system build
   kCpu_SetStatus (CPU_STATE_SYSCALL);
 
-  kfs_init ();
+  initialize_vfs ();
   kvma_init ();
   VBA_Initialize (kSYS.devNd_);
 

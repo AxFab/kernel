@@ -3,7 +3,7 @@
 /** Check if this buffer cover a valid user space area
  *  \note the current requierment is to write on a single memory bucket
  */
-int kUserParam_Buffer (kAddSpace_t* addp, void* base, size_t length)
+int kUserParam_Buffer (kAddSpace_t* addp, const void* base, size_t length)
 {
 #ifdef __KERNEL
   kVma_t* start = kvma_look_at (addp, (uintptr_t)base);

@@ -2,7 +2,7 @@
 #include <kernel/memory.h>
 #include <kernel/info.h>
 #include <kernel/scheduler.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/uparams.h>
 #include <stdio.h>
 
@@ -73,7 +73,7 @@ ssize_t kstm_read_pipe (kStream_t* stream, void* buf, size_t length)
 
 
 // ---------------------------------------------------------------------------
-ssize_t kstm_write_pipe (kStream_t* stream, void* buf, size_t length)
+ssize_t kstm_write_pipe (kStream_t* stream, const void* buf, size_t length)
 {
   uint32_t page;
   kPipe_t* pipe = kstm_get_pipe(stream);

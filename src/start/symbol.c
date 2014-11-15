@@ -1,5 +1,5 @@
 #include <kernel/core.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 
 #define SC_TEXT   1
 #define SC_DATA   2

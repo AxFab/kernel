@@ -22,14 +22,18 @@ int main (int argc, char** argv)
   char buff [1024];
   int sc = open ("/master.log", 0, 0); // O_RDONLY
   int lg = read (sc, buff, 1024);
-  // write (1, buff, lg);
+  if (lg > 0) {
+    // write (1, buff, lg);
+  }
 
   write (1, "---\n", 4);
   memset (buff, 0, 1024);
 
   sc = open ("/dev/pts/p1", 0, 0); // O_RDONLY
   lg = read (sc, buff, 1024);
-  // write (1, buff, lg);
+  if (lg > 0) {
+    // write (1, buff, lg);
+  }
 
   return 0;
 }

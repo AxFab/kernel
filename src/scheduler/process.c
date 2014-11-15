@@ -12,7 +12,7 @@
 #include <kernel/scheduler.h>
 #include <kernel/assembly.h>
 #include <kernel/memory.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/info.h>
 #include <kernel/streams.h>
 

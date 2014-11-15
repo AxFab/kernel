@@ -10,7 +10,7 @@
  *      Initialize Memory address space
  */
 #include <kernel/memory.h>
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/info.h>
 
 

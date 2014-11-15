@@ -4,7 +4,7 @@
 #include <kernel/core.h>
 
 
-int kUserParam_Buffer (kAddSpace_t* addp, void* base, size_t length);
+int kUserParam_Buffer (kAddSpace_t* addp, const void* base, size_t length);
 int kUserParam_String (kAddSpace_t* addp, const char* str, int max);
 
 

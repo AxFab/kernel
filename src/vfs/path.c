@@ -17,7 +17,8 @@
  /** Read an inode full pathname. */
 ssize_t read_pathname(kInode_t* ino, int method, char* buf, int size)
 {
-
+  __seterrno(ENOSYS);
+  return -1;
 }
 
 
@@ -25,7 +26,8 @@ ssize_t read_pathname(kInode_t* ino, int method, char* buf, int size)
 /** Read the content of a directory. */
 int read_directory(kInode_t* dir, off_t offset, void* buf, size_t size)
 {
-
+  __seterrno(ENOSYS);
+  return -1;
 }
 
 

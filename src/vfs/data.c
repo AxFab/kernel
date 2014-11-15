@@ -9,8 +9,9 @@
  *
  *      Methods used for data file operations.
  */
-#include "kernel/vfs.h"
-#include "kernel/params.h"
+#include <kernel/vfs.h>
+#include <kernel/params.h>
+#include <kernel/memory.h>
 
 
 // ---------------------------------------------------------------------------
@@ -76,39 +77,52 @@ kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
   assert (PARAM_KOBJECT (ino, kInode_t));
   assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);
 
-  // klock (&ino->lock_);
+  klock (&ino->lock_);
 
-  // // Look on already cached buckets
-  // kBucket_t* buck = ino->buckets.f_;
-  // while (buck != NULL) {
-  //   if (buck->offset_ == offset) {
-  //     return buck;
-  //   }
+  // Look on already cached buckets
+  kBucket_t* buck;
+    // kprintf (LOG, "ANCHOR '%x'  '%x' \n", ino->buckets_.first_, ino->buckets_.last_);
+  for (buck = klist_begin(&ino->buckets_, kBucket_t, ino_list_); 
+      buck != NULL; 
+      buck = klist_next(buck, kBucket_t, ino_list_)) {
+    // kprintf (LOG, "BUCKET '%x' \n", buck);
+    if (buck->offset_ == offset) {
+      // @todo remove and then push front
+      kunlock (&ino->lock_);
+      return buck;
+    }
+  }
 
-  //   buck = buck->l_;
-  // };
+  // Look for the new page
+  uint32_t spg;
+  if (ino->dev_->map != NULL) {
 
+    MODULE_ENTER(&ino->lock_, &ino->dev_->lock_);
+    spg = ino->dev_->map(ino, offset);
+    MODULE_LEAVE(&ino->lock_, &ino->dev_->lock_);
+    if (spg == 0) {
+      kunlock (&ino->lock_);
+      return __seterrno (EIO);
+    }
 
-  // // @todo Search physique pages !
+  } else {
+    void* address = kpg_temp_page (&spg);
+    if (feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_)) {
+      kunlock (&ino->lock_);
+      return __geterrno();
+    }
+    // kprintf (LOG_VFS, "Map complete the feed...\n");
+  }
 
-  // buck = KALLOC(kBucket_t);
-  // buck->offset_ = offset;
-  // buck->flags_ = 1;
-  // buck->length_ = PAGE_SIZE;
-
-  // // Attach at the end
-  // buck->file_.l_ = NULL;
-  // buck->file_.f_ = ino->buckets.l_;
-  // ino->buckets.l_->l_ = buck;
-  // ino->buckets.l_ = buck;
-
-  // // Attach at the begining
-  // buck->file_.f_ = NULL;
-  // buck->file_.l_ =  ino->buckets_.f_;
-  // if (ino->buckets_.f_) ino->buckets_.f_->l_;
-
-  __seterrno(ENOSYS);
-  return NULL;
+  // Create a new bucket
+  buck = KALLOC(kBucket_t);
+  buck->offset_ = offset;
+  buck->flags_ = 1;
+  buck->length_ = PAGE_SIZE;
+  buck->phys_ = spg;
+  klist_push_back(&ino->buckets_, &buck->ino_list_); // @todo front
+  kunlock (&ino->lock_);
+  return buck;
 }
 
 
@@ -118,6 +132,14 @@ kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
   */
 int inode_page(kInode_t* ino, off_t offset, uint32_t* page)
 {
+  // kBucket_t* buck = inode_bucket (ino, offset);
+  // kprintf (LOG, "BUCKET '%x'  '%x' \n", ino->buckets_.first_, ino->buckets_.last_);
+  // if (buck == NULL)
+  //   return -1;
+  // *page = buck->phys_;
+  // return 0;
+
+
   // kprintf (LOG_VFS, "Map '%s' on LBA %d using %s()\n", ino->name_, offset);
   assert (PARAM_KOBJECT (ino, kInode_t));
   assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);

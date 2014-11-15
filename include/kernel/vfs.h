@@ -9,6 +9,8 @@
 #include <sys/stat.h>  // S_*
 #include <fcntl.h>     // O_*, AT_*
 
+extern kDevice_t tmpFs;
+
 // ===========================================================================
 //      Data Structures
 // ===========================================================================
@@ -47,11 +49,12 @@ struct kInode {
   union {
     kAssembly_t*  assembly_;
     kFifo_t*      fifo_;
+    kPipe_t*      pipe_;
     kTerm_t*      term_;
   };
-  void*           devinfo_;
   int             pageCount_;  ///< max number of physical pages in cache
   kBucket_t*      pagesCache_; ///< physical pages caching
+  anchor_t        buckets_;
 };
 
 
@@ -60,20 +63,15 @@ struct kDevice {
 
   id_t id_;
   spinlock_t      lock_;      ///< Lock
+  list_t          all_;      ///< List of all devices.
   kInode_t*       ino_;
 
-  // read / write / poll / ioctl / map / allocate
-  // getxattr / setxattr / listxattr
-
+  // poll / ioctl / map / allocate - getxattr / setxattr / listxattr
   // lookup / create(mkdir) / remove(rmdir) / rename / setmeta
-  // follow_link / symlink
-  // setacl / getacl
+  // follow_link / symlink -  setacl / getacl
   // link / unlink... (for compatibility)
-
   // mount / umount / statfs / check / ioctl
-  // format
-  // defrag !?
-
+  // format -  defrag !?
   // int (*format)(dev_t dev_, const char* options);
   // freeze / unfreeze / statfs / umount / options
 
@@ -84,10 +82,6 @@ struct kDevice {
 
   int (*create)(const char* name, kInode_t* dir, kStat_t* file);
   int (*write)(kInode_t* fp, const void* buffer, size_t length, size_t offset);
-  
-  // int (*link)();
-  // int (*unlink)();
-  // int (*symlink)();
 
   uint32_t (*map)(kInode_t* fp, off_t offset);
 };
@@ -99,11 +93,11 @@ struct kDevice {
   */
 struct kBucket
 {
-  size_t    phys_;    ///< Physique address of this page bucket.
-  size_t    length_;  ///< Length of the page bucket.
-  off_t     offset_;  ///< Offset on the file.
-  int       flags_;   ///< Flags for this bucket properties.
-  list_t    lru_;     ///< List of bucket for Last-Recently-Used policy.
+  size_t    phys_;      ///< Physique address of this page bucket.
+  size_t    length_;    ///< Length of the page bucket.
+  off_t     offset_;    ///< Offset on the file.
+  int       flags_;     ///< Flags for this bucket properties.
+  list_t    ino_list_;  ///< List of bucket for Last-Recently-Used policy.
 };
 
 
@@ -122,12 +116,13 @@ kBucket_t* inode_bucket(kInode_t* ino, off_t offset);
 /** Find a physique page for the content of an inode. */
 int inode_page(kInode_t* ino, off_t offset, uint32_t* page);
 
+
 // VFS/DEVICE ================================================================
 /** Create and register a new device. */
 id_t create_device(const char* nm, kInode_t* ino, kDevice_t* dev, 
                    kStat_t* stat);
 /** Search for device by it's handle. */
-kInode_t* search_device(dev_t dev);
+kDevice_t* search_device(id_t dev);
 /** Try to initalize a driver for a specific device. */
 int mount_device (kInode_t* dev, const char* name, kInode_t* mnt, int fs,
                   int flags, const char* data);
@@ -140,6 +135,7 @@ int umount_device(kInode_t* dev);
 ssize_t read_pathname(kInode_t* ino, int method, char* buf, int size);
 /** Read the content of a directory. */
 int read_directory(kInode_t* dir, off_t offset, void* buf, size_t size);
+
 
 // VFS/REGISTER ==============================================================
 /** Try to add a new inode on the VFS tree. */
@@ -159,6 +155,11 @@ kInode_t* search_inode (const char* path, kInode_t* dir);
 kInode_t* follow_symlink(kInode_t* ino, int* links);
 
 
+// VFS/TMPFS =================================================================
+/** Initialize the VFS kernel module */
+int initialize_vfs();
+
+
 // VFS/WMETA =================================================================
 /** Request the file system for the creation of a new inode. */
 kInode_t* create_inode(const char* name, kInode_t* dir, mode_t mode, size_t lg);
@@ -168,6 +169,13 @@ int remove_inode(kInode_t* ino);
 int chmeta_inode(kInode_t* ino, kStat_t* stat);
 /** Request the file system to change the path of the inode. */
 int rename_inode(kInode_t* ino, const char* name, kInode_t* dir);
+
+
+// ---------------------------------------------------------------------------
+/** Function to called to grab an inodes */
+int kfs_grab(kInode_t* ino);
+/** Function to release an inodes */
+int kfs_release(kInode_t* ino);
 
 
 #endif /* KERNEL_VFS_H__ */

@@ -9,7 +9,7 @@
  *
  *      Redirect system calls to the correct function.
  */
-#include <kernel/inodes.h>
+#include <kernel/vfs.h>
 #include <kernel/streams.h>
 #include <kernel/memory.h>
 #include <kernel/scheduler.h>
@@ -19,7 +19,7 @@
 typedef int (*sys_func)(kCpuRegs_t* regs, ...);
 
 int sys_reboot(kCpuRegs_t* regs, int code);
-int sys_exec(kCpuRegs_t* regs, void* param);
+int sys_exec(kCpuRegs_t* regs, const char* path, void* param);
 int sys_exit(kCpuRegs_t* regs, int code);
 
 int sys_open(kCpuRegs_t* regs, const char* path, int flags, int mode);
@@ -85,12 +85,13 @@ int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags)
 
 
 
-int sys_exec(kCpuRegs_t* regs, void* param)
+int sys_exec(kCpuRegs_t* regs, const char* path, void* param)
 {
   kInode_t* ino = search_inode ((char*)regs->ecx, kCPU.current_->process_->workingDir_);
   if (ino == NULL)
     return -1;  
-  ksch_create_process (kCPU.current_->process_, ino, kCPU.current_->process_->workingDir_, regs->edx);
+  sStartInfo_t* sinfo = (sStartInfo_t*)param;
+  ksch_create_process (kCPU.current_->process_, ino, kCPU.current_->process_->workingDir_, sinfo->cmd_);
   return -1;
 }
 

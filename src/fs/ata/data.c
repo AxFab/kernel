@@ -294,7 +294,7 @@ int kAtapi_Read (kAtaDrive_t* dr, uint32_t lba,  uint8_t sects, uint8_t* buf)
 
 int ATA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba)
 {
-  kAtaDrive_t* dr = (kAtaDrive_t*)ino->devinfo_;
+  kAtaDrive_t* dr = (kAtaDrive_t*)ino->dev_;
   size_t i;
   if (KLOG_FS) printf ("ATA] read <%d> at lba: %x for %d sectors on %x\n", dr->_pbase, lba, count, bucket);
 
@@ -327,7 +327,7 @@ int ATA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba)
 
 int ATA_Write (kInode_t* ino, const void* bucket, size_t count, size_t lba)
 {
-  kAtaDrive_t* dr = (kAtaDrive_t*)ino->devinfo_;
+  kAtaDrive_t* dr = (kAtaDrive_t*)ino->dev_;
 
   if (bucket == NULL)
     return __seterrno (EINVAL);

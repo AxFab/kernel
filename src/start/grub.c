@@ -1,6 +1,7 @@
 #include <kernel/memory.h>
 
 void VBA_Set (void* address, int width, int height, int depth);
+int kTty_PreSystem (uint32_t* base, int width, int height, int depth);
 
 // --------------------------------------------------------------------------
 /** Read memory map */

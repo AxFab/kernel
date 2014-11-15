@@ -1,7 +1,7 @@
 #ifndef KERNEL_TERM_H_
 #define KERNEL_TERM_H_
 
-#include "kernel/inodes.h"
+#include "kernel/vfs.h"
 
 
 

@@ -45,7 +45,7 @@ int main()
   int timer_handle = itimer(1000);
   int cnt = 20;
   while (--cnt) {
-    time_t now = time(NULL);
+    // time_t now = time(NULL);
     _puts ("\e[33mKT_ITIMER\e[0m] Ticks!\n");
     wait_obj(timer_handle, 0, 0);
   }
