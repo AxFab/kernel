@@ -53,7 +53,7 @@ int core_master (void)
 {
   // Create TTY0
   // kInode_t* fb0 = search_inode ("/dev/fb0", NULL);
-  kInode_t* tty0 = term_create((void*)(4 * _Mb_), 800, 600);
+  kInode_t* tty0 = term_create((void*)(4 * _Mb_), 800, 600, 400);
   if (tty0 == NULL)
     return -1;
 

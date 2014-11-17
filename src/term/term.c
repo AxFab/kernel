@@ -8,7 +8,7 @@ kTerm_t* term_open (kInode_t* ino)
 {
   kTerm_t* term = KALLOC(kTerm_t);
 
-  term->txColor_ = 0xff5c5c5c;
+  term->txColor_ = 0xffa6a6a6; // 0xff5c5c5c;
   term->bgColor_ = 0xff323232;
 
   term->out_size_ = TERM_OUT_BUFFER;
@@ -21,7 +21,7 @@ kTerm_t* term_open (kInode_t* ino)
 
 
   term->first_ = KALLOC(kLine_t);
-  term->first_->txColor_ = 0xff5c5c5c;
+  term->first_->txColor_ = 0xffa6a6a6;
   term->first_->bgColor_ = 0xff323232;
 
   term->last_ = term->first_;
@@ -95,6 +95,7 @@ void term_frame(kTerm_t* term,
                 void* pixels, 
                 int width, 
                 int height, 
+                int line,
                 int (*paint)(kTerm_t*, kLine_t*, int), 
                 void (*clear)(kTerm_t*))
 {
@@ -102,6 +103,7 @@ void term_frame(kTerm_t* term,
   term->pixels_ = pixels;
   term->width_ = width;
   term->height_ = height;
+  term->line_ = line;
   term->paint = paint;
   term->clear = clear;
 

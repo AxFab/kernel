@@ -23,7 +23,7 @@ int main (int argc, char** argv)
   int sc = open ("/master.log", 0, 0); // O_RDONLY
   int lg = read (sc, buff, 1024);
   if (lg > 0) {
-    // write (1, buff, lg);
+    write (1, buff, lg);
   }
 
   write (1, "---\n", 4);

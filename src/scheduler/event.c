@@ -10,6 +10,7 @@
  *      General event registration.
  */
 #include <kernel/scheduler.h>
+#include <kernel/streams.h>
 
 typedef struct kEventHandler kEventHandler_t;
 
@@ -28,6 +29,7 @@ int kevt_timer_cancel (kTask_t* task);
 kEventHandler_t EH[] = {
   { NULL, NULL, NULL },
   { kevt_sleep, kevt_timer_cancel, NULL },
+  { stream_wait_regist, stream_wait_cancel, stream_wait_trigger },
 };
 
 

@@ -78,7 +78,7 @@ time_t sys_time(kCpuRegs_t* regs, time_t* now)
 int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags) 
 {
   // Micro second
-  kevt_wait(kCPU.current_, TASK_EVENT_SLEEP, (1000ULL * 1000ULL) * 3ULL, regs);
+  kevt_wait(kCPU.current_, what, handle, regs);
   return -1;
 }
 
@@ -111,7 +111,14 @@ int sys_open(kCpuRegs_t* regs, const char* path, int flags, int mode)
 
 ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset)
 {
-  return kstm_read (fd, buf, count, (off_t)-1);
+  size_t lg = kstm_read (fd, buf, count, (off_t)-1);
+  if (lg == 0) {
+    // for (;;)
+    kprintf ("Read on fd %d no ready for task %d [%d]\n", fd, kCPU.current_->process_->pid_, kCPU.current_->tid_);
+    sys_waitobj (regs, fd, 2, 0);
+  }
+
+  return lg;
 }
 
 ssize_t sys_write(kCpuRegs_t* regs, int fd, const void* buf, size_t count, off_t offset)

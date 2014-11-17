@@ -42,19 +42,20 @@ uint64_t ttyFont [] = {
 const int fontW = 6;
 const int fontH = 9;
 
+
 uint32_t consoleColor[] = {
-  0xff181818, 0xffa61010,  0xff10a610, 0xffa6a610, 
+  0xff181818, 0xffa61010,  0xff10a610, 0xffa66010, 
   0xff1010a6, 0xffa610a6, 0xff10a6a6,  0xffa6a6a6, 
   0xffffffff
 };
 uint32_t consoleSecColor[] = {
-  0xff181818, 0xffa61010,  0xff10a610, 0xffa66810, 
-  0xff1010a6, 0xffa610a6, 0xff10a6a6,  0xff5c5c5c, 
+  0xff323232, 0xffd01010,  0xff10d010, 0xffd0d010, 
+  0xff1060d0, 0xffd010d0, 0xff10d0d0,  0xffd0d0d0, 
   0xffffffff
 };
 uint32_t consoleBgColor[] = {
-  0xff000000, 0xff600606,  0xff066006, 0xff606006, 
-  0xff060660, 0xff600660, 0xff066060,  0xff323232, 
+  0xff181818, 0xffa61010,  0xff10a610, 0xffa66010, 
+  0xff1010a6, 0xffa610a6, 0xff10a6a6,  0xffa6a6a6, 
   0xffffffff
 };
 
@@ -201,7 +202,7 @@ int font64_paint(kTerm_t* term, kLine_t* style, int row)
     font64_draw (term, ch, style, pen, term->width_);
 
     col++;
-    if (col >= term->width_ / fontW)
+    if (col >= term->line_ / fontW) // @todo colMax_
       return str - term->out_buf_;
     
     if (style->offset_ + col >= term->out_pen_)

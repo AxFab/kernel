@@ -31,7 +31,7 @@ int snprintf(char* s, size_t n, const char* format, ... );
 
 /** ltime_t is an accurate time storage
   * It hold the number of microsecond since 1st Jan 1970..
-  * This type can hold up to "7000 years" in nanosecond count, (signed). 
+  * This type can hold up to "584 years" in nanosecond count, (signed). 
   * The counter start at Epoch, for a range from - 5041 BC - to - 8981 AD -
   */
 typedef int64_t ltime_t;

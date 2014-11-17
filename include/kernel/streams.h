@@ -115,6 +115,15 @@ ssize_t kstm_write (int fd, const void* buf, size_t length, off_t off);
 off_t kstm_seek(int fd, off_t offset, int whence);
 
 kStream_t* stream_open (kInode_t* ino);
-kInode_t* term_create (void* pixels, int width, int height);
+kInode_t* term_create (void* pixels, int width, int height, int line);
+
+
+
+int stream_wait_regist(kTask_t* task);
+int stream_wait_cancel(kTask_t* task);
+int stream_wait_trigger(long param1, long param2);
+
+
+
 
 #endif /* STREAMS_H__ */

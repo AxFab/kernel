@@ -13,11 +13,11 @@ kTerm_t* term_open (kInode_t* ino);
 void term_close (kTerm_t* term);
 void term_scroll (kTerm_t* term, int count);
 void term_redraw(kTerm_t* term);
-void term_frame(kTerm_t* term, void* pixels, int width, int height, 
+void term_frame(kTerm_t* term, void* pixels, int width, int height, int line, 
                 int (*paint)(kTerm_t*, kLine_t*, int), void (*clear)(kTerm_t*));
 
 // ---------------------------------------------------------------------------
-kInode_t* term_create (void* pixels, int width, int height)
+kInode_t* term_create (void* pixels, int width, int height, int line)
 {
   char no[10];
 
@@ -27,7 +27,7 @@ kInode_t* term_create (void* pixels, int width, int height)
 
   term_open(ino);
 
-  term_frame (ino->term_, pixels, width, height, font64_paint, font64_clean);
+  term_frame (ino->term_, pixels, width, height, line, font64_paint, font64_clean);
   return ino;
 }
 

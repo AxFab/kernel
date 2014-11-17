@@ -46,7 +46,7 @@ ssize_t kstm_read (int fd, void* buf, size_t length, off_t off)
       return fifo_read (stream->ino_, buf, length);
       // return kstm_read_pipe (stream, buf, length);
 
-    case S_IFTTY:
+    case S_IFTTY: 
       return term_read (stream->ino_, buf, length);
 
     case S_IFSOCK:

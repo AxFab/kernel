@@ -113,6 +113,7 @@ void ksch_pick ()
   // In case the current task is on garbadge collector
   kCPU.current_ = kCPU.current_->nextSc_;
   // FIXME call __asm__ HLT
+  task_print ();
   kpanic ("HLT is not implemented.\n");
 }
 

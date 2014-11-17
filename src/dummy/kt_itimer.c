@@ -41,16 +41,16 @@ int wait_obj(int handle, int what, int flags)
 
 int main() 
 {
-  _puts ("\e[33mKT_ITIMER\e[0m] Starting\n");
+  _puts ("\e[94mKT_ITIMER\e[0m] Starting\n");
   int timer_handle = itimer(1000);
   int cnt = 20;
   while (--cnt) {
     // time_t now = time(NULL);
-    _puts ("\e[33mKT_ITIMER\e[0m] Ticks!\n");
-    wait_obj(timer_handle, 0, 0);
+    _puts ("\e[94mKT_ITIMER\e[0m] Ticks!\n");
+    wait_obj((1000ULL * 1000ULL) * 3ULL /*timer_handle*/, 1, 0); // Nicroseconds
   }
 
   // Try sleep()
-  _puts ("\e[33mKT_ITIMER\e[0m] Ending...\n");
+  _puts ("\e[94mKT_ITIMER\e[0m] Ending...\n");
   return 0;  
 }

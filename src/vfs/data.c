@@ -102,14 +102,15 @@ kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
     MODULE_LEAVE(&ino->lock_, &ino->dev_->lock_);
     if (spg == 0) {
       kunlock (&ino->lock_);
-      return __seterrno (EIO);
+      __seterrno (EIO);
+      return NULL;
     }
 
   } else {
     void* address = kpg_temp_page (&spg);
     if (feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_)) {
       kunlock (&ino->lock_);
-      return __geterrno();
+      return NULL;
     }
     // kprintf (LOG_VFS, "Map complete the feed...\n");
   }

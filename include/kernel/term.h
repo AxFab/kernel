@@ -59,6 +59,7 @@ struct kTerm
   
   int width_;
   int height_;
+  int line_;
   void* pixels_;
 
   int row_;
@@ -85,7 +86,7 @@ kTerm_t* term_open();
 void term_close(kTerm_t* term);
 void term_scroll(kTerm_t* term, int count);
 void term_redraw(kTerm_t* term);
-void term_frame(kTerm_t* term, void* pixels, int width, int height, 
+void term_frame(kTerm_t* term, void* pixels, int width, int height, int line,
             int (*paint)(kTerm_t*, kLine_t*, int), void (*clear)(kTerm_t*));
 
 

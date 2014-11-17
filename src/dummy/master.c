@@ -46,8 +46,9 @@ int main ()
 
   execv_s ("DEAMON.", NULL);
 
-  for (;;) {
 
+  for (;;) {
+    
     int k, i = 0x8000000;
     while (--i > 0) {
       k  = (k | (i >> 3)) * 0x75f;
