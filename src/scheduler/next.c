@@ -65,7 +65,7 @@ void ksch_pick ()
   assert (!ksch_ontask());
 
   cli();
-  int waiting = atomic_add_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING], 1);
+  int waiting = atomic_sub_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING], 1);
   if (waiting >= 0) {
 
     pick = kCPU.current_->nextSc_;

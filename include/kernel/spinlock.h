@@ -1,7 +1,7 @@
 #ifndef KERNEL_SPINLOCK_H__
 #define KERNEL_SPINLOCK_H__
 
-#include <kernel/core.h>
+#include <atomic.h>
 
 
 typedef struct spinlock     spinlock_t;

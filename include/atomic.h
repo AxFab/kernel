@@ -1,3 +1,6 @@
+#ifndef ATOMIC_H__
+#define ATOMIC_H__
+
 #include <stdint.h>
 
 
@@ -33,6 +36,13 @@
      return val;
   }
 
+  static inline int32_t atomic_sub_i32(volatile int32_t *ref, int32_t val)
+  {
+    val = -val;
+    asm volatile("lock xaddl %%eax, %2;"
+                 :"=a" (val) :"a" (val), "m" (*ref) :"memory");
+     return val;
+  }
 
   static inline void atomic_inc_i64 (volatile int64_t* ref)
   {
@@ -86,6 +96,15 @@
   static inline int32_t atomic_add_i32(volatile int32_t *ref, int32_t val)
   {
     volatile int32_t tmp;
+    __asm__ __volatile__ ("fetchadd4.rel %0=[%1],%2"
+                          : "=r"(tmp) : "r"(ref), "i"(val) : "memory");
+    return tmp + val;
+  }
+
+  static inline int32_t atomic_sub_i32(volatile int32_t *ref, int32_t val)
+  {
+    volatile int32_t tmp;
+    val = -val;
     __asm__ __volatile__ ("fetchadd4.rel %0=[%1],%2"
                           : "=r"(tmp) : "r"(ref), "i"(val) : "memory");
     return tmp + val;
@@ -145,6 +164,12 @@
     return (*ref) += val;
   }
 
+  static inline int32_t atomic_sub_i32(volatile int32_t *ref, int32_t val)
+  {
+    val = -val;
+    return (*ref) += val;
+  }
+
 #endif
 
 // ---------------------------------------------------------------------------
@@ -161,3 +186,5 @@ static inline void cli()
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
+
+#endif /* ATOMIC_H__ */

@@ -77,19 +77,18 @@ ltime_t ltime (ltime_t* ptr);
 typedef struct kCpuRegs     kCpuRegs_t;
 typedef struct kTty         kTty_t;
 typedef struct kUser        kUser_t;
-// inodes.h
+// vfs.h
 typedef struct kStat        kStat_t;
 typedef struct kInode       kInode_t;
 typedef struct kStream      kStream_t;
-// typedef struct kFileOp      kDevice_t;
 typedef struct kPage        kPage_t;
 typedef struct kPipe        kPipe_t;
 typedef struct kFifo        kFifo_t;
 typedef struct kTerm        kTerm_t;
 
-typedef struct kFifoPen       kFifoPen_t;
-typedef struct kNTty       kNTty_t;
-typedef struct kLine      kLine_t;
+typedef struct kFifoPen     kFifoPen_t;
+typedef struct kNTty        kNTty_t;
+typedef struct kLine        kLine_t;
 // memory.h
 typedef struct kVma         kVma_t;
 typedef struct kAddSpace    kAddSpace_t;
@@ -98,8 +97,10 @@ typedef struct kProcess     kProcess_t;
 typedef struct kTask        kTask_t;
 typedef struct kAssembly    kAssembly_t;
 typedef struct kSection     kSection_t;
-typedef struct kBucket     kBucket_t;
-typedef struct kDevice     kDevice_t;
+typedef struct kBucket      kBucket_t;
+typedef struct kDevice      kDevice_t;
+typedef struct kEvent       kEvent_t;
+
 
 
 // ======================================================

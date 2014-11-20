@@ -13,22 +13,26 @@
 #include <kernel/info.h>
 
 
+anchor_t timer_list = ANCHOR_INIT;
 // ===========================================================================
 /** Suppress the task form the timer list */
 static int kevt_timer_remove (kTask_t* task)
 {
-  if (task->prevEv_ == NULL)
-    kSYS.timerFrst_ = task->nextEv_;
-  else
-    task->prevEv_->nextEv_ = task->nextEv_;
+  klist_remove (&timer_list, &task->eventNd_);
+  // if (task->prevEv_ == NULL)
+  //   kSYS.timerFrst_ = task->nextEv_;
+  // else
+  //   task->prevEv_->nextEv_ = task->nextEv_;
 
-  if (task->nextEv_ == NULL)
-    kSYS.timerFrst_ = task->prevEv_;
-  else
-    task->nextEv_->prevEv_ = task->prevEv_;
+  // if (task->nextEv_ == NULL)
+  //   kSYS.timerFrst_ = task->prevEv_;
+  // else
+  //   task->nextEv_->prevEv_ = task->prevEv_;
 
-  task->prevEv_ = NULL;
-  task->nextEv_ = NULL;
+  // task->prevEv_ = NULL;
+  // task->nextEv_ = NULL;
+
+
   task->eventParam_ = 0;
   task->eventType_ = 0;
   return __noerror();
@@ -49,15 +53,16 @@ int kevt_sleep (kTask_t* task)
   if ((ltime_t)task->eventParam_ < kSYS.timerMin_)
     kSYS.timerMin_ = (ltime_t)task->eventParam_;
 
-  task->prevEv_ = kSYS.timerLast_;
-  task->nextEv_ = NULL;
-  if (kSYS.timerFrst_ == NULL) {
-    kSYS.timerFrst_ = task;
-    kSYS.timerLast_ = task;
-  } else {
-    kSYS.timerLast_->nextEv_ = task;
-    kSYS.timerLast_ = task;
-  }
+  klist_push_back (&timer_list, &task->eventNd_);
+  // task->prevEv_ = kSYS.timerLast_;
+  // task->nextEv_ = NULL;
+  // if (kSYS.timerFrst_ == NULL) {
+  //   kSYS.timerFrst_ = task;
+  //   kSYS.timerLast_ = task;
+  // } else {
+  //   kSYS.timerLast_->nextEv_ = task;
+  //   kSYS.timerLast_ = task;
+  // }
 
   kunlock (&kSYS.timerLock_);
   return __noerror();
@@ -92,23 +97,52 @@ void kevt_ticks()
     return;
 
   kSYS.timerMin_ = INT64_MAX;
-  kTask_t* task = kSYS.timerFrst_;
-  while (task != NULL) {
-    kTask_t* next = task->nextEv_;
+  kTask_t* task; // = kSYS.timerFrst_;
+
+
+    // kprintf (LOG, "ANCHOR '%x'  '%x' \n", ino->buckets_.first_, ino->buckets_.last_);
+  for (task = klist_begin(&timer_list, kTask_t, eventNd_); 
+      task != NULL; 
+      task = klist_next(task, kTask_t, eventNd_)) {
+
     if ((ltime_t)task->eventParam_ < now) {
 
       // wake up the task
       if (task->eventType_ == TASK_EVENT_SLEEP) {
         ksch_wakeup (task);
         kevt_timer_remove (task);
+        continue;
       }
 
-    } else if ((ltime_t)task->eventParam_ < kSYS.timerMin_) {
-      kSYS.timerMin_ = task->eventParam_;
+      //else if (task->eventType_ == TASK_EVENT_ITIMER) {
+      //   ksch_wakeup (task);
+      //   task->eventParam_ += period; 
+      // }
+
+
     }
 
-    task = next;
+    if ((ltime_t)task->eventParam_ < kSYS.timerMin_) 
+      kSYS.timerMin_ = task->eventParam_;
+
   }
+
+  // while (task != NULL) {
+  //   kTask_t* next = task->nextEv_;
+  //   if ((ltime_t)task->eventParam_ < now) {
+
+  //     // wake up the task
+  //     if (task->eventType_ == TASK_EVENT_SLEEP) {
+  //       ksch_wakeup (task);
+  //       kevt_timer_remove (task);
+  //     }
+
+  //   } else if ((ltime_t)task->eventParam_ < kSYS.timerMin_) {
+  //     kSYS.timerMin_ = task->eventParam_;
+  //   }
+
+  //   task = next;
+  // }
 
   kunlock (&kSYS.timerLock_);
 }

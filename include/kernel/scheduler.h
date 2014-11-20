@@ -54,8 +54,11 @@ struct kTask
   kProcess_t*   process_;
   kTask_t*      nextSc_;          /// Next item on scheduler list
   kTask_t*      nextPr_;          /// Next item on process list
-  kTask_t*      prevEv_;          /// Previous item on event list
-  kTask_t*      nextEv_;          /// Next item on event list
+
+  list_t        eventNd_;      /// Node to connect on event_list
+
+  // kTask_t*      prevEv_;          /// Previous item on event list
+  // kTask_t*      nextEv_;          /// Next item on event list
 
   spinlock_t    lock_;            /// Lock
 

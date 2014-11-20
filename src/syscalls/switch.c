@@ -40,11 +40,9 @@ int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags);
 sys_func sys_table [] = {
 
   _SYS(SYS_REBOOT, sys_reboot),
-  // START / STOP
-  // SLEEP / ITIMER
-  // OPEN / CLOSE
   _SYS(SYS_EXEC, sys_exec),
   _SYS(SYS_EXIT, sys_exit),
+  // START / STOP
 
   _SYS(SYS_OPEN, sys_open),
   // _SYS(SYS_CLOSE, sys_close),
@@ -52,6 +50,7 @@ sys_func sys_table [] = {
   _SYS(SYS_WRITE, sys_write),
 
 
+  // SLEEP / ITIMER
   _SYS(SYS_TIME, sys_time),
   _SYS(SYS_ITIMER, sys_itimer),
   _SYS(SYS_WAIT, sys_waitobj),
@@ -66,6 +65,7 @@ int sys_reboot(kCpuRegs_t* regs, int code)
 
 int sys_itimer(kCpuRegs_t* regs, int miliseconds) 
 {
+  // @todo create an interval timer and return it's handle
   return -1;
 }
 
@@ -114,8 +114,8 @@ ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset
   size_t lg = kstm_read (fd, buf, count, (off_t)-1);
   if (lg == 0) {
     // for (;;)
-    kprintf ("Read on fd %d no ready for task %d [%d]\n", fd, kCPU.current_->process_->pid_, kCPU.current_->tid_);
-    sys_waitobj (regs, fd, 2, 0);
+    //kprintf ("Read on fd %d no ready for task %d [%d]\n", fd, kCPU.current_->process_->pid_, kCPU.current_->tid_);
+    //sys_waitobj (regs, fd, 2, 0);
   }
 
   return lg;
