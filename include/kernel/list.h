@@ -19,7 +19,7 @@ struct list
   list_t*     next_;
 };
 
-#define ANCHOR_INIT  {LOCK_INIT, NULL, NULL}
+#define ANCHOR_INIT  {LOCK_INIT, NULL, NULL, 0}
 
 static inline void klist_push_back(anchor_t* head, list_t* item)
 {

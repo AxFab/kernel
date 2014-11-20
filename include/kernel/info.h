@@ -74,8 +74,6 @@ struct kSysCore
   int         prioWeight_;
   spinlock_t  timerLock_;
   ltime_t     timerMin_;
-  kTask_t*    timerFrst_;
-  kTask_t*    timerLast_;
 
   // STATS
   float       loadAvg_ [ KRN_LOADAVG_COUNT ];

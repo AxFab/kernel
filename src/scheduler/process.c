@@ -17,28 +17,9 @@
 #include <kernel/streams.h>
 
 
+anchor_t procList = ANCHOR_INIT;
 
-// ---------------------------------------------------------------------------
-/** Attach a new process to the system list.
- * \note {proc} must be locked
- */
-static void ksch_attach_proc (kProcess_t *proc)
-{
-  assert (kislocked (&proc->lock_));
-
-  klock (&kSYS.procLock_, LOCK_ATTACH_PROCESS);
-  if (kSYS.allProcFrst_ == NULL) {
-    kSYS.allProcFrst_ = proc;
-    kSYS.allProcLast_ = proc;
-  } else {
-    kSYS.allProcLast_->nextAll_ = proc;
-    kSYS.allProcLast_ = proc;
-  }
-
-  kunlock (&kSYS.procLock_);
-}
-
-
+// ===========================================================================
 
 int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const char* cmd)
 {
@@ -73,21 +54,18 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   proc->openStreams_[2] = stream_open(tty);
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
-  ksch_attach_proc (proc);
-  proc->threadCount_++;
-  proc->threadFrst_ = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
-  proc->threadLast_ = proc->threadFrst_;
-
+  klist_push_back(&procList, &proc->procNd_);
+  kTask_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
+  klist_push_back(&proc->threadList_, &task->procNd_);
+  
   kunlock (&proc->lock_);
   kprintf ("Start login program [%d - %s - root<0> ]\n", proc->pid_, prg->name_);
   return proc->pid_;
-
-
-  return 1;
 }
 
 
 // ===========================================================================
+// ---------------------------------------------------------------------------
 /** Create a new process, ready to start */
 int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, const char* cmd)
 {
@@ -121,10 +99,10 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
   proc->openStreams_[2] = parent->openStreams_[2]; // proc->openStreams_[1];
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
-  ksch_attach_proc (proc);
-  proc->threadCount_++;
-  proc->threadFrst_ = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
-  proc->threadLast_ = proc->threadFrst_;
+  klist_push_back(&procList, &proc->procNd_);
+
+  kTask_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
+  klist_push_back(&proc->threadList_, &task->procNd_);
 
   kunlock (&proc->lock_);
   kprintf ("Start program [%d - %s - root<0> - /mnt/cd0/USR/BIN]\n", proc->pid_, image->name_);
@@ -142,19 +120,21 @@ int ksch_add_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
     return __seterrno(ENOSYS);
 
   klock (&proc->lock_, LOCK_PROCESS_ADD_THREAD);
-  kTask_t* pick = proc->threadFrst_;
-  while (pick != NULL) {
-    if (pick->state_ == TASK_STATE_ZOMBIE) {
-      ksch_resurect_thread (pick, entry, arg);
+  kTask_t* task; // = proc->threadFrst_;
+  for (task = klist_begin(&proc->threadList_, kTask_t, procNd_);
+    task != NULL;
+    task = klist_next(task, kTask_t, procNd_)) {
+
+    if (task->state_ == TASK_STATE_ZOMBIE) {
+      ksch_resurect_thread (task, entry, arg);
       kunlock (&proc->lock_);
       return __noerror();
     }
-    pick = pick->nextPr_;
+    // pick = pick->nextPr_;
   }
 
-  proc->threadCount_++;
-  proc->threadLast_->nextPr_ = ksch_new_thread (proc, entry, arg);
-  proc->threadLast_ = proc->threadLast_->nextPr_;
+  task = ksch_new_thread (proc, entry, arg);
+  klist_push_back(&proc->threadList_, &task->procNd_);
   kunlock (&proc->lock_);
   return __noerror();
 }
@@ -174,15 +154,18 @@ void ksch_destroy_process (kProcess_t* proc)
   // FIXME if (proc->parent_ != NULL && proc->flags_ & PROC_TRACED) { // signal() }
 
   klock (&proc->lock_, LOCK_PROCESS_DESTROY);
-  kTask_t* task = proc->threadFrst_;
-  while (task != NULL) {
+  kTask_t* task; // = proc->threadFrst_;
+  for (task = klist_begin(&proc->threadList_, kTask_t, procNd_);
+    task != NULL;
+    task = klist_next(task, kTask_t, procNd_)) {
+  // while (task != NULL) {
     kTask_t* pick = task;
-    task = task->nextPr_;
+    // task = task->nextPr_;
     ksch_destroy_thread (pick);
   }
 
-  proc->threadFrst_ = NULL;
-  proc->threadLast_ = NULL;
+  // proc->threadFrst_ = NULL;
+  // proc->threadLast_ = NULL;
 
   kprintf ("Exit program [%d] \n", proc->pid_);
   // FIXME release all ressources
@@ -200,10 +183,13 @@ void ksch_exit (kProcess_t* proc, int status)
 {
   proc->flags_ |= PROC_EXITED;
   proc->exitStatus_ = status;
-  kTask_t* task = proc->threadFrst_;
-  while (task != NULL) {
+  kTask_t* task; // = proc->threadFrst_;
+  for (task = klist_begin(&proc->threadList_, kTask_t, procNd_);
+    task != NULL;
+    task = klist_next(task, kTask_t, procNd_)) {
+
     ksch_abort (task);
-    task = task->nextPr_;
+    // task = task->nextPr_;
   }
 }
 

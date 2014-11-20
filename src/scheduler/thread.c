@@ -136,11 +136,11 @@ void ksch_destroy_thread (kTask_t* task)
 // ---------------------------------------------------------------------------
 void ksch_print ()
 {
-  kProcess_t* proc = kSYS.allProcFrst_;
-  while (proc) {
-    kprintf ("PROC [%d] %s, \n", proc->pid_, proc->image_->name_);
-    proc = proc->nextAll_;
-  }
+  // kProcess_t* proc = kSYS.allProcFrst_;
+  // while (proc) {
+  //   kprintf ("PROC [%d] %s, \n", proc->pid_, proc->image_->name_);
+  //   proc = proc->nextAll_;
+  // }
 }
 
 // ---------------------------------------------------------------------------

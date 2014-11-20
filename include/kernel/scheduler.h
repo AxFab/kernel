@@ -19,9 +19,10 @@ struct kProcess
   int           threadCount_;     /// Number of allocated threads
   int           runningTask_;     /// Number of thread running
   kProcess_t*   parent_;          /// Parent process - the one that starts it (should be a task !?)
-  kProcess_t*   nextAll_;         /// Next process on total lists
-  kTask_t*      threadFrst_;      /// First thread on the list
-  kTask_t*      threadLast_;      /// Last thread on the list
+  list_t        procNd_;          /// Node to connect on procList
+  anchor_t      threadList_;      /// Collection of thread from this process
+  // kTask_t*      threadFrst_;      /// First thread on the list
+  // kTask_t*      threadLast_;      /// Last thread on the list
   ltime_t       execStart_;       /// DateTime of the start of this process
   int           exitStatus_;      /// status of this process at exit
   spinlock_t    lock_;            /// Lock
@@ -50,15 +51,10 @@ struct kTask
   ltime_t       elapsedSystem_;
   ltime_t       execStart_;
 
-
   kProcess_t*   process_;
   kTask_t*      nextSc_;          /// Next item on scheduler list
-  kTask_t*      nextPr_;          /// Next item on process list
-
+  list_t        procNd_;         /// Node to connect on  process list
   list_t        eventNd_;      /// Node to connect on event_list
-
-  // kTask_t*      prevEv_;          /// Previous item on event list
-  // kTask_t*      nextEv_;          /// Next item on event list
 
   spinlock_t    lock_;            /// Lock
 
