@@ -100,6 +100,7 @@ typedef struct kSection     kSection_t;
 typedef struct kBucket      kBucket_t;
 typedef struct kDevice      kDevice_t;
 typedef struct kEvent       kEvent_t;
+typedef struct kWaiting     kWaiting_t;
 
 
 

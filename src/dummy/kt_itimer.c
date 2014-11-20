@@ -5,9 +5,9 @@ int syscall_2A(void* a1, void* a2, int no);
 int syscall_3A(void* a1, void* a2, void* a3, int no);
 int syscall_4A(void* a1, void* a2, void* a3, void* a4, int no);
 
-#define SYSCALL1(n,a1)        syscall_1A((void*)a1, n);
-#define SYSCALL2(n,a1,a2)     syscall_2A((void*)a1, (void*)a2, n);
-#define SYSCALL3(n,a1,a2,a3)  syscall_3A((void*)a1, (void*)a2, (void*)a3, n);
+#define SYSCALL1(n,a1)        syscall_1A((void*)(a1), n);
+#define SYSCALL2(n,a1,a2)     syscall_2A((void*)(a1), (void*)(a2), n);
+#define SYSCALL3(n,a1,a2,a3)  syscall_3A((void*)(a1), (void*)(a2), (void*)(a3), n);
 
 
 
@@ -38,16 +38,21 @@ int wait_obj(int handle, int what, int flags)
   return SYSCALL3(SYS_WAIT, handle, what, flags);
 }
 
+int sleep (int seconds) 
+{
+  return SYSCALL1(SYS_SLEEP, seconds * 1000);
+}
 
 int main() 
 {
   _puts ("\e[94mKT_ITIMER\e[0m] Starting\n");
-  int timer_handle = itimer(1000);
+  // int timer_handle = itimer(1000);
   int cnt = 20;
   while (--cnt) {
     // time_t now = time(NULL);
     _puts ("\e[94mKT_ITIMER\e[0m] Ticks!\n");
-    wait_obj((1000ULL * 1000ULL) * 3ULL /*timer_handle*/, 1, 0); // Nicroseconds
+    //wait_obj((1000ULL * 1000ULL) * 3ULL /*timer_handle*/, 1, 0); // Nicroseconds
+    sleep (3);
   }
 
   // Try sleep()

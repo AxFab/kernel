@@ -4,8 +4,17 @@
 #include <sys/types.h>
 
 #define SYS_REBOOT  0
+
+#define SYS_YIELD 0x08
+#define SYS_TIME 0x09
+#define SYS_SLEEP 0x0a
+#define SYS_ITIMER 0x0b
+
+
 #define SYS_EXIT    0x10
 #define SYS_EXEC    0x11
+
+#define SYS_WAIT 0x14
 
 #define SYS_CLOSE   0x20
 #define SYS_OPEN    0x21
@@ -13,10 +22,6 @@
 #define SYS_WRITE   0x23
 
 
-
-#define SYS_TIME 0x8
-#define SYS_ITIMER 0x9
-#define SYS_WAIT 0x14
 
 
 

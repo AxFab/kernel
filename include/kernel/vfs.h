@@ -1,3 +1,15 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Header file of the virtual file system module
+ *      Create a file hierarchie and make used of IO ressources.
+ */
 #ifndef KERNEL_VFS_H__
 #define KERNEL_VFS_H__
 
@@ -17,7 +29,8 @@ extern kDevice_t tmpFs;
 /** Structure holding the metadata of an inode 
   * @note: This structure will probably be used on user space.
   */
-struct kStat {
+struct kStat 
+{
   id_t            ino_;       ///< Inode number
   mode_t          mode_;      ///< File mode
   id_t            uid_;       ///< User ID
@@ -36,7 +49,9 @@ struct kStat {
 /** Structure containing all system information relative to an inode.
   * @todo Think about a clever way to store the name of the inode.
   */
-struct kInode {
+struct kInode 
+{
+  // K_OBJECT;
   const char*     name_;      ///< Name of the inode
   kStat_t         stat_;      ///<
   int             readers_;   ///< Usage counter
@@ -59,8 +74,9 @@ struct kInode {
 
 
 // ---------------------------------------------------------------------------
-struct kDevice {
-
+struct kDevice 
+{
+  // K_OBJECT;
   id_t id_;
   spinlock_t      lock_;      ///< Lock
   list_t          all_;      ///< List of all devices.
@@ -91,8 +107,9 @@ struct kDevice {
 /** A bucket is a memory cache for all or part of a file.
   * @note: A bucket must be of size (PAGE_SIZE) or (K x 8 x PAGE_SIZE).
   */
-struct kBucket
+struct kBucket 
 {
+  // K_OBJECT;
   size_t    phys_;      ///< Physique address of this page bucket.
   size_t    length_;    ///< Length of the page bucket.
   off_t     offset_;    ///< Offset on the file.
@@ -171,6 +188,7 @@ int chmeta_inode(kInode_t* ino, kStat_t* stat);
 int rename_inode(kInode_t* ino, const char* name, kInode_t* dir);
 
 
+// LEGACY - to remove
 // ---------------------------------------------------------------------------
 /** Function to called to grab an inodes */
 int kfs_grab(kInode_t* ino);

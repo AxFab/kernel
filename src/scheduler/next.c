@@ -12,6 +12,7 @@
 #include <kernel/scheduler.h>
 #include <kernel/info.h>
 #include <kernel/memory.h>
+#include <kernel/async.h>
 
 // ---------------------------------------------------------------------------
 static int ksch_timeslice (kTask_t* task)
@@ -35,7 +36,7 @@ static int ksch_timeslice (kTask_t* task)
 // ---------------------------------------------------------------------------
 void ksch_ticks (kCpuRegs_t* regs)
 {
-  kevt_ticks();
+  async_ticks();
   if (!ksch_ontask()) {
     ksch_pick ();
 

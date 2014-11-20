@@ -13,6 +13,7 @@
 #include <kernel/streams.h>
 #include <kernel/memory.h>
 #include <kernel/scheduler.h>
+#include <kernel/async.h>
 #include <kernel/info.h>
 #include <smoke/syscall.h>
 
@@ -30,9 +31,9 @@ ssize_t sys_write(kCpuRegs_t* regs, int fd, const void* buf, size_t count, off_t
 
 
 int sys_itimer(kCpuRegs_t* regs, int miliseconds);
+int sys_sleep(kCpuRegs_t* regs, int miliseconds);
 time_t sys_time(kCpuRegs_t* regs, time_t* now);
-int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags);
-
+int sys_yield(kCpuRegs_t* regs);
 
 
 #define _SYS(n,f)  [n] = (sys_func)f
@@ -51,9 +52,10 @@ sys_func sys_table [] = {
 
 
   // SLEEP / ITIMER
+  _SYS(SYS_YIELD, sys_yield),
   _SYS(SYS_TIME, sys_time),
+  _SYS(SYS_SLEEP, sys_sleep),
   _SYS(SYS_ITIMER, sys_itimer),
-  _SYS(SYS_WAIT, sys_waitobj),
 };
 
 
@@ -65,9 +67,20 @@ int sys_reboot(kCpuRegs_t* regs, int code)
 
 int sys_itimer(kCpuRegs_t* regs, int miliseconds) 
 {
+  long microseconds = miliseconds * 1000L;
+  async_event(kCPU.current_, NULL, EV_INTERVAL, microseconds, microseconds);
   // @todo create an interval timer and return it's handle
   return -1;
 }
+
+int sys_sleep(kCpuRegs_t* regs, int miliseconds)
+{
+  long microseconds = miliseconds * 1000L;
+  async_event(kCPU.current_, NULL, EV_SLEEP, 0, microseconds);
+  ksch_stop(TASK_STATE_BLOCKED, regs);
+  return -1;
+}
+
 
 time_t sys_time(kCpuRegs_t* regs, time_t* now)
 {
@@ -75,10 +88,9 @@ time_t sys_time(kCpuRegs_t* regs, time_t* now)
   return kSYS.now_ / CLOCK_PREC;
 }
 
-int sys_waitobj(kCpuRegs_t* regs, int handle, int what, int flags) 
+int sys_yield(kCpuRegs_t* regs) 
 {
-  // Micro second
-  kevt_wait(kCPU.current_, what, handle, regs);
+  ksch_stop (TASK_STATE_WAITING, regs);
   return -1;
 }
 
@@ -112,9 +124,15 @@ int sys_open(kCpuRegs_t* regs, const char* path, int flags, int mode)
 ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset)
 {
   size_t lg = kstm_read (fd, buf, count, (off_t)-1);
+  // We need the stream here !!!
   if (lg == 0) {
+    // @todo param is the number of byte wanted, with 0 we request a '\n' character!
+    async_event(kCPU.current_, NULL, EV_READ, 0, 0);
+    ksch_stop(TASK_STATE_BLOCKED, regs);
+
     // for (;;)
     //kprintf ("Read on fd %d no ready for task %d [%d]\n", fd, kCPU.current_->process_->pid_, kCPU.current_->tid_);
+
     //sys_waitobj (regs, fd, 2, 0);
   }
 
