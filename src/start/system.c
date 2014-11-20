@@ -49,6 +49,7 @@ void ksymbols_load (kInode_t* ino);
   * It should be started by ROOT only, on directory '/usr' and be attach to 
   * TTY0.
   */
+extern kInode_t* keyboard_tty;
 int core_master (void) 
 {
   // Create TTY0
@@ -56,8 +57,9 @@ int core_master (void)
   kInode_t* tty0 = term_create((void*)(4 * _Mb_), 800, 600, 400);
   if (tty0 == NULL)
     return -1;
-
-
+  
+  keyboard_tty = tty0;
+  
   // term_write(tty0, "\e[31mBonjour\e[0m", 16);
 
   // Search start directory

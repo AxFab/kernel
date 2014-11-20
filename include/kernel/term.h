@@ -14,6 +14,7 @@
 
 #define TTY_KEY_CTRL (1 << 3)
 #define TTY_KEY_ALT (1 << 4)
+#define TTY_KEY_SHIFT (1 << 5)
 
 enum {
   KEY_SHIFT_LF = 1,
@@ -92,6 +93,6 @@ void term_frame(kTerm_t* term, void* pixels, int width, int height, int line,
 
 ssize_t term_read(kInode_t* ino, void* buf, size_t count);
 ssize_t term_write(kInode_t* ino, const void* buf, size_t count);
-int term_event (kInode_t* ino, int event, int param1, int param2);
+int term_event (kInode_t* ino, kEvent_t* event);
 
 #endif /* KERNEL_TERM_H_ */

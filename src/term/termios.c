@@ -1,4 +1,6 @@
-#include "kernel/term.h"
+#include <kernel/term.h>
+#include <kernel/async.h>
+#include <kernel/keys.h>
 
 
 // ---------------------------------------------------------------------------
@@ -185,41 +187,50 @@ ssize_t term_write(kInode_t* ino, const void* buf, size_t count)
   * If we tape a character, we print it on output. And store it on input !
   * When we ask to read, we 
   */
-int term_event (kInode_t* ino, int event, int param1, int param2)
+unsigned char key_layout_us[128][4];
+int term_event (kInode_t* ino, kEvent_t* event)
 {
-  __nounused(param1);
-  switch (event) {
+  
+  int param2 = event->keyboard_.key_;
+  assert (param2 > 0 && param2 < 0x80);
+  param2 = (int)key_layout_us[param2][ino->term_->flags_ & TTY_KEY_SHIFT ? 1 : 0];
+
+  switch (event->type_) {
 
     case EV_KEYDW:
+
+      // kprintf ("key down] %d - (%x) \n", param2, param2);
       switch (param2) {
 
-        case KEY_CTRL_LF:
-        case KEY_CTRL_RG:
+        case KEY_SH_LF:
+        case KEY_SH_RG:
+          ino->term_->flags_ |= TTY_KEY_SHIFT;
+          break;
+
+        case KEY_CTRL:
           ino->term_->flags_ |= TTY_KEY_CTRL;
           break;
 
-        case KEY_ALT_LF:
-        case KEY_ALT_RG:
+        case KEY_ALT:
           ino->term_->flags_ |= TTY_KEY_ALT;
           break;
 
-        case KEY_ARROW_UP:
+        case KEY_PAGE_UP:
           term_scroll(ino->term_, - ino->term_->max_row_ / 2);
           break;
 
-        case KEY_ARROW_DW:
+        case KEY_PAGE_DW:
           term_scroll(ino->term_, ino->term_->max_row_ / 2);
           break;
 
         // case KEY_TAB:
-        //   break;
-
+        //   b
         default:
           if (ino->term_->flags_ & TTY_KEY_CTRL) 
             term_shortcut_ctrl(ino, param2);
           else if (ino->term_->flags_ & TTY_KEY_ALT) 
             term_shortcut_alt(ino, param2);
-          else
+          else 
             term_input(ino, param2);
           break;
       }
@@ -227,6 +238,11 @@ int term_event (kInode_t* ino, int event, int param1, int param2)
 
     case EV_KEYUP:
       switch (param2) {
+
+        case KEY_SH_LF:
+        case KEY_SH_RG:
+          ino->term_->flags_ &= ~TTY_KEY_SHIFT;
+          break;
 
         case KEY_CTRL_LF:
         case KEY_CTRL_RG:
