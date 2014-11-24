@@ -6,7 +6,7 @@ static anchor_t waitList = ANCHOR_INIT;
 
 // ---------------------------------------------------------------------------
 /** Wake up the task waiting for an event */
-static void async_wakeup (kWaiting_t* wait)
+void async_wakeup (kWaiting_t* wait)
 {
   if (wait->task_->state_ == TASK_STATE_BLOCKED) {
     ksch_wakeup (wait->task_);
@@ -18,9 +18,13 @@ static void async_wakeup (kWaiting_t* wait)
   if (wait->reason_ == EV_INTERVAL) { // @todo replace by flags
     wait->timeout_ += wait->param_;
   } else {
+
+    // @todo Copy of async_cancel_event, but kfree bring trouble
     klist_remove (&waitList, &wait->waitNd_);
-    // if (!klist_isdetach (&task->targetNd_)) { HOW !? } // Use flags!
+    if (wait->target_ != NULL)
+      klist_remove (wait->target_, &wait->targetNd_);
     // Mark to delete
+    wait->task_->event_ = NULL;
   }
 }
 
@@ -67,7 +71,14 @@ int async_event(kTask_t* task, anchor_t* targetList, int reason, long param, lon
   static int auto_incr = 0;
   assert (task == kCPU.current_);
   kWaiting_t* wait = KALLOC (kWaiting_t);
-  wait->handle_ = ++auto_incr;
+  wait->handle_ = auto_incr++;
+
+  // kprintf ("async_event -- " "register [%d], %d, with %d (%d)\n", wait->handle_, reason, param, maxtime);
+  // if (task->event_) {
+  //   kprintf ("async_event -- " "already here [%d] %d, with %d (%d)\n", task->event_->handle_, task->event_->reason_, task->event_->param_, task->event_->handle_);
+  // }
+  assert (task->event_ == NULL);
+  task->event_ = wait;
   wait->task_ = task;
   wait->reason_ = reason;
   wait->param_ = param;
@@ -77,9 +88,26 @@ int async_event(kTask_t* task, anchor_t* targetList, int reason, long param, lon
     kSYS.timerMin_ = wait->timeout_;
 
   klist_push_back(&waitList, &wait->waitNd_);
-  if (targetList != NULL)
+  if (targetList != NULL) {
+    wait->target_ = targetList;
     klist_push_back(targetList, &wait->targetNd_);
+  }
   return 0;
+}
+
+
+// ---------------------------------------------------------------------------
+/** Cancel an event */
+void async_cancel_event (kTask_t* task)
+{
+  assert (kislocked (&task->lock_));
+  kWaiting_t* wait = task->event_;
+  assert (wait != NULL);
+  klist_remove (&waitList, &wait->waitNd_);
+  if (wait->target_ != NULL)
+    klist_remove (wait->target_, &wait->targetNd_);
+  kfree(wait);
+  task->event_ = NULL;
 }
 
 

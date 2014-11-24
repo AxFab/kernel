@@ -36,6 +36,7 @@ struct kWaiting
   long      param_;     ///< Param depending of the reason.
   list_t    waitNd_;    ///< Node for all waiting objects.
   list_t    targetNd_;  ///< Node to link to the trigering object.
+  anchor_t* target_;    ///< Save the list of the target to remove the node.
 };
 
 
@@ -87,6 +88,10 @@ enum EV_Reason
 void async_ticks ();
 /** Register to an event */
 int async_event(kTask_t* task, anchor_t* targetList, int reason, long param, long maxtime);
+/** Wake up the task waiting for an event */
+void async_wakeup (kWaiting_t* wait);
+/** Cancel an event */
+void async_cancel_event (kTask_t* task);
 
 
 // ---------------------------------------------------------------------------

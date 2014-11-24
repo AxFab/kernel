@@ -10,6 +10,7 @@
  *      Function to handle thread status.
  */
 #include <kernel/scheduler.h>
+#include <kernel/async.h>
 #include <kernel/info.h>
 
 
@@ -89,7 +90,7 @@ void ksch_abort (kTask_t* task)
 
   } else if (task->state_ != TASK_STATE_ZOMBIE) {
     if (task->state_ == TASK_STATE_BLOCKED) {
-      kevt_cancel(task);
+      async_cancel_event(task);
     }
 
     atomic_dec_i32 (&kSYS.tasksCount_[task->state_]);

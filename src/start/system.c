@@ -6,7 +6,7 @@
 #include "kernel/memory.h"
 #include "kernel/scheduler.h"
 #include <kernel/assembly.h>
-#include <kernel/streams.h>
+#include <kernel/stream.h>
 
 
 
@@ -90,20 +90,9 @@ int kCore_Initialize ()
   // II. Initialize system core
   kinit ();
 
-
   // III. Set Date and initiate timer
   char tmp[510];
   struct tm dt = RTC_GetTime ();
-
-// kprintf("Dt sec: %d \n", dt.tm_sec);
-// kprintf("Dt min: %d \n", dt.tm_min);
-// kprintf("Dt hour: %d \n", dt.tm_hour);
-// kprintf("Dt tm_mday: %d \n", dt.tm_mday);
-// kprintf("Dt tm_mon: %d \n", dt.tm_mon);
-// kprintf("Dt tm_year: %d \n", dt.tm_year);
-// kprintf("Dt tm_wday: %d \n", dt.tm_wday);
-// kprintf("Dt tm_yday: %d \n", dt.tm_yday);
-// kprintf("Dt tm_isdst: %d \n", dt.tm_mday);
 
   asctime_r (&dt, tmp);
   kprintf ("Date: %s\n", tmp);

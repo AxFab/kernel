@@ -54,7 +54,7 @@ int main (int argc, char** argv)
   tsw[2] = '\n';
   tsw[3] = '\0';
 
-  write (0, tsw, 3);
+  write (1, tsw, 3);
   write (where, tmp, lg);
 
   return 0;

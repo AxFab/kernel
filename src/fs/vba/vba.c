@@ -41,7 +41,7 @@ void VBA_Initialize (kInode_t* dev)
   // kStat_t stat = { 0, , 0, 0, lg, , now, now, now, 0, vbaDepth, line };
 
   char tmp [8];
-  snprintf (tmp, 8, "fb%d", ++auto_incr);
+  snprintf (tmp, 8, "fb%d", auto_incr++);
   create_device (tmp, dev, ops, &stat);  
   //kfs_new_device ("vba", dev, &vbaOperation, NULL, &stat);
 }

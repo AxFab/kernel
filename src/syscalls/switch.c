@@ -10,7 +10,7 @@
  *      Redirect system calls to the correct function.
  */
 #include <kernel/vfs.h>
-#include <kernel/streams.h>
+#include <kernel/stream.h>
 #include <kernel/memory.h>
 #include <kernel/scheduler.h>
 #include <kernel/async.h>
@@ -118,12 +118,13 @@ int sys_exit(kCpuRegs_t* regs, int code)
 
 int sys_open(kCpuRegs_t* regs, const char* path, int flags, int mode)
 {
-  return kstm_open (-1, path, flags, mode);
+  kStream_t* stm = stream_open (-1, path, flags, mode);
+  return (stm != NULL) ? stm->fd_ : -1;
 }
 
 ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset)
 {
-  size_t lg = kstm_read (fd, buf, count, (off_t)-1);
+  size_t lg = stream_read (fd, buf, count);
   // We need the stream here !!!
   if (lg == 0) {
     // @todo param is the number of byte wanted, with 0 we request a '\n' character!
@@ -141,7 +142,8 @@ ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset
 
 ssize_t sys_write(kCpuRegs_t* regs, int fd, const void* buf, size_t count, off_t offset)
 {
-  return kstm_write (fd, buf, count, (off_t)-1);
+  // kprintf ("sys_write -- " "on FD %d, for %d\n", fd, count);
+  return stream_write (fd, buf, count);
 }
 
 

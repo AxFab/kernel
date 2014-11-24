@@ -145,9 +145,8 @@ kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/syscalls/*.c))  \
              $(patsubst src/%,%,$(wildcard src/vfs/*.c))  \
              $(patsubst src/%,%,$(wildcard src/inodes/*.c))  \
-             $(patsubst src/%,%,$(wildcard src/streams/*.c))  \
+             $(patsubst src/%,%,$(wildcard src/stream/*.c))  \
              $(patsubst src/%,%,$(wildcard src/assembly/*.c))  \
-             $(patsubst src/%,%,$(wildcard src/term/*.c)) \
              $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
              $(patsubst src/%,%,$(wildcard src/async/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
@@ -161,6 +160,7 @@ kImage_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL
 kImage_lflags = $(AXLIBC)/lib/libAxRaw.a
 $(eval $(call KERNEL,kImage))
 
+#             $(patsubst src/%,%,$(wildcard src/term/*.c)) \
 
 # ===========================================================================
 # ===========================================================================

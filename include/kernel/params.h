@@ -7,6 +7,9 @@
 #define PARAM_FILENAME(n)           1
 #define PARAM_KERNEL_BUFFER(b,s,a)  1
 
+#define PARAM_USER_BUFFER(m,b,l)    1
+#define PARAM_USER_STRING(m,s,l)    1
+
 
 #define kprintf(n,s,...) do {                       \
           if (n) kprintf(n##_PFX s,##__VA_ARGS__);  \

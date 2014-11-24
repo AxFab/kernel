@@ -43,8 +43,8 @@ struct kTask
   int           timeSlice_;
   int           niceValue_;
   int           state_;
-  int           eventType_;
-  uint64_t      eventParam_;
+  // int           eventType_;
+  // uint64_t      eventParam_;
 
   ltime_t       lastWakeUp_;
   ltime_t       elapsedUser_;
@@ -54,7 +54,10 @@ struct kTask
   kProcess_t*   process_;
   kTask_t*      nextSc_;          /// Next item on scheduler list
   list_t        procNd_;         /// Node to connect on  process list
-  list_t        eventNd_;      /// Node to connect on event_list
+
+  kWaiting_t*   event_;
+  // list_t        eventNd_;      /// Node to connect on event_list
+
 
   spinlock_t    lock_;            /// Lock
 

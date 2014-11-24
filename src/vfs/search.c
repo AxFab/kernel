@@ -49,6 +49,7 @@ static kInode_t* search_child (const char* name, kInode_t* dir)
   if (!dir->dev_->lookup) {
     kunlock (&dir->lock_);
     __seterrno (ENOENT);
+    kprintf (LOG, "Can't find %s on dir %s\n", name, dir->name_);
     return NULL;
   }
 
@@ -60,6 +61,7 @@ static kInode_t* search_child (const char* name, kInode_t* dir)
   if (err != 0) {
     kunlock (&dir->lock_);
     __seterrno (err == ENOENT ? ENOENT : EIO);
+    kprintf (LOG, "Can't find %s on dir %s\n", name, dir->name_);
     return NULL;
   }
 

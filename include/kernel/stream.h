@@ -18,6 +18,9 @@
 // ===========================================================================
 //      Definitions and Macros
 // ===========================================================================
+#define SEEK_SET   1
+#define SEEK_CUR   2
+#define SEEK_END   3
 
 // ===========================================================================
 //      Data Structures
@@ -26,19 +29,12 @@
 struct kStream
 {
   int           fd_;
+  spinlock_t    lock_;
   kInode_t*     ino_;
   size_t        position_;
   int           flags_;
-};
-
-// ---------------------------------------------------------------------------
-/** Structure holding fifo cursor. */
-struct kFifo
-{
-  ssize_t rpen_;      ///< Offset of the consumer(read) cursor
-  ssize_t wpen_;      ///< Offset of the producer(write) cursor
-  ssize_t size_;      ///< Total size of the buffers
-  ssize_t avail_;     ///< Byte available to reading
+  ssize_t (*read)(kStream_t*, void*, size_t);
+  ssize_t (*write)(kStream_t*, const void*, size_t);
 };
 
 
@@ -49,30 +45,31 @@ struct kFifo
 
 // STREAM/TERMIOS ============================================================
 /**   */
-ssize_t term_read(kInode_t* ino, void* buf, size_t count);
+ssize_t term_read(kStream_t* stm, void* buf, size_t count);
 /**   */
-ssize_t term_write(kInode_t* ino, const void* buf, size_t count);
+ssize_t term_write(kStream_t* stm, const void* buf, size_t count);
 /**   */
-int term_event (kInode_t* ino, kEvent_t* event);
+int term_event (kStream_t* stm, kEvent_t* event);
 /**   */
 kInode_t* term_create();
 
 
 // STREAM/FIFO ===============================================================
 /**   */
-ssize_t fifo_read(kInode_t* ino, void* buf, size_t count);
+ssize_t fifo_read(kStream_t* stm, void* buf, size_t count);
 /**   */
-ssize_t fifo_write(kInode_t* ino, const void* buf, size_t count);
+ssize_t fifo_write(kStream_t* stm, const void* buf, size_t count);
 /**   */
 kInode_t* fifo_create();
 
 
 // STREAM/BLOCK ==============================================================
 /**   */
-ssize_t block_read(kInode_t* ino, void* buf, size_t count, ssize_t off);
+ssize_t block_read(kStream_t* stm, void* buf, size_t count);
 /**   */
-ssize_t block_write(kInode_t* ino, const void* buf, size_t count, ssize_t off);
-
+ssize_t block_write(kStream_t* stm, const void* buf, size_t count);
+/**   */
+ssize_t dir_data (kStream_t* stm, void* buf, size_t count);
 
 // STREAM/FD =================================================================
 /**   */
@@ -80,21 +77,21 @@ kStream_t* stream_open (int dir, const char* path, int mode, int flags);
 /**   */
 kStream_t* stream_create (int dir, const char* path, int mode, int flags);
 /**   */
-void stream_close (int fd);
+int stream_close (int fd);
 /**   */
 kStream_t* stream_set (kInode_t* ino, int flags);
 /**   */
-kStream_t* stream_get (int fd);
+kStream_t* stream_get (int fd, int rights);
+/** */
+int stream_tty (kProcess_t* proc, kInode_t* tty);
 
-
-// STREAM/ASYNC ==============================================================
-/**   */
-int stream_wait_regist(kTask_t* task);
-/**   */
-int stream_wait_cancel(kTask_t* task);
-/**   */
-int stream_wait_trigger(long param1, long param2);
-
+// STREAM/DATA ===============================================================
+/** */
+ssize_t stream_read (int fd, void* buf, size_t length);
+/** */
+ssize_t stream_write (int fd, const void* buf, size_t length);
+/** */
+off_t stream_seek(int fd, off_t offset, int whence);
 
 
 #endif /* KERNEL_STREAM_H__ */

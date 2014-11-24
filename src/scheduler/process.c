@@ -14,12 +14,13 @@
 #include <kernel/memory.h>
 #include <kernel/vfs.h>
 #include <kernel/info.h>
-#include <kernel/streams.h>
+#include <kernel/stream.h>
 
 
 anchor_t procList = ANCHOR_INIT;
 
 // ===========================================================================
+
 
 int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const char* cmd)
 {
@@ -47,11 +48,12 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   proc->command_ = kcopystr(cmd);
   proc->memSpace_ = mmsp;
 
-  proc->streamCap_ = 8;
-  proc->openStreams_ = (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
-  proc->openStreams_[0] = stream_open(tty);
-  proc->openStreams_[1] = stream_open(tty);
-  proc->openStreams_[2] = stream_open(tty);
+  proc->streamCap_ = 0;
+  proc->openStreams_ = NULL; // (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
+  stream_tty (proc, tty);
+  // proc->openStreams_[0] = stream_set(tty, O_RDONLY);
+  // proc->openStreams_[1] = stream_set(tty, O_WRONLY);
+  // proc->openStreams_[2] = stream_set(tty, O_WRONLY);
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   klist_push_back(&procList, &proc->procNd_);
@@ -62,6 +64,8 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   kprintf ("Start login program [%d - %s - root<0> ]\n", proc->pid_, prg->name_);
   return proc->pid_;
 }
+
+
 
 
 // ===========================================================================

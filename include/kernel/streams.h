@@ -5,17 +5,15 @@
 
 struct kStream
 {
+  int           fd_;
+  spinlock_t    lock_;
   kInode_t*     ino_;
   size_t        position_;
   int           flags_;
+  ssize_t (*read)(kStream_t*, void*, size_t , ssize_t);
+  ssize_t (*write)(kStream_t*, const void*, size_t, ssize_t);
 };
 
-struct kStreamType
-{
-  ssize_t (*read)(kInode_t* ino, void* buf, size_t count, off_t offset);
-  ssize_t (*write)(kInode_t* ino, const void* buf, size_t count, off_t offset);
-  // sync
-};
 
 struct kPipe
 {
@@ -116,14 +114,6 @@ off_t kstm_seek(int fd, off_t offset, int whence);
 
 kStream_t* stream_open (kInode_t* ino);
 kInode_t* term_create (void* pixels, int width, int height, int line);
-
-
-
-int stream_wait_regist(kTask_t* task);
-int stream_wait_cancel(kTask_t* task);
-int stream_wait_trigger(long param1, long param2);
-
-
 
 
 #endif /* STREAMS_H__ */

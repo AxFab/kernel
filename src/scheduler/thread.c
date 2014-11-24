@@ -46,10 +46,7 @@ static void ksch_remove (kTask_t* task)
   klock(&kSYS.schedLock_, LOCK_SCHED_REMOVE);
   assert (task->state_ == TASK_STATE_ZOMBIE);
   assert (task->execOnCpu_ == -1);
-  assert (task->eventType_ == 0); // FIXME use macro
-  assert (list_isdetached(&task->eventNd_));
-  // assert (task->nextEv_ == NULL);
-  // assert (task->prevEv_ == NULL);
+  assert (task->event_ == NULL);
 
   atomic_dec_i32 (&kSYS.tasksCount_[0]);
   atomic_dec_i32 (&kSYS.tasksCount_[task->state_]);

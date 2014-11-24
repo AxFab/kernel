@@ -1,7 +1,6 @@
-#include <kernel/term.h>
 #include <kernel/async.h>
 #include <kernel/keys.h>
-
+#include "term.h"
 
 // ---------------------------------------------------------------------------
 static void term_shortcut_ctrl (kInode_t* ino, int ch) 
@@ -57,6 +56,10 @@ static void term_input (kInode_t* ino, int ch)
   ++ino->term_->in_write_pen_;
 
   ino->term_->flags_ = (ino->term_->flags_ | TTY_NEW_INPUT) & ~TTY_ON_INPUT;
+
+  if (ch == '\n') {
+    // @todo wake up tasks waiting for read inode event!
+  }
 }
 
 // ===========================================================================

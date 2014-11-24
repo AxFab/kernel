@@ -115,8 +115,11 @@ int kpg_resolve_inode (kVma_t* vma, uint32_t address, int rights)
 uint32_t last = 0;
 int kpg_fault (uint32_t address)
 {
-  kAddSpace_t* mmspc = kCPU.current_->process_->memSpace_;
   if (KLOG_PF) kprintf ("PF] PF at <%x> \n", address);
+  kAddSpace_t* mmspc = NULL;
+  if (kCPU.current_ != NULL)
+    mmspc = kCPU.current_->process_->memSpace_;
+
 
   if (address < kHDW.userSpaceBase_)
     kpanic ("PF] PG NOT ALLOWED <%x-%d-%d> \n", address, (address >> 22) & 0x3ff, (address >> 12) & 0x3ff);
@@ -140,6 +143,7 @@ int kpg_fault (uint32_t address)
   else
     kpanic ("PF] PG NOT ALLOWED <%x-%d-%d> [%d]\n", address, (address >> 22) & 0x3ff, (address >> 12) & 0x3ff, kCPU.tmpPageStack_);
 
+  if (KLOG_PF) kprintf ("PF] PF end\n");
   return __noerror();
 }
 

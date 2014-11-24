@@ -38,9 +38,16 @@ int main ()
      "I'll better continue. \n",
   };
 
-  write (0, "\e[53,38mKernel master\e[0m] v1.0\n", 32);
-  int sc = open ("/master.log", 0x41, 0644); // O_WRONLY | O_CREAT
-  int s1 = open ("/dev/fb0", 0x01, 0644); // O_WRONLY
+  write (1, "\e[53,38mKernel master\e[0m] v1.0\n", 32);
+  int sc = open ("master.log", 0x43, 0644); // O_WRONLY | O_CREAT
+  if (sc != 3) {
+    write (1, "The first file open on master is not 3!\n", 40);
+  } 
+
+  if (sc == 0) {
+    write (1, "The first file open on master is zero!!\n", 40);
+  }
+  int s1 = open ("/dev/fb0", 0x02, 0644); // O_WRONLY
 
   int j=0;
 
@@ -54,7 +61,7 @@ int main ()
       k  = (k | (i >> 3)) * 0x75f;
     }
 
-    write (0, "\e[31mMaster\e[0m - still here\n", 29);
+    write (1, "\e[31mMaster\e[0m - still here\n", 29);
 
     // int buf[] = {0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010,
     //   0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010, 0xa61010,
