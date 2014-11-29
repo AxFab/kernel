@@ -84,7 +84,8 @@ void ksch_stop (int state, kCpuRegs_t* regs)
 // ---------------------------------------------------------------------------
 void ksch_abort (kTask_t* task)
 {
-  klock (&task->lock_, LOCK_THREAD_ABORT);
+  cli();
+  klock (&task->lock_);
   if (task->state_ == TASK_STATE_EXECUTING) {
     task->state_ = TASK_STATE_ABORTING;
 
@@ -98,7 +99,9 @@ void ksch_abort (kTask_t* task)
     atomic_inc_i32 (&kSYS.tasksCount_[task->state_]);
     atomic_dec_i32 (&task->process_->runningTask_);
     if (task->process_->runningTask_ == 0) {
+      kunlock (&task->lock_);
       ksch_destroy_process (task->process_);
+      return;
     }
   }
 

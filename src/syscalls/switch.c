@@ -70,7 +70,7 @@ int sys_reboot(kCpuRegs_t* regs, int code)
 
 int sys_pause(kCpuRegs_t* regs)
 {
-  kregisters (regs);
+  // kregisters (regs);
   ksch_stop(TASK_STATE_BLOCKED, regs);
   return 0;
 }
@@ -155,10 +155,11 @@ ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset
       async_event(kCPU.current_, &stream->ino_->evList_, EV_READ, 0, 0);
       // kprintf (LOG, "EVT READ %s - %d \n", stream->ino_->name_, stream->ino_->evList_.count_);      
       task_pause();
-      kprintf (LOG, "TASK JUST WAKE UP AFTER PAUSE\n");
+      lg = stream->read (stream, buf, count);
+      // kprintf (LOG, "TASK JUST WAKE UP AFTER PAUSE\n");
       // kprintf (LOG, "TASK JUST WAKE UP AFTER PAUSE\n");
       // for (;;);
-      return -1;
+      // return -1;
     }
 
   } while (lg == 0);

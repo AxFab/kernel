@@ -329,7 +329,7 @@ kCpu_Switch2:
     mov eax, [ebp + 12]
     mov cr3, eax
 
-    call kswitchdump
+    ; call kswitchdump
 
   ; End of interupt
     mov al,0x20
@@ -359,20 +359,27 @@ kCpu_Switch2:
 
 
 
-
 ; =============================================
 ; =============================================
 
+global kCpu_Halt
 
-kcpuhlt:
-
+kCpu_Halt:
     cli
-    mov esp, 0x6800
-    mov dword [esp + 16], 0x18        ; ss
-    mov dword [esp + 12], 0x6f00      ; esp
-    mov dword [esp + 8], 0x200        ; eflags
-    mov dword [esp + 4], 0x8          ; cs
-    mov dword [esp], kcpuhlt.go       ; eip
+    mov esp, 0x6800 - 10
+
+    mov dword [esp + 0], kCpu_Halt.pause    ; eip
+    mov dword [esp + 4], 0x8                ; cs
+    mov dword [esp + 8], 0x200              ; eflags
+
+  ; Set TSS ESP0
+    mov ebx, 0x6800 - 0x10
+    mov edi, 0x1004
+    mov [edi], ebx   
+
+    mov ax, _x86_kData_Sgmt
+    mov ds, ax
+    mov es, ax
 
   ; End of interupt
     mov al,0x20
@@ -381,9 +388,11 @@ kcpuhlt:
   ; Jump
     iret
 
-  .go:
+.pause
+    sti
     hlt
     jmp $
+    
 
 
 ; =============================================

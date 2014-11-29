@@ -3,6 +3,7 @@
 
 void kregisters (kCpuRegs_t* regs)
 {
+  kprintf ("dump registers at %8X\n", regs);
   kprintf ("  eax:%8x  ebx:%8x  ecx:%8x  edx:%8x    eflags:%8x\n",
     regs->eax, regs->ebx, regs->ecx, regs->edx, regs->eflags);
   kprintf ("  esi:%8x  edi:%8x  esp:%8x  ebp:%8x       eip:%8x\n",

@@ -169,7 +169,7 @@ $(eval $(call KERNEL,kImage))
 # ---------------------------------------------------------------------------
 master_src = dummy/master.c
 master_crt = $(obj_dir)/crt0.o
-master_inc = $(AXLIBC)/include/
+master_inc = $(AXLIBC)/include/ include
 master_cflags = $(std_$(mode)_cflags) -nostdinc
 master_lflags = $(AXLIBC)/lib/libaxc.a
 $(eval $(call KPROGRAM,master))
@@ -183,14 +183,14 @@ $(eval $(call KPROGRAM,deamon))
 # ---------------------------------------------------------------------------
 hello_src = dummy/hello.c
 hello_crt = $(obj_dir)/crt0.o
-hello_inc = $(AXLIBC)/include/
+hello_inc = $(AXLIBC)/include/ include
 hello_cflags = $(std_$(mode)_cflags) -nostdinc
 hello_lflags = $(AXLIBC)/lib/libaxc.a
 $(eval $(call KPROGRAM,hello))
 # ---------------------------------------------------------------------------
 sname_src = dummy/sname.c
 sname_crt = $(obj_dir)/crt0.o
-sname_inc = $(AXLIBC)/include/
+sname_inc = $(AXLIBC)/include/ include
 sname_cflags = $(std_$(mode)_cflags) -nostdinc
 sname_lflags = $(AXLIBC)/lib/libaxc.a
 $(eval $(call KPROGRAM,sname))

@@ -101,10 +101,10 @@ void ksch_pick ()
 
       // kprintf("SCHEDULER - TASK %d\n", pick->tid_);
       if (pick->regs_.cs == 8) {
-        kprintf ("Schedule on syscall [%d]\n", pick->tid_);
+        // kprintf ("Schedule on syscall [%d]\n", pick->tid_);
         kpg_reset_stack ();
-        kregisters (&pick->regs_);
-        kprintf ("... call %x, %x, %x, %x\n", &pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
+        // kregisters (&pick->regs_);
+        // kprintf ("... call %x, %x, %x, %x\n", &pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
         kCpu_Switch2 (&pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
       } else {
         kpg_reset_stack ();
@@ -123,7 +123,9 @@ void ksch_pick ()
   // In case the current task is on garbadge collector
   kCPU.current_ = kCPU.current_->nextSc_;
   // FIXME call __asm__ HLT
-  task_print ();
-  kpanic ("HLT is not implemented.\n");
+  // task_print ();
+  // kpanic ("HLT is not implemented.\n");
+  // kprintf ("HLT is not implemented.\n");
+  kCpu_Halt ();
 }
 
