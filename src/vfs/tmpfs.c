@@ -1,3 +1,14 @@
+/*
+ *      This file is part of the Smoke project.
+ *
+ *  Copyright of this program is the property of its author(s), without
+ *  those written permission reproduction in whole or in part is prohibited.
+ *  More details on the LICENSE file delivered with the project.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Methods used to handle default temporary file system (tmpfs).
+ */
 #include <kernel/vfs.h>
 #include <kernel/info.h>
 

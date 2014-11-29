@@ -99,8 +99,17 @@ void ksch_pick ()
 
       if (KLOG_SCH) kprintf ("scheduler] calling switch <%x, %x> [%x]\n", &pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
 
-      kpg_reset_stack ();
-      kCpu_Switch (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
+      // kprintf("SCHEDULER - TASK %d\n", pick->tid_);
+      if (pick->regs_.cs == 8) {
+        kprintf ("Schedule on syscall [%d]\n", pick->tid_);
+        kpg_reset_stack ();
+        kregisters (&pick->regs_);
+        kprintf ("... call %x, %x, %x, %x\n", &pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
+        kCpu_Switch2 (&pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
+      } else {
+        kpg_reset_stack ();
+        kCpu_Switch (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
+      }
       return;
 
     } while (pick != kCPU.current_);

@@ -92,7 +92,8 @@ int async_event(kTask_t* task, anchor_t* targetList, int reason, long param, lon
 void async_wakeup (kWaiting_t* wait);
 /** Cancel an event */
 void async_cancel_event (kTask_t* task);
-
+/** */
+void async_trigger (anchor_t* targetList, int reason, long param);
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

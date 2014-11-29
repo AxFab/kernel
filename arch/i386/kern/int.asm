@@ -51,9 +51,11 @@ kcpu_Default:
 ; 0x0E - Page Fault
 kcpu_PageFault:
     SAVE_REGS
+    push esp
     mov eax, cr2
     push eax
     call kInt_PageFault
+    pop eax
     pop eax
     LOAD_REGS
     add esp, 4
@@ -220,6 +222,15 @@ kcpu_Look:
     out 0x20,al
     LOAD_REGS
     iret
+
+
+global task_pause
+task_pause:
+    mov eax, 1
+    int 0x30
+    ret
+
+
 
 
 ; ========================================================

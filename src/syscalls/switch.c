@@ -16,10 +16,12 @@
 #include <kernel/async.h>
 #include <kernel/info.h>
 #include <smoke/syscall.h>
+#include <kernel/params.h>
 
 typedef int (*sys_func)(kCpuRegs_t* regs, ...);
 
 int sys_reboot(kCpuRegs_t* regs, int code);
+int sys_pause(kCpuRegs_t* regs);
 int sys_exec(kCpuRegs_t* regs, const char* path, void* param);
 int sys_exit(kCpuRegs_t* regs, int code);
 
@@ -41,6 +43,7 @@ int sys_yield(kCpuRegs_t* regs);
 sys_func sys_table [] = {
 
   _SYS(SYS_REBOOT, sys_reboot),
+  _SYS(SYS_PAUSE, sys_pause),
   _SYS(SYS_EXEC, sys_exec),
   _SYS(SYS_EXIT, sys_exit),
   // START / STOP
@@ -65,6 +68,13 @@ int sys_reboot(kCpuRegs_t* regs, int code)
   return -1;
 }
 
+int sys_pause(kCpuRegs_t* regs)
+{
+  kregisters (regs);
+  ksch_stop(TASK_STATE_BLOCKED, regs);
+  return 0;
+}
+
 int sys_itimer(kCpuRegs_t* regs, int miliseconds) 
 {
   long microseconds = miliseconds * 1000L;
@@ -84,7 +94,7 @@ int sys_sleep(kCpuRegs_t* regs, int miliseconds)
 
 time_t sys_time(kCpuRegs_t* regs, time_t* now)
 {
-  kprintf ("Time is: %lld\n", kSYS.now_ / CLOCK_PREC);
+  kprintf (LOG, "Time is: %lld\n", kSYS.now_ / CLOCK_PREC);
   return kSYS.now_ / CLOCK_PREC;
 }
 
@@ -124,18 +134,34 @@ int sys_open(kCpuRegs_t* regs, const char* path, int flags, int mode)
 
 ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset)
 {
-  size_t lg = stream_read (fd, buf, count);
-  // We need the stream here !!!
-  if (lg == 0) {
-    // @todo param is the number of byte wanted, with 0 we request a '\n' character!
-    async_event(kCPU.current_, NULL, EV_READ, 0, 0);
-    ksch_stop(TASK_STATE_BLOCKED, regs);
+  size_t lg;
+  kStream_t* stream = stream_get (fd, O_RDONLY);
+  if (stream == NULL) 
+    return -1;
 
-    // for (;;)
-    //kprintf ("Read on fd %d no ready for task %d [%d]\n", fd, kCPU.current_->process_->pid_, kCPU.current_->tid_);
+  if (!PARAM_USER_BUFFER(kCPU.current_->process_->memSpace_, buf, count))
+    return -1;
 
-    //sys_waitobj (regs, fd, 2, 0);
+  if (stream->read == NULL) {
+    __seterrno(ENXIO);
+    return -1;
   }
+
+  do {
+    lg = stream->read (stream, buf, count);
+
+    if (lg == 0) {
+      // @todo param is the number of byte wanted, with 0 we request a '\n' character!
+      async_event(kCPU.current_, &stream->ino_->evList_, EV_READ, 0, 0);
+      // kprintf (LOG, "EVT READ %s - %d \n", stream->ino_->name_, stream->ino_->evList_.count_);      
+      task_pause();
+      kprintf (LOG, "TASK JUST WAKE UP AFTER PAUSE\n");
+      // kprintf (LOG, "TASK JUST WAKE UP AFTER PAUSE\n");
+      // for (;;);
+      return -1;
+    }
+
+  } while (lg == 0);
 
   return lg;
 }
@@ -151,17 +177,20 @@ ssize_t sys_write(kCpuRegs_t* regs, int fd, const void* buf, size_t count, off_t
 
 void kCore_Syscall(kCpuRegs_t* regs)
 {
+  assert (regs != NULL);
+
   const int max = (int)(sizeof(sys_table) / sizeof(sys_func));
   cli();
 
   int no = (int)regs->eax;
   if (no >= max || sys_table[no] == NULL) {
-    kprintf("Sys] Try to call syscall function number %d (max %d).\n", no, max);
+    kprintf(LOG, "Sys] Try to call syscall function number %d (max %d).\n", no, max);
     regs->eax = -1;
     regs->edx = ENOSYS;
     return;
   }
 
+  // kprintf (LOG, "Task %d syscall %d \n", kCPU.current_->tid_, no);
   kCpu_SetStatus (CPU_STATE_SYSCALL);
   int ret = sys_table[no](regs, 
                 (void*)regs->ecx, 

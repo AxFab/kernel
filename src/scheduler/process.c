@@ -21,6 +21,7 @@ anchor_t procList = ANCHOR_INIT;
 
 // ===========================================================================
 
+extern kStream_t* keyboard_tty;
 
 int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const char* cmd)
 {
@@ -51,6 +52,8 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   proc->streamCap_ = 0;
   proc->openStreams_ = NULL; // (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
   stream_tty (proc, tty);
+  if (keyboard_tty == NULL)
+    keyboard_tty = proc->openStreams_[0];
   // proc->openStreams_[0] = stream_set(tty, O_RDONLY);
   // proc->openStreams_[1] = stream_set(tty, O_WRONLY);
   // proc->openStreams_[2] = stream_set(tty, O_WRONLY);

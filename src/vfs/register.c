@@ -7,7 +7,7 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Methods used to handle devices operations.
+ *      Methods used to handle inode registeration, creation and deletion.
  */
 #include "kernel/vfs.h"
 #include "kernel/params.h"

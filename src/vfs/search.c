@@ -7,7 +7,7 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Methods used to handle devices operations.
+ *      Methods used to search a inodes from it's name and/or path.
  */
 #include "kernel/vfs.h"
 #include "kernel/params.h"

@@ -126,7 +126,7 @@ int kpg_fault (uint32_t address)
   else if (address < kHDW.userSpaceLimit_) {
     kVma_t* vma = kvma_look_at (mmspc, address);
     if (vma == NULL ) {
-      kpanic ("PF] Page fault in user space <%x> SIGFAULT \n", address);
+      kpanic ("PF] Task%d -- Page fault in user space <%x> SIGFAULT \n", kCPU.current_->tid_, address);
       for (;;);
     } else if (vma->flags_ & VMA_STACK) {
       kpg_resolve (address, TABLE_DIR_PRC, PG_USER_RDWR, PG_USER_RDWR, 0, TRUE);
@@ -135,7 +135,7 @@ int kpg_fault (uint32_t address)
       kpg_resolve_inode (vma, ALIGN_DW (address, PAGE_SIZE), PG_USER_RDWR);
       // kpanic ("PF] Page fault on mapped file !? <%x> [%x] %s \n", address, vma, vma->ino_->name_);
     else {
-      kpanic ("PF] Page fault in user space <%x> [%x] \n", address, vma);
+      kpanic ("PF] Task%d -- Page fault in user space <%x> [%x] \n", kCPU.current_->tid_, address, vma);
       for (;;);
     }
   } else if (address < 0xff000000)

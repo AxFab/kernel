@@ -1,6 +1,7 @@
 #include "tty.h"
 #include "cpu.h"
 #include <kernel/info.h>
+#include <kernel/cpu.h>
 #include <kernel/scheduler.h>
 #include <kernel/term.h>
 #include <kernel/async.h>
@@ -85,30 +86,24 @@ int kInt_Clock (kCpuRegs_t* regs)
   return 0;
 }
 
-kInode_t* keyboard_tty;
+/* =============================
+  IRQ - KEYBOARD
+================================*/
+kStream_t* keyboard_tty = NULL;
+
 int kInt_KBoard (kCpuRegs_t* registers)
 {
-  // return 0;
-
   // IRQ.1 - Keyboard 
-
-  unsigned char i;
+  unsigned char key;
   while((inb(0x64) & 0x01) == 0);
-  i = inb(0x60);
+  key = inb(0x60);
 
   kEvent_t ev;
-  ev.type_ = (i < 0x80) ? EV_KEYDW : EV_KEYUP;
-  ev.keyboard_.key_ = i & 0x7F;
+  ev.type_ = (key < 0x80) ? EV_KEYDW : EV_KEYUP;
+  ev.keyboard_.key_ = key & 0x7F;
+
   if (keyboard_tty != NULL)
-  term_event (keyboard_tty, &ev);
-
-
-
- //  if (i < 0x80) {
- //   kTty_KeyPress (i & 0xFF);
- //  } else {
- //    kTty_KeyUp (i & 0x7F);
- //  }
+    term_event (keyboard_tty, &ev);
 
   return 0;
 }
@@ -150,9 +145,12 @@ int kInt_SysCall (kCpuRegs_t* regs)
 
 int kpg_fault (uint32_t address);
 
-int kInt_PageFault (uint32_t address, kCpuRegs_t* registers)
+int kInt_PageFault (uint32_t address, kCpuRegs_t* regs)
 {
-  // kprintf ("PageFault at 0x%x\n", address);
+  if (regs->cs == 0x08 && keyboard_tty != NULL) {
+    kprintf ("KERNEL PAGE FAULT AT 0x%X\n", address);
+  }
+
   return kpg_fault (address);
 }
 

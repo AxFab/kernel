@@ -92,7 +92,8 @@ int async_event(kTask_t* task, anchor_t* targetList, int reason, long param, lon
     wait->target_ = targetList;
     klist_push_back(targetList, &wait->targetNd_);
   }
-  return 0;
+  
+  return wait->handle_;
 }
 
 
@@ -110,6 +111,27 @@ void async_cancel_event (kTask_t* task)
   task->event_ = NULL;
 }
 
+// ---------------------------------------------------------------------------
+void async_trigger (anchor_t* targetList, int reason, long param)
+{
+  kWaiting_t* wait = klist_begin(targetList, kWaiting_t, targetNd_);
+
+  // kprintf ("EVT triggered  %d \n", targetList->count_);
+  while (wait != NULL) {
+    kWaiting_t* del = NULL;
+
+    if (wait->reason_ == reason) {
+
+      kprintf ("TRIGGER AN EVENT [%d] TASK %d \n", wait->reason_, wait->task_->tid_);
+      async_wakeup (wait);
+      // @todo should we delete or not
+    }
+
+    wait = klist_next(wait, kWaiting_t, targetNd_);
+    if (del) 
+      kfree(del);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

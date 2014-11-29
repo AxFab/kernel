@@ -3,124 +3,32 @@
 #include <kernel/keys.h>
 #include <kernel/vfs.h>
 #include <kernel/info.h>
+#include <kernel/term.h>
 
 
 int font64_paint(kTerm_t* term, kLine_t* style, int row);
 void font64_clean(kTerm_t* term);
 
 
-// If set, indicate that what we write on output is in fact user input.
-#define TTY_ON_INPUT  (1 << 0)  
-// If set, indicate that we have content into input buffer.
-#define TTY_NEW_INPUT (1 << 1)
-// Ask to recho the line the next time the program read.
-#define TTY_READ_ECHO (1 << 2)
-
-#define TTY_KEY_CTRL (1 << 3)
-#define TTY_KEY_ALT (1 << 4)
-#define TTY_KEY_SHIFT (1 << 5)
-
-
-
-#define TERM_OUT_BUFFER 8192
-#define TERM_IN_BUFFER 4096
-
-
 // ===========================================================================
-
-typedef struct kLine kLine_t;
-
-struct kLine
+static void term_shortcut (kStream_t* stm, int level, int ch) 
 {
-  uint32_t txColor_;
-  uint32_t bgColor_;
-  int offset_;
-  int flags_;
-  kLine_t* prev_;
-  kLine_t* next_;
-};
+  static int shortcut[2][0x80] = {
+    { // CTRL + 
+      ['d'] = 0, // Signal: end of file
+      ['c'] = 0, // Signal: abort
+      ['w'] = 0, // Input: erase word to left
+      ['u'] = 0, // Input: erase line to left
+      ['k'] = 0, // Input: erase line to right
+    },
+    { // ALT + 
+      ['d'] = 0, // Input: erase word to right
+    },
+  };
 
-struct kTerm
-{
-  uint32_t txColor_;
-  uint32_t bgColor_;
-  
-  kLine_t* first_;
-  kLine_t* top_;
-  kLine_t* last_;
-  
-  int width_;
-  int height_;
-  int line_;
-  void* pixels_;
-
-  int row_;
-  int flags_;
-  int max_row_;
-  int max_col_;
-
-  char* out_buf_;
-  ssize_t out_size_;
-  ssize_t out_pen_;
-
-  char* in_buf_;
-  ssize_t in_size_;
-  ssize_t in_write_pen_;
-  ssize_t in_pen_;
-
-  int (*paint)(kTerm_t* term, kLine_t* style, int row);
-  void (*clear)(kTerm_t* term);
-};
-
-enum {
-  EV_NONE = 0,
-  EV_KEYDW,
-  EV_KEYUP,
-  EV_MOTION,
-  EV_MOUSEDW,
-  EV_MOUSEUP,
-};
-
-
-// ===========================================================================
-static void term_shortcut_ctrl (kStream_t* stm, int ch) 
-{
   __nounused(stm);
+  __nounused(shortcut);
   assert (ch > 0 && ch < 0x80);
-  switch (ch) {
-      case 'd': 
-        // Signal: end of file
-        break;
-
-      case 'c': 
-        // Signal: abort
-        break;
-
-      case 'w': 
-        // Input: erase word to left
-        break;
-
-      case 'u': 
-        // Input: erase line to left
-        break;
-
-      case 'k': 
-        // Input: erase line to right
-        break;
-  }
-}
-
-
-// ---------------------------------------------------------------------------
-static void term_shortcut_alt (kStream_t* stm, int ch) 
-{
-  __nounused(stm);
-  assert (ch > 0 && ch < 0x80);
-  switch (ch) {
-      case 'd': 
-        // Input: erase word to right
-        break;        
-  }
 }
 
 
@@ -139,6 +47,9 @@ static void term_input (kStream_t* stm, int ch)
   term->flags_ = (term->flags_ | TTY_NEW_INPUT) & ~TTY_ON_INPUT;
 
   if (ch == '\n') {
+    // kprintf ("STDIN GOT A NEW LINE [%s - %d]\n", stm->ino_->name_, stm->ino_->evList_.count_);
+    async_trigger (&stm->ino_->evList_, EV_READ, 0); // param LESS OR EQUALS TO avail or zero
+
     // @todo wake up tasks waiting for read inode event!
   }
 }
@@ -317,8 +228,63 @@ ssize_t term_write(kStream_t* stm, const void* buf, size_t count)
   * When we ask to read, we 
   */
 unsigned char key_layout_us[128][4];
+
+static void term_keydown (kStream_t* stm, int key) 
+{
+  kTerm_t* term = stm->ino_->term_;
+  switch (key) {
+    case KEY_CTRL:
+      term->flags_ |= TTY_KEY_CTRL;
+      break;
+    case KEY_ALT:
+      term->flags_ |= TTY_KEY_ALT;
+      break;
+    case KEY_SH_LF:
+    case KEY_SH_RG:
+      term->flags_ |= TTY_KEY_SHIFT;
+      break;
+    case KEY_PAGE_UP:
+      term_scroll(term, - term->max_row_ / 2);
+      break;
+    case KEY_PAGE_DW:
+      term_scroll(term, term->max_row_ / 2);
+      break;
+    default:
+      if (key >= 0x80)
+        break;
+      if (term->flags_ & TTY_KEY_CTRL)
+        term_shortcut(stm, 0, key);
+      else if (term->flags_ & TTY_KEY_ALT)
+        term_shortcut(stm, 1, key);
+      else
+        term_input(stm, key);
+      return;
+  }
+}
+
+static void term_keyup (kStream_t* stm, int key) 
+{
+  kTerm_t* term = stm->ino_->term_;
+  switch (key) {
+    case KEY_CTRL:
+      term->flags_ &= ~TTY_KEY_CTRL;
+      break;
+    case KEY_ALT:
+      term->flags_ &= ~TTY_KEY_ALT;
+      break;
+    case KEY_SH_LF:
+    case KEY_SH_RG:
+      term->flags_ &= ~TTY_KEY_SHIFT;
+      break;
+    default:
+      return;
+  }
+}
+
 int term_event (kStream_t* stm, kEvent_t* event)
 {
+  assert (stm != NULL);
+  assert (event != NULL);
   kTerm_t* term = stm->ino_->term_;
   int param2 = event->keyboard_.key_;
   assert (param2 > 0 && param2 < 0x80);
@@ -327,60 +293,11 @@ int term_event (kStream_t* stm, kEvent_t* event)
   switch (event->type_) {
 
     case EV_KEYDW:
-
-      // kprintf ("key down] %d - (%x) \n", param2, param2);
-      switch (param2) {
-
-        case KEY_SH_LF:
-        case KEY_SH_RG:
-          term->flags_ |= TTY_KEY_SHIFT;
-          break;
-
-        case KEY_CTRL:
-          term->flags_ |= TTY_KEY_CTRL;
-          break;
-
-        case KEY_ALT:
-          term->flags_ |= TTY_KEY_ALT;
-          break;
-
-        case KEY_PAGE_UP:
-          term_scroll(term, - term->max_row_ / 2);
-          break;
-
-        case KEY_PAGE_DW:
-          term_scroll(term, term->max_row_ / 2);
-          break;
-
-        // case KEY_TAB:
-        //   b
-        default:
-          if (term->flags_ & TTY_KEY_CTRL) 
-            term_shortcut_ctrl(stm, param2);
-          else if (term->flags_ & TTY_KEY_ALT) 
-            term_shortcut_alt(stm, param2);
-          else 
-            term_input(stm, param2);
-          break;
-      }
+      term_keydown (stm, param2);
       break;
 
     case EV_KEYUP:
-      switch (param2) {
-
-        case KEY_SH_LF:
-        case KEY_SH_RG:
-          term->flags_ &= ~TTY_KEY_SHIFT;
-          break;
-
-        case KEY_CTRL:
-          term->flags_ &= ~TTY_KEY_CTRL;
-          break;
-
-        case KEY_ALT:
-          term->flags_ &= ~TTY_KEY_ALT;
-          break;
-      }
+      term_keyup (stm, param2);
       break;
 
     case EV_MOTION:
@@ -389,7 +306,7 @@ int term_event (kStream_t* stm, kEvent_t* event)
       break;
   }
 
-  return -1;
+  return 0;
 }
 
 

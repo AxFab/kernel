@@ -7,7 +7,7 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Methods used to handle devices operations.
+ *      Methods used to handle file system entries modification.
  */
 #include "kernel/vfs.h"
 #include "kernel/params.h"

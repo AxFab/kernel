@@ -7,7 +7,7 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Header file of the virtual file system module
+ *      Header file of the virtual file system module.
  *      Create a file hierarchie and make used of IO ressources.
  */
 #ifndef KERNEL_VFS_H__
@@ -70,6 +70,7 @@ struct kInode
   int             pageCount_;  ///< max number of physical pages in cache
   kBucket_t*      pagesCache_; ///< physical pages caching
   anchor_t        buckets_;
+  anchor_t        evList_;      /// Events list
 };
 
 

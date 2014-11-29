@@ -7,7 +7,7 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Methods used to handle devices operations.
+ *      Methods used to read path names and browse directories.
  */
 #include "kernel/vfs.h"
 #include "kernel/params.h"

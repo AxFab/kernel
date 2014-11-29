@@ -87,7 +87,7 @@ kTask_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   assert (proc != NULL);
   kVma_t ussk = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
   ussk.limit_ = 1 * _Mb_;
-kVma_t krns = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
+  kVma_t krns = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
   krns.limit_ = PAGE_SIZE * 2;
 
   // FIXME load memory

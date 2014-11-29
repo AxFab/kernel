@@ -4,6 +4,7 @@
 #include <sys/types.h>
 
 #define SYS_REBOOT  0
+#define SYS_PAUSE  1
 
 #define SYS_YIELD 0x08
 #define SYS_TIME 0x09

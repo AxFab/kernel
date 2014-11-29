@@ -212,7 +212,7 @@ extern kregisters, kTty_HexDump
 ; void kCpu_SwitchContext (kCpuRegs_t* regs, uint32_t dir)
 
 ; void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
-global kCpu_Switch
+global kCpu_Switch, kCpu_Switch2
 extern kpg_new, kTty_HexChar, kDBG
 
 
@@ -263,10 +263,10 @@ kcpuswitch:
     call kpg_new
     mov edx, [ebp + 12]
     mov [edx], eax
-    mov cr3, eax
 
     ; Init kernel stack
     mov ebx, [ebp + 16]
+    mov cr3, eax
     mov byte [ebx], 0
     jmp .d2
   .d1:
@@ -289,6 +289,75 @@ kcpuswitch:
 
   ; Jump
     iret
+
+
+
+; =============================================
+; =============================================
+
+extern kval
+extern kswitchdump
+
+kCpu_Switch2:
+
+    cli
+    push ebp
+    mov ebp, esp
+    mov esp, 0x6800
+
+  ; Copy REGS on stack
+    mov ax, ds
+    mov es, ax
+    sub esp, SIZEOF_CPU_REGS - 8
+    mov ecx, SIZEOF_CPU_REGS - 8
+    mov esi, [ebp + 8]
+    mov edi, esp
+    rep movsb
+
+  ; Fix EFLAGS
+    mov eax, [esp + 14*4]
+    or eax, 0x200
+    and eax, 0xffffbfff
+    mov [esp + 14*4], eax
+
+  ; Set TSS ESP0
+    mov ebx, [ebp + 16]
+    mov edi, 0x1004
+    mov [edi], ebx
+
+  ; Set Page directory
+    mov eax, [ebp + 12]
+    mov cr3, eax
+
+    call kswitchdump
+
+  ; End of interupt
+    mov al,0x20
+    out 0x20,al
+
+
+  ; Load register
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    popad
+
+    mov eax, [esp - 20 ]
+    mov esp, eax
+
+  ; Jump
+    iret
+
+
+    mov esi, [ebp + 8]
+    push esi
+    call kval
+    jmp $
+
+    call kregisters
+
+
 
 
 ; =============================================

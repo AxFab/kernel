@@ -31,7 +31,7 @@ void ksymbols_load (kInode_t* ino)
       ++j;
     }
 
-    str[++j] = '\0';
+    str[j++] = '\0';
     i += j;
 
     if (str[0] != ' ') state = 0;
@@ -45,7 +45,7 @@ void ksymbols_load (kInode_t* ino)
       if (str[1] != ' ')                          continue;
       strncpy (add, &str[16], 18);
       strcpy (sym, &str[50]);
-      sym[strlen(sym)-1] = '\0';
+      sym[strlen(sym)] = '\0';
       add[19] = '\0';
       ptr = strtoull (add, NULL, 0);
 
