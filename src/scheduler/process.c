@@ -17,8 +17,6 @@
 #include <kernel/stream.h>
 
 
-anchor_t procList = ANCHOR_INIT;
-
 // ===========================================================================
 
 extern kStream_t* keyboard_tty;
@@ -60,7 +58,7 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   // proc->openStreams_[2] = stream_set(tty, O_WRONLY);
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
-  klist_push_back(&procList, &proc->procNd_);
+  klist_push_back(&kSYS.processes_, &proc->procNd_);
   kThread_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
   klist_push_back(&proc->threads_, &task->procNd_);
   
@@ -108,7 +106,7 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
   proc->openStreams_[2] = parent->openStreams_[2]; // proc->openStreams_[1];
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
-  klist_push_back(&procList, &proc->procNd_);
+  klist_push_back(&kSYS.processes_, &proc->procNd_);
 
   kThread_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
   klist_push_back(&proc->threads_, &task->procNd_);

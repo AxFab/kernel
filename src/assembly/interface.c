@@ -40,7 +40,9 @@ int kasm_load (kAddSpace_t* mmsp, kInode_t* ino)
 {
   kSection_t* sec;
   kAssembly_t* assembly = ino->assembly_;
-  kVma_t area = { VMA_EXECUTABLE, 0L, 0L, 0, 0, ino, 0 };
+  kVma_t area = {0};
+  area.flags_ = VMA_EXECUTABLE;
+  area.ino_ = ino;
 
   sec = assembly->section_;
   while (sec != NULL) {

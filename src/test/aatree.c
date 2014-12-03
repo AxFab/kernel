@@ -10,7 +10,7 @@ struct Obj {
 
 Obj_t o [256];
 
-aanode_t* root;
+aatree_t tree;
 
 int verbose = 0;
 
@@ -38,10 +38,10 @@ void set_obj (int idx, long value, const char* name)
   o[idx].node_.value_ = value;
   o[idx].name_ = name;
 
-  root = aa_insert_ (root, &o[idx].node_, 9999);
+  aa_insert (&tree, &o[idx].node_);
 
   int ref = 0;
-  printo (&ref, (Obj_t*)root);
+  printo (&ref, (Obj_t*)tree.root_);
 }
 
 
@@ -50,13 +50,13 @@ void rm_obj (int idx)
   if (verbose)
     printf ("ACTION -- Remove object [%d] for %s <%ld>\n", idx, o[idx].name_, o[idx].node_.value_);
 
-  root = aa_delete_ (root, &o[idx].node_, 9999);
+  aa_delete (&tree, &o[idx].node_);
 
   int ref = 0;
-  printo (&ref, (Obj_t*)root);
+  printo (&ref, (Obj_t*)tree.root_);
 }
 
-void jmp()
+void throw()
 {
 }
 

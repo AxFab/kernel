@@ -73,9 +73,9 @@ struct kInode
   };
   int             pageCount_;  ///< max number of physical pages in cache
   kBucket_t*      pagesCache_; ///< physical pages caching
-  anchor_t        buckets_;
-  anchor_t        evList_;      /// Events list
-  list_t          lruNd_;    /// LRU list
+  llhead_t        buckets_;
+  llhead_t        evList_;      /// Events list
+  llnode_t          lruNd_;    /// LRU list
 };
 
 
@@ -85,7 +85,7 @@ struct kDevice
   // K_OBJECT;
   id_t id_;
   spinlock_t      lock_;      ///< Lock
-  list_t          all_;      ///< List of all devices.
+  llnode_t          all_;      ///< List of all devices.
   kInode_t*       ino_;
 
   // poll / ioctl / map / allocate - getxattr / setxattr / listxattr
@@ -120,7 +120,7 @@ struct kBucket
   size_t    length_;  ///< Length of the page bucket.
   off_t     offset_;  ///< Offset on the file.
   int       flags_;   ///< Flags for this bucket properties.
-  list_t    node_;    ///< List of bucket for Last-Recently-Used policy.
+  llnode_t  node_;    ///< List of bucket for Last-Recently-Used policy.
 };
 
 

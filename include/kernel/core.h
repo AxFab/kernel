@@ -33,10 +33,11 @@ typedef char bool;
         Kernel types
 =========================================================================== */
 /* CORE ------------------------------------------------------------------- */
-/// union for a page, should be compatible with integer and adapt to architecture.
 typedef struct spinlock     spinlock_t;
-typedef struct list         list_t;
-typedef struct anchor       anchor_t;
+typedef struct llnode       llnode_t;
+typedef struct llhead       llhead_t;
+typedef struct aanode       aanode_t;
+typedef struct aatree       aatree_t;
 /// nanotime_t is an accurate time counter with nanoseconds since epoch.
 typedef int64_t nanotime_t;
 
@@ -82,19 +83,42 @@ struct spinlock {
 
 #define ANCHOR_INIT  {LOCK_INIT, NULL, NULL, 0}
 // struct list_anchor
-struct anchor
+struct llhead
 {
   spinlock_t  lock_;
-  list_t*     first_;
-  list_t*     last_;
+  llnode_t*     first_;
+  llnode_t*     last_;
   int         count_;
 };
 
-// struct list_node
-struct list 
+/** Linked list node */
+struct llnode 
 {
-  list_t*     prev_;
-  list_t*     next_;
+  llnode_t*     prev_;
+  llnode_t*     next_;
+};
+
+#define AAANODE_INIT  { NULL, NULL, 0, 0 }
+
+/** AATree (self-balancing binary tree) node */
+struct aanode 
+{
+  aanode_t*  left_;
+  aanode_t*  right_;
+  long  value_;
+  int  level_;
+};
+
+#define AAATREE_INIT  { LOCK_INIT, NULL, NULL, NULL, 0, 0, 0 }
+
+/** AATree (self-balancing binary tree) head */
+struct aatree 
+{
+  spinlock_t  lock_;
+  aanode_t*   root_;
+  aanode_t*   last_;
+  aanode_t*   deleted_;
+  int         count_;
 };
 
 
@@ -171,7 +195,7 @@ void kregisters (kCpuRegs_t* regs);
 #include <kernel/info.h>
 #include <kernel/spinlock.h>
 #include <kernel/list.h>
-
+#include <kernel/aatree.h>
 
 
 

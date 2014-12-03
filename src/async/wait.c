@@ -2,7 +2,6 @@
 #include <kernel/scheduler.h>
 #include <kernel/info.h>
 
-static anchor_t waitList = ANCHOR_INIT;
 
 // ---------------------------------------------------------------------------
 /** Wake up the task waiting for an event */
@@ -20,7 +19,7 @@ void async_wakeup (kWaiting_t* wait)
   } else {
 
     // @todo Copy of async_cancel_event, but kfree bring trouble
-    klist_remove (&waitList, &wait->waitNd_);
+    klist_remove (&kSYS.waitList_, &wait->waitNd_);
     if (wait->target_ != NULL)
       klist_remove (wait->target_, &wait->targetNd_);
     // Mark to delete
@@ -40,7 +39,7 @@ void async_ticks ()
     return;
 
   kSYS.timerMin_ = INT64_MAX;
-  kWaiting_t* wait = klist_begin(&waitList, kWaiting_t, waitNd_);
+  kWaiting_t* wait = klist_begin(&kSYS.waitList_, kWaiting_t, waitNd_);
   while (wait != NULL) {
     kWaiting_t* del = NULL;
 
@@ -66,7 +65,7 @@ void async_ticks ()
 /** Register to an event
   * @note maxtime is express in micro-seconds
   */
-int async_event(kThread_t* task, anchor_t* targetList, int reason, long param, long maxtime)
+int async_event(kThread_t* task, llhead_t* targetList, int reason, long param, long maxtime)
 {
   static int auto_incr = 0;
   assert (task == kCPU.current_);
@@ -87,7 +86,7 @@ int async_event(kThread_t* task, anchor_t* targetList, int reason, long param, l
   if (wait->timeout_ < kSYS.timerMin_)
     kSYS.timerMin_ = wait->timeout_;
 
-  klist_push_back(&waitList, &wait->waitNd_);
+  klist_push_back(&kSYS.waitList_, &wait->waitNd_);
   if (targetList != NULL) {
     wait->target_ = targetList;
     klist_push_back(targetList, &wait->targetNd_);
@@ -104,7 +103,7 @@ void async_cancel_event (kThread_t* task)
   assert (kislocked (&task->lock_));
   kWaiting_t* wait = task->event_;
   assert (wait != NULL);
-  klist_remove (&waitList, &wait->waitNd_);
+  klist_remove (&kSYS.waitList_, &wait->waitNd_);
   if (wait->target_ != NULL)
     klist_remove (wait->target_, &wait->targetNd_);
   kfree(wait);
@@ -112,7 +111,7 @@ void async_cancel_event (kThread_t* task)
 }
 
 // ---------------------------------------------------------------------------
-void async_trigger (anchor_t* targetList, int reason, long param)
+void async_trigger (llhead_t* targetList, int reason, long param)
 {
   kWaiting_t* wait = klist_begin(targetList, kWaiting_t, targetNd_);
 

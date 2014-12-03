@@ -2,6 +2,7 @@
 #define MEMORY_H__
 
 #include <kernel/core.h>
+#include <kernel/aatree.h>
 
 
 #define VMA_WRITE         0x002 ///< Pages can be written to
@@ -43,6 +44,7 @@ struct kVma {
   kVma_t*         next_;
   kVma_t*         prev_;
 
+  aanode_t        bbNode_;
 };
 
 struct kAddSpace 
@@ -54,6 +56,8 @@ struct kAddSpace
   kVma_t* first_;
   kVma_t* last_;
 
+  // TODO use BBtree !
+  aatree_t        bbTree_;
 };
 
 

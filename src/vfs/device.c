@@ -12,7 +12,6 @@
 #include <kernel/vfs.h>
 #include <kernel/params.h>
 
-anchor_t devicesList = ANCHOR_INIT;
 
 // ---------------------------------------------------------------------------
 /** Create and register a new device. */
@@ -35,7 +34,7 @@ id_t create_device(const char* nm, kInode_t* dir, kDevice_t* dev, kStat_t* stat)
   ino->dev_ = dev;
   ino->stat_.dev_ = dev->id_;
   ino->stat_.atime_ = time(NULL);
-  klist_push_back(&devicesList, &dev->all_);
+  klist_push_back(&kSYS.devices_, &dev->all_);
   kunlock (&ino->lock_);
   return dev->id_;
 }
@@ -46,7 +45,7 @@ id_t create_device(const char* nm, kInode_t* dir, kDevice_t* dev, kStat_t* stat)
 kDevice_t* search_device(id_t id)
 {
   kDevice_t* dev;
-  for (dev = klist_begin(&devicesList, kDevice_t, all_); 
+  for (dev = klist_begin(&kSYS.devices_, kDevice_t, all_); 
       dev != NULL; 
       dev = klist_next(dev, kDevice_t, all_)) {
     if (dev->id_ == id)

@@ -20,7 +20,7 @@ struct kUser
 {
   const char*   name_;
   int           privileges_;
-  list_t        allNd_;
+  llnode_t        allNd_;
   int           processCount_;
 };
 
@@ -43,7 +43,7 @@ struct kThread
   kProcess_t*   process_;
   kThread_t*    nextSc_;          /// Next item on scheduler list
 
-  list_t        taskNd_;
+  llnode_t        taskNd_;
   void*         execPointer_;
   long          param_;
   bool          restart_;
@@ -51,7 +51,7 @@ struct kThread
   uint32_t      kstack_;
 
   // TO DELETE
-  list_t        procNd_;         /// Node to connect on  process list
+  llnode_t        procNd_;         /// Node to connect on  process list
   kWaiting_t*   event_;
   kCpuRegs_t    regs_;
 };
@@ -64,13 +64,13 @@ struct kProcess
   int           flags_;       /// Process flags
 
   kProcess_t*   parent_;      /// Parent process - the one that starts it
-  anchor_t      children_;    /// List of children process.
-  list_t        siblingNd_;
-  list_t        allNd_;       /// List of every process on a system
+  llhead_t      children_;    /// List of children process.
+  llnode_t        siblingNd_;
+  llnode_t        allNd_;       /// List of every process on a system
 
   kInode_t*     workingDir_;  /// Working directory.
   kAssembly_t*  asmImg_;      /// 
-  anchor_t      threads_;
+  llhead_t      threads_;
   nanotime_t    execStart_;
   kAddSpace_t   memSpace_;
   int           runningTask_;
@@ -83,7 +83,7 @@ struct kProcess
   // TO DELETE
   int           childrenCount_;   /// Number of child processes
   int           threadCount_;     /// Number of allocated threads
-  list_t        procNd_;          /// Node to connect on procList
+  llnode_t        procNd_;          /// Node to connect on procList
   int           exitStatus_;      /// status of this process at exit
  
   kInode_t*     image_;
@@ -101,7 +101,7 @@ struct kAssembly
   int         flags_;
   kInode_t*   ino_;
   void*       entryPoint_;
-  anchor_t    sections_;
+  llhead_t    sections_;
 
   size_t      stackSize_;
 };
@@ -114,7 +114,7 @@ struct kSection
   uintptr_t   offset_;
   kSection_t* next_ ;
   int         flags_;
-  list_t      node_;
+  llnode_t      node_;
 };
 
 

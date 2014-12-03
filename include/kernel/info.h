@@ -60,10 +60,13 @@ struct kSysCore
   long          pidAutoInc_;
   long          taskAutoInc_;
 
-  anchor_t      userList_;
+  llhead_t      userList_;
+
+  llhead_t      devices_;
 
   kProcess_t* execStart_;
-  anchor_t    processes_;
+  llhead_t    processes_;
+  llhead_t    waitList_;
 
   // INODES
   int         autoIno_;
@@ -72,7 +75,7 @@ struct kSysCore
   kInode_t*   devNd_;
   kInode_t*   mntNd_;
   kInode_t*   pipeNd_;
-  anchor_t    inodeLru_;
+  llhead_t    inodeLru_;
 
   // MEMORY
 

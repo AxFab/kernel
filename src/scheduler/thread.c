@@ -85,15 +85,15 @@ static void ksch_remove (kThread_t* task)
 kThread_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 {
   assert (proc != NULL);
-  kVma_t ussk = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
-  ussk.limit_ = 1 * _Mb_;
-  kVma_t krns = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
-  krns.limit_ = PAGE_SIZE * 2;
+  kVma_t vma = {0};
+  vma.flags_ = VMA_STACK | VMA_READ | VMA_WRITE;
 
   // FIXME load memory
   kThread_t* task = KALLOC (kThread_t);
-  task->kstack_ = kvma_mmap (&proc->memSpace_, &krns)->base_;
-  task->ustack_ = kvma_mmap (&proc->memSpace_, &ussk)->limit_;
+  vma.limit_ = PAGE_SIZE * 2;
+  task->kstack_ = kvma_mmap (&proc->memSpace_, &vma)->base_;
+  vma.limit_ = 1 * _Mb_;
+  task->ustack_ = kvma_mmap (&proc->memSpace_, &vma)->limit_;
   task->taskId_ = kSys_NewPid();
   task->execOnCpu_ = -1;
   task->process_ = proc;

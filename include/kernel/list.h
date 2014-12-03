@@ -4,7 +4,7 @@
 #include <kernel/spinlock.h>
 
 
-static inline void klist_push_back(anchor_t* head, list_t* item)
+static inline void klist_push_back(llhead_t* head, llnode_t* item)
 {
   assert (item->prev_ == NULL);
   assert (item->next_ == NULL);
@@ -21,7 +21,7 @@ static inline void klist_push_back(anchor_t* head, list_t* item)
   kunlock (&head->lock_);
 }
 
-static inline void klist_push_front(anchor_t* head, list_t* item)
+static inline void klist_push_front(llhead_t* head, llnode_t* item)
 {
   assert (item->prev_ == NULL);
   assert (item->next_ == NULL);
@@ -39,9 +39,9 @@ static inline void klist_push_front(anchor_t* head, list_t* item)
 }
 
 #define klist_pop(h,t,m) (t*)klist_pop_((h), offsetof(t,m))
-static inline void* klist_pop_(anchor_t* head, size_t off) 
+static inline void* klist_pop_(llhead_t* head, size_t off) 
 {
-  list_t* item = head->first_;
+  llnode_t* item = head->first_;
   if (item == NULL)
     return NULL;
 
@@ -56,11 +56,11 @@ static inline void* klist_pop_(anchor_t* head, size_t off)
   return ((char*)item) - off;
 }
 
-static inline void klist_remove (anchor_t* head, list_t* item)
+static inline void klist_remove (llhead_t* head, llnode_t* item)
 {
   klock (&head->lock_);
 
-  list_t* w = item; // @todo try something faster!
+  llnode_t* w = item; // @todo try something faster!
   while (w->prev_) w = w->prev_;
   // @test Check that useless loop is optimized or add #if
   assert (w == head->first_);
@@ -85,11 +85,11 @@ static inline void klist_remove (anchor_t* head, list_t* item)
   kunlock (&head->lock_);
 }
 
-static inline void klist_remove_if (anchor_t* head, list_t* item)
+static inline void klist_remove_if (llhead_t* head, llnode_t* item)
 {
   klock (&head->lock_);
 
-  list_t* w = item; // @todo try something faster!
+  llnode_t* w = item; // @todo try something faster!
   while (w->prev_) w = w->prev_;
 
   if (w != head->first_) {
@@ -101,13 +101,13 @@ static inline void klist_remove_if (anchor_t* head, list_t* item)
   klist_remove (head, item);
 }
 
-static inline int list_isdetached (list_t* item) 
+static inline int list_isdetached (llnode_t* item) 
 {
   return item->prev_ == NULL && item->next_ == NULL;
 }
 
 #define klist_begin(h,t,m) (t*)klist_begin_((h), offsetof(t,m))
-static inline void* klist_begin_(anchor_t* head, size_t off) 
+static inline void* klist_begin_(llhead_t* head, size_t off) 
 {
   if (head->first_ == NULL)
     return  NULL;
@@ -117,7 +117,7 @@ static inline void* klist_begin_(anchor_t* head, size_t off)
 #define klist_next(i,t,m) (t*)klist_next_((i), offsetof(t,m))
 static inline void* klist_next_(void* item, size_t off) 
 {
-  list_t* node = (list_t*)(((char*)item) + off);
+  llnode_t* node = (llnode_t*)(((char*)item) + off);
   if (node->next_ == NULL)
     return NULL;
   return ((char*)node->next_) - off;
