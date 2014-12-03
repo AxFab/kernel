@@ -117,7 +117,7 @@ kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
   }
 
   // Create a new bucket
-  kprintf (LOG, "Create a new bucket\n");
+  // kprintf (LOG, "Create a new bucket\n");
   buck = KALLOC(kBucket_t);
   buck->offset_ = offset;
   buck->flags_ = 1;

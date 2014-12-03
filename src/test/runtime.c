@@ -67,36 +67,43 @@ char* kstrdup (const char* str)
 
 // ----------------------
 
+bool mem_accounting = true;
 int alloc_count = 0;
 int alloc_size = 0;
 int alloc_total = 0;
 int alloc_pick = 0;
 void* kalloc (size_t size, int slab)
 {
+  int upsize;
   __nounused(slab);
   void* ptr = calloc(size, 1);
-  int upsize = ((int*)ptr)[-1] & ~0x7;
-  alloc_count++;
-  alloc_size += upsize;
-  alloc_total += upsize;
-  if (alloc_size > alloc_pick) alloc_pick = alloc_size;
-  printf("Trace] allocation of size %d [%d]  <%d block for %d bytes>\n", size, upsize, alloc_count, alloc_size);
+  if (mem_accounting) {
+    alloc_count++;
+    upsize = ((int*)ptr)[-1] & ~0x7;
+    alloc_size += upsize;
+    alloc_total += upsize;
+    if (alloc_size > alloc_pick) alloc_pick = alloc_size;
+    printf("Trace] allocation of size %d [%d]  <%d block for %d bytes>\n", size, upsize, alloc_count, alloc_size);
+  }
   return ptr;
 }
 
 void kfree (void* ptr) 
 {
-  int size = ((int*)ptr)[-1] & ~0x7;
-  alloc_count--;
-  alloc_size -= size;
+  if (mem_accounting) {
+    int size = ((int*)ptr)[-1] & ~0x7;
+    alloc_count--;
+    alloc_size -= size;
+    printf("Trace] free pointer of size %d <%d block for %d bytes>\n", size, alloc_count, alloc_size);
+  }
   free(ptr);
-  printf("Trace] free pointer of size %d <%d block for %d bytes>\n", size, alloc_count, alloc_size);
 }
 
 void kstat()
 {
-  printf("Trace] Allocation is ::\n    Count \t%d\n    Size \t%d\n    Total \t%d\n    Pick \t%d\n", 
-    alloc_count, alloc_size, alloc_total, alloc_pick);
+  if (mem_accounting)
+    printf("Trace] Allocation is ::\n    Count \t%d\n    Size \t%d\n    Total \t%d\n    Pick \t%d\n", 
+      alloc_count, alloc_size, alloc_total, alloc_pick);
 }
 
 // int kpanic(const char* str, ...);

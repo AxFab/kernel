@@ -4,7 +4,7 @@
 
 
 // ---------------------------------------------------------------------------
-void mmu_prolog() 
+void mmu_prolog ()
 {
   memset ((void*)PG_BITMAP_ADD, 0xff, PG_BITMAP_LG);
   kSYS.pageAvailable_ = 0;
@@ -160,23 +160,22 @@ void mmu_dump()
   kprintf(tmp);
 }
 // ---------------------------------------------------------------------------
-int mmu_resolve (void* address, page_t page, int access, bool zero)
+int mmu_resolve (size_t address, page_t page, int access, bool zero)
 {
   assert (zero || page != 0);
   assert (!zero || page == 0);
 
-  uint32_t add = (uint32_t)address;
-  int dir = (add >> 22) & 0x3ff;
-  int tbl = (add >> 12) & 0x3ff;
+  int dir = (address >> 22) & 0x3ff;
+  int tbl = (address >> 12) & 0x3ff;
 
   // kprintf ("resolve page fault at _[%d][%d] for %x - %x\n", dir, tbl, address, add);
-  uint32_t* table = (access & MMU_KERNEL) ? MMU_LEVEL1_KRN() : MMU_LEVEL1();
+  uint32_t* table = (access & VMA_KERNEL) ? MMU_LEVEL1_KRN() : MMU_LEVEL1();
   if (table[dir] == 0) {
     page_t dirPage = mmu_newpage();
-    dirPage |= (MMU_ACCESS_WR | ((access & MMU_KERNEL) ? 0 : MMU_ACCESS_UR));
+    dirPage |= (MMU_ACCESS_WR | ((access & VMA_KERNEL) ? 0 : MMU_ACCESS_UR));
     table[dir] = dirPage;
 
-    if (access & MMU_KERNEL) 
+    if (access & VMA_KERNEL) 
       MMU_LEVEL1()[dir] = dirPage;
 
     memset(MMU_LEVEL2(dir), 0, PAGE_SIZE);
@@ -185,12 +184,12 @@ int mmu_resolve (void* address, page_t page, int access, bool zero)
   if (MMU_LEVEL2(dir)[tbl] == 0) {
     if (page == 0)
       page = mmu_newpage();
-    page |= (access & MMU_WRITE) ? MMU_ACCESS_WR : 0; 
-    page |= (access & MMU_KERNEL) ? 0 : MMU_ACCESS_UR;
+    page |= (access & VMA_WRITE) ? MMU_ACCESS_WR : 0; 
+    page |= (access & VMA_KERNEL) ? 0 : MMU_ACCESS_UR;
     MMU_LEVEL2(dir)[tbl] = page;
 
     if (zero)
-      memset((void*)(add & ~(PAGE_SIZE-1)), 0, PAGE_SIZE);
+      memset((void*)(address & ~(PAGE_SIZE-1)), 0, PAGE_SIZE);
   }
 
   return __seterrno(0);

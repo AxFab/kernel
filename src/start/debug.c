@@ -41,10 +41,8 @@ void kswitchdump (int ebp)
   kprintf ("  esp: %8x\n", stack[15]);
   kprintf ("   ss: %8x\n", stack[16]);
 
-  kvma_display (&kCPU.current_->process_->memSpace_);
-  kdump ((void*)stack[7], 32);
-//  kprintf ("  esp: %8x\n", stack[15]);
-//  kprintf ("   ss: %4x\n", stack[16]);
+  // kvma_display (&kCPU.current_->process_->memSpace_);
+  // kdump ((void*)stack[7], 32);
 
   // for (;;);
 }

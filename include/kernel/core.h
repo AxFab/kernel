@@ -121,6 +121,7 @@ struct aatree
   int         count_;
 };
 
+#define get_item(a,s,m)   ((a) == NULL ? NULL : ((s*)(((char*)(a)) - offsetof(s,m))))
 
 /* ===========================================================================
         Kernel macros
@@ -139,8 +140,9 @@ struct aatree
 
 // Macro min-max -------------------------------------------------------------
 // #if !defined(MIN) || !defined(MAX)
-#define MIN(a,b) ((a)<=(b)?(a):(b))
-#define MAX(a,b) ((a)>=(b)?(a):(b))
+#define MIN(a,b)    ((a)<=(b)?(a):(b))
+#define MAX(a,b)    ((a)>=(b)?(a):(b))
+#define IS_PW2(v)   ((v) != 0 && ((v) & ((v)-1)) == 0)
 // #endif
 
 // Macro error ---------------------------------------------------------------

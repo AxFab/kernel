@@ -74,6 +74,7 @@ int kInt_Clock (kCpuRegs_t* regs)
   // kTty_Putc ('.');
   if (++ticksCount > CLOCK_HZ / 100) {
     ticksCount = 0;
+    
     // kprintf ("System clock: %lld us\n", kSYS.now_);
 
     ksch_ticks((kCpuRegs_t*)&regs);
@@ -146,24 +147,19 @@ int kInt_SysCall (kCpuRegs_t* regs)
 
 int kpg_fault (uint32_t address);
 
-int page_fault (void* address, int cause, bool onsystem);
+int page_fault (size_t address, int cause);
 
 int kInt_PageFault (uint32_t address, kCpuRegs_t* regs)
 {
   int errcode = regs->eip;
   regs = (kCpuRegs_t*)(((char*)regs) + 4); // due to pushed code
 
-  // if (regs->cs == 0x08)
-  // if (regs->cs == 0x08 && keyboard_tty != NULL) {
-  //   kprintf ("KERNEL PAGE FAULT AT 0x%X\n", address);
-  // }
-  // if (address == 0xc0ffee) {
-    // kregisters (regs);
-    // kdump ((void*)regs-0x10, 128);
-  // }
-  // return kpg_fault (address);
+  if (regs->cs == 0x08)
+    assert ((errcode & PF_USER) == 0);
+  else 
+    assert ((errcode & PF_USER) != 0);
 
-  return page_fault ((void*)address, errcode, regs->cs == 0x08);
+  return page_fault ((size_t)address, errcode);
 }
 
 

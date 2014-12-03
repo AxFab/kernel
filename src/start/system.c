@@ -104,7 +104,7 @@ int kCore_Initialize ()
   kCpu_SetStatus (CPU_STATE_SYSCALL);
 
   initialize_vfs ();
-  kvma_init ();
+  // kvma_init ();
   VBA_Initialize (kSYS.devNd_);
 
 

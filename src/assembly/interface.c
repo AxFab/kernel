@@ -36,27 +36,29 @@ void kasm_destroy (kAssembly_t* assembly)
  *  Basically, it place the correct virtual memory area at the right addresses.
  *  \note A nice feature will be to compute offset for relocation.
  */
-int kasm_load (kAddSpace_t* mmsp, kInode_t* ino)
+int kasm_load (kAddSpace_t* mspace, kInode_t* ino)
 {
-  kSection_t* sec;
+  kSection_t* section;
   kAssembly_t* assembly = ino->assembly_;
   kVma_t area = {0};
-  area.flags_ = VMA_EXECUTABLE;
+  area.flags_ = VMA_FILE;
   area.ino_ = ino;
 
-  sec = assembly->section_;
-  while (sec != NULL) {
-    area.base_ = sec->address_;
-    area.limit_ = area.base_ + sec->length_;
-    area.offset_ = sec->offset_;
-    area.flags_ = (sec->flags_ & 7) | VMA_EXECUTABLE;
-    if ((sec->flags_ & VMA_WRITE) == 0 )
+  section = assembly->section_;
+  while (section != NULL) {
+    area.base_ = section->address_;
+    area.limit_ = area.base_ + section->length_;
+    area.offset_ = section->offset_;
+    area.flags_ = (section->flags_ & 7) | VMA_FILE;
+    if ((section->flags_ & VMA_WRITE) == 0 )
       area.flags_ |= VMA_SHARED;
-    // kprintf ("ELF : %x - %x", sec->address_, sec->offset_);
-    assert ((sec->offset_ & (PAGE_SIZE -1)) == 0);
+    // kprintf ("ELF : %x - %x", section->address_, section->offset_);
+    assert ((section->offset_ & (PAGE_SIZE -1)) == 0);
 
-    kvma_mmap (mmsp, &area);
-    sec = sec->next_;
+    // kvma_mmap (mspace, &area);
+    vmarea_map_section (mspace, section, ino);
+
+    section = section->next_;
   }
 
   return __noerror();

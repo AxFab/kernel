@@ -45,7 +45,6 @@ static inline aanode_t* aa_split(aanode_t* node)
 
 
 // ---------------------------------------------------------------------------
-#define aa_insert(t,n) (t)->root_ = aa_insert_((t)->root_,n,AA_RECURS_LIMIT)
 static inline aanode_t* aa_insert_(aanode_t* root, aanode_t* node, int limit)
 {
   if (--limit < 0) throw();
@@ -69,7 +68,6 @@ static inline aanode_t* aa_insert_(aanode_t* root, aanode_t* node, int limit)
 
 
 // ---------------------------------------------------------------------------
-#define aa_delete(t,n) (t)->root_ = aa_delete_((t),(t)->root_,n,AA_RECURS_LIMIT)
 static inline aanode_t* aa_delete_(aatree_t* tree, aanode_t* root, aanode_t* node, int limit)
 {
   if (--limit < 0) throw();
@@ -117,17 +115,6 @@ static inline aanode_t* aa_delete_(aatree_t* tree, aanode_t* root, aanode_t* nod
 
 
 // ---------------------------------------------------------------------------
-static inline aanode_t* aa_best (aanode_t* root) 
-{
-  if (root == NULL)
-    return NULL;
-  while (root->left_ != NULL)
-    root = root->left_;
-  return root;
-}
-
-// ---------------------------------------------------------------------------
-#define aa_search_lesseq(t,v) aa_search_lesseq_(t->root_,v,AA_RECURS_LIMIT)
 static inline aanode_t* aa_search_lesseq_ (aanode_t* root, long value, int limit)
 {
   aanode_t* best;
@@ -139,9 +126,54 @@ static inline aanode_t* aa_search_lesseq_ (aanode_t* root, long value, int limit
     return aa_search_lesseq_(root->left_, value, limit-1);
 
   best = aa_search_lesseq_(root->right_, value, limit-1);
-  if (best != NULL && root->value_ > best->value_)
+  if (best != NULL && root->value_ < best->value_)
     return best;
   return root;
+}
+
+
+// ---------------------------------------------------------------------------
+static inline aanode_t* aa_best (aatree_t* tree) 
+{
+  klock(&tree->lock_);
+  aanode_t* node = tree->root_;
+  if (node == NULL) {
+    kunlock(&tree->lock_);
+    return NULL;
+  }
+  
+  while (node->left_ != NULL)
+    node = node->left_;
+  kunlock(&tree->lock_);
+  return node;
+}
+
+
+// ---------------------------------------------------------------------------
+static inline void aa_insert (aatree_t* tree, aanode_t* node) 
+{
+  klock(&tree->lock_);
+  tree->root_ = aa_insert_(tree->root_, node, AA_RECURS_LIMIT);
+  kunlock(&tree->lock_);
+} 
+
+
+// ---------------------------------------------------------------------------
+static inline void aa_delete (aatree_t* tree, aanode_t* node) 
+{
+  klock(&tree->lock_);
+  tree->root_ = aa_delete_(tree, tree->root_, node, AA_RECURS_LIMIT);
+  kunlock(&tree->lock_);
+} 
+
+
+// ---------------------------------------------------------------------------
+static inline aanode_t* aa_search_lesseq (aatree_t* tree, long value) 
+{
+  klock(&tree->lock_);
+  aanode_t* node = aa_search_lesseq_(tree->root_, value, AA_RECURS_LIMIT);
+  kunlock(&tree->lock_);
+  return node;
 }
 
 

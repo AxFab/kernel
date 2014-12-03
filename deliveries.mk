@@ -56,8 +56,14 @@ $(eval $(call UT_PROGRAM,task,   \
 			src/test/task.c            \
 		))
 
+# # -------------------------------------------------------
+$(eval $(call UT_PROGRAM,sched, \
+			src/scheduler/sched.c          \
+			src/scheduler/runtime.c         \
+		))
 
 # # -------------------------------------------------------
 $(eval $(call UT_PROGRAM,aatree, \
 			src/test/aatree.c          \
+			src/test/runtime.c         \
 		))

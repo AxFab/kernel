@@ -12,13 +12,14 @@
 #include <kernel/memory.h>
 #include <kernel/vfs.h>
 #include <kernel/info.h>
+#include <kernel/task.h>
 
-// ===========================================================================
+
 /** */
-static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
+static kVma_t* kvma_map_begin (kAddSpace_t* mspace, kVma_t* area)
 {
   kVma_t* vma = NULL;
-  kVma_t* origin = addp->first_;
+  kVma_t* origin = mspace->first_;
   uintptr_t base = MMU_USERSP_BASE;
   area->limit_ = ALIGN_UP(area->limit_, PAGE_SIZE);
   size_t length = (size_t)(area->limit_ - area->base_);
@@ -36,7 +37,7 @@ static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
         origin->prev_->next_ = vma;
 
       else
-        addp->first_ = vma;
+        mspace->first_ = vma;
 
       origin->prev_ = vma;
       vma->base_ = base;
@@ -56,9 +57,9 @@ static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
 
     // INSERT LAST
     base = origin->limit_;
-    addp->last_ = KALLOC(kVma_t);
+    mspace->last_ = KALLOC(kVma_t);
     memcpy (vma, area, sizeof(kVma_t));
-    vma = origin->next_ = addp->last_;
+    vma = origin->next_ = mspace->last_;
     vma->prev_ = origin;
     vma->base_ = base;
     vma->limit_ = base + length;
@@ -72,10 +73,10 @@ static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
 
 // ---------------------------------------------------------------------------
 /** */
-static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
+static kVma_t* kvma_map_at (kAddSpace_t* mspace, kVma_t* area)
 {
   kVma_t* vma = NULL;
-  kVma_t* origin = addp->first_;
+  kVma_t* origin = mspace->first_;
   uintptr_t address = area->base_;
   area->limit_ = ALIGN_UP(area->limit_, PAGE_SIZE);
   size_t length = (size_t)(area->limit_ - area->base_);
@@ -87,7 +88,7 @@ static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
     vma->next_ = origin;
     vma->prev_ = NULL;
     origin->prev_ = vma;
-    addp->first_ = vma;
+    mspace->first_ = vma;
     return vma;
   }
 
@@ -95,7 +96,7 @@ static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
 
   while (--maxLoop) {
     if (origin->limit_ > address)  {
-      return kvma_map_begin (addp, area);
+      return kvma_map_begin (mspace, area);
     }
 
     if (origin->next_ != NULL && origin->next_->base_ >= address + length) {
@@ -112,7 +113,7 @@ static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
       vma = KALLOC(kVma_t);
       memcpy (vma, area, sizeof(kVma_t));
       vma->next_ = NULL;
-      addp->last_ = vma;
+      mspace->last_ = vma;
       origin->next_ = vma;
       vma->prev_ = origin;
       return vma;
@@ -126,116 +127,177 @@ static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
 }
 
 
-// ---------------------------------------------------------------------------
-// Try before an address (BEFORE HEAP, BEFORE STACK - to preserve heap)
-// static kVma_t* kvma_map_before (kAddSpace_t* addp, kVma_t* area)
-// {
-//   __seterrno(ENOSYS);
-//   return NULL;
-// }
+
 
 
 // ===========================================================================
-/** */
-kVma_t* kvma_mmap (kAddSpace_t* addressSpace, kVma_t* area)
+//      Map area
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+/** Will allocate a new segment on the address space */
+kVma_t* vmarea_map (kAddSpace_t* mspace, size_t length, int flags) 
 {
-  kVma_t* vma;
-
-  // TODO move area check here
-
-  if (area->ino_)
-    inode_open(area->ino_); // TODO if fail !?
-
-  klock (&addressSpace->lock_, LOCK_VMA_MMAP);
-
-  if (area->base_ != 0)
-    vma = kvma_map_at (addressSpace, area);
-
-  else
-    vma = kvma_map_begin (addressSpace, area);
-
-  if (vma == NULL && area->ino_)
-    inode_close (area->ino_);
-
-  if (vma != NULL) {
-    addressSpace->vrtPages_ += (vma->limit_ - vma->base_) / PAGE_SIZE;
-
-    vma->flags_ = area->flags_;
-    vma->offset_ = area->offset_;
-    vma->ino_ = area->ino_;
-
-    // assert ((vma->offset_ & (PAGE_SIZE-1)) == 0);
+  kVma_t area = {0};
+  area.flags_ = flags;
+  area.limit_ = length;
+  if (length == 0 || !IS_PW2(flags & VMA_TYPE)) {
+    __seterrno(EINVAL);
+    return NULL;
   }
 
-  kunlock (&addressSpace->lock_);
-  return vma;
+  klock (&mspace->lock_);
+  kVma_t* narea;
+  switch (flags & VMA_TYPE) {
+    case VMA_SHM:
+    case VMA_FILE:
+    case VMA_HEAP:
+    case VMA_STACK:
+      narea = kvma_map_begin (mspace, &area);
+      break;
+    default:
+      assert (0);
+  }
+  
+  if (narea == NULL) {
+    kunlock (&mspace->lock_);
+    return NULL;
+  }
+
+  narea->flags_ = flags;
+  mspace->vrtPages_ += length / PAGE_SIZE;
+  narea->bbNode_.value_ = (long)narea->base_;
+  aa_insert (&mspace->bbTree_, &narea->bbNode_);
+  kunlock (&mspace->lock_);
+  return narea;
 }
 
 
 // ---------------------------------------------------------------------------
-
-int kvma_unmap (kAddSpace_t* addp, uintptr_t address, size_t length)
+/** Will allocate a new segment at a fixed address on the address space */
+kVma_t* vmarea_map_at (kAddSpace_t* mspace, size_t address, size_t length, int flags)
 {
-  return __seterrno(ENOSYS);
+  assert ((flags & VMA_TYPE) != VMA_HEAP);
+  assert ((flags & VMA_TYPE) != VMA_STACK);
+
+  kVma_t area = {0};
+  area.flags_ = flags;
+  area.base_ = address;
+  area.limit_ = address + length;
+  if (area.base_ >= area.limit_ || !IS_PW2(flags & VMA_TYPE)) {
+    __seterrno(EINVAL);
+    return NULL;
+  }
+
+  klock (&mspace->lock_);
+  kVma_t* narea = kvma_map_at (mspace, &area);
+  if (narea == NULL) {
+    kunlock (&mspace->lock_);
+    return NULL;
+  }
+
+  narea->flags_ = flags;
+  mspace->vrtPages_ += length / PAGE_SIZE;
+  narea->bbNode_.value_ = (long)narea->base_;
+  aa_insert (&mspace->bbTree_, &narea->bbNode_);
+  kunlock (&mspace->lock_);
+  return narea;
+}
+
+
+// ===========================================================================
+//      Map helper
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+/** Will map an assembly on the address space */
+kVma_t* vmarea_map_section (kAddSpace_t* mspace, kSection_t* section, kInode_t* ino)
+{
+  int flags = (section->flags_ & (VMA_ACCESS | VMA_ASSEMBLY)) | VMA_FILE;
+
+  if ((flags & VMA_WRITE) == 0)
+    flags |= VMA_SHARED;
+
+  kVma_t* area = vmarea_map_at (mspace, section->address_, section->length_, flags);
+  if (area == NULL)
+    return NULL;
+
+  if (vmarea_map_ino (area, ino, section->offset_)) {
+    vmarea_unmap_area (mspace, area);
+    return NULL;
+  }
+
+  return area;
 }
 
 
 // ---------------------------------------------------------------------------
-
-int kvma_grow_up (kAddSpace_t* addp, void* address, size_t extra_size)
+int vmarea_map_ino (kVma_t* area, kInode_t* ino, size_t offset)
 {
-  kVma_t* vma = kvma_look_at (addp, (uintptr_t)address);
+  //@todo think about link by bucket and add a dir to filter...
+  if ((area->flags_ & (VMA_ASSEMBLY | VMA_FILE)) == 0) 
+    return __seterrno(EINVAL);
+  
+  if (inode_open (ino)) {
+    return __geterrno();
+  }
+
+  area->offset_ = offset;
+  area->ino_ = ino;
+  return __seterrno(0);
+}
+
+// ---------------------------------------------------------------------------
+int vmarea_grow (kAddSpace_t* mspace, kVma_t* area, size_t extra_size)
+{
   extra_size = ALIGN_UP(extra_size, PAGE_SIZE);
 
-  if (!vma)
-    return __geterrno();
+  if ((area->flags_ & VMA_GROWSUP) != 0) {
+    klock (&mspace->lock_);
+    if (area->next_->base_ >= area->limit_ + extra_size) {
+      area->limit_ += extra_size;
+      mspace->vrtPages_ += extra_size / PAGE_SIZE;
+      kunlock (&mspace->lock_);
+      return __seterrno(0);
+    }
 
-  if ((vma->flags_ & VMA_GROWSUP) == 0)
-    return __seterrno (EPERM);
-
-  __noerror();
-  klock (&addp->lock_, LOCK_VMA_GROW);
-
-  if (vma->next_->base_ >= vma->limit_ + extra_size) {
-    vma->limit_ += extra_size;
-    addp->vrtPages_ += extra_size / PAGE_SIZE;
-
-  } else {
+    kunlock (&mspace->lock_);
     __seterrno (ENOMEM);
   }
 
-  kunlock (&addp->lock_);
-  return __geterrno();
+
+  if ((area->flags_ & VMA_GROWSDOWN) != 0) {
+    klock (&mspace->lock_);
+
+    if (area->prev_->limit_ <= area->base_ - extra_size) {
+      area->base_ -= extra_size;
+      mspace->vrtPages_ += extra_size / PAGE_SIZE;
+      kunlock (&mspace->lock_);
+      return __seterrno(0);
+    }
+
+    kunlock (&mspace->lock_);
+    __seterrno (ENOMEM);
+  }
+
+  return __seterrno (EPERM);
+}
+
+// ===========================================================================
+//      Unmap
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+void vmarea_unmap_area (kAddSpace_t* mspace, kVma_t* area)
+{
 }
 
 
 // ---------------------------------------------------------------------------
-
-int kvma_grow_down (kAddSpace_t* addp, void* address, size_t extra_size)
+void vmarea_unmap (kAddSpace_t* mspace, size_t address, size_t length) 
 {
-  kVma_t* vma = kvma_look_at (addp, (uintptr_t)address);
-  extra_size = ALIGN_UP(extra_size, PAGE_SIZE);
-
-  if (!vma)
-    return __geterrno();
-
-  if ((vma->flags_ & VMA_GROWSDOWN) == 0)
-    return __seterrno (EPERM);
-
-  __noerror();
-  klock (&addp->lock_, LOCK_VMA_GROW);
-
-  if (vma->prev_->limit_ <= vma->base_ - extra_size) {
-    vma->base_ -= extra_size;
-    addp->vrtPages_ += extra_size / PAGE_SIZE;
-
-  } else {
-    __seterrno (ENOMEM);
-  }
-
-  kunlock (&addp->lock_);
-  return __geterrno();
 }
+
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

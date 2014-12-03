@@ -17,7 +17,7 @@
 #include <kernel/cpu.h>
 
 #define __noreturn
-void __noreturn kCpu_Switch2 (kCpuRegs_t* regs, uint32_t* dir, uint32_t ss, uint32_t sp);
+void __noreturn kCpu_Switch2 (kCpuRegs_t* regs, uint32_t dir, uint32_t ss, uint32_t sp);
 void __noreturn kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t ss);
 void __noreturn kCpu_Halt ();
 
@@ -44,6 +44,7 @@ static int ksch_timeslice (kThread_t* task)
 void ksch_ticks (kCpuRegs_t* regs)
 {
   async_ticks();
+
   if (!ksch_ontask()) {
     ksch_pick ();
 
@@ -77,6 +78,7 @@ void ksch_pick ()
   if (waiting >= 0) {
 
     pick = kCPU.current_->nextSc_;
+    int loopLimit = 5000;
     do {
       if (pick->state_ != TASK_STATE_WAITING) {
         pick = pick->nextSc_;
@@ -112,14 +114,17 @@ void ksch_pick ()
       // kregisters (&pick->regs_);
       // kprintf ("... call %x, %x, %x, %x\n", &pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
       if (pick->regs_.cs == 8) 
-        kCpu_Switch2 (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
+        kCpu_Switch2 (&pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
       else 
         kCpu_Switch (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
+
       return;
 
-    } while (pick != kCPU.current_);
+    } while (/*pick != kCPU.current_ && */ --loopLimit > 0);
 
     kprintf ("scheduler] pick next didn't find any available task\n");
+    task_print ();
+    for (;;);
   }
 
   if (KLOG_SCH) kprintf ("scheduler] No task go idle...\n");

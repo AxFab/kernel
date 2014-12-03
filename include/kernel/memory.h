@@ -3,28 +3,7 @@
 
 #include <kernel/core.h>
 #include <kernel/aatree.h>
-
-
-#define VMA_WRITE         0x002 ///< Pages can be written to
-#define VMA_EXEC          0x001 ///< Pages can be executed
-#define VMA_READ          0x004 ///< Pages can be read from
-#define VMA_SHARED        0x008 ///< Page are shared
-#define VMA_MAYREAD       0x010 ///< The VMA_READ flag can be set
-#define VMA_MAYWRITE      0x020 ///< The VMA_WRITE flag can be set
-#define VMA_MAYEXEC       0x040 ///< The VMA_EXEC flag can be set
-#define VMA_MAYSHARED     0x080 ///< The VMA_SHARED flag can be set
-#define VMA_GROWSDOWN     0x100 ///< The area can grow downward
-#define VMA_GROWSUP       0x200 ///< The area can grow upward
-
-#define VMA_SHM           0x400 ///< The area is used for shared memory
-#define VMA_EXECUTABLE    0x800 ///< The area map an executable file
-#define VMA_HEAP          0x1000 ///< The area map a process heap
-#define VMA_STACK         0x2000 ///< The area map a thread stack
-
-#define VMA_CODE          0x4000
-#define VMA_DATA          0x8000
-
-#define VMA_KERNEL       0x10000
+#include <kernel/mmu.h>
 
 
 
@@ -33,18 +12,19 @@
 
 
 struct kVma {
-  uintptr_t       base_;
-  uintptr_t       limit_;
+  size_t       base_;
+  size_t       limit_;
+  size_t       length_;
 
+  kVma_t*         next_;
+  kVma_t*         prev_;
+  aanode_t        bbNode_;
 
   int             flags_;
   kInode_t*       ino_;
   off_t           offset_;
 
-  kVma_t*         next_;
-  kVma_t*         prev_;
 
-  aanode_t        bbNode_;
 };
 
 struct kAddSpace 
@@ -68,34 +48,27 @@ struct kAddSpace
 // MEMORY/ADDSPACE ===========================================================
 /** Initialize a new address space structure with a first user-stack */
 int addspace_init(kAddSpace_t* space, int flags);
+/** Find the area holding an address */
+kVma_t* addspace_find(kAddSpace_t* mspace, size_t address);
+
+void addspace_display (kAddSpace_t* mspace);
+
+// MEMORY/VMAREA =============================================================
+/** Will allocate a new segment on the address space */
+kVma_t* vmarea_map (kAddSpace_t* mspace, size_t length, int flags);
+kVma_t* vmarea_map_at (kAddSpace_t* mspace, size_t address, size_t length, int flags);
+kVma_t* vmarea_map_section (kAddSpace_t* mspace, kSection_t* sector, kInode_t* ino);
+int vmarea_map_ino (kVma_t* area, kInode_t* ino, size_t offset);
+int vmarea_grow (kAddSpace_t* mspace, kVma_t* area, size_t extra_size);
+void vmarea_unmap_area (kAddSpace_t* mspace, kVma_t* area);
+void vmarea_unmap (kAddSpace_t* mspace, size_t address, size_t length);
+
+// MEMORY/PAGE ===============================================================
+int page_fault (size_t address, int cause) ;
 
 
-void kvma_init (void);
-kAddSpace_t* kvma_new (size_t stack_size);
-kAddSpace_t* kvma_clone (kAddSpace_t* addp);
-int kvma_destroy (kAddSpace_t* addp);
 
-kVma_t* kvma_mmap (kAddSpace_t* addressSpace, kVma_t* area);
-int kvma_unmap (kAddSpace_t* addp, uintptr_t address, size_t length);
-int kvma_grow_up (kAddSpace_t* addp, void* address, size_t extra_size);
-int kvma_grow_down (kAddSpace_t* addp, void* address, size_t extra_size);
 
-kVma_t* kvma_look_at (kAddSpace_t* addp, uintptr_t address);
-kVma_t* kvma_look_ino (kAddSpace_t* addp, kInode_t* ino, off_t offset);
-void kvma_display(kAddSpace_t* addp);
-
-void kpg_dump (uint32_t *table);
-// static void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page, int reset);
-int kpg_fault (uint32_t address);
-uint32_t kpg_new ();
-
-void kpg_init (void);
-uintptr_t kpg_alloc (void);
-void kpg_release (uintptr_t page);
-void kpg_ram (uint64_t base, uint64_t length);
-
-// void kpg_reset_stack ();
-// void* mmu_temporary (uint32_t* pg);
 void* mmu_temporary (page_t* pg);
 
 #endif /* MEMORY_H__ */

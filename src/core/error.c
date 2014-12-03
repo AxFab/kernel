@@ -48,6 +48,10 @@ int kpanic (const char *str, ...)
   for (;;);
 }
 
+void throw()
+{
+  kpanic ("Kernel throw: Stack overflow\n");
+}
 
 // ----------------------------------------------------------------------------
 /**

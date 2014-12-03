@@ -7,7 +7,7 @@ page_t mmu_newpage()
 
 }
 
-int mmu_resolve (void* address, page_t page, int access, bool zero)
+int mmu_resolve (size_t address, page_t page, int access, bool zero)
 {
 
 }
