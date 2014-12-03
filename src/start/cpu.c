@@ -220,7 +220,7 @@ void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param, uintptr_t s
   regs->ss = 0x33;
 }
 
-void kCpu_Save (kTask_t* task, kCpuRegs_t* regs)
+void kCpu_Save (kThread_t* task, kCpuRegs_t* regs)
 {
   memcpy (&task->regs_, regs, sizeof(kCpuRegs_t));
   if (task->regs_.cs == 0x08) {

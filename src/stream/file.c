@@ -178,7 +178,7 @@ static kStream_t* stream_new (kProcess_t* proc)
   }
 
   proc->streamCap_ += 8;
-  openFd = kalloc (sizeof(kStream_t*) * proc->streamCap_);
+  openFd = kalloc (sizeof(kStream_t*) * proc->streamCap_, 0);
   memcpy (openFd, proc->openStreams_,
     sizeof(kStream_t*) * (proc->streamCap_));
   openFd[i] = KALLOC (kStream_t);
@@ -194,7 +194,7 @@ static int stream_build (kStream_t* stm, kInode_t* ino, int flags)
   // Assert ino, flags
   assert (ino != NULL);
   
-  kfs_grab (ino); // TODO if failed !? free readFD cause probably a lock stuff
+  inode_open (ino); // TODO if failed !? free readFD cause probably a lock stuff
   stm->ino_ = ino;
   int type = ino->stat_.mode_ & S_IFMT;
   switch (type) {
@@ -232,7 +232,7 @@ int stream_tty (kProcess_t* proc, kInode_t* tty)
   assert (proc->streamCap_ == 0);
   assert (proc->openStreams_ == NULL);
 
-  kStream_t** openFd = kalloc (sizeof(kStream_t*) * 8);
+  kStream_t** openFd = kalloc (sizeof(kStream_t*) * 8, 0);
   proc->openStreams_ = openFd;
   proc->streamCap_ = 8;
   openFd[0] = KALLOC(kStream_t);

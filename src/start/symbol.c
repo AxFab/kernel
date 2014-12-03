@@ -13,12 +13,12 @@ void ksymbols_load (kInode_t* ino)
   int state = 0;
   int lg = ino->stat_.length_;
   uintptr_t ptr;
-  char *tmp = kalloc (ALIGN_UP (lg, PAGE_SIZE));
-  char *str = kalloc (512);
-  char *sym = kalloc (512);
-  char *add = kalloc (20);
+  char *tmp = kalloc (ALIGN_UP (lg, PAGE_SIZE), 0);
+  char *str = kalloc (512, 0);
+  char *sym = kalloc (512, 0);
+  char *add = kalloc (20, 0);
 
-  kfs_grab (ino);
+  inode_open (ino);
   klock(&ino->lock_);
   feed_inode (ino, tmp, ALIGN_UP (lg, ino->stat_.block_) / ino->stat_.block_, 0);
   kunlock(&ino->lock_);
@@ -59,6 +59,6 @@ void ksymbols_load (kInode_t* ino)
   kfree (str);
   kfree (sym);
   kfree (add);
-  kfs_release (ino);
+  inode_close (ino);
 }
 

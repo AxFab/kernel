@@ -1,21 +1,21 @@
-#include <kernel/info.h>
+#include <kernel/core.h>
 
 // Kernel Info structures
 kCpuCore_t kCPU;
 kSysCore_t kSYS;
 
-kHdwCore_t kHDW = {
-  USR_SPACE_BASE,
-  USR_SPACE_LIMIT,
-  PG_BITMAP_ADD,
-  PG_BITMAP_LG,
-  (uint32_t*)0x2000, // directory mapping of the kernel
-  (uint32_t*)0x3000,
-  (uint32_t*)0x4000, // directory for screen buffer
-};
+// kHdwCore_t kHDW = {
+//   USR_SPACE_BASE,
+//   USR_SPACE_LIMIT,
+//   PG_BITMAP_ADD,
+//   PG_BITMAP_LG,
+//   (uint32_t*)0x2000, // directory mapping of the kernel
+//   (uint32_t*)0x3000,
+//   (uint32_t*)0x4000, // directory for screen buffer
+// };
 
 
-// ===========================================================================
+// ========== =================================================================
 // ---------------------------------------------------------------------------
 static int kSys_RunnableTasks()
 {
@@ -47,8 +47,8 @@ int kCpu_SetStatus (int state)
   assert (state > 0 && state < CPU_STATE_COUNT);
 
   int oldstate = kCPU.state_;
-  ltime_t now = time (NULL);
-  ltime_t elapsed = now - kCPU.lastStatus_;
+  nanotime_t now = time (NULL);
+  nanotime_t elapsed = now - kCPU.lastStatus_;
   kCPU.stateTime_[kCPU.state_] += elapsed;
   kCPU.stateTime_[0] += elapsed;
   kCPU.lastStatus_ = now;
@@ -71,7 +71,7 @@ void kCpu_Statistics ()
 
   kCpu_SetStatus (kCPU.state_);
 
-  ltime_t elapsed = kCPU.stateTime_[0];
+  nanotime_t elapsed = kCPU.stateTime_[0];
   for (i = 1; i < CPU_STATE_COUNT; ++i) {
     kCPU.statistics_[i] = (int)(kCPU.stateTime_[i] * KSTATS_PRECISION / elapsed);
   }

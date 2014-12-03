@@ -37,7 +37,7 @@ void ATA_Initialize (kInode_t* dev)
   outb(0x376 + ATA_REG_CONTROL - 0x0A, 2);
 
   for (i = 0; i < 4; ++i) {
-    printf ("%s: ", name[i]);
+    kprintf ("%s: ", name[i]);
     if (ATA_Detect(&sdx[i])) {
       int block = sdx[i]._type == IDE_ATA ? 512 : 2048;
       stat.block_ = block;

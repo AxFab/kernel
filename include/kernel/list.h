@@ -3,26 +3,12 @@
 
 #include <kernel/spinlock.h>
 
-typedef struct list         list_t;
-typedef struct anchor       anchor_t;
-struct anchor
-{
-  spinlock_t  lock_;
-  list_t*     first_;
-  list_t*     last_;
-  int         count_;
-};
-
-struct list 
-{
-  list_t*     prev_;
-  list_t*     next_;
-};
-
-#define ANCHOR_INIT  {LOCK_INIT, NULL, NULL, 0}
 
 static inline void klist_push_back(anchor_t* head, list_t* item)
 {
+  assert (item->prev_ == NULL);
+  assert (item->next_ == NULL);
+
   klock (&head->lock_);
   item->prev_ = head->last_;
   if (head->last_ != NULL)
@@ -37,6 +23,9 @@ static inline void klist_push_back(anchor_t* head, list_t* item)
 
 static inline void klist_push_front(anchor_t* head, list_t* item)
 {
+  assert (item->prev_ == NULL);
+  assert (item->next_ == NULL);
+
   klock (&head->lock_);
   item->next_ = head->first_;
   if (head->first_ != NULL)
@@ -49,9 +38,32 @@ static inline void klist_push_front(anchor_t* head, list_t* item)
   kunlock (&head->lock_);
 }
 
+#define klist_pop(h,t,m) (t*)klist_pop_((h), offsetof(t,m))
+static inline void* klist_pop_(anchor_t* head, size_t off) 
+{
+  list_t* item = head->first_;
+  if (item == NULL)
+    return NULL;
+
+  klock (&head->lock_);
+  head->first_ = head->first_->next_;
+  if (head->first_)
+    head->first_->prev_ = NULL;
+  item->prev_ = NULL;
+  item->next_ = NULL;
+  --head->count_;
+  kunlock (&head->lock_);
+  return ((char*)item) - off;
+}
+
 static inline void klist_remove (anchor_t* head, list_t* item)
 {
   klock (&head->lock_);
+
+  list_t* w = item; // @todo try something faster!
+  while (w->prev_) w = w->prev_;
+  // @test Check that useless loop is optimized or add #if
+  assert (w == head->first_);
 
   if (item->prev_) {
     item->prev_->next_ = item->next_;
@@ -71,6 +83,22 @@ static inline void klist_remove (anchor_t* head, list_t* item)
   item->next_ = NULL;
   --head->count_;
   kunlock (&head->lock_);
+}
+
+static inline void klist_remove_if (anchor_t* head, list_t* item)
+{
+  klock (&head->lock_);
+
+  list_t* w = item; // @todo try something faster!
+  while (w->prev_) w = w->prev_;
+
+  if (w != head->first_) {
+    kunlock (&head->lock_);
+    return;
+  }
+
+  kunlock (&head->lock_);
+  klist_remove (head, item);
 }
 
 static inline int list_isdetached (list_t* item) 
@@ -95,7 +123,7 @@ static inline void* klist_next_(void* item, size_t off)
   return ((char*)node->next_) - off;
 }
 
-
+#define for_each(v,h,s,m) for ((v)=klist_begin(h,s,m);(v);(v)=klist_next(v,s,m))
 
 
 #endif /* KERNEL_LIST_H__ */

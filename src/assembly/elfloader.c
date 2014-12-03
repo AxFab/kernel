@@ -62,14 +62,14 @@ kAssembly_t* elf_open (kInode_t* ino)
   if (ino->assembly_) return ino->assembly_;
 
   // head = (ELF_Header_t*)kalloc(4096);
-  kfs_grab (ino);
+  inode_open (ino);
   inode_page (ino, 0, &page);
   // kfs_feed (ino, head, 4096 / ino->stat_.cblock_, 0);
-  head = (ELF_Header_t*)kpg_temp_page (&page);
+  head = (ELF_Header_t*)mmu_temporary (&page);
   if (0) {
     kprintf ("elf] Read first page failed\n");
     // kfree(head);
-    kfs_release (ino);
+    inode_close (ino);
     return NULL;
   }
 
@@ -81,7 +81,7 @@ kAssembly_t* elf_open (kInode_t* ino)
   if (err) {
     kprintf ("elf] File is not a valid ELF file.\n");
     __seterrno (err);
-    kfs_release (ino);
+    inode_close (ino);
     // kfree(head);
     return NULL;
   }
@@ -100,7 +100,7 @@ kAssembly_t* elf_open (kInode_t* ino)
     kprintf ("elf] File doesn't have loadable section\n");
     kasm_destroy (assembly);
     __seterrno (ENOEXEC);
-    kfs_release (ino);
+    inode_close (ino);
     // kfree(head);
     return NULL;
   }

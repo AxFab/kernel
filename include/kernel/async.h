@@ -30,9 +30,9 @@
 struct kWaiting
 {
   int       handle_;    ///< Handle for user application and canceling/abort.
-  kTask_t*  task_;      ///< Thread currently waiting.
+  kThread_t*  task_;      ///< Thread currently waiting.
   int       reason_;    ///< Reason of the wait (EV_*).
-  ltime_t   timeout_;   ///< Time before canceling.
+  nanotime_t   timeout_;   ///< Time before canceling.
   long      param_;     ///< Param depending of the reason.
   list_t    waitNd_;    ///< Node for all waiting objects.
   list_t    targetNd_;  ///< Node to link to the trigering object.
@@ -87,11 +87,11 @@ enum EV_Reason
 /** Check the time of registers events */
 void async_ticks ();
 /** Register to an event */
-int async_event(kTask_t* task, anchor_t* targetList, int reason, long param, long maxtime);
+int async_event(kThread_t* task, anchor_t* targetList, int reason, long param, long maxtime);
 /** Wake up the task waiting for an event */
 void async_wakeup (kWaiting_t* wait);
 /** Cancel an event */
-void async_cancel_event (kTask_t* task);
+void async_cancel_event (kThread_t* task);
 /** */
 void async_trigger (anchor_t* targetList, int reason, long param);
 

@@ -3,12 +3,12 @@
 
 #include <kernel/config.h>
 
-#define PARAM_KOBJECT(p,t)          1
-#define PARAM_FILENAME(n)           1
-#define PARAM_KERNEL_BUFFER(b,s,a)  1
+#define PARAM_KOBJECT(p,t)          (p != NULL)
+#define PARAM_FILENAME(n)           (n != NULL && strnlen(n, MAX_STRING_LENGTH) < MAX_STRING_LENGTH)
+#define PARAM_KERNEL_BUFFER(b,s,a)  (b != NULL && ((unsigned long)b & (a-1)) == 0)
 
-#define PARAM_USER_BUFFER(m,b,l)    1
-#define PARAM_USER_STRING(m,s,l)    1
+#define PARAM_USER_BUFFER(m,b,l)    (b != NULL)
+#define PARAM_USER_STRING(m,s,l)    (s != NULL && strnlen(s, MIN(MAX_STRING_LENGTH,l)) < MIN(MAX_STRING_LENGTH,l))
 
 
 #define kprintf(n,s,...) do {                       \

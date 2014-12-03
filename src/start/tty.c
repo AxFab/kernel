@@ -558,6 +558,8 @@ kTtyTerm_t* term = &klog;
 
 void kTty_Update ()
 {
+  // return;
+
   char *str;
   int lg;
 
@@ -586,7 +588,7 @@ void kTty_Update ()
 
 void kTty_NewTerminal (uintptr_t base, size_t limit)
 {
-  kTtyTerm_t* neo = kalloc(sizeof(kTtyTerm_t));
+  kTtyTerm_t* neo = kalloc(sizeof(kTtyTerm_t), 0);
   neo->next_ = term;
   neo->buffer_ = (char*)0x7000;
   neo->length_ = limit;

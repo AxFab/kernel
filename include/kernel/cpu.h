@@ -39,7 +39,7 @@ struct kCpuRegs
 
 void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param, uintptr_t stack);
 void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
-void kCpu_Save (kTask_t* task, kCpuRegs_t* regs);
+void kCpu_Save (kThread_t* task, kCpuRegs_t* regs);
 
 
 

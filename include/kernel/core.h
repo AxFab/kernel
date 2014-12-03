@@ -7,9 +7,9 @@
 #endif
 
 // Standard includes
-#include <ax/core.h>
 #include <string.h>
 #include <assert.h>
+#include <stddef.h>
 #include <errno.h>
 #include <stdint.h>
 #include <limits.h>
@@ -23,30 +23,85 @@
 unsigned long long strtoull (const char * str, char ** endptr, int base);
 int snprintf(char* s, size_t n, const char* format, ... );
 
+// STDBOOL
+typedef char bool;
+#define true    ((bool)(!0))
+#define false   ((bool)(0))
 
-#include <kernel/spinlock.h>
-#include <kernel/list.h>
 
+/* ===========================================================================
+        Kernel types
+=========================================================================== */
+/* CORE ------------------------------------------------------------------- */
+/// union for a page, should be compatible with integer and adapt to architecture.
+typedef struct spinlock     spinlock_t;
+typedef struct list         list_t;
+typedef struct anchor       anchor_t;
+/// nanotime_t is an accurate time counter with nanoseconds since epoch.
+typedef int64_t nanotime_t;
+
+/* MEMORY ----------------------------------------------------------------- */
+typedef struct kAddSpace    kAddSpace_t;
+typedef struct kVma         kVma_t;
+
+/* VFS -------------------------------------------------------------------- */
+typedef struct kDevice      kDevice_t;
+typedef struct kStat        kStat_t;
+typedef struct kInode       kInode_t;
+typedef struct kBucket      kBucket_t;
+
+/* STREAM ----------------------------------------------------------------- */
+typedef struct kStream      kStream_t;
+typedef struct kFifo        kFifo_t;
+typedef struct kTerm        kTerm_t;
+
+/* TASK ------------------------------------------------------------------- */
+typedef struct kSession     kSession_t;
+typedef struct kUser        kUser_t;
+typedef struct kProcess     kProcess_t;
+typedef struct kThread      kThread_t;
+typedef struct kAssembly    kAssembly_t;
+typedef struct kSection     kSection_t;
+
+/* ASYNC ------------------------------------------------------------------ */
+typedef struct kEvent       kEvent_t;
+typedef struct kWaiting     kWaiting_t;
+
+/* OTHERS ----------------------------------------------------------------- */
+typedef struct kCpuRegs     kCpuRegs_t;
+typedef struct kNTty        kNTty_t;
+typedef struct kLine        kLine_t;
+
+/* ======================================================================== */
 #define LOCK_INIT  {0, 0, NULL}
+struct spinlock {
+  int32_t       key_;
+  int           cpu_;
+  const char*   where_;
+};
 
-/** ltime_t is an accurate time storage
-  * It hold the number of microsecond since 1st Jan 1970..
-  * This type can hold up to "584 years" in nanosecond count, (signed). 
-  * The counter start at Epoch, for a range from - 5041 BC - to - 8981 AD -
-  */
-typedef int64_t ltime_t;
-ltime_t ltime (ltime_t* ptr);
+#define ANCHOR_INIT  {LOCK_INIT, NULL, NULL, 0}
+// struct list_anchor
+struct anchor
+{
+  spinlock_t  lock_;
+  list_t*     first_;
+  list_t*     last_;
+  int         count_;
+};
 
-#define TRUE    (!0)
-#define FALSE   (0)
+// struct list_node
+struct list 
+{
+  list_t*     prev_;
+  list_t*     next_;
+};
 
-/* --- END OF STDLIB --- */
 
-// Configuration header
-#include <kernel/config.h>
-
-// ======================================================
-// Macro size -------------------------------------------
+/* ===========================================================================
+        Kernel macros
+=========================================================================== */
+// Macro size ----------------------------------------------------------------
 #define _Kb_      (1024)
 #define _Mb_      (1024 * _Kb_)
 #define _Gb_      (1024 * _Mb_)
@@ -54,53 +109,77 @@ ltime_t ltime (ltime_t* ptr);
 #define _Pb_      (1024LL * _Tb_)
 #define _Eb_      (1024LL * _Eb_)
 
-// Macro align ------------------------------------------
+// Macro align ---------------------------------------------------------------
 #define ALIGN_UP(v,a)      (((v)+(a-1))&(~(a-1)))
 #define ALIGN_DW(v,a)      ((v)&(~(a-1)))
 
-// Macro error ------------------------------------------
-#define __noerror()     kseterrno(0,__FILE__,__LINE__, __func__)
-#define __seterrno(e)   kseterrno(e,__FILE__,__LINE__, __func__)
+// Macro min-max -------------------------------------------------------------
+// #if !defined(MIN) || !defined(MAX)
+#define MIN(a,b) ((a)<=(b)?(a):(b))
+#define MAX(a,b) ((a)>=(b)?(a):(b))
+// #endif
+
+// Macro error ---------------------------------------------------------------
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define __AT__  __FILE__ ":" TOSTRING(__LINE__)
+// #define __AT__  __FILE__ ":" TOSTRING(__LINE__) " on " __func__ "()"
+
+#define __noerror()     kseterrno(0,__AT__)
+#define __seterrno(e)   kseterrno(e,__AT__)
 #define __geterrno()    kgeterrno()
 #define __nounused(a)  ((void)a)
 
-// Macro
-#define KALLOC(T)     ((T*)kalloc (sizeof(T)))
+// Macro object --------------------------------------------------------------
+#define KALLOC(T)     ((T*)kalloc (sizeof(T), 0))
 #define SIZEOF(T)     kprintf ("Sizeof " #T ": %x\n", sizeof(T))
-#define NO_LOCK       assert(klockcount() == 0)
-#define MOD_ENTER     NO_LOCK
-#define MOD_LEAVE     NO_LOCK
+
+// Configuration header ------------------------------------------------------
+#include <kernel/config.h>
+#include <arch/define.h>
 
 
-// ======================================================
-// Kernel types
-typedef struct kCpuRegs     kCpuRegs_t;
-typedef struct kTty         kTty_t;
-typedef struct kUser        kUser_t;
-// vfs.h
-typedef struct kStat        kStat_t;
-typedef struct kInode       kInode_t;
-typedef struct kStream      kStream_t;
-typedef struct kPage        kPage_t;
-typedef struct kPipe        kPipe_t;
-typedef struct kFifo        kFifo_t;
-typedef struct kTerm        kTerm_t;
+/* ===========================================================================
+        Kernel runtime
+=========================================================================== */
+// Error ------------------------------------------------
+int kseterrno(int err, const char* at);
+int kgeterrno();
+int kpanic(const char* str, ...);
 
-typedef struct kFifoPen     kFifoPen_t;
-typedef struct kNTty        kNTty_t;
-typedef struct kLine        kLine_t;
-// memory.h
-typedef struct kVma         kVma_t;
-typedef struct kAddSpace    kAddSpace_t;
-// tasks.h
-typedef struct kProcess     kProcess_t;
-typedef struct kTask        kTask_t;
-typedef struct kAssembly    kAssembly_t;
-typedef struct kSection     kSection_t;
-typedef struct kBucket      kBucket_t;
-typedef struct kDevice      kDevice_t;
-typedef struct kEvent       kEvent_t;
-typedef struct kWaiting     kWaiting_t;
+// Print ---------------------------------------------------------------------
+int kputc(int c);
+int kprintf(const char* str, ...);
+int kvprintf (const char* str, va_list ap);
+const char* kpsize (uintmax_t number);
+
+// Alloc ---------------------------------------------------------------------
+void* kalloc(size_t size, int slab);
+void kfree(void* addr);
+char* kstrdup(const char* str);
+
+// Miscallenous --------------------------------------------------------------
+nanotime_t ltime (nanotime_t* ptr);
+
+// Debug ---------------------------------------------------------------------
+const char* ksymbol (void* address);
+void kstacktrace(uintptr_t max_frames);
+void kdump (void* ptr, size_t lg);
+void kregisters (kCpuRegs_t* regs);
+
+
+#include <kernel/info.h>
+#include <kernel/spinlock.h>
+#include <kernel/list.h>
+
+
+
+
+// /* --- END OF STDLIB --- */
+
+
+// // ======================================================
+
 
 
 
@@ -111,56 +190,24 @@ typedef struct kWaiting     kWaiting_t;
 // kMemSpace_t* getSpace();
 void kinit ();
 
-// Error ------------------------------------------------
-int kseterrno(int err, const char* file, int line, const char* func);
-int kgeterrno();
-int kpanic(const char* str, ...);
-
 // Debug ------------------------------------------------
 void ksymreg (uintptr_t ptr, const char* sym);
-const char* ksymbol (void* address);
-void kstacktrace(uintptr_t MaxFrames);
-void kdump (void* ptr, size_t lg);
-void kregisters (kCpuRegs_t* regs);
-
-// Print ------------------------------------------------
-int kputc(int c);
-int kprintf(const char* str, ...);
-int kvprintf (const char* str, va_list ap);
-const char* kpsize (uintmax_t number);
-
-// Alloc ------------------------------------------------
-void* kalloc(size_t size);
-void kfree(void* addr);
-char* kcopystr(const char* str);
 
 // CPU -------------------------------------------------
 int kcpu_state();
 
 // ======================================================
 
-#ifndef __KERNEL
-#define PAGE_SIZE 4096
-#define OPEN_MAX 12
-#define O_STATMSK 0x101c00
 
-#define kalloc(s) calloc(s,1)
-#define kfree  free
-#define kprintf printf
-void* malloc (size_t);
-void* calloc (size_t, size_t);
-void free (void*);
-int printf(const char*, ...);
-#else
+// #define OPEN_MAX 12
+// #define O_STATMSK 0x101c00
 
-#define printf kprintf
-#define malloc kalloc
-#define free kfree
-#endif
+// #define offsetof(s,m)   (size_t)&(((s *)0)->m)
 
 
 // ======================================================
 
+typedef struct  kTty kTty_t;
 struct kTty
 {
   uint32_t  _color;

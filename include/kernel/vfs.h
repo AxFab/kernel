@@ -21,6 +21,11 @@
 #include <sys/stat.h>  // S_*
 #include <fcntl.h>     // O_*, AT_*
 
+#ifndef S_ISTTY
+#  define S_IFTTY S_IFSOCK // Error, but we don't use them yet...
+#  define S_ISTTY(m)  (((m) & S_IFMT) == S_IFTTY)
+#endif
+
 extern kDevice_t tmpFs;
 
 // ===========================================================================
@@ -64,13 +69,13 @@ struct kInode
   union {
     kAssembly_t*  assembly_;
     kFifo_t*      fifo_;
-    kPipe_t*      pipe_;
     kTerm_t*      term_;
   };
   int             pageCount_;  ///< max number of physical pages in cache
   kBucket_t*      pagesCache_; ///< physical pages caching
   anchor_t        buckets_;
   anchor_t        evList_;      /// Events list
+  list_t          lruNd_;    /// LRU list
 };
 
 
@@ -111,11 +116,11 @@ struct kDevice
 struct kBucket 
 {
   // K_OBJECT;
-  size_t    phys_;      ///< Physique address of this page bucket.
-  size_t    length_;    ///< Length of the page bucket.
-  off_t     offset_;    ///< Offset on the file.
-  int       flags_;     ///< Flags for this bucket properties.
-  list_t    ino_list_;  ///< List of bucket for Last-Recently-Used policy.
+  page_t    phys_;    ///< Physique address of this page bucket.
+  size_t    length_;  ///< Length of the page bucket.
+  off_t     offset_;  ///< Offset on the file.
+  int       flags_;   ///< Flags for this bucket properties.
+  list_t    node_;    ///< List of bucket for Last-Recently-Used policy.
 };
 
 
@@ -132,7 +137,7 @@ int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset);
 /** Find a memory bucket for the content of an inode. */
 kBucket_t* inode_bucket(kInode_t* ino, off_t offset);
 /** Find a physique page for the content of an inode. */
-int inode_page(kInode_t* ino, off_t offset, uint32_t* page);
+int inode_page(kInode_t* ino, off_t offset, page_t* page);
 
 
 // VFS/DEVICE ================================================================
@@ -164,7 +169,10 @@ int unregister_inode (kInode_t* ino);
 int scavenge_inodes(int nodes);
 /** Call the bucket scavanger which will try to free cached page. */
 int scavenge_bucket(int pages);
-
+/** Function to called to grab an inodes */
+int inode_open (kInode_t* ino);
+/** Function to release an inodes */
+int inode_close (kInode_t* ino);
 
 // VFS/SEARCH ================================================================
 /** Search an inode on the filetree. */
@@ -191,9 +199,7 @@ int rename_inode(kInode_t* ino, const char* name, kInode_t* dir);
 
 // LEGACY - to remove
 // ---------------------------------------------------------------------------
-/** Function to called to grab an inodes */
 int kfs_grab(kInode_t* ino);
-/** Function to release an inodes */
 int kfs_release(kInode_t* ino);
 
 

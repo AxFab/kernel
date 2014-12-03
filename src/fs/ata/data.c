@@ -190,7 +190,7 @@ int kAtapi_Read2 (kAtaDrive_t* dr, uint32_t lba, uint8_t* buf)
   int status;
   uint8_t packet[12] = { ATAPI_CMD_READ, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 };
   size_t size;
-  if (KLOG_FS) printf ("ATAPI] read <%d> at lba: %x for 1 sector on %x\n", dr->_pbase, lba, buf);
+  if (KLOG_FS) kprintf ("ATAPI] read <%d> at lba: %x for 1 sector on %x\n", dr->_pbase, lba, buf);
 
   // Setup SCSI Packet:
   packet[ 2] = (lba >> 24) & 0xFF;
@@ -233,7 +233,7 @@ int kAtapi_Read (kAtaDrive_t* dr, uint32_t lba,  uint8_t sects, uint8_t* buf)
   int words = 1024; // Sector Size. ATAPI drives have a sector size of 2048 bytes.
   int i;
   uint8_t packet[12];
-  if (KLOG_FS) printf ("ATAPI] read <%d> at lba: %x for %d sectors on %x\n", dr->_pbase, lba, sects, buf);
+  if (KLOG_FS) kprintf ("ATAPI] read <%d> at lba: %x for %d sectors on %x\n", dr->_pbase, lba, sects, buf);
 
   cli();
   outb(dr->_pbase + ATA_REG_CONTROL, 0x0);
@@ -296,7 +296,7 @@ int ATA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba)
 {
   kAtaDrive_t* dr = (kAtaDrive_t*)ino->dev_;
   size_t i;
-  if (KLOG_FS) printf ("ATA] read <%d> at lba: %x for %d sectors on %x\n", dr->_pbase, lba, count, bucket);
+  if (KLOG_FS) kprintf ("ATA] read <%d> at lba: %x for %d sectors on %x\n", dr->_pbase, lba, count, bucket);
 
   if (bucket == NULL)
     return __seterrno (EINVAL);

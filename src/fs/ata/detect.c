@@ -7,7 +7,7 @@ void atapiDetect (kAtaDrive_t* dr)
   uint8_t ch = inb(dr->_pbase + ATA_REG_LBA2);
 
   if ((cl == 0x14 && ch == 0xEB) || (cl == 0x69 && ch == 0x96)) {
-    printf ("ATAPI ");
+    kprintf ("ATAPI ");
     dr->_type = IDE_ATAPI;
 
   } else {
@@ -32,7 +32,7 @@ int ATA_Detect (kAtaDrive_t* dr)
   res = inb(dr->_pbase + ATA_REG_STATUS);
 
   if (res == 0) {
-    printf ("no disc \n");
+    kprintf ("no disc \n");
     dr->_type = IDE_NODISC;
     return 0;
   }
@@ -46,14 +46,14 @@ int ATA_Detect (kAtaDrive_t* dr)
       atapiDetect (dr);
 
       if (dr->_type == IDE_NODISC) {
-        printf ("unrecognized disc \n");
+        kprintf ("unrecognized disc \n");
         return 0;
       }
 
       break;
 
     } else if (!(res & ATA_SR_BSY) && (res & ATA_SR_DRQ))
-      printf ("ATA ");
+      kprintf ("ATA ");
 
     dr->_type = IDE_ATA;
     break;
@@ -76,7 +76,7 @@ int ATA_Detect (kAtaDrive_t* dr)
   }
 
   dr->_model[40] = 0; // Terminate String.
-  printf (" Size: %d Kb, %s \n", dr->_size / 2, dr->_model);
+  kprintf (" Size: %d Kb, %s \n", dr->_size / 2, dr->_model);
   return 1;
 }
 

@@ -18,9 +18,9 @@ void task_print ()
 
   // while (proc) {
   //   kprintf ("%3d   %3d\n", proc->pid_, proc->runningTask_ );
-  //   kTask_t* thread = proc->threadFrst_;
+  //   kThread_t* thread = proc->threadFrst_;
   //   while (thread) {
-  //     kprintf ("          %3d   %3d   %d   "PRINT_TIME_FORMAT"\n", thread->tid_, thread->state_, 
+  //     kprintf ("          %3d   %3d   %d   "PRINT_TIME_FORMAT"\n", thread->taskId_, thread->state_, 
   //       kislocked(&thread->lock_), PRINT_TIME(thread->elapsedUser_));
   //     thread = thread->nextPr_;
   //   }

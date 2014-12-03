@@ -27,6 +27,8 @@ void ksch_init ()
 
   // INIT kCPU
   kCPU.current_ = kSYS.allTaskFrst_;
+  kCPU.ready_ = true;
+  sti();
 }
 
 // ---------------------------------------------------------------------------
@@ -38,7 +40,7 @@ int ksch_ontask ()
 
 
 // ---------------------------------------------------------------------------
-void ksch_wakeup (kTask_t* task)
+void ksch_wakeup (kThread_t* task)
 {
   atomic_dec_i32 (&kSYS.tasksCount_[task->state_]);
   assert (kSYS.tasksCount_[task->state_] >= 0);
@@ -56,7 +58,7 @@ void ksch_stop (int state, kCpuRegs_t* regs)
     (kCPU.current_->state_ == TASK_STATE_ABORTING && state == TASK_STATE_ZOMBIE));
   assert (state != TASK_STATE_EXECUTING && state != TASK_STATE_ABORTING);
 
-  kTask_t* task = kCPU.current_;
+  kThread_t* task = kCPU.current_;
 
   cli();
   if (state != TASK_STATE_ZOMBIE)
@@ -82,7 +84,7 @@ void ksch_stop (int state, kCpuRegs_t* regs)
 
 
 // ---------------------------------------------------------------------------
-void ksch_abort (kTask_t* task)
+void ksch_abort (kThread_t* task)
 {
   cli();
   klock (&task->lock_);

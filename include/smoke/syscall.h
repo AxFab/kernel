@@ -73,7 +73,10 @@ ssize_t read(int fd, void *buf, size_t count);
 
 
 
-
-
+#define ASCII_RESET   "\e[0m"
+#define ASCII_U_WHITE "\e[53,38m"
+#define ASCII_YELLOW  "\e[93m"
+#define ASCII_RED     "\e[91m"
+#define ASCII_BLUE_ON_WHITE   "\e[48,94m"
 
 #endif /* SMOKE_SYSCALL_H__ */

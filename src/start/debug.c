@@ -1,5 +1,7 @@
 #include <kernel/core.h>
 #include <kernel/cpu.h>
+#include <kernel/memory.h>
+#include <kernel/scheduler.h>
 
 void kregisters (kCpuRegs_t* regs)
 {
@@ -36,8 +38,11 @@ void kswitchdump (int ebp)
   kprintf ("  eip: %8x\n", stack[12]);
   kprintf ("   cs: %4x\n", stack[13]);
   kprintf (" flgs: %8x\n", stack[14]);
+  kprintf ("  esp: %8x\n", stack[15]);
+  kprintf ("   ss: %8x\n", stack[16]);
 
-  kdump (stack[7], 32);
+  kvma_display (&kCPU.current_->process_->memSpace_);
+  kdump ((void*)stack[7], 32);
 //  kprintf ("  esp: %8x\n", stack[15]);
 //  kprintf ("   ss: %4x\n", stack[16]);
 

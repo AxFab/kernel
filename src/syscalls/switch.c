@@ -191,7 +191,7 @@ void kCore_Syscall(kCpuRegs_t* regs)
     return;
   }
 
-  // kprintf (LOG, "Task %d syscall %d \n", kCPU.current_->tid_, no);
+  // kprintf (LOG, "Task %d syscall %d \n", kCPU.current_->taskId_, no);
   kCpu_SetStatus (CPU_STATE_SYSCALL);
   int ret = sys_table[no](regs, 
                 (void*)regs->ecx, 

@@ -19,7 +19,7 @@ static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
 {
   kVma_t* vma = NULL;
   kVma_t* origin = addp->first_;
-  uintptr_t base = kHDW.userSpaceBase_;
+  uintptr_t base = MMU_USERSP_BASE;
   area->limit_ = ALIGN_UP(area->limit_, PAGE_SIZE);
   size_t length = (size_t)(area->limit_ - area->base_);
   int maxLoop = MAX_LOOP_BUCKET;
@@ -27,7 +27,7 @@ static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
   while (--maxLoop) {
     if (origin->base_ - base >= length) {
       // INSERT BEFORE ORIGIN
-      vma = (kVma_t*)kalloc(sizeof(kVma_t));
+      vma = KALLOC(kVma_t);
       memcpy (vma, area, sizeof(kVma_t));
       vma->next_ = origin;
       vma->prev_ = origin->prev_;
@@ -50,13 +50,13 @@ static kVma_t* kvma_map_begin (kAddSpace_t* addp, kVma_t* area)
       continue;
     }
 
-    if (origin->limit_ + length > kHDW.userSpaceLimit_) {
+    if (origin->limit_ + length > MMU_USERSP_LIMIT) {
       return NULL;
     }
 
     // INSERT LAST
     base = origin->limit_;
-    addp->last_ = (kVma_t*)kalloc(sizeof(kVma_t));
+    addp->last_ = KALLOC(kVma_t);
     memcpy (vma, area, sizeof(kVma_t));
     vma = origin->next_ = addp->last_;
     vma->prev_ = origin;
@@ -82,7 +82,7 @@ static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
 
   // Try to put as the first memory area
   if (origin->base_ >= address + length) {
-    vma = (kVma_t*)kalloc(sizeof(kVma_t));
+    vma = KALLOC(kVma_t);
     memcpy (vma, area, sizeof(kVma_t));
     vma->next_ = origin;
     vma->prev_ = NULL;
@@ -99,7 +99,7 @@ static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
     }
 
     if (origin->next_ != NULL && origin->next_->base_ >= address + length) {
-      vma = (kVma_t*)kalloc(sizeof(kVma_t));
+      vma = KALLOC(kVma_t);
       memcpy (vma, area, sizeof(kVma_t));
       vma->next_ = origin->next_;
       origin->next_ = vma;
@@ -109,7 +109,7 @@ static kVma_t* kvma_map_at (kAddSpace_t* addp, kVma_t* area)
       // Put memory area at the end
 
     } else if (origin->next_ == NULL) {
-      vma = (kVma_t*)kalloc(sizeof(kVma_t));
+      vma = KALLOC(kVma_t);
       memcpy (vma, area, sizeof(kVma_t));
       vma->next_ = NULL;
       addp->last_ = vma;
@@ -144,7 +144,7 @@ kVma_t* kvma_mmap (kAddSpace_t* addressSpace, kVma_t* area)
   // TODO move area check here
 
   if (area->ino_)
-    kfs_grab(area->ino_); // TODO if fail !?
+    inode_open(area->ino_); // TODO if fail !?
 
   klock (&addressSpace->lock_, LOCK_VMA_MMAP);
 
@@ -155,7 +155,7 @@ kVma_t* kvma_mmap (kAddSpace_t* addressSpace, kVma_t* area)
     vma = kvma_map_begin (addressSpace, area);
 
   if (vma == NULL && area->ino_)
-    kfs_release (area->ino_);
+    inode_close (area->ino_);
 
   if (vma != NULL) {
     addressSpace->vrtPages_ += (vma->limit_ - vma->base_) / PAGE_SIZE;

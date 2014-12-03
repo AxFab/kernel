@@ -46,7 +46,7 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   else
     snprintf(search, PATH_MAX, "%s%s/%s", krpPrefix, (strchr (uri, ':') + 2), name);
 
-  if (KLOG_FS) printf ("krpFs] Look for %s -> '%s' on dir %s \n", name, search, uri);
+  if (KLOG_FS) kprintf ("krpFs] Look for %s -> '%s' on dir %s \n", name, search, uri);
   file->uid_ = 0;
   file->gid_ = 0;
   file->atime_ = now;
@@ -59,7 +59,7 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   char* table = krpBase;
 
   while (pos < krpLength) {
-    // printf ("krpFs] Compare {%s|%s} at %d \n", search, table, pos/512);
+    // kprintf ("krpFs] Compare {%s|%s} at %d \n", search, table, pos/512);
     if (memcmp(search, table, lg) == 0) {
       if (table[lg] == '/') {
         file->mode_ = S_IFDIR | 0500;
@@ -71,7 +71,7 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
         file->mode_ = S_IFREG | 0500;
         file->length_ = strtol(&table[0x7c], NULL, 0);
         file->lba_ = pos;
-        if (KLOG_FS) printf ("krpFs] Find %s{%s} at %d \n", name, table, pos/512);
+        if (KLOG_FS) kprintf ("krpFs] Find %s{%s} at %d \n", name, table, pos/512);
         return 0;
       }
     }
@@ -82,7 +82,7 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
     pos += sz;
   }
 
-  if (KLOG_FS) printf ("krpFs] Unable to find entry %s\n", search);
+  if (KLOG_FS) kprintf ("krpFs] Unable to find entry %s\n", search);
   return ENOENT;
 }
 
@@ -91,7 +91,7 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
 int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 {
   size_t idx = fp->stat_.lba_ + (lba + 1) * 512;
-  if (KLOG_FS) printf ("krpFs] Read file at %d[%x] for %d cluster on [%x]\n", idx, &krpBase[0], count, buffer);
+  if (KLOG_FS) kprintf ("krpFs] Read file at %d[%x] for %d cluster on [%x]\n", idx, &krpBase[0], count, buffer);
   memcpy (buffer, &krpBase[idx], count * 512);
 
   // kTty_HexDump (&krpBase[idx], 0x50);

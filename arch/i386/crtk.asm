@@ -213,7 +213,7 @@ extern kregisters, kTty_HexDump
 
 ; void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
 global kCpu_Switch, kCpu_Switch2
-extern kpg_new, kTty_HexChar, kDBG
+extern mmu_new_dir, kTty_HexChar, kDBG
 
 
 ; =============================================
@@ -260,7 +260,7 @@ kcpuswitch:
     mov eax, [edx]
     test eax, eax
     jnz .d1
-    call kpg_new
+    call mmu_new_dir
     mov edx, [ebp + 12]
     mov [edx], eax
 
@@ -273,12 +273,11 @@ kcpuswitch:
     mov cr3, eax
   .d2:
 
-
+    ; call kswitchdump
 
   ; End of interupt
     mov al,0x20
     out 0x20,al
-
 
   ; Load register
     pop gs
@@ -388,7 +387,7 @@ kCpu_Halt:
   ; Jump
     iret
 
-.pause
+.pause:
     sti
     hlt
     jmp $

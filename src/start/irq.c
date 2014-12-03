@@ -5,6 +5,7 @@
 #include <kernel/scheduler.h>
 #include <kernel/term.h>
 #include <kernel/async.h>
+#include <kernel/mmu.h>
 
 /**
 
@@ -145,13 +146,24 @@ int kInt_SysCall (kCpuRegs_t* regs)
 
 int kpg_fault (uint32_t address);
 
+int page_fault (void* address, int cause, bool onsystem);
+
 int kInt_PageFault (uint32_t address, kCpuRegs_t* regs)
 {
+  int errcode = regs->eip;
+  regs = (kCpuRegs_t*)(((char*)regs) + 4); // due to pushed code
+
+  // if (regs->cs == 0x08)
   // if (regs->cs == 0x08 && keyboard_tty != NULL) {
   //   kprintf ("KERNEL PAGE FAULT AT 0x%X\n", address);
   // }
+  // if (address == 0xc0ffee) {
+    // kregisters (regs);
+    // kdump ((void*)regs-0x10, 128);
+  // }
+  // return kpg_fault (address);
 
-  return kpg_fault (address);
+  return page_fault ((void*)address, errcode, regs->cs == 0x08);
 }
 
 
@@ -161,7 +173,7 @@ int kInt_Protect (unsigned int address, kCpuRegs_t* regs)
     kpanic ("Kernel throw general protection fault at [%x]\n", address);
 
   kprintf ("task (#%d) throw general protection at [%x]: abort\n",
-      kCPU.current_->tid_, address);
+      kCPU.current_->taskId_, address);
   kregisters (regs);
   ksch_exit (kCPU.current_->process_, -1);
   ksch_stop (TASK_STATE_ZOMBIE, regs);

@@ -140,6 +140,7 @@ int kCore_Initialize ()
 
   // VIII. Initialize per-cpu scheduler
   kprintf ("Starting...\n");
+
   ksch_init ();
 
   return 0;

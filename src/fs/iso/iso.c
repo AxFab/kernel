@@ -21,7 +21,7 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
     return EBADF;
 
 
-  buf = (uint8_t*) malloc (2048);
+  buf = (uint8_t*) kalloc (2048, 0);
   bufi = (uint32_t*)buf;
   while (inDesc) {
     feed_inode (dev, buf, 1, sec);
@@ -29,14 +29,14 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
     if ((bufi[0] & 0xFFFFFF00) != ISO9660_STD_ID1 ||
         (bufi[1] & 0x0000FFFF) != ISO9660_STD_ID2 ||
         (buf[0] != ISO9660_VOLDESC_PRIM && !volInfo)) {
-      free (buf);
+      kfree (buf);
       return EBADF;
     }
 
     switch (buf[0]) {
       case ISO9660_VOLDESC_PRIM:
         firstDesc =  (isoFstDescriptor_t*)&buf[8];
-        volInfo = (isoVolume_t*)kalloc (sizeof(isoVolume_t));
+        volInfo = (isoVolume_t*)kalloc (sizeof(isoVolume_t), 0);
         volInfo->fs_.lookup = ISO_Lookup;
         volInfo->fs_.read = ISO_Read;
         volInfo->fs_.write = ISO_Write;
@@ -74,7 +74,7 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
 
       default:
         // kprintf ("iso9660] Bad volume descriptor id %d\n", buf[0]);
-        free (buf);
+        kfree (buf);
         return __seterrno(ENOSYS);
     }
 
@@ -92,7 +92,7 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
     create_device (name, mnt, &volInfo->fs_, &root);
     // kfs_new_device (name, mnt, &isoOps, (void*)volInfo, &root);
 
-  free (buf);
+  kfree (buf);
   return __noerror ();
 }
 
@@ -106,7 +106,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   char filename[PATH_MAX];
   size_t sec = dir->stat_.lba_;
   isoDirEntry_t* entry;
-  char* buf = malloc (2048);
+  char* buf = kalloc (2048, 0);
   isoVolume_t* volInfo = (isoVolume_t*)dir->dev_;
 
   if (KLOG_FS) kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
@@ -142,7 +142,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
 
       file->lba_ = entry->locExtendLE;
       file->length_ = entry->dataLengthLE;
-      free (buf);
+      kfree (buf);
       kunlock(&volInfo->dev->lock_); 
       return 0;
     }
@@ -150,7 +150,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
     entry = (isoDirEntry_t*) & (((char*)entry)[entry->lengthRecord]);
   }
 
-  free (buf);
+  kfree (buf);
   // @todo Pre-lock underlaying devices... brainstorming needed.
   kunlock(&volInfo->dev->lock_); 
   return ENOENT;
@@ -181,14 +181,14 @@ int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 // _Error iso9660_readdir (const _pFileNode fn) {
 
 //   _Error err;
-//   _pByte buff = (_pByte)malloc (2048);
+//   _pByte buff = (_pByte)kalloc (2048, 0);
 //   _Iso9660_FileInfo nInfo;
 //   _pIso9660_FileInfo pInfo = (_pIso9660_FileInfo)fn;
 //   _pIso9660_Directory dir = (_pIso9660_Directory)buff;
 //   nInfo.structSize = sizeof (_Iso9660_FileInfo);
 //   err = STO_readSectors (buff, pInfo->lba, 0, 1); //FS_Infos->lbaroot
 //   if (err) {
-//     free (buff);
+//     kfree (buff);
 //     return err;
 //   }
 
@@ -205,12 +205,12 @@ int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 //     nInfo.parentLba = pInfo->lba;
 //     err = Fsys_RegisterFile (dir->fileId, (_pFileNode)&nInfo);
 //     if (err) {
-//       free (buff);
+//       kfree (buff);
 //       return err;
 //     }
 //     dir = (_pIso9660_Directory)&(((_pByte)dir)[dir->lengthRecord]);
 //   }
-//   free (buff);
+//   kfree (buff);
 //   return __Err_None_;
 // }
 

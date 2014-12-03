@@ -17,7 +17,7 @@
 
 // ===========================================================================
 /** Add a new task on the scheduler list as a waiting task. */
-static void ksch_insert (kTask_t* task)
+static void ksch_insert (kThread_t* task)
 {
   klock(&kSYS.schedLock_, LOCK_SCHED_INSERT);
   klock(&task->lock_, LOCK_SCHED_INSERT);
@@ -41,7 +41,7 @@ static void ksch_insert (kTask_t* task)
 
 
 // ---------------------------------------------------------------------------
-static void ksch_remove (kTask_t* task)
+static void ksch_remove (kThread_t* task)
 {
   klock(&kSYS.schedLock_, LOCK_SCHED_REMOVE);
   assert (task->state_ == TASK_STATE_ZOMBIE);
@@ -65,7 +65,7 @@ static void ksch_remove (kTask_t* task)
       kSYS.state_ = SYS_STATE_OFF;
     }
   } else {
-    kTask_t* pick = kSYS.allTaskFrst_;
+    kThread_t* pick = kSYS.allTaskFrst_;
     while (pick->nextSc_ != task) {
       pick = pick->nextSc_;
       assert (pick != kSYS.allTaskFrst_);
@@ -76,13 +76,13 @@ static void ksch_remove (kTask_t* task)
     pick->nextSc_ = task->nextSc_;
   }
 
-  // kprintf ("Remove task #%d\n", task->tid_);
+  // kprintf ("Remove task #%d\n", task->taskId_);
   kunlock(&kSYS.schedLock_);
 }
 
 // ===========================================================================
 /** Create a new thread, ready to execute */
-kTask_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
+kThread_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 {
   assert (proc != NULL);
   kVma_t ussk = { VMA_STACK | VMA_READ | VMA_WRITE, 0L, 0L, 0, 0, 0, 0 };
@@ -91,10 +91,10 @@ kTask_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   krns.limit_ = PAGE_SIZE * 2;
 
   // FIXME load memory
-  kTask_t* task = KALLOC (kTask_t);
-  task->kstack_ = kvma_mmap (proc->memSpace_, &krns)->base_;
-  task->ustack_ = kvma_mmap (proc->memSpace_, &ussk)->limit_;
-  task->tid_ = kSys_NewPid();
+  kThread_t* task = KALLOC (kThread_t);
+  task->kstack_ = kvma_mmap (&proc->memSpace_, &krns)->base_;
+  task->ustack_ = kvma_mmap (&proc->memSpace_, &ussk)->limit_;
+  task->taskId_ = kSys_NewPid();
   task->execOnCpu_ = -1;
   task->process_ = proc;
   task->state_ = TASK_STATE_WAITING;
@@ -108,7 +108,7 @@ kTask_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 
 // ---------------------------------------------------------------------------
 /** Ressurect a zombie thread, ready to execute */
-void ksch_resurect_thread (kTask_t* task, uintptr_t entry, intmax_t arg)
+void ksch_resurect_thread (kThread_t* task, uintptr_t entry, intmax_t arg)
 {
   assert (task->state_ == TASK_STATE_ZOMBIE);
 
@@ -120,11 +120,11 @@ void ksch_resurect_thread (kTask_t* task, uintptr_t entry, intmax_t arg)
 
 // ---------------------------------------------------------------------------
 /**  */
-void ksch_destroy_thread (kTask_t* task)
+void ksch_destroy_thread (kThread_t* task)
 {
   klock (&task->lock_, LOCK_TASK_DESTROY);
   ksch_remove (task);
-  task->flags_ |= TASK_REMOVED;
+  task->flags_ |= TK_REMOVED;
   kunlock (&task->lock_);
 }
 

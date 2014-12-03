@@ -37,17 +37,18 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   }
 
   // FIXME load the image
-  kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
-  kasm_load (mmsp, prg);
-
   kProcess_t* proc = KALLOC (kProcess_t);
+  addspace_init (&proc->memSpace_, 0);
+  // kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
+  kasm_load (&proc->memSpace_, prg);
+
   proc->pid_ = kSys_NewPid();
   proc->execStart_ = ltime(NULL);
   proc->workingDir_ = dir;
   proc->parent_ = NULL;
   proc->image_ = prg;
-  proc->command_ = kcopystr(cmd);
-  proc->memSpace_ = mmsp;
+  proc->command_ = kstrdup(cmd);
+  // proc->memSpace_ = mmsp;
 
   proc->streamCap_ = 0;
   proc->openStreams_ = NULL; // (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
@@ -60,8 +61,8 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   klist_push_back(&procList, &proc->procNd_);
-  kTask_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
-  klist_push_back(&proc->threadList_, &task->procNd_);
+  kThread_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
+  klist_push_back(&proc->threads_, &task->procNd_);
   
   kunlock (&proc->lock_);
   kprintf ("Start login program [%d - %s - root<0> ]\n", proc->pid_, prg->name_);
@@ -85,21 +86,22 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
   }
 
   // FIXME load the image
-  kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
-  kasm_load (mmsp, image);
-
   kProcess_t* proc = KALLOC (kProcess_t);
+  addspace_init (&proc->memSpace_, 0);
+  // kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
+  kasm_load (&proc->memSpace_, image);
+
   proc->pid_ = kSys_NewPid();
   proc->execStart_ = ltime(NULL);
   proc->workingDir_ = dir;
   proc->parent_ = parent;
   proc->image_ = image;
-  proc->command_ = kcopystr(cmd);
-  proc->memSpace_ = mmsp;
+  proc->command_ = kstrdup(cmd);
+  // proc->memSpace_ = mmsp;
   atomic_inc_i32 (&parent->childrenCount_);
 
   proc->streamCap_ = 8;
-  proc->openStreams_ = (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
+  proc->openStreams_ = (kStream_t**)kalloc (sizeof(kStream_t*) * 8, 0);
   // @todo we must clone the stream and check if still here !
   proc->openStreams_[0] = parent->openStreams_[0]; // (kStream_t*)1;
   proc->openStreams_[1] = parent->openStreams_[1]; // kstm_create_pipe (O_WRONLY, 4 * _Kb_);
@@ -108,8 +110,8 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   klist_push_back(&procList, &proc->procNd_);
 
-  kTask_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
-  klist_push_back(&proc->threadList_, &task->procNd_);
+  kThread_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
+  klist_push_back(&proc->threads_, &task->procNd_);
 
   kunlock (&proc->lock_);
   kprintf ("Start program [%d - %s - root<0> - /mnt/cd0/USR/BIN]\n", proc->pid_, image->name_);
@@ -123,14 +125,14 @@ int ksch_add_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   assert (proc != NULL);
   assert (kCPU.current_ != NULL && proc == kCPU.current_->process_);
 
-  if (proc->flags_ & PROC_EXITED)
+  if (proc->flags_ & TK_EXITED)
     return __seterrno(ENOSYS);
 
   klock (&proc->lock_, LOCK_PROCESS_ADD_THREAD);
-  kTask_t* task; // = proc->threadFrst_;
-  for (task = klist_begin(&proc->threadList_, kTask_t, procNd_);
+  kThread_t* task; // = proc->threadFrst_;
+  for (task = klist_begin(&proc->threads_, kThread_t, procNd_);
     task != NULL;
-    task = klist_next(task, kTask_t, procNd_)) {
+    task = klist_next(task, kThread_t, procNd_)) {
 
     if (task->state_ == TASK_STATE_ZOMBIE) {
       ksch_resurect_thread (task, entry, arg);
@@ -141,7 +143,7 @@ int ksch_add_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   }
 
   task = ksch_new_thread (proc, entry, arg);
-  klist_push_back(&proc->threadList_, &task->procNd_);
+  klist_push_back(&proc->threads_, &task->procNd_);
   kunlock (&proc->lock_);
   return __noerror();
 }
@@ -157,16 +159,16 @@ int ksch_add_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
  */
 void ksch_destroy_process (kProcess_t* proc)
 {
-  proc->flags_ |= PROC_EXITED;
+  proc->flags_ |= TK_EXITED;
   // FIXME if (proc->parent_ != NULL && proc->flags_ & PROC_TRACED) { // signal() }
 
   klock (&proc->lock_, LOCK_PROCESS_DESTROY);
-  kTask_t* task; // = proc->threadFrst_;
-  for (task = klist_begin(&proc->threadList_, kTask_t, procNd_);
+  kThread_t* task; // = proc->threadFrst_;
+  for (task = klist_begin(&proc->threads_, kThread_t, procNd_);
     task != NULL;
-    task = klist_next(task, kTask_t, procNd_)) {
+    task = klist_next(task, kThread_t, procNd_)) {
   // while (task != NULL) {
-    kTask_t* pick = task;
+    kThread_t* pick = task;
     // task = task->nextPr_;
     ksch_destroy_thread (pick);
   }
@@ -188,12 +190,12 @@ void ksch_destroy_process (kProcess_t* proc)
  */
 void ksch_exit (kProcess_t* proc, int status)
 {
-  proc->flags_ |= PROC_EXITED;
+  proc->flags_ |= TK_EXITED;
   proc->exitStatus_ = status;
-  kTask_t* task; // = proc->threadFrst_;
-  for (task = klist_begin(&proc->threadList_, kTask_t, procNd_);
+  kThread_t* task; // = proc->threadFrst_;
+  for (task = klist_begin(&proc->threads_, kThread_t, procNd_);
     task != NULL;
-    task = klist_next(task, kTask_t, procNd_)) {
+    task = klist_next(task, kThread_t, procNd_)) {
 
     ksch_abort (task);
     // task = task->nextPr_;

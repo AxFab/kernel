@@ -14,29 +14,6 @@
 #include <kernel/cpu.h>
 
 // ===========================================================================
-/** Function to called to grab an inodes */
-int kfs_grab(kInode_t* ino)
-{
-  if (!ino)
-    return __seterrno (EINVAL);
-
-  atomic_inc_i32(&ino->readers_);
-  return __noerror();
-}
-
-// ---------------------------------------------------------------------------
-/** Function to release an inodes */
-int kfs_release(kInode_t* ino)
-{
-  if (!ino)
-    return __seterrno (EINVAL);
-
-  atomic_dec_i32(&ino->readers_);
-  return __noerror();
-}
-
-
-// ===========================================================================
 
 int kfs_plink (kInode_t* ino, char* ptr, size_t length)
 {

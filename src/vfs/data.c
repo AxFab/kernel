@@ -20,7 +20,7 @@
 int feed_inode(kInode_t* ino, void* buffer, size_t length, off_t offset)
 {
   assert (PARAM_KOBJECT (ino, kInode_t));
-  assert (PARAM_KERNEL_BUFFER(buffer, length, PAGE_SIZE));
+  // @todo assert (PARAM_KERNEL_BUFFER(buffer, length, PAGE_SIZE));
   // kprintf (LOG_VFS, "FEED_INODE %d, / %d - %d locks\n", offset, (int)ino->stat_.length_, klockcount());
   assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);
   assert (kislocked(&ino->lock_));
@@ -75,134 +75,106 @@ int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset)
 kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
 {
   assert (PARAM_KOBJECT (ino, kInode_t));
-  assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);
+  if (((size_t)offset >= ino->stat_.length_ && ino->stat_.length_ != 0)) {
+    __seterrno (EINVAL);
+    return NULL;
+  }
 
+  kBucket_t* buck;
   klock (&ino->lock_);
 
   // Look on already cached buckets
-  kBucket_t* buck;
-    // kprintf (LOG, "ANCHOR '%x'  '%x' \n", ino->buckets_.first_, ino->buckets_.last_);
-  for (buck = klist_begin(&ino->buckets_, kBucket_t, ino_list_); 
-      buck != NULL; 
-      buck = klist_next(buck, kBucket_t, ino_list_)) {
-    // kprintf (LOG, "BUCKET '%x' \n", buck);
-    if (buck->offset_ == offset) {
-      // @todo remove and then push front
+  for_each (buck, &ino->buckets_, kBucket_t, node_) {
+    if (buck->offset_ <= offset && 
+          ((size_t)buck->offset_ + buck->length_) > (size_t)offset) {
       kunlock (&ino->lock_);
       return buck;
     }
   }
 
   // Look for the new page
-  uint32_t spg;
+  size_t length = PAGE_SIZE;
+  page_t page = 0;
   if (ino->dev_->map != NULL) {
-
+    length = PAGE_SIZE;
+    offset = ALIGN_DW (offset, PAGE_SIZE);
     MODULE_ENTER(&ino->lock_, &ino->dev_->lock_);
-    spg = ino->dev_->map(ino, offset);
+    page = ino->dev_->map(ino, offset);
     MODULE_LEAVE(&ino->lock_, &ino->dev_->lock_);
-    if (spg == 0) {
-      kunlock (&ino->lock_);
-      __seterrno (EIO);
-      return NULL;
-    }
 
   } else {
-    void* address = kpg_temp_page (&spg);
-    if (feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_)) {
-      kunlock (&ino->lock_);
-      return NULL;
-    }
-    // kprintf (LOG_VFS, "Map complete the feed...\n");
+    // length = ino->stat_.block_;
+    offset = ALIGN_DW (offset, PAGE_SIZE); // ino->stat_.block_);
+    void* address = mmu_temporary (&page);
+    if (feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_))
+      page = 0;
+  }
+
+  if (page == 0) {
+    kunlock (&ino->lock_);
+    __seterrno (EIO);
+    return NULL;
   }
 
   // Create a new bucket
+  kprintf (LOG, "Create a new bucket\n");
   buck = KALLOC(kBucket_t);
   buck->offset_ = offset;
   buck->flags_ = 1;
-  buck->length_ = PAGE_SIZE;
-  buck->phys_ = spg;
-  klist_push_back(&ino->buckets_, &buck->ino_list_); // @todo front
+  buck->length_ = length;
+  buck->phys_ = page;
+  klist_push_front(&ino->buckets_, &buck->node_);
   kunlock (&ino->lock_);
   return buck;
 }
+
 
 
 // ---------------------------------------------------------------------------
 /** Find a physique page for the content of an inode. 
   * @note Legacy, should be replace progressively by inode_bucket.
   */
-int inode_page(kInode_t* ino, off_t offset, uint32_t* page)
+int inode_page(kInode_t* ino, off_t offset, page_t* page)
 {
-  // kBucket_t* buck = inode_bucket (ino, offset);
-  // kprintf (LOG, "BUCKET '%x'  '%x' \n", ino->buckets_.first_, ino->buckets_.last_);
-  // if (buck == NULL)
-  //   return -1;
-  // *page = buck->phys_;
-  // return 0;
+  kBucket_t* bucket = inode_bucket(ino, offset);
+  if (bucket == NULL)
+    return __geterrno();
+  *page = bucket->phys_;
+  return __seterrno(0);
+}
 
 
-  // kprintf (LOG_VFS, "Map '%s' on LBA %d using %s()\n", ino->name_, offset);
-  assert (PARAM_KOBJECT (ino, kInode_t));
-  assert ((size_t)offset < ino->stat_.length_ || ino->stat_.length_ == 0);
+// ---------------------------------------------------------------------------
+/** Function to called to grab an inodes */
+int inode_open (kInode_t* ino) 
+{
+  if (!ino)
+    return __seterrno (EINVAL);
 
+  // @todo be sure that the file is available
   klock (&ino->lock_);
-
-  int i;
-  int fr = -1;
-  kBucket_t* cache = ino->pagesCache_;
-  offset = ALIGN_DW (offset, PAGE_SIZE);
-
-  // Look on already cached buckets
-  for (i = 0; i < ino->pageCount_; ++i) {
-    if (cache[i].offset_ == offset && cache[i].phys_ != 0) {
-      *page = cache[i].phys_;
-      kunlock (&ino->lock_);
-      return 0;
-    } else if (fr < 0 && cache[i].flags_ == 0) {
-      fr = i;
-    }
-  }
-
-  if (fr < 0) {
-    // Allocate a new bucket array
-    fr = ino->pageCount_;
-    cache = kalloc (sizeof(kBucket_t) * (ino->pageCount_ + 8));
-    if (ino->pagesCache_) {
-      memcpy (cache, ino->pagesCache_, sizeof(kBucket_t) * ino->pageCount_);
-      kfree(ino->pagesCache_);
-    }
-
-    ino->pageCount_ += 8;
-    ino->pagesCache_ = cache;
-  }
-
-  assert (cache[fr].phys_ == 0 && cache[fr].flags_ == 0);
-
-  if (ino->dev_->map != NULL) {
-
-    MODULE_ENTER(&ino->lock_, &ino->dev_->lock_);
-    uint32_t spg = ino->dev_->map(ino, offset);
-    MODULE_LEAVE(&ino->lock_, &ino->dev_->lock_);
-
-    cache[fr].phys_ = spg;
-    if (cache[fr].phys_ == 0) {
-      kunlock (&ino->lock_);
-      return __seterrno (EIO);
-    }
-
-  } else {
-    void* address = kpg_temp_page (&cache[fr].phys_);
-    feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_);
-    // kprintf (LOG_VFS, "Map complete the feed...\n");
-  }
-
-  cache[fr].offset_ = offset;
-  cache[fr].flags_ = 1;
-  cache[fr].length_ = PAGE_SIZE;
-
-  *page = cache[fr].phys_;
+  ++ino->readers_;
+  klist_remove_if(&kSYS.inodeLru_, &ino->lruNd_);
   kunlock (&ino->lock_);
-  return 0;
+  return __noerror();
+}
+
+// ---------------------------------------------------------------------------
+/** Function to release an inodes */
+int inode_close (kInode_t* ino) 
+{
+  if (!ino)
+    return __seterrno (EINVAL);
+
+  // @todo if zero, push pression on scavenger
+  klock (&ino->lock_);
+  if (--ino->readers_ <= 0) {
+    klist_remove_if(&kSYS.inodeLru_, &ino->lruNd_);
+    klist_push_front(&kSYS.inodeLru_, &ino->lruNd_);
+  }
+
+  kunlock (&ino->lock_);
+  return __noerror();
 
 }
 

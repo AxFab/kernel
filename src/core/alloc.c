@@ -1,11 +1,11 @@
-#include <kernel/info.h>
+#include <kernel/core.h>
 
 // ----------------------------------------------------------------------------
 /**
     Allocate and copy a string
     The string returned can be freed using kfree
  */
-char* kcopystr (const char* str)
+char* kstrdup (const char* str)
 {
   char* ptr;
   int lg;
@@ -16,7 +16,7 @@ char* kcopystr (const char* str)
     return NULL;
   }
 
-  ptr = (char*)kalloc(lg + 1);
+  ptr = (char*)kalloc(lg + 1, 0);
   memcpy(ptr, str, lg);
   ptr [lg] = '\0';
   return ptr;
@@ -25,10 +25,10 @@ char* kcopystr (const char* str)
 // ============================================================================
 
 #ifndef __KERNEL
-ltime_t ltime (ltime_t* ptr) { return time(NULL) * CLOCK_PREC; }
+nanotime_t ltime (nanotime_t* ptr) { return time(NULL) * CLOCK_PREC; }
 #else
 
-ltime_t ltime (ltime_t* ptr) { return kSYS.now_; }
+nanotime_t ltime (nanotime_t* ptr) { return kSYS.now_; }
 
 // FIXME Why here !?
 time_t time (time_t* ptr) { return 0; }
@@ -42,7 +42,7 @@ time_t time (time_t* ptr) { return 0; }
     The memory is initialized to zero.
     The block of memory can be freed using kfree
  */
-void* kalloc (size_t size)
+void* kalloc (size_t size, int slab)
 {
   void* addr = malloc_r(&kSYS.kheap, size);
 

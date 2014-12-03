@@ -182,6 +182,16 @@ static inline void cli()
   __asm__ ("cli");
 }
 
+static inline void sti()
+{
+  __asm__ ("sti");
+}
+
+#else
+
+static inline void cli() {}
+static inline void sti() {}
+
 #endif
 
 // ---------------------------------------------------------------------------

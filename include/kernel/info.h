@@ -1,7 +1,10 @@
 #ifndef KINFO_H__
 #define KINFO_H__
 
-#include <kernel/core.h>
+#ifndef KCORE_H__
+#  error You must include kernel/core.h before of kernel/info.h
+#endif
+
 #include <kernel/cpu.h>
 #ifdef __KERNEL
 #  include <ax/alloc.h>
@@ -17,7 +20,7 @@ struct kCpuCore
   int   errNo;
   int   lockCounter;
   int   tmpPageStack_;
-
+  int   ready_;
   // INODES
   // RootInode
 
@@ -25,11 +28,11 @@ struct kCpuCore
   // AddressSpace
 
   // SCHEDULER
-  ltime_t     lastStatus_;
+  nanotime_t     lastStatus_;
   int         ticksCount_;
   int         state_;
-  ltime_t     stateTime_ [ CPU_STATE_COUNT ];
-  kTask_t*    current_;
+  nanotime_t     stateTime_ [ CPU_STATE_COUNT ];
+  kThread_t*    current_;
 
   // STATS
   int         statistics_ [ CPU_STATE_COUNT ];
@@ -41,13 +44,26 @@ typedef struct kSysCore kSysCore_t;
 struct kSysCore
 {
   // CORE
-  ltime_t     now_;       // IMPORTANT! Must be the first field for ASM timers
+  nanotime_t     now_;       // IMPORTANT! Must be the first field for ASM timers
   int         state_;
   int         cpuCount_;
 
 #ifdef __KERNEL
   xHeapArea_t   kheap;
 #endif
+
+  // MMU
+  long pageAvailable_;
+  long pageMax_;
+  uint64_t memMax_;
+
+  long          pidAutoInc_;
+  long          taskAutoInc_;
+
+  anchor_t      userList_;
+
+  kProcess_t* execStart_;
+  anchor_t    processes_;
 
   // INODES
   int         autoIno_;
@@ -56,6 +72,7 @@ struct kSysCore
   kInode_t*   devNd_;
   kInode_t*   mntNd_;
   kInode_t*   pipeNd_;
+  anchor_t    inodeLru_;
 
   // MEMORY
 
@@ -69,11 +86,11 @@ struct kSysCore
   spinlock_t  procLock_;
   kProcess_t* allProcFrst_;
   kProcess_t* allProcLast_;
-  kTask_t*    allTaskFrst_;
-  kTask_t*    allTaskLast_;
+  kThread_t*    allTaskFrst_;
+  kThread_t*    allTaskLast_;
   int         prioWeight_;
   spinlock_t  timerLock_;
-  ltime_t     timerMin_;
+  nanotime_t     timerMin_;
 
   // STATS
   float       loadAvg_ [ KRN_LOADAVG_COUNT ];
@@ -83,19 +100,19 @@ struct kSysCore
 };
 
 // ---------------------------------------------------------------------------
-typedef struct kHdwCore kHdwCore_t;
-struct kHdwCore
-{
-  size_t      userSpaceBase_;
-  size_t      userSpaceLimit_;
+// typedef struct kHdwCore kHdwCore_t;
+// struct kHdwCore
+// {
+//   size_t      userSpaceBase_;
+//   size_t      userSpaceLimit_;
 
-  size_t      pageBitmapAdd_;
-  ssize_t     pageBitmapLg_;
+//   size_t      pageBitmapAdd_;
+//   ssize_t     pageBitmapLg_;
 
-  uint32_t*   kernelDir_;
-  uint32_t*   kernelTbl0_;
-  uint32_t*   screenTbl_; // FIXME - only for early implement iteration
-};
+//   uint32_t*   kernelDir_;
+//   uint32_t*   kernelTbl0_;
+//   uint32_t*   screenTbl_; // FIXME - only for early implement iteration
+// };
 
 // ---------------------------------------------------------------------------
 int kCpu_SetStatus (int state);
@@ -106,6 +123,6 @@ int kSys_NewIno();
 // ---------------------------------------------------------------------------
 extern kCpuCore_t kCPU;
 extern kSysCore_t kSYS;
-extern kHdwCore_t kHDW;
+// extern kHdwCore_t kHDW;
 
 #endif /* KINFO_H__ */

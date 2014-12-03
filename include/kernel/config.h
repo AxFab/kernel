@@ -12,12 +12,6 @@
 
 #define PTR_POISON  ((void*)0xdeaddead)
 
-#define USR_SPACE_BASE  0x00800000
-#define USR_SPACE_LIMIT 0xD0000000
-
-#define PG_BITMAP_ADD           (0x80000)
-#define PG_BITMAP_LG            (0x20000)
-
 
 #define ROOT_UID 0x1593
 
@@ -38,6 +32,14 @@
 #define CLOCK_PREC (1000000000LL)   // Nano-second
 
 
+
+
+#define PG_BITMAP_ADD           (0x80000)
+#define PG_BITMAP_LG            (0x20000)
+
+#define USR_SPACE_BASE  0x00800000
+#define USR_SPACE_LIMIT 0xD0000000
+
 #define PG_KERNEL_ONLY    3
 #define PG_USER_RDWR      7
 #define PG_USER_RDONLY    5
@@ -48,6 +50,7 @@
 #define TABLE_DIR_WIN ((uint32_t *)0xffffc000)
 
 #define TABLE_PAGE_TH(s) ((uint32_t *)(0xffc00000 | ((s) << 12)))
+
 
 
 

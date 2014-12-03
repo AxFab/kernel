@@ -88,7 +88,8 @@ kInode_t* search_inode (const char* path, kInode_t* dir)
   int symLinkLoop = 0;
   char* rentTok;
 
-  NO_LOCK; 
+  assert (klockcount() == 0); 
+  __seterrno (0);
 
   // Find the initial directory.
   if (strrchr (path, ':')) { 
@@ -114,7 +115,7 @@ kInode_t* search_inode (const char* path, kInode_t* dir)
     if (S_ISLNK(dir->stat_.mode_)) {
       dir = follow_symlink(dir, &symLinkLoop);
       if (dir == NULL) {
-        NO_LOCK;
+        assert (klockcount() == 0);
         return NULL;
       }
     }
@@ -148,7 +149,7 @@ kInode_t* search_inode (const char* path, kInode_t* dir)
       // Search child node
       dir = search_child (name, dir);
       if (dir == NULL) {
-        NO_LOCK;
+        assert (klockcount() == 0);
         return NULL;
       }
     }
@@ -156,7 +157,7 @@ kInode_t* search_inode (const char* path, kInode_t* dir)
 
   // We read all folder on path, we found it.
   kunlock (&dir->lock_);
-  NO_LOCK;
+  assert (klockcount() == 0);
   return dir;
 }
 

@@ -14,10 +14,9 @@ ssize_t block_read (kStream_t* stm, void* buf, size_t count)
   // Loop inside the buffer
   while (count > 0) {
     // Get the current page
-    // @todo, rename kpg_temp_page
     ssize_t poff = ALIGN_DW(stm->position_, PAGE_SIZE);
     inode_page (stm->ino_, poff, &page);
-    void* address = (char*)kpg_temp_page(&page) + (stm->position_ - poff);
+    void* address = (char*)mmu_temporary(&page) + (stm->position_ - poff);
 
     // Capacity ahead
     ssize_t cap = PAGE_SIZE - stm->position_ + poff;
@@ -49,10 +48,9 @@ ssize_t block_write (kStream_t* stm, const void* buf, size_t count)
   // Loop inside the buffer
   while (count > 0) {
     // Get the current page
-    // @todo, rename kpg_temp_page
     ssize_t poff = ALIGN_DW(stm->position_, PAGE_SIZE);
     inode_page (stm->ino_, poff, &page);
-    void* address = (char*)kpg_temp_page(&page) + (stm->position_ - poff);
+    void* address = (char*)mmu_temporary(&page) + (stm->position_ - poff);
 
     // Capacity ahead
     ssize_t cap = PAGE_SIZE - stm->position_ + poff;

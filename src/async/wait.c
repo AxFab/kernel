@@ -32,7 +32,7 @@ void async_wakeup (kWaiting_t* wait)
 /** Check the time of registers events */
 void async_ticks ()
 {
-  ltime_t now = ltime(NULL);
+  nanotime_t now = ltime(NULL);
   if (kSYS.timerMin_ > now)
     return;
 
@@ -44,7 +44,7 @@ void async_ticks ()
   while (wait != NULL) {
     kWaiting_t* del = NULL;
 
-    if ((ltime_t)wait->timeout_ < now) {
+    if ((nanotime_t)wait->timeout_ < now) {
       async_wakeup (wait);
       // @todo should we delete or not
     } else if (wait->timeout_ < kSYS.timerMin_) {
@@ -66,7 +66,7 @@ void async_ticks ()
 /** Register to an event
   * @note maxtime is express in micro-seconds
   */
-int async_event(kTask_t* task, anchor_t* targetList, int reason, long param, long maxtime)
+int async_event(kThread_t* task, anchor_t* targetList, int reason, long param, long maxtime)
 {
   static int auto_incr = 0;
   assert (task == kCPU.current_);
@@ -99,7 +99,7 @@ int async_event(kTask_t* task, anchor_t* targetList, int reason, long param, lon
 
 // ---------------------------------------------------------------------------
 /** Cancel an event */
-void async_cancel_event (kTask_t* task)
+void async_cancel_event (kThread_t* task)
 {
   assert (kislocked (&task->lock_));
   kWaiting_t* wait = task->event_;
@@ -122,7 +122,7 @@ void async_trigger (anchor_t* targetList, int reason, long param)
 
     if (wait->reason_ == reason) {
 
-      kprintf ("TRIGGER AN EVENT [%d] TASK %d \n", wait->reason_, wait->task_->tid_);
+      kprintf ("TRIGGER AN EVENT [%d] TASK %d \n", wait->reason_, wait->task_->taskId_);
       async_wakeup (wait);
       // @todo should we delete or not
     }

@@ -13,14 +13,21 @@
 #include <kernel/info.h>
 #include <kernel/memory.h>
 #include <kernel/async.h>
+#include <kernel/mmu.h>
+#include <kernel/cpu.h>
+
+#define __noreturn
+void __noreturn kCpu_Switch2 (kCpuRegs_t* regs, uint32_t* dir, uint32_t ss, uint32_t sp);
+void __noreturn kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t ss);
+void __noreturn kCpu_Halt ();
 
 // ---------------------------------------------------------------------------
-static int ksch_timeslice (kTask_t* task)
+static int ksch_timeslice (kThread_t* task)
 {
 #ifndef __KERNEL
   return 1;
 #else
-  ltime_t elapsed = ltime(NULL) - task->execStart_;
+  nanotime_t elapsed = ltime(NULL) - task->execStart_;
   if (elapsed == 0) elapsed = 1;
   long weight = (21 - task->niceValue_) * 2;
   long weightElapsed = (task->elapsedUser_ * kSYS.schedLatency_) / elapsed / 1;//kSYS.cpuCount_;
@@ -62,7 +69,7 @@ void ksch_ticks (kCpuRegs_t* regs)
 // ---------------------------------------------------------------------------
 void ksch_pick ()
 {
-  kTask_t* pick;
+  kThread_t* pick;
   assert (!ksch_ontask());
 
   cli();
@@ -99,17 +106,15 @@ void ksch_pick ()
 
       if (KLOG_SCH) kprintf ("scheduler] calling switch <%x, %x> [%x]\n", &pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
 
-      // kprintf("SCHEDULER - TASK %d\n", pick->tid_);
-      if (pick->regs_.cs == 8) {
-        // kprintf ("Schedule on syscall [%d]\n", pick->tid_);
-        kpg_reset_stack ();
-        // kregisters (&pick->regs_);
-        // kprintf ("... call %x, %x, %x, %x\n", &pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
-        kCpu_Switch2 (&pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
-      } else {
-        kpg_reset_stack ();
+      // kprintf("SCHEDULER - TASK %d\n", pick->taskId_);
+      mmu_reset_stack ();
+      // kprintf ("Schedule on syscall [%d]\n", pick->taskId_);
+      // kregisters (&pick->regs_);
+      // kprintf ("... call %x, %x, %x, %x\n", &pick->regs_, pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
+      if (pick->regs_.cs == 8) 
+        kCpu_Switch2 (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10, pick->regs_.espx - 0x10);
+      else 
         kCpu_Switch (&pick->regs_, &pick->process_->dir_, pick->kstack_ + PAGE_SIZE * 2 - 0x10);
-      }
       return;
 
     } while (pick != kCPU.current_);

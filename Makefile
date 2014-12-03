@@ -1,7 +1,7 @@
 # Makefile
 
 #ifeq ($(MAKE_SCRIPTS_DIR),)
-  MAKE_SCRIPTS_DIR = tools
+  MAKE_SCRIPTS_DIR = scripts
 #endif
 
 -include $(MAKE_SCRIPTS_DIR)/settings.mk
@@ -42,7 +42,7 @@ ut_src = dbg/ut.c \
              $(patsubst src/%,%,$(wildcard src/assembly/*.c))  \
              $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
-			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/fs/iso/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/img/*.c)) \
              $(patsubst src/%,%,$(wildcard src/core/*.c))
 ut_inc = include/
@@ -66,7 +66,7 @@ inodes_src = $(patsubst src/%,%,$(wildcard src/inodes/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/core/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/tmpfs/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/img/*.c)) \
-			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/fs/iso/*.c)) \
 			       dbg/inodes.c
 inodes_inc = include/
 inodes_cflags = $(std_$(mode)_cflags)
@@ -102,7 +102,7 @@ $(eval $(call PROGRAM,scheduler))
 # mods_src = $(patsubst src/%,%,$(wildcard src/core/*.c)) \
 # 		       $(patsubst src/%,%,$(wildcard src/fs/tmpfs/*.c)) \
 # 		       $(patsubst src/%,%,$(wildcard src/fs/img/*.c)) \
-# 		       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
+# 		       $(patsubst src/%,%,$(wildcard src/fs/iso/*.c)) \
 #            $(patsubst src/%,%,$(wildcard src/inodes/*.c)) \
 #            $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
 #            $(patsubst src/%,%,$(wildcard src/tasks/*.c)) \
@@ -152,10 +152,10 @@ kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/ata/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/vba/*.c)) \
-			       $(patsubst src/%,%,$(wildcard src/fs/iso9660/*.c)) \
+			       $(patsubst src/%,%,$(wildcard src/fs/iso/*.c)) \
              $(patsubst src/%,%,$(wildcard src/core/*.c))
 kImage_crt = $(obj_dir)/crtk.o
-kImage_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/
+kImage_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/ arch/i386/include/
 kImage_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL
 kImage_lflags = $(AXLIBC)/lib/libAxRaw.a
 $(eval $(call KERNEL,kImage))
@@ -211,7 +211,7 @@ Os.iso: $(kimg) master deamon hello sname kt_itimer
 	$(VVV) mkdir -p iso/boot/grub
 	$(VVV) mkdir -p iso/bin iso/lib iso/sbin
 
-	$(VV) cp tools/grub/grub.cfg  iso/boot/grub/grub.cfg
+	$(VV) cp scripts/grub.cfg  iso/boot/grub/grub.cfg
 	$(VV) cp $(bin_dir)/$(kimg) iso/boot/kImage
 	$(VV) cp kImage.map iso/boot/kImage.map
 

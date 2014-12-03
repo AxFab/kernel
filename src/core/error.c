@@ -1,4 +1,4 @@
-#include <kernel/info.h>
+#include <kernel/core.h>
 #include <stdarg.h>
 
 // ----------------------------------------------------------------------------
@@ -6,10 +6,10 @@
     Change the kernel error status.
     On debug/paranoid mode, each error are logged.
  */
-int kseterrno(int err, const char* file, int line, const char* func)
+int kseterrno(int err, const char* at)
 {
   if (err) {
-    kprintf("Error %d on %s:%d (%s) [%s]\n", err, file, line, func, strerror(err));
+    kprintf("Error %d at %s [%s]\n", err, at, strerror(err));
     // kstacktrace (8);
   }
 

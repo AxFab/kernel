@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for fl in `find include/ src/ tools/ -type f`; do
+for fl in `find include/ src/ -type f`; do
   sed -e 's/\r//' -e 's/[ \t]*$//' -i $fl
 done;
 

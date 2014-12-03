@@ -23,6 +23,8 @@
 #define VMA_CODE          0x4000
 #define VMA_DATA          0x8000
 
+#define VMA_KERNEL       0x10000
+
 
 
 // ============================================================================
@@ -30,25 +32,39 @@
 
 
 struct kVma {
-  int             flags_;
   uintptr_t       base_;
   uintptr_t       limit_;
-  kVma_t*         next_;
-  kVma_t*         prev_;
+
+
+  int             flags_;
   kInode_t*       ino_;
   off_t           offset_;
+
+  kVma_t*         next_;
+  kVma_t*         prev_;
+
 };
 
-struct kAddSpace {
+struct kAddSpace 
+{
+  size_t phyPages_;
+  size_t vrtPages_;
+  spinlock_t lock_;
+
   kVma_t* first_;
   kVma_t* last_;
-  size_t vrtPages_;
-  size_t phyPages_;
-  spinlock_t lock_;
+
 };
 
 
 // ============================================================================
+
+
+
+// MEMORY/ADDSPACE ===========================================================
+/** Initialize a new address space structure with a first user-stack */
+int addspace_init(kAddSpace_t* space, int flags);
+
 
 void kvma_init (void);
 kAddSpace_t* kvma_new (size_t stack_size);
@@ -65,7 +81,7 @@ kVma_t* kvma_look_ino (kAddSpace_t* addp, kInode_t* ino, off_t offset);
 void kvma_display(kAddSpace_t* addp);
 
 void kpg_dump (uint32_t *table);
-void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page, int reset);
+// static void kpg_resolve (uint32_t address, uint32_t *table, int rights, int dirRight, uint32_t page, int reset);
 int kpg_fault (uint32_t address);
 uint32_t kpg_new ();
 
@@ -74,7 +90,8 @@ uintptr_t kpg_alloc (void);
 void kpg_release (uintptr_t page);
 void kpg_ram (uint64_t base, uint64_t length);
 
-void kpg_reset_stack ();
-void* kpg_temp_page (uint32_t* pg);
+// void kpg_reset_stack ();
+// void* mmu_temporary (uint32_t* pg);
+void* mmu_temporary (page_t* pg);
 
 #endif /* MEMORY_H__ */

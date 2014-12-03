@@ -27,7 +27,14 @@ kInode_t* create_inode(const char* name, kInode_t* dir, mode_t mode, size_t lg)
   
   kStat_t stat = { 0 };
   stat.atime_ = stat.ctime_ = stat.mtime_ = time (NULL);
-  stat.mode_ = mode;
+  int rg = mode & 0777;
+  int tp = mode & S_IFMT;
+  if (!S_ISREG(tp) && !S_ISDIR(tp) && !S_ISFIFO(tp) && !S_ISTTY(tp)){
+    __seterrno(EINVAL);
+    return NULL;
+  }
+
+  stat.mode_ = rg | tp;
   stat.length_ = lg;
 
   klock(&dir->lock_);

@@ -33,10 +33,10 @@ ssize_t fifo_read (kStream_t* stm, void* buf, size_t count)
       fifo->rpen_ = 0;
 
     // Get the current page
-    // @todo, rename kpg_temp_page
+    // @todo, rename mmu_temporary
     ssize_t poff = ALIGN_DW(fifo->rpen_, PAGE_SIZE);
     inode_page (stm->ino_, poff, &page);
-    void* address = (char*)kpg_temp_page(&page) + (fifo->rpen_ - poff);
+    void* address = (char*)mmu_temporary(&page) + (fifo->rpen_ - poff);
 
     // Capacity ahead
     ssize_t cap = PAGE_SIZE - fifo->rpen_ + poff;
@@ -78,10 +78,10 @@ ssize_t fifo_write (kStream_t* stm, const void* buf, size_t count)
       fifo->wpen_ = 0;
 
     // Get the current page
-    // @todo, rename kpg_temp_page
+    // @todo, rename mmu_temporary
     ssize_t poff = ALIGN_DW(fifo->wpen_, PAGE_SIZE);
     inode_page (stm->ino_, poff, &page);
-    void* address = (char*)kpg_temp_page(&page) + (fifo->wpen_ - poff);
+    void* address = (char*)mmu_temporary(&page) + (fifo->wpen_ - poff);
 
     // Capacity ahead
     ssize_t cap = PAGE_SIZE - fifo->wpen_ + poff;
