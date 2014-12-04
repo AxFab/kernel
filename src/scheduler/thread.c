@@ -17,11 +17,11 @@
 
 // ===========================================================================
 /** Add a new task on the scheduler list as a waiting task. */
-static void ksch_insert (kThread_t* task)
+void ksch_insert (kThread_t* task)
 {
   klock(&kSYS.schedLock_, LOCK_SCHED_INSERT);
   klock(&task->lock_, LOCK_SCHED_INSERT);
-  task->state_ = TASK_STATE_WAITING;
+  task->state_ = SCHED_READY;
   atomic_inc_i32 (&kSYS.tasksCount_[0]);
   atomic_inc_i32 (&kSYS.tasksCount_[task->state_]);
   atomic_add_i32 (&kSYS.prioWeight_, 21 - task->niceValue_);
@@ -41,10 +41,10 @@ static void ksch_insert (kThread_t* task)
 
 
 // ---------------------------------------------------------------------------
-static void ksch_remove (kThread_t* task)
+void ksch_remove (kThread_t* task)
 {
   klock(&kSYS.schedLock_, LOCK_SCHED_REMOVE);
-  assert (task->state_ == TASK_STATE_ZOMBIE);
+  assert (task->state_ == SCHED_ZOMBIE);
   assert (task->execOnCpu_ == -1);
   assert (task->event_ == NULL);
 
@@ -95,25 +95,13 @@ kThread_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   task->taskId_ = ++kSYS.taskAutoInc_;
   task->execOnCpu_ = -1;
   task->process_ = proc;
-  task->state_ = TASK_STATE_WAITING;
+  task->state_ = SCHED_READY;
   task->niceValue_ = 5;
   task->execStart_ = kSYS.now_;
   kCpu_Reset (&task->regs_, entry, arg, task->ustack_);
   atomic_inc_i32 (&proc->runningTask_);
   ksch_insert (task);
   return task;
-}
-
-// ---------------------------------------------------------------------------
-/** Ressurect a zombie thread, ready to execute */
-void ksch_resurect_thread (kThread_t* task, uintptr_t entry, intmax_t arg)
-{
-  assert (task->state_ == TASK_STATE_ZOMBIE);
-
-  task->execStart_ = kSYS.now_;
-  kCpu_Reset (&task->regs_, entry, arg, task->ustack_);
-  atomic_inc_i32 (&task->process_->runningTask_);
-  ksch_wakeup (task);
 }
 
 // ---------------------------------------------------------------------------
@@ -126,17 +114,6 @@ void ksch_destroy_thread (kThread_t* task)
   kunlock (&task->lock_);
 }
 
-
-
-// ---------------------------------------------------------------------------
-void ksch_print ()
-{
-  // kProcess_t* proc = kSYS.allProcFrst_;
-  // while (proc) {
-  //   kprintf ("PROC [%d] %s, \n", proc->pid_, proc->image_->name_);
-  //   proc = proc->nextAll_;
-  // }
-}
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

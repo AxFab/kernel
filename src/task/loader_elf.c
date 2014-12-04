@@ -62,7 +62,6 @@ kAssembly_t* elf_open (kInode_t* ino)
   head = (ELF_Header_t*)mmu_temporary (&page);
   if (head == NULL) {
     kprintf ("elf] Read first page failed\n");
-    inode_close (ino);
     return NULL;
   }
 
@@ -78,7 +77,7 @@ kAssembly_t* elf_open (kInode_t* ino)
   }
 
   assembly = KALLOC(kAssembly_t);
-  assembly->entryPoint_ = (void*)head->entry_;
+  assembly->entryPoint_ = (size_t)head->entry_;
   for (i = 0; i < head->phCount_; ++i) {
     size_t off = head->phOff_ + i * sizeof(ELF_PhEntry_t);
     assert (off + sizeof(ELF_PhEntry_t) < 4096);
@@ -91,7 +90,6 @@ kAssembly_t* elf_open (kInode_t* ino)
     kprintf ("elf] File doesn't have any loadable section\n");
     destroy_assembly (assembly);
     __seterrno (ENOEXEC);
-    inode_close (ino);
     return NULL;
   }
 

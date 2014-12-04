@@ -62,4 +62,4 @@ void kfree (void* addr)
   // memcorrupt_r (&kSYS.kheap);
 }
 
-#endif /* __KERNEL */
+// #endif /* __KERNEL */

@@ -54,7 +54,7 @@ static kProcess_t* alloc_process (kAssembly_t* asmImg)
   }
 
   klist_push_back(&process->children_, &process->siblingNd_);
-  klist_push_back(&process->threads_, &start->taskNd_);
+  // klist_push_back(&process->threads_, &start->taskNd_);
   return process;
 }
 

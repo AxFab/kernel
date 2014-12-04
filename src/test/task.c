@@ -31,19 +31,23 @@ int addspace_init(kAddSpace_t* space, int flags)
   return __seterrno(0);
 }
 
-kVma_t* vmarea_append(kAddSpace_t* space, size_t length, int flags)
+kVma_t* vmarea_map(kAddSpace_t* space, size_t length, int flags)
 {
   kVma_t* vma = KALLOC(kVma_t);
   vma->base_ = 8 * _Mb_;
   vma->limit_ = 8 * _Mb_ + length;
+  vma->flags_ = flags;
   return vma; 
 }
 
-kVma_t* vmarea_map_exec(kAddSpace_t* space, kSection_t* section)
+kVma_t* vmarea_map_section(kAddSpace_t* space, kSection_t* section, kInode_t* ino)
 {
   kVma_t* vma = KALLOC(kVma_t);
   vma->base_ = 4 * _Mb_;
   vma->limit_ = 4 * _Mb_ + section->length_;
+  vma->flags_ = section->flags_;
+  vma->offset_ = section->offset_;
+  vma->ino_ = ino;
   return vma; 
 }
 

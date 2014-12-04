@@ -14,7 +14,7 @@
 
 // ---------------------------------------------------------------------------
 /**  */
-kThread_t* create_thread(kProcess_t* proc, void* pointer, long param) 
+kThread_t* create_thread(kProcess_t* proc, size_t pointer, long param) 
 {
   assert (proc != NULL);
   assert (kislocked(&proc->lock_));
@@ -25,14 +25,14 @@ kThread_t* create_thread(kProcess_t* proc, void* pointer, long param)
   thread->process_ = proc;
 
   kVma_t* vma;
-  vma = vmarea_append(&proc->memSpace_, PAGE_SIZE * 2, stackFlags);
+  vma = vmarea_map(&proc->memSpace_, PAGE_SIZE * 2, stackFlags);
   thread->kstack_ = vma->base_;
-  vma = vmarea_append(&proc->memSpace_, 1 * _Mb_, stackFlags);
+  vma = vmarea_map(&proc->memSpace_, 1 * _Mb_, stackFlags);
   thread->ustack_ = vma->limit_;
 
   klist_push_back(&proc->threads_, &thread->taskNd_);
   thread->execOnCpu_ = -1;
-  thread->state_ = SCHED_WAITING;
+  thread->state_ = SCHED_READY;
   thread->niceValue_ = 5;
   thread->execStart_ = kSYS.now_;
   thread->execPointer_ = pointer;
@@ -46,7 +46,7 @@ kThread_t* create_thread(kProcess_t* proc, void* pointer, long param)
 
 // ---------------------------------------------------------------------------
 /**  */
-static void resurect_thread (kThread_t* thread, void* pointer, long param)
+static void resurect_thread (kThread_t* thread, size_t pointer, long param)
 {
   assert (thread->state_ == SCHED_ZOMBIE);
 
@@ -55,21 +55,20 @@ static void resurect_thread (kThread_t* thread, void* pointer, long param)
   thread->param_ = param;
   thread->restart_ = true;
   atomic_inc_i32(&thread->process_->runningTask_);
-  thread->state_ = SCHED_WAITING;
-  sched_insert (thread);
-  // sched_wakeup (thread);
+  thread->state_ = SCHED_READY;
+  sched_wakeup (thread);
+  // sched_insert (thread);
 }
 
 
 // ---------------------------------------------------------------------------
 /** Add a new thread to the process */
-kThread_t* append_thread (kProcess_t* proc, void* pointer, long param)
+kThread_t* append_thread (kProcess_t* proc, size_t pointer, long param)
 {
   assert (proc != NULL);
   assert (kCPU.current_ != NULL && proc == kCPU.current_->process_);
 
   if (proc->flags_ & TK_REMOVED) {
-
     __seterrno(ENOSYS);
     return NULL;
   }
@@ -102,6 +101,37 @@ void destroy_thread (kThread_t* thread)
   sched_remove (thread);
   kfree (thread);
 }
+
+
+// ===========================================================================
+// #define PRINT_TIME_FORMAT "%04d-%02d-%01d-%02d:%02d:%02d"
+// #define PRINT_TIME(t) (int)(t / 31556520), (int)((t % 31556520)/86400)/7, (int)((t % 31556520)/86400)%7, (int)(((t % 31556520)%86400)/3600), (int)(((t % 31556520)%3600)/60), (int)(((t % 31556520)%60))
+#define PRINT_TIME_FORMAT "%4d-%02d:%02d:%02d"
+#define PRINT_TIME(t) (int)(t/86400), (int)((t%86400)/3600), (int)((t%3600)/60), (int)(t%60)
+
+// ---------------------------------------------------------------------------
+/**  */
+void task_display ()
+{
+  kThread_t* thread;
+  kProcess_t* process;
+  kprintf ("PID   THREADS\n");
+  kprintf ("          TID   STATE   IS LOcKED    ELAPSED\n");
+
+  for_each (process, &kSYS.processes_, kProcess_t, procNd_) {
+    kprintf ("%3d   %3d\n", process->pid_, process->runningTask_ );
+    for_each (thread, &process->threads_, kThread_t, taskNd_) {
+      kprintf ("          %3d   %3d   %d   "PRINT_TIME_FORMAT"\n", thread->taskId_, thread->state_, 
+        kislocked(&thread->lock_), PRINT_TIME(thread->elapsedUser_));
+    }
+  }
+  
+  int i;
+  kprintf("\n");
+  for (i=0; i < SCHED_COUNT; ++i)
+    kprintf( "-- %d] %d \n", i, kSYS.tasksCount_[i] );
+}
+
 
 
 

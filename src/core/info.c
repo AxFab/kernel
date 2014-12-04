@@ -19,8 +19,8 @@ kSysCore_t kSYS;
 // ---------------------------------------------------------------------------
 static int kSys_RunnableTasks()
 {
-  return kSYS.tasksCount_[(int)TASK_STATE_WAITING] +
-      kSYS.tasksCount_[(int)TASK_STATE_EXECUTING];
+  return kSYS.tasksCount_[(int)SCHED_READY] +
+      kSYS.tasksCount_[(int)SCHED_RUNNING];
 }
 
 // ---------------------------------------------------------------------------

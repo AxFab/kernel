@@ -146,9 +146,8 @@ kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/vfs/*.c))  \
              $(patsubst src/%,%,$(wildcard src/inodes/*.c))  \
              $(patsubst src/%,%,$(wildcard src/stream/*.c))  \
-             $(patsubst src/%,%,$(wildcard src/assembly/*.c))  \
              $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
-             $(patsubst src/%,%,$(wildcard src/async/*.c)) \
+             $(patsubst src/%,%,$(wildcard src/task/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/ata/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/vba/*.c)) \

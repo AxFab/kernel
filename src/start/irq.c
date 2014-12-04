@@ -172,7 +172,7 @@ int kInt_Protect (unsigned int address, kCpuRegs_t* regs)
       kCPU.current_->taskId_, address);
   kregisters (regs);
   ksch_exit (kCPU.current_->process_, -1);
-  ksch_stop (TASK_STATE_ZOMBIE, regs);
+  ksch_stop (SCHED_ZOMBIE, regs);
   ksch_pick ();
   return 0;
 }
@@ -241,7 +241,7 @@ int kInt_Exception (int no, kCpuRegs_t* regs)
     kprintf ("task throw an exception [%d]: abort\n", no);
 
     ksch_exit (kCPU.current_->process_, -1);
-    ksch_stop (TASK_STATE_ZOMBIE, regs);
+    ksch_stop (SCHED_ZOMBIE, regs);
     ksch_pick ();
   }
 

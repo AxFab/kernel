@@ -34,7 +34,7 @@ kUser_t* create_user (const char* name, int privileges)
 void destroy_user (kUser_t* user)
 {
   assert (user->processCount_ == 0);
-  kfree(user->name_);
+  kfree((char*)user->name_);
   kfree(user);
 }
 

@@ -9,18 +9,13 @@
 #define TK_REMOVED (1 << 1) // For a thread/process of waiting to be destroy
 
 
-#define SCHED_ZOMBIE     0
-#define SCHED_SLEEPING   1
-#define SCHED_WAITING    2
-#define SCHED_READY      3
-#define SCHED_RUNNING    4
 
 
 struct kUser 
 {
   const char*   name_;
   int           privileges_;
-  llnode_t        allNd_;
+  llnode_t      allNd_;
   int           processCount_;
 };
 
@@ -43,16 +38,16 @@ struct kThread
   kProcess_t*   process_;
   kThread_t*    nextSc_;          /// Next item on scheduler list
 
-  llnode_t        taskNd_;
-  void*         execPointer_;
+  llnode_t        taskNd_;        /// Node of the list of processor threads.
+  size_t        execPointer_;
   long          param_;
   bool          restart_;
   uint32_t      ustack_;
   uint32_t      kstack_;
+  kWaiting_t*   event_;
 
   // TO DELETE
-  llnode_t        procNd_;         /// Node to connect on  process list
-  kWaiting_t*   event_;
+  // llnode_t        procNd_;         /// Node to connect on  process list
   kCpuRegs_t    regs_;
 };
 
@@ -100,7 +95,7 @@ struct kAssembly
 {
   int         flags_;
   kInode_t*   ino_;
-  void*       entryPoint_;
+  size_t      entryPoint_;
   llhead_t    sections_;
 
   size_t      stackSize_;
@@ -150,12 +145,13 @@ void destroy_process (kProcess_t* proc);
 
 // TASK/THREAD ===============================================================
 /**  */
-kThread_t* create_thread (kProcess_t* proc, void* pointer, long param);
+kThread_t* create_thread (kProcess_t* proc, size_t pointer, long param);
 /** Add a new thread to the process */
-kThread_t* append_thread (kProcess_t* proc, void* pointer, long param);
+kThread_t* append_thread (kProcess_t* proc, size_t pointer, long param);
 /** */
 void destroy_thread (kThread_t* thread);
 
+void task_display ();
 
 // TASK/SECURITY =============================================================
 int capability_for_inode (kInode_t* ino, int action);

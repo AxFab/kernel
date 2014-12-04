@@ -7,10 +7,10 @@
 /** Wake up the task waiting for an event */
 void async_wakeup (kWaiting_t* wait)
 {
-  if (wait->task_->state_ == TASK_STATE_BLOCKED) {
+  if (wait->task_->state_ == SCHED_BLOCKED) {
     ksch_wakeup (wait->task_);
   } else {
-    assert (wait->task_->state_ != TASK_STATE_ZOMBIE);
+    assert (wait->task_->state_ != SCHED_ZOMBIE);
     // @todo SEND SIGNAL
   }
 

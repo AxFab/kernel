@@ -48,20 +48,20 @@ void ksch_ticks (kCpuRegs_t* regs)
   if (!ksch_ontask()) {
     ksch_pick ();
 
-  } else if (kCPU.current_->state_ == TASK_STATE_ABORTING) {
-    ksch_stop (TASK_STATE_ZOMBIE, regs);
+  } else if (kCPU.current_->state_ == SCHED_ABORTING) {
+    ksch_stop (SCHED_ZOMBIE, regs);
     ksch_pick ();
 
   } else if (--kCPU.current_->timeSlice_ > 0) {
-    assert (kCPU.current_->state_ == TASK_STATE_EXECUTING);
+    assert (kCPU.current_->state_ == SCHED_RUNNING);
     kCpu_SetStatus (CPU_STATE_USER);
 
-  } else if (kSYS.tasksCount_[TASK_STATE_WAITING] <= 0) {
-    assert (kCPU.current_->state_ == TASK_STATE_EXECUTING);
+  } else if (kSYS.tasksCount_[SCHED_READY] <= 0) {
+    assert (kCPU.current_->state_ == SCHED_RUNNING);
     kCPU.current_->timeSlice_ = ksch_timeslice (kCPU.current_);
 
   } else {
-    ksch_stop (TASK_STATE_WAITING, regs);
+    ksch_stop (SCHED_READY, regs);
     ksch_pick ();
   }
 }
@@ -74,13 +74,14 @@ void ksch_pick ()
   assert (!ksch_ontask());
 
   cli();
-  int waiting = atomic_sub_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING], 1);
+  // kprintf ("PICK %x \n", kCPU.current_);
+  int waiting = atomic_sub_i32 (&kSYS.tasksCount_[SCHED_READY], 1);
   if (waiting >= 0) {
 
     pick = kCPU.current_->nextSc_;
     int loopLimit = 5000;
     do {
-      if (pick->state_ != TASK_STATE_WAITING) {
+      if (pick->state_ != SCHED_READY) {
         pick = pick->nextSc_;
         continue;
       }
@@ -90,7 +91,7 @@ void ksch_pick ()
         continue;
       }
 
-      if (pick->state_ != TASK_STATE_WAITING) { // FIXME unlikely()
+      if (pick->state_ != SCHED_READY) { // FIXME unlikely()
         kunlock (&pick->lock_);
         pick = pick->nextSc_;
         continue;
@@ -100,7 +101,7 @@ void ksch_pick ()
       kCPU.current_ = pick;
       pick->lastWakeUp_ = kSYS.now_;
       pick->timeSlice_ = ksch_timeslice (pick);
-      pick->state_ = TASK_STATE_EXECUTING;
+      pick->state_ = SCHED_RUNNING;
       atomic_inc_i32 (&kSYS.tasksCount_[pick->state_]);
       pick->execOnCpu_ = kCPU.cpuNo_;
       kCpu_SetStatus (CPU_STATE_USER);
@@ -123,19 +124,15 @@ void ksch_pick ()
     } while (/*pick != kCPU.current_ && */ --loopLimit > 0);
 
     kprintf ("scheduler] pick next didn't find any available task\n");
-    task_print ();
+    task_display();
     for (;;);
   }
 
   if (KLOG_SCH) kprintf ("scheduler] No task go idle...\n");
-  atomic_inc_i32 (&kSYS.tasksCount_[TASK_STATE_WAITING]);
+  atomic_inc_i32 (&kSYS.tasksCount_[SCHED_READY]);
   kCpu_SetStatus (CPU_STATE_IDLE);
   // In case the current task is on garbadge collector
   kCPU.current_ = kCPU.current_->nextSc_;
-  // FIXME call __asm__ HLT
-  // task_print ();
-  // kpanic ("HLT is not implemented.\n");
-  // kprintf ("HLT is not implemented.\n");
   kCpu_Halt ();
 }
 

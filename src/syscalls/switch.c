@@ -71,7 +71,7 @@ int sys_reboot(kCpuRegs_t* regs, int code)
 int sys_pause(kCpuRegs_t* regs)
 {
   // kregisters (regs);
-  ksch_stop(TASK_STATE_BLOCKED, regs);
+  ksch_stop(SCHED_BLOCKED, regs);
   return 0;
 }
 
@@ -87,7 +87,7 @@ int sys_sleep(kCpuRegs_t* regs, int miliseconds)
 {
   long microseconds = miliseconds * 1000L;
   async_event(kCPU.current_, NULL, EV_SLEEP, 0, microseconds);
-  ksch_stop(TASK_STATE_BLOCKED, regs);
+  ksch_stop(SCHED_BLOCKED, regs);
   return -1;
 }
 
@@ -100,7 +100,7 @@ time_t sys_time(kCpuRegs_t* regs, time_t* now)
 
 int sys_yield(kCpuRegs_t* regs) 
 {
-  ksch_stop (TASK_STATE_WAITING, regs);
+  ksch_stop (SCHED_READY, regs);
   return -1;
 }
 
@@ -120,7 +120,7 @@ int sys_exec(kCpuRegs_t* regs, const char* path, void* param)
 int sys_exit(kCpuRegs_t* regs, int code)
 {
   ksch_exit (kCPU.current_->process_, code);
-  ksch_stop (TASK_STATE_ZOMBIE, regs);
+  ksch_stop (SCHED_ZOMBIE, regs);
   return -1;
 }
 

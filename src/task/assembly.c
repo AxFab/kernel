@@ -1,5 +1,6 @@
 #include <kernel/task.h>
 #include <kernel/vfs.h>
+#include <kernel/memory.h>
 
 extern kAssembly_t* elf_open (kInode_t* ino);
 
@@ -8,14 +9,15 @@ extern kAssembly_t* elf_open (kInode_t* ino);
  */
 kAssembly_t* load_assembly (kInode_t* ino)
 {
-  // assert (ino->stat_mode_ == ); IS REG !
+  assert (S_ISREG (ino->stat_.mode_));
+
   if (ino->assembly_ == NULL) {
     kAssembly_t* image;
-    inode_open(ino);
-    klock (&ino->lock_);
+    if (inode_open(ino))
+      return NULL;
+
     image = elf_open (ino);
     if (image == NULL) {
-      kunlock (&ino->lock_);
       int err = __geterrno();
       inode_close (ino);
       __seterrno(err);
@@ -24,7 +26,6 @@ kAssembly_t* load_assembly (kInode_t* ino)
 
     image->ino_ = ino;
     ino->assembly_ = image;
-    kunlock (&ino->lock_);
   }
 
   return ino->assembly_;
@@ -56,8 +57,13 @@ int map_assembly (kAddSpace_t* mspace, kAssembly_t* image)
   kSection_t* section;
   for_each (section, &image->sections_, kSection_t, node_) {
     assert ((section->offset_ & (PAGE_SIZE -1)) == 0);
-    vmarea_map_exec (mspace, section);
+    vmarea_map_section (mspace, section, image->ino_);
   }
 
   return __noerror();
 }
+
+
+
+
+

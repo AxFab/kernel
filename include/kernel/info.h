@@ -85,7 +85,7 @@ struct kSysCore
   int         schedLatency_;
   int         minTimeSlice_;
   spinlock_t  schedLock_;
-  int         tasksCount_ [ TASK_STATE_COUNT ];
+  int         tasksCount_ [ SCHED_COUNT ];
   spinlock_t  procLock_;
   kProcess_t* allProcFrst_;
   kProcess_t* allProcLast_;
