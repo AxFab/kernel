@@ -118,12 +118,11 @@ void kstat()
 // void kfree(void* addr);
 // char* kstrdup(const char* str);
 
-// nanotime_t ltime (nanotime_t* ptr);
-
 // const char* ksymbol (void* address);
 // void kstacktrace(uintptr_t max_frames);
 // void kdump (void* ptr, size_t lg);
 // void kregisters (kCpuRegs_t* regs);
+
 int bclearbyte (uint8_t* byte, int off, int lg)
 {
   uint8_t v = byte[0];

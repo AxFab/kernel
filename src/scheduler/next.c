@@ -27,7 +27,7 @@ static int ksch_timeslice (kThread_t* task)
 #ifndef __KERNEL
   return 1;
 #else
-  nanotime_t elapsed = ltime(NULL) - task->execStart_;
+  nanotime_t elapsed = kSYS.now_ - task->execStart_;
   if (elapsed == 0) elapsed = 1;
   long weight = (21 - task->niceValue_) * 2;
   long weightElapsed = (task->elapsedUser_ * kSYS.schedLatency_) / elapsed / 1;//kSYS.cpuCount_;
@@ -98,7 +98,7 @@ void ksch_pick ()
 
       // Run the task
       kCPU.current_ = pick;
-      pick->lastWakeUp_ = ltime(NULL);
+      pick->lastWakeUp_ = kSYS.now_;
       pick->timeSlice_ = ksch_timeslice (pick);
       pick->state_ = TASK_STATE_EXECUTING;
       atomic_inc_i32 (&kSYS.tasksCount_[pick->state_]);

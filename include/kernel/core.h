@@ -185,7 +185,7 @@ void kfree(void* addr);
 char* kstrdup(const char* str);
 
 // Miscallenous --------------------------------------------------------------
-nanotime_t ltime (nanotime_t* ptr);
+// nanotime_t ltime (nanotime_t* ptr);
 
 // Debug ---------------------------------------------------------------------
 const char* ksymbol (void* address);

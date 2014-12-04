@@ -65,7 +65,7 @@ void ksch_stop (int state, kCpuRegs_t* regs)
     kCpu_Save (task, regs); // FIXME Save registers
 
   task->execOnCpu_ = -1;
-  task->elapsedUser_ += ltime(NULL) - task->lastWakeUp_;
+  task->elapsedUser_ += kSYS.now_ - task->lastWakeUp_;
   if (task->state_ == TASK_STATE_ABORTING)
     task->state_ = TASK_STATE_EXECUTING;
 

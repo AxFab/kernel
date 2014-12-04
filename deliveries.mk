@@ -57,9 +57,12 @@ $(eval $(call UT_PROGRAM,task,   \
 		))
 
 # # -------------------------------------------------------
-$(eval $(call UT_PROGRAM,sched, \
-			src/scheduler/sched.c          \
-			src/scheduler/runtime.c         \
+$(eval $(call UT_PROGRAM,sched,  \
+			$(wildcard src/scheduler/*.c) \
+			$(wildcard src/async/*.c) \
+			src/test/sched.c           \
+			src/test/cpu.c             \
+			src/test/runtime.c         \
 		))
 
 # # -------------------------------------------------------

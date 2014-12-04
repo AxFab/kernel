@@ -40,8 +40,8 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   // kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
   kasm_load (&proc->memSpace_, prg);
 
-  proc->pid_ = kSys_NewPid();
-  proc->execStart_ = ltime(NULL);
+  proc->pid_ = ++kSYS.pidAutoInc_;
+  proc->execStart_ = kSYS.now_;
   proc->workingDir_ = dir;
   proc->parent_ = NULL;
   proc->image_ = prg;
@@ -89,8 +89,8 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
   // kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
   kasm_load (&proc->memSpace_, image);
 
-  proc->pid_ = kSys_NewPid();
-  proc->execStart_ = ltime(NULL);
+  proc->pid_ = ++kSYS.pidAutoInc_;
+  proc->execStart_ = kSYS.now_;
   proc->workingDir_ = dir;
   proc->parent_ = parent;
   proc->image_ = image;

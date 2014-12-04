@@ -31,7 +31,7 @@ void async_wakeup (kWaiting_t* wait)
 /** Check the time of registers events */
 void async_ticks ()
 {
-  nanotime_t now = ltime(NULL);
+  nanotime_t now = kSYS.now_;
   if (kSYS.timerMin_ > now)
     return;
 
@@ -81,7 +81,7 @@ int async_event(kThread_t* task, llhead_t* targetList, int reason, long param, l
   wait->task_ = task;
   wait->reason_ = reason;
   wait->param_ = param;
-  wait->timeout_ = (maxtime > 0 ? ltime(NULL) + maxtime * 1000LL : INT64_MAX);
+  wait->timeout_ = (maxtime > 0 ? kSYS.now_ + maxtime * 1000LL : INT64_MAX);
 
   if (wait->timeout_ < kSYS.timerMin_)
     kSYS.timerMin_ = wait->timeout_;

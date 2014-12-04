@@ -92,12 +92,12 @@ kThread_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
   kThread_t* task = KALLOC (kThread_t);
   task->kstack_ = vmarea_map (&proc->memSpace_, PAGE_SIZE * 2, flags_ | VMA_KERNEL)->base_;
   task->ustack_ = vmarea_map (&proc->memSpace_, 1 * _Mb_, flags_)->limit_;
-  task->taskId_ = kSys_NewPid();
+  task->taskId_ = ++kSYS.taskAutoInc_;
   task->execOnCpu_ = -1;
   task->process_ = proc;
   task->state_ = TASK_STATE_WAITING;
   task->niceValue_ = 5;
-  task->execStart_ = ltime(NULL);
+  task->execStart_ = kSYS.now_;
   kCpu_Reset (&task->regs_, entry, arg, task->ustack_);
   atomic_inc_i32 (&proc->runningTask_);
   ksch_insert (task);
@@ -110,7 +110,7 @@ void ksch_resurect_thread (kThread_t* task, uintptr_t entry, intmax_t arg)
 {
   assert (task->state_ == TASK_STATE_ZOMBIE);
 
-  task->execStart_ = ltime(NULL);
+  task->execStart_ = kSYS.now_;
   kCpu_Reset (&task->regs_, entry, arg, task->ustack_);
   atomic_inc_i32 (&task->process_->runningTask_);
   ksch_wakeup (task);

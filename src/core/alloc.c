@@ -24,14 +24,11 @@ char* kstrdup (const char* str)
 
 // ============================================================================
 
-#ifndef __KERNEL
-nanotime_t ltime (nanotime_t* ptr) { return time(NULL) * CLOCK_PREC; }
-#else
-
-nanotime_t ltime (nanotime_t* ptr) { return kSYS.now_; }
-
 // FIXME Why here !?
-time_t time (time_t* ptr) { return 0; }
+time_t time (time_t* ptr) 
+{ 
+  return (time_t)(kSYS.now_ / 1000000); 
+}
 
 #undef kalloc
 #undef kfree
