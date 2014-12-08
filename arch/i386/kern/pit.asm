@@ -137,24 +137,25 @@ PIT_set_reloadcount:
   ret
 
 ; =============================================================================
-global IRQ0_handler
-extern kInt_Clock, PIT_Period, kSYS
+;global IRQ0_handler
+;extern kInt_Clock, PIT_Period, kSYS
 ; ---
-IRQ0_handler:
-  .start:
-    SAVE_REGS
-   
-    xor edx, edx
-    mov eax, [PIT_Period]
-    add [kSYS], eax            ; Update system timer low-bytes
-    adc [kSYS + 4], edx        ; Update system timer high-bytes
-   
-    call kInt_Clock
-   
-    mov al,0x20
-    out 0x20,al
-    LOAD_REGS
-    iret
+
+;IRQ0_handler:
+;  .start:
+;    SAVE_REGS
+;   
+;    xor edx, edx
+;    mov eax, [PIT_Period]
+;    add [kSYS], eax            ; Update system timer low-bytes
+;    adc [kSYS + 4], edx        ; Update system timer high-bytes
+;   
+;    call kInt_Clock
+;   
+;    mov al,0x20
+;    out 0x20,al
+;    LOAD_REGS
+;    iret
 
 ; =============================================================================
 

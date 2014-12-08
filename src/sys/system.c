@@ -1,6 +1,6 @@
-#include "tty.h"
-#include "cpu.h"
-#include <kernel/info.h>
+#include <kernel/core.h>
+#include "../start/tty.h"
+#include "../start/cpu.h"
 
 #include "kernel/vfs.h"
 #include "kernel/memory.h"

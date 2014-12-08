@@ -47,12 +47,15 @@ int kvprintf (const char* str, va_list ap)
   return res;
 }
 
+spinlock_t printLock = LOCK_INIT;
 int kprintf (const char* str, ...)
 {
+  klock (&printLock);
   va_list ap;
   va_start(ap, str);
   int v = kvprintf (str, ap);
   va_end(ap);
+  kunlock (&printLock);
   return v;
 
 }

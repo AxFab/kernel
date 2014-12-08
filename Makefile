@@ -130,9 +130,11 @@ $(eval $(call CRT,CRT0))
 # ---------------------------------------------------------------------------
 # Target: Program  kMin
 kMin_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
+           $(patsubst src/%,%,$(wildcard src/arch/i386/*.c)) \
+           $(patsubst src/%,%,$(wildcard src/minimal/*.c))\
            $(patsubst src/%,%,$(wildcard src/core/*.c))
 kMin_crt = $(obj_dir)/crtk.o
-kMin_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/
+kMin_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/ arch/i386/include/
 kMin_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL
 kMin_lflags = $(AXLIBC)/lib/libAxRaw.a
 $(eval $(call KERNEL,kMin))
@@ -148,6 +150,8 @@ kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/stream/*.c))  \
              $(patsubst src/%,%,$(wildcard src/memory/*.c)) \
              $(patsubst src/%,%,$(wildcard src/task/*.c)) \
+             $(patsubst src/%,%,$(wildcard src/sys/*.c)) \
+             $(patsubst src/%,%,$(wildcard src/arch/i386/*.c)) \
              $(patsubst src/%,%,$(wildcard src/scheduler/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/ata/*.c)) \
 			       $(patsubst src/%,%,$(wildcard src/fs/vba/*.c)) \

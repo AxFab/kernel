@@ -54,82 +54,82 @@
 
 // --------------------------------------------------------
 
-int kInt_Default (kCpuRegs_t* registers)
-{
-  kTty_Write ("Unk.IRQ!\n");
-  // for (;;);
-  return 0;
-}
+// int kInt_Default (kCpuRegs_t* registers)
+// {
+//   kTty_Write ("Unk.IRQ!\n");
+//   // for (;;);
+//   return 0;
+// }
 
-int clockCount = 0;
-int ticksCount = 0;
-int kInt_Clock (kCpuRegs_t* regs)
-{
-  /** PIT - Timers [ +/- 1.73 sec/day ]
-   */
-  kSYS.now_ += CLOCK_PREC / CLOCK_HZ;
-  //kprintf ("== %lld ==\n", kSYS.now_);
+// int clockCount = 0;
+// int ticksCount = 0;
+// int kInt_Clock (kCpuRegs_t* regs)
+// {
+//   /** PIT - Timers [ +/- 1.73 sec/day ]
+//    */
+//   kSYS.now_ += CLOCK_PREC / CLOCK_HZ;
+//   //kprintf ("== %lld ==\n", kSYS.now_);
 
-  // FIXME check kSYS.on_ !?
-  // kTty_Putc ('.');
-  if (++ticksCount > CLOCK_HZ / 100) {
-    ticksCount = 0;
+//   // FIXME check kSYS.on_ !?
+//   // kTty_Putc ('.');
+//   if (++ticksCount > CLOCK_HZ / 100) {
+//     ticksCount = 0;
     
-    // kprintf ("System clock: %lld us\n", kSYS.now_);
+//     // kprintf ("System clock: %lld us\n", kSYS.now_);
 
-    ksch_ticks((kCpuRegs_t*)&regs);
-  }
+//     ksch_ticks((kCpuRegs_t*)&regs);
+//   }
 
-  if (++clockCount > CLOCK_HZ) {
-    clockCount = 0;
-    // kprintf ("System clock: %lld us\n", kSYS.now_);
-  }
+//   if (++clockCount > CLOCK_HZ) {
+//     clockCount = 0;
+//     // kprintf ("System clock: %lld us\n", kSYS.now_);
+//   }
 
-  return 0;
-}
+//   return 0;
+// }
 
 /* =============================
   IRQ - KEYBOARD
 ================================*/
-kStream_t* keyboard_tty = NULL;
+// kStream_t* keyboard_tty = NULL;
 
-int kInt_KBoard (kCpuRegs_t* registers)
-{
-  // IRQ.1 - Keyboard 
-  unsigned char key;
-  while((inb(0x64) & 0x01) == 0);
-  key = inb(0x60);
+// int kInt_KBoard (kCpuRegs_t* registers)
+// {
+//   // IRQ.1 - Keyboard 
+//   unsigned char key;
+//   while((inb(0x64) & 0x01) == 0);
+//   key = inb(0x60);
 
-  kEvent_t ev;
-  ev.type_ = (key < 0x80) ? EV_KEYDW : EV_KEYUP;
-  ev.keyboard_.key_ = key & 0x7F;
+//   kEvent_t ev;
+//   ev.type_ = (key < 0x80) ? EV_KEYDW : EV_KEYUP;
+//   ev.keyboard_.key_ = key & 0x7F;
 
-  if (keyboard_tty != NULL)
-    term_event (keyboard_tty, &ev);
+//   if (keyboard_tty != NULL)
+//     term_event (keyboard_tty, &ev);
 
-  return 0;
-}
+//   return 0;
+// }
 
-uint64_t value = 0;
-int kInt_CMOS (kCpuRegs_t* registers)
-{
-  /** RTC - Interval Timers from 512Hz to 8096Hz
-    512Hz  -> 1953125.0    ns
-    1024Hz ->  976562.5    ns
-    2KHz   ->  488281.25   ns
-    4KHz   ->  244140.625  ns
-    8KHz   ->  122070.3125 ns
-   */
-  value += 9765625000; // Period in pico-seconds
-  // if (value > /*9765625 */ 1024) {
-  //   value = 0;
-  //  kTty_Putc ('-');
-  // }
-  outb(0x70, 0x8C); // select register C
-  inb(0x71);    // just throw away contents
+// uint64_t value = 0;
+// int kInt_CMOS (kCpuRegs_t* registers)
+// {
+//   * RTC - Interval Timers from 512Hz to 8096Hz
+//     512Hz  -> 1953125.0    ns
+//     1024Hz ->  976562.5    ns
+//     2KHz   ->  488281.25   ns
+//     4KHz   ->  244140.625  ns
+//     8KHz   ->  122070.3125 ns
+   
+//   value += 9765625000; // Period in pico-seconds
+//   // if (value > /*9765625 */ 1024) {
+//   //   value = 0;
+//   //  kTty_Putc ('-');
+//   // }
+//   outb(0x70, 0x8C); // select register C
+//   inb(0x71);    // just throw away contents
 
-  return 0;
-}
+//   return 0;
+// }
 
 /*
 int kInt_SysCall (kCpuRegs_t* regs)

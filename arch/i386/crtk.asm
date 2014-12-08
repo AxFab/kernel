@@ -82,7 +82,10 @@ startup:
     mov ecx, 2048
     rep stosd
 
-    call kCpu_Initialize
+extern cpu_init_table
+    ; void cpu_init_table ()
+    call cpu_init_table
+    ; call kCpu_Initialize
 
     mov esp, kMem_kstackptr - 0x10
     lgdt [.gdtregs]
@@ -95,10 +98,11 @@ startup:
     mov gs, ax
     mov ss, ax
 
+    
     mov byte [0xB8004], '.'
     mov byte [0xB8005], 0x57
 
-    call kcpu_pic  ; init_pic
+    ; call kcpu_pic  ; init_pic
     lidt [.idtregs]
     mov ax, _x86_TSS_Sgmt
     ltr ax
@@ -106,11 +110,13 @@ startup:
     mov byte [0xB8006], '.'
     mov byte [0xB8007], 0x57
 
+
     mov eax, 0x2000 ; PAGE kernel
     mov cr3, eax
     mov eax, cr0
     or eax, (1 << 31) ; CR0 31b to activate mmu
     mov cr0, eax
+
 
     mov byte [0xB8008], '.'
     mov byte [0xB8009], 0x57
@@ -118,6 +124,7 @@ startup:
     ; Initialize timer
     ; mov ebx, 0x220 ; Frequency in Hz
     ; call PIT_initialize
+
 
     call kCore_Initialize
     sti
@@ -149,10 +156,13 @@ krpLength:
 
 ; ------------------------------------------
 
-%include "arch/i386/kern/int.asm"
+; %include "arch/i386/kern/int.asm"
 %include "arch/i386/kern/io.asm"
 %include "arch/i386/kern/pit.asm"
-
+%include "arch/i386/kern/interupt.asm"
+align 4096
+%include "arch/i386/kern/ap_boot.asm"
+align 4096
 
 
 ; i386 routines ----------------------------
@@ -390,7 +400,8 @@ kCpu_Halt:
 .pause:
     sti
     hlt
-    jmp $
+    jmp .pause
+
     
 
 
@@ -401,4 +412,44 @@ global _geterrno
 errno: dd 0
 _geterrno:
     mov eax, errno
+    ret
+
+
+
+
+global cpuid
+
+cpuid:
+    push ebp
+    mov ebp, esp
+    push ecx
+    push edx
+    mov eax, [ebp + 8]
+    mov ecx, [ebp + 12]
+    cpuid
+    mov edi, [ebp + 16]
+    mov [edi], eax
+    mov [edi + 4], ebx
+    mov [edi + 8], edx
+    mov [edi + 12], ecx
+    pop edx
+    pop ecx
+    leave
+    ret
+
+global task_pause
+global __delay
+
+__delay:
+    push ecx
+    mov ecx, 0x500000
+  .s:
+    loop .s
+    pop ecx
+    ret
+
+
+task_pause:
+    mov eax, 1
+    int 0x30
     ret

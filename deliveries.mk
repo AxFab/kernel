@@ -59,7 +59,7 @@ $(eval $(call UT_PROGRAM,task,   \
 # # -------------------------------------------------------
 $(eval $(call UT_PROGRAM,sched,  \
 			$(wildcard src/scheduler/*.c) \
-			$(wildcard src/async/*.c) \
+			$(wildcard src/task/*.c)   \
 			src/test/sched.c           \
 			src/test/cpu.c             \
 			src/test/runtime.c         \
@@ -70,3 +70,33 @@ $(eval $(call UT_PROGRAM,aatree, \
 			src/test/aatree.c          \
 			src/test/runtime.c         \
 		))
+
+
+# =======================================================
+#      Define deliveries
+# =======================================================
+
+SRCS_kImage = $(wildcard src/start/*.c)     \
+							$(wildcard src/syscalls/*.c)  \
+							$(wildcard src/vfs/*.c)       \
+							$(wildcard src/inodes/*.c)    \
+							$(wildcard src/stream/*.c)    \
+							$(wildcard src/memory/*.c)    \
+							$(wildcard src/task/*.c)      \
+							$(wildcard src/scheduler/*.c) \
+							$(wildcard src/fs/ata/*.c)    \
+							$(wildcard src/fs/vba/*.c)    \
+							$(wildcard src/fs/iso/*.c)    \
+							$(wildcard src/core/*.c)
+
+OBJS_kImage = $(patsubst src/%.cpp,obj/testing/%.o, $(patsubst src/%.c,obj/testing/%.o, SRCS_kImage))
+DEPS_kImage = $(patsubst src/%.cpp,obj/testing/%.d, $(patsubst src/%.c,obj/testing/%.d, SRCS_kImage))
+bin/kImage: $(OBJS_kImage)
+# TEST += $(1)UT
+DEPS += $(DEPS_kImage)
+
+# # -------------------------------------------------------
+
+
+
+
