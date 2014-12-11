@@ -10,6 +10,12 @@ const char* masterPaths[] = {
   NULL
 };
 
+void kernel_ready ()
+{
+
+}
+
+
 void kernel_start ()
 {
   // assert (1); // kalloc is available, memory is virtual, screen is OK, timer is set
@@ -84,5 +90,10 @@ void kernel_start ()
   // // IX. Initialize per-cpu scheduler
   // kprintf ("Starting...\n");
   // ksch_init ();
+}
+
+int __delayX (int microsecond)
+{
+
 }
 

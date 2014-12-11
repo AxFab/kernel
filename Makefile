@@ -135,7 +135,7 @@ kMin_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
            $(patsubst src/%,%,$(wildcard src/core/*.c))
 kMin_crt = $(obj_dir)/crtk.o
 kMin_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/ arch/i386/include/
-kMin_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL
+kMin_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL -D__x86_64__
 kMin_lflags = $(AXLIBC)/lib/libAxRaw.a
 $(eval $(call KERNEL,kMin))
 
@@ -159,7 +159,7 @@ kImage_src = $(patsubst src/%,%,$(wildcard src/start/*.c)) \
              $(patsubst src/%,%,$(wildcard src/core/*.c))
 kImage_crt = $(obj_dir)/crtk.o
 kImage_inc = include/ $(AXLIBC)/include/ $(AXLIBC)/internal/ arch/i386/include/
-kImage_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL
+kImage_cflags = $(std_$(mode)_cflags) -nostdinc -D__EX -D__KERNEL -D__x86_64__
 kImage_lflags = $(AXLIBC)/lib/libAxRaw.a
 $(eval $(call KERNEL,kImage))
 

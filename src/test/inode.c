@@ -45,6 +45,7 @@ kInode_t* load_inode (const char* file)
     return NULL;
 
   kInode_t* ino = KALLOC(kInode_t);
+  ino->stat_.mode_ = 0755 | S_IFREG;
   fseek(fp, 0, SEEK_END);
   size_t lg = ftell(fp); 
   ino->stat_.length_ = lg;

@@ -32,6 +32,7 @@ _start:
 krpInfo:
     dd 0, 0 ; Offset, length
 
+
 align 16
 start:
 ; Start ------------------------------------
@@ -57,7 +58,7 @@ start:
 
   .failed:
     hlt
-    jmp $
+    jmp $ 
 
 
 ; Grub -------------------------------------
@@ -73,6 +74,7 @@ start:
     mov byte [0xB8002], 'o'
     mov byte [0xB8003], 0x57
     mov byte [0xB8004], 0x00
+
 
 
 startup:
@@ -409,7 +411,9 @@ kCpu_Halt:
 ; =============================================
 
 global _geterrno
-errno: dd 0
+errno: 
+    dd 0
+
 _geterrno:
     mov eax, errno
     ret
@@ -453,3 +457,5 @@ task_pause:
     mov eax, 1
     int 0x30
     ret
+
+

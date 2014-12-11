@@ -71,6 +71,7 @@ int kGrub_Initialize (uint32_t* bTable)
   }
 
   kgrubMemory ((uint32_t*)bTable[12]);
+  kprintf ("POINTER SCREEN 0x%08x\n", bTable[22]);
 
 	return __noerror();
 }

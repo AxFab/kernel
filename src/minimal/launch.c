@@ -166,6 +166,14 @@ int kCore_Initialize ()
 }
 
 
+void kernel_ready (int eax) 
+{
+  kprintf ("Oh yeah! From CPU %d <%08x>\n", cpu_id(), &eax);
+  // kdump (0x7f0, 0x20);
+  // for (;;);
+}
+
+
 void ksch_pick()
 {
 
@@ -184,7 +192,8 @@ void ksch_stop(int state, kCpuRegs_t* regs)
 
 int page_fault (size_t address, int cause)
 {
-
+  kprintf ("PF 0x%08x -- %4x \n", address, cause);
+  for (;;);
 }
 
 
@@ -218,5 +227,26 @@ int term_event (kStream_t* stm, kEvent_t* event)
 
 void sys_enter (int no, void* stack)
 {
+  kprintf ("SYS_ENTER %d \n", no);
+  for (;;);
 }
+
+
+extern int PIT_Period;
+int volatile __timer = 0;
+void ksch_ticks (kCpuRegs_t* regs) 
+{
+  __timer+= PIT_Period;
+  // kprintf (".\n");
+}
+
+
+int __delayX (int microsecond) 
+{
+  sti();
+  __timer = 0;
+  while (__timer < microsecond);
+}
+
+
 

@@ -163,7 +163,7 @@ void mmu_dump()
 int mmu_resolve (size_t address, page_t page, int access, bool zero)
 {
   assert (zero || page != 0);
-  assert (!zero || page == 0);
+  // assert (!zero || page == 0);
 
   int dir = (address >> 22) & 0x3ff;
   int tbl = (address >> 12) & 0x3ff;

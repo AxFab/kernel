@@ -6,6 +6,7 @@
 #define IA32_APIC_BASE_MSR_ENABLE 0x800
 
 void cpuid(int leave, int sublv, int* cpu);
+int __delayX (int microsecond);
 
 void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 {
@@ -149,8 +150,6 @@ void cpu_svr();
 
 #define APIC_ENABLE 0x800
 
-extern int ap_count;
-
 int cpu_id ()
 {
   return (APIC_ID >> 24) & 0xf;
@@ -163,6 +162,8 @@ void __step ()
   kprintf ("step %d\n", step);
   ++ step;
 }
+
+#define cpu_count (*((uint16_t*)0x7f8))
 
 
 void enableAPIC()
@@ -200,31 +201,16 @@ void enableAPIC()
   kprintf ("Initial APIC ID form cpuid[EAX=1] is %d.\n", cpuid_features[1] >> 24);
   kprintf ("Local APIC ID form apic table is %d.\n",  cpu_id ());
 
-  if (x86_FEATURES_X2APIC)
-    kprintf ("Support of x2APIC: YES\n");
-  else
-    kprintf ("Support of x2APIC: NO\n");
-
-  kprintf ("---- Local APIC\n");
-  kprintf ("    APIC ID    %08x\n", APIC_ID);
-  kprintf ("    APIC VERS  %08x\n", APIC_VERS);
-  kprintf ("    APIC TPR   %08x\n", APIC_TPR);
-  kprintf ("    APIC APR   %08x\n", APIC_APR);
-  kprintf ("    APIC PPR   %08x\n", APIC_PPR);
-  kprintf ("    APIC EIO   %08x\n", APIC_EOI);
-  kprintf ("    APIC RRD   %08x\n", APIC_RRD);
-  kprintf ("    APIC LDR   %08x\n", APIC_LRD);
-  kprintf ("    APIC DRD   %08x\n", APIC_DRD);
-  kprintf ("    APIC SVR   %08x\n", APIC_SVR);
-  kprintf ("    APIC Err   %08x\n", APIC_ESR);
 
   // START APs ------
   int apVector = (uint32_t)ap_start >> 12;
   int aeVector = (uint32_t)acpi_err >> 12;
   
-  kprintf ("Read APs count %d\n", ap_count);
-  kprintf ("ap_start is at  0x%x [%d-%x]\n", ap_start, apVector, apVector);
-  kprintf ("acpi_err is at  0x%x [%d-%x]\n", acpi_err, aeVector, aeVector);
+  memset ((void*)0x700, 0, 0x100); // Initialize 0x100 bytes of data for AP startup
+
+  // kprintf ("Read APs count %d\n", cpu_count);
+  // kprintf ("ap_start is at  0x%x [%d-%x]\n", ap_start, apVector, apVector);
+  // kprintf ("acpi_err is at  0x%x [%d-%x]\n", acpi_err, aeVector, aeVector);
 
   PIT_Initialize(CLOCK_HZ);
   sti ();
@@ -234,28 +220,20 @@ void enableAPIC()
   APIC_SVR = APIC_SVR | APIC_ENABLE;
   APIC_LVT3 = (APIC_LVT3 & (~0xff)) | (aeVector & 0xff);
 
-  __step();
   // Broadcast INIT IPI to all APs
   APIC_ICR_LOW = 0x0C4500;
-  // __delay(); // 10-millisecond delay loop.
-  __delayX(10000); 
+  __delayX(10000); // 10-millisecond delay loop.
 
-  __step();
-  // Load ICR encoding for broadcast SIPI IP
+  // Load ICR encoding for broadcast SIPI IP (x2)
   APIC_ICR_LOW = 0x000C4600 | apVector;
-  // __delay(); // 200-microsecond delay loop.
-  __delayX(200); 
-
-  __step();
+  __delayX(200); // 200-microsecond delay loop.
   APIC_ICR_LOW = 0x000C4600 | apVector;
-  // __delay(); // 200-microsecond delay loop.
-  __delayX(200); 
+  __delayX(200); // 200-microsecond delay loop.
 
-  __step();
-  // Wait timer interrupt
-  kprintf ("Read APs count %d\n", ap_count);
- 
+  // Wait timer interrupt - We should have init all CPUs
+  kprintf ("BSP #0]: I found a count of %d CPUs\n", cpu_count + 1);
 
+  for (;;);
 
   // cpu_svr();
   // mmu_dump();
@@ -270,21 +248,5 @@ void enableAPIC()
 
   
 
-}
-
-extern int PIT_Period;
-int volatile __timer = 0;
-void ksch_ticks (kCpuRegs_t* regs) 
-{
-  __timer+= 100; //= PIT_Period;
-  // kprintf (".\n");
-}
-
-
-int __delayX (int microsecond) 
-{
-  sti();
-  __timer = 0;
-  while (__timer < microsecond);
 }
 

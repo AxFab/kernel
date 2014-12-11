@@ -1,43 +1,69 @@
 
-global ap_start
-global ap_count
+
+; ==========================================
 extern kprintf
+extern mmu_newpage
+extern mmu_resolve
+extern kernel_ready
 
+; ------------------------------------------
+; AP start-up
+%define  CPU_GDT    0x700
+%define  CPU_LOCK   0x7f0
+%define  CPU_COUNT  0x7f8
+
+; ==========================================
+align 4096
+use16
+
+global ap_start
+; ------------------------------------------
 ap_start:
-
-;    mov eax, 0xf0000000
-
-
-
-;  .pause1:
-;    cli
-;    hlt
-;    jmp .pause1
-
-
     cli
-
-  .spinlock:
-    mov eax, 1
-    lock xchg eax, [.lock]
-    test eax, eax
-    jnz .spinlock
-
-
-    lgdt [startup.gdtregs]
-    mov esp, kMem_kstackptr - 0x10 + 0x800
-    jmp _x86_kCode_Sgmt:.reloadCS
-  .reloadCS:
-    mov ax, _x86_kData_Sgmt
+    mov ax, 0x0
     mov ds, ax
     mov es, ax
+
+    ; Activate GDT
+    mov di, CPU_GDT
+    mov word [di], 0xF8
+    lgdt [di]
+
+    ; Mode protected
+    mov eax, cr0
+    or  ax, 1
+    mov cr0, eax        ; PE set to 1 (CR0)
+
+    lock inc word [CPU_COUNT]
+
+    jmp .next
+  .next:
+
+    mov ax, 0x10                  ; data segment
+    mov ds, ax
     mov fs, ax
     mov gs, ax
+    mov es, ax
     mov ss, ax
 
+    jmp dword 0x8:ap_32start    ; code segment
+
+
+; ------------------------------------------
+align 128
+use32
+
+global ap_32start
+; ------------------------------------------
+
+
+ap_32start:
+    cli
+
     lidt [startup.idtregs]
-    mov ax, _x86_TSS_Sgmt
-    ltr ax
+
+    ; mov ax, _x86_TSS_Sgmt
+    ; ltr ax
 
     mov eax, 0x2000 ; PAGE kernel
     mov cr3, eax
@@ -45,87 +71,57 @@ ap_start:
     or eax, (1 << 31) ; CR0 31b to activate mmu
     mov cr0, eax
 
-    lock inc dword [ap_count]
+    ; Lock CPU Initialization Spin-Lock
+  .spinlock:
+    cmp dword [CPU_LOCK], 0    ; Check if lock is free
+    je .getlock
+    pause
+    jmp .spinlock
+  .getlock:
+    mov eax, 1
+    xchg eax, [CPU_LOCK]  ; Try to get lock
+    cmp eax, 0            ; Test is successful
+    jne .spinlock
+  .criticalsection:
 
-    push dword .msg
+    ; Parameters
+    mov esp, 0x67e0
+    mov eax, [.stack]
+    add eax, 0x1000
+    mov [.stack], eax
+    mov [esp], eax                   ; Address of mapping
+    mov dword [esp + 8], 0x10006     ; WMA_WRITE | WMA_KERNEL
+    mov dword [esp + 12], 1          ; reset to zero
+
+    call mmu_newpage
+    mov [esp + 4], eax
+    call mmu_resolve
+    mov esp, [esp]
+    add esp, 0x1000 - 0x10
+
+    ; Print a message
+    push esp
+    push .msg 
     call kprintf
 
+    ; Unlock the spinlock
     xor eax, eax
-    mov [.lock], eax
+    mov [CPU_LOCK], eax
+
+    call kernel_ready
 
   .pause:
-    cli
+    sti
     hlt
     jmp .pause
 
   .msg:
-    db "-- NEW CPU", 10, 0
-
-  .lock:
-    dd 0
-
-ap_count:
-    dd 0
+    db "Stack 0x%08x...", 10, 0
 
 
-%define    ICR_LOW          0x300
-%define    SVR              0xF0
-%define    APIC_ID          0x20
-%define    LVT3             0x370
-%define    APIC_ENABLED     0x100
+  .stack:
+    dd 0x100000
 
-%define    ACPI             0x100000
-
-
-global cpu_svr
-extern __step
-cpu_svr:
-    push ebp
-    mov ebp, esp
-
-    ; Enables the local APIC by setting bit 8 of the APIC spurious vector register
-    mov esi, ACPI + SVR       ; Address of SVR
-    mov eax, [esi]
-    or eax, 0x100     ; APIC_ENABLED - Set bit 8 to enable (0 on reset)
-    mov [esi], eax
-
-    call __step
-
-    mov esi, 0x0100370       ; Address of LVT3
-    mov eax, [esi]
-    and eax, 0xFFFFFF00       ; Clear out previous vector.
-    or eax, 0x22 ;(acpi_err >> 12)     ; is the 8-bit vector the APIC error handler.
-    mov [esi], eax
-
-    call __step
-    
-    mov esi, 0x00100300  ; Load address of ICR low dword into ESI.
-    mov eax, 0x000C4500  ; Load ICR encoding for broadcast INIT IPI
-    
-    ; to all APs into EAX.
-    mov [esi], eax        ; Broadcast INIT IPI to all APs
-
-    ; 10-millisecond delay loop.
-    call __delay
-
-
-    mov eax, 0x0C4600 | 0x21 ; (ap_start / 4096)     ; Load ICR encoding for broadcast SIPI IP
-                                            ; to all APs into EAX, where xx is the vector computed in step 10.
-    mov [esi], eax        ; Broadcast SIPI IPI to all APs
-    ; 200-microsecond delay loop
-    call __delay
-
-    mov [esi], eax        ; Broadcast second SIPI IPI to all APs
-    ; 200-microsecond delay loop
-    call __delay
-
-    
-    ; Load ICR encoding from broadcast SIPI IP to all APs into EAX where xx is the vector computed in step 8.
-    mov eax, 0x0C4600 | 0x21 ; (ap_start / 4096)      
-
-    cli
-    hlt
-    jmp $
 
 
 
@@ -147,6 +143,19 @@ acpi_err:
 
 
 
+sp_lock:
+    mov edi, [esp + 8]
+    mov eax, [edi]
+    test eax, eax           ; Check if lock is free
+    jz .get
+    pause                   ; Short delay
+    jmp sp_lock
+  .get:
+    mov eax, 1
+    xchg eax, [edi]         ; Try to get lock
+    cmp eax, eax            ; Test if successful
+    jnz sp_lock
+    ret
 
 
 
