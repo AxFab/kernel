@@ -66,7 +66,7 @@ int core_master (void)
   kInode_t* dir = search_inode ("/usr/BIN/", NULL);
 
   // Search program
-  kInode_t* msr = search_inode ("MASTER.", dir);
+  kInode_t* msr = search_inode ("MASTER.XE", dir);
 
   // Start program
   return process_login (NULL, msr, dir, tty0, ""); 

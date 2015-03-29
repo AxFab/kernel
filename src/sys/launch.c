@@ -4,9 +4,9 @@
 #include <kernel/scheduler.h>
 
 const char* masterPaths[] = {
-  "sbin/master",
-  "bin/master",
-  "master",
+  "sbin/master.xe",
+  "bin/master.xe",
+  "master.xe",
   NULL
 };
 
