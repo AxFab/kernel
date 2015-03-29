@@ -38,7 +38,7 @@ KRN_SRC = $(wildcard src/syscalls/*.c) \
 					$(wildcard src/fs/ata/*.c) \
 					$(wildcard src/fs/vba/*.c) \
 					$(wildcard src/fs/iso/*.c) \
-					$(wildcard src/core/*.c)
+					$(wildcard src/runtime/*.c)
 
 MST_SRC = $(wildcard src/dummy/master.c)
 
@@ -62,7 +62,7 @@ $(BUILD_DIR)/OsCore.iso: $(BOOT_DIR)/grub/grub.cfg \
 	$(BOOT_DIR)/kImage $(BOOT_DIR)/kImage.map \
 	$(BIN_DIR)/master.xe											\
 	$(BIN_DIR)/deamon.xe											\
-	$(BIN_DIR)/hello.xe											\
-	$(BIN_DIR)/sname.xe											\
+	$(BIN_DIR)/hello.xe												\
+	$(BIN_DIR)/sname.xe												\
 	$(BIN_DIR)/kt_itimer.xe
 
