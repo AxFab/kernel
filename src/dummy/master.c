@@ -14,7 +14,7 @@ int auth_user (const char* username)
   strcat (tmp, "'!\n" ASCII_RESET);
   _puts (tmp);
   
-  execv_s ("KT_ITIME.", NULL);
+  execv_s ("KT_ITIME.XE", NULL);
   return -1;
 }
 

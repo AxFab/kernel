@@ -55,7 +55,7 @@ int main ()
 
   write (1, "Deamon v1.0\n", 12);
 
-  execv_s ("KT_ITIME.", NULL);
+  execv_s ("KT_ITIME.XE", NULL);
 
   for (;;) {
 

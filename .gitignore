@@ -1,25 +1,59 @@
+# =======================================================
+# GitIgnore '.gitignore'
+#     Fabien B. <fabien.bavent@gmail.com>
+#
+# This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# =======================================================
 
-# GIT - ignore
-
-# Strict rule for c project
+# -------------------------------------------------------
+# We work with black-listed folders but white-listed files
 *
 !*/
 
-# Disable directory
-3rdparty/
+# -------------------------------------------------------
+# Remove classic directory
+.*/
+[Bb]in/
+[Bb]uild/
+[LL]ib/
+[Oo]bj/
+[Rr]elease/
+[Ss]bin/
+[Ss]lib/
+[Tt]hird[Pp]arty/
+3rd[Pp]arty/
+[Tt]est[s]?/
 
-# Allow repository files
+# -------------------------------------------------------
+# Add repository files
 !.gitignore
-!LICENSE
-!README.md
-
-# Allow makefiles
+!.travis.yml
+!README*
+!LICENSE*
+!COPYING*
+!CONTRIB*
 !Makefile
-!*.mk
-!*.sh
 
-# Allow source files
+# -------------------------------------------------------
+# Add all possible source files
 !*.c
 !*.h
+!*.cpp
+!*.cc
+!*.cxx
+!*.hpp
+!*.hxx
+!*.s
 !*.asm
 
+# -------------------------------------------------------
+# Add building information and scripts
+!*.mk
+!*.xml
+!*.md
+!*.ld
+
+# -------------------------------------------------------
+# -------------------------------------------------------
