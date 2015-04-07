@@ -38,10 +38,9 @@
 
 /* ----------------------------------------------------------------------- */
 /** BBTree (self-balancing binary tree) node */
-struct bbnode 
-{
-  struct bbnode* left_;
-  struct bbnode* right_;
+struct bbnode {
+  struct bbnode *left_;
+  struct bbnode *right_;
   size_t value_;
   int level_;
 };
@@ -49,11 +48,10 @@ struct bbnode
 
 /* ----------------------------------------------------------------------- */
 /** BBTree (self-balancing binary tree) head */
-struct bbtree 
-{
-  struct bbnode* root_;
-  struct bbnode* last_;
-  struct bbnode* deleted_;
+struct bbtree {
+  struct bbnode *root_;
+  struct bbnode *last_;
+  struct bbnode *deleted_;
   int count_;
 };
 
@@ -63,11 +61,11 @@ struct bbtree
 
 /* ----------------------------------------------------------------------- */
 /** Swap the pointers of horizontal left links. */
-static inline struct bbnode* bb_skew(struct bbnode* node) 
-{
-  struct bbnode* temp;
-  if (node == NULL || node->left_ == NULL || 
-      node->left_->level_ != node->level_) 
+static inline struct bbnode *bb_skew(struct bbnode *node) {
+  struct bbnode *temp;
+
+  if (node == NULL || node->left_ == NULL ||
+      node->left_->level_ != node->level_)
     return node;
 
   temp = node;
@@ -82,12 +80,12 @@ static inline struct bbnode* bb_skew(struct bbnode* node)
 /** If we have two horizontal right links.
   * Take the middle node, elevate it, and return it.
  */
-static inline struct bbnode* bb_split(struct bbnode* node) 
-{
-  struct bbnode* temp;
-  if (node == NULL || node->right_ == NULL || 
-      node->right_->right_ == NULL || 
-      node->level_ != node->right_->right_->level_) 
+static inline struct bbnode *bb_split(struct bbnode *node) {
+  struct bbnode *temp;
+
+  if (node == NULL || node->right_ == NULL ||
+      node->right_->right_ == NULL ||
+      node->level_ != node->right_->right_->level_)
     return node;
 
   temp = node;
@@ -100,21 +98,21 @@ static inline struct bbnode* bb_split(struct bbnode* node)
 
 
 /* ----------------------------------------------------------------------- */
-static inline struct bbnode* bb_insert_(struct bbnode* root, struct bbnode* node, int limit)
-{
+static inline struct bbnode *bb_insert_(struct bbnode *root, struct bbnode *node, int limit) {
   if (--limit < 0) RECURS_ERR();
+
   if (root == NULL) {
     node->level_ = 1;
     node->right_ = NULL;
     node->left_ = NULL;
     return node;
-  } 
+  }
 
   if (node->value_ < root->value_) {
-    root->left_ = bb_insert_ (root->left_, node, limit-1);
+    root->left_ = bb_insert_ (root->left_, node, limit - 1);
   } else { /* if (node->value_ > root->value_) { */
-    root->right_ = bb_insert_ (root->right_, node, limit-1);
-  } 
+    root->right_ = bb_insert_ (root->right_, node, limit - 1);
+  }
 
   root = bb_skew(root);
   root = bb_split(root);
@@ -123,20 +121,21 @@ static inline struct bbnode* bb_insert_(struct bbnode* root, struct bbnode* node
 
 
 /* ----------------------------------------------------------------------- */
-static inline struct bbnode* bb_delete_(struct bbtree* tree, struct bbnode* root, struct bbnode* node, int limit)
-{
+static inline struct bbnode *bb_delete_(struct bbtree *tree, struct bbnode *root, struct bbnode *node, int limit) {
   if (--limit < 0) RECURS_ERR();
+
   if (root == NULL)
     return NULL;
 
   /* Search down the tree and set pointers last and deleted */
   tree->last_ = root;
+
   if (node->value_ < root->value_) {
-    root->left_ = bb_delete_ (tree, root->left_, node, limit-1);
+    root->left_ = bb_delete_ (tree, root->left_, node, limit - 1);
   } else { /* if (node->value_ > root->value_) { */
     tree->deleted_ = root;
-    root->right_ = bb_delete_(tree, root->right_, node, limit-1);
-  } 
+    root->right_ = bb_delete_(tree, root->right_, node, limit - 1);
+  }
 
   /* At the bottom of the tree we remove the element (if it is present) */
   if (tree->last_ == root && tree->deleted_ != NULL && node == tree->deleted_) {
@@ -144,85 +143,95 @@ static inline struct bbnode* bb_delete_(struct bbtree* tree, struct bbnode* root
     tree->deleted_ = NULL;
     root = root->right_;
     /* dispose (last); */
-    
-  /* On the way back, we rebalance */
+
+    /* On the way back, we rebalance */
   } else {
 
     int lvl = 0;
+
     if (node->left_) lvl = MIN (lvl, node->left_->level_);
+
     if (node->right_) lvl = MIN (lvl, node->right_->level_);
 
     if (lvl < root->level_ - 1) {
       root->level_ = root->level_ - 1;
+
       if (root->right_ != NULL && root->right_->level_ > root->level_)
         root->right_->level_ = root->level_;
+
       root = bb_skew(root);
       root->right_ = bb_skew(root->right_);
+
       if (root->right_ != NULL)
         root->right_->right_ = bb_skew(root->right_->right_);
+
       root = bb_split(root);
       root->right_ = bb_split(root->right_);
     }
   }
 
-  return root; 
+  return root;
 }
 
 
 /* ----------------------------------------------------------------------- */
-static inline struct bbnode* bb_search_le_ (struct bbnode* root, size_t value, int limit)
-{
-  struct bbnode* best;
+static inline struct bbnode *bb_search_le_ (struct bbnode *root, size_t value, int limit) {
+  struct bbnode *best;
+
   if (--limit < 0) RECURS_ERR();
+
   if (root == NULL)
     return NULL;
 
-  if (root->value_ > value) 
-    return bb_search_le_(root->left_, value, limit-1);
+  if (root->value_ > value)
+    return bb_search_le_(root->left_, value, limit - 1);
 
-  best = bb_search_le_(root->right_, value, limit-1);
+  best = bb_search_le_(root->right_, value, limit - 1);
+
   if (best != NULL && root->value_ < best->value_)
     return best;
+
   return root;
 }
 
 /* ----------------------------------------------------------------------- */
-static inline struct bbnode* bb_search_ (struct bbnode* root, size_t value, int limit)
-{
+static inline struct bbnode *bb_search_ (struct bbnode *root, size_t value, int limit) {
   if (--limit < 0) RECURS_ERR();
+
   if (root == NULL)
     return NULL;
 
-  if (root->value_ > value) 
-    return bb_search_(root->left_, value, limit-1);
-  else if (root->value_ < value) 
-    return bb_search_(root->right_, value, limit-1);
+  if (root->value_ > value)
+    return bb_search_(root->left_, value, limit - 1);
+  else if (root->value_ < value)
+    return bb_search_(root->right_, value, limit - 1);
+
   return root;
 }
 
 
 /* ----------------------------------------------------------------------- */
-static inline struct bbnode* bb_best_ (struct bbnode* node) 
-{
+static inline struct bbnode *bb_best_ (struct bbnode *node) {
   if (node == NULL) {
     return NULL;
   }
-  
+
   while (node->left_ != NULL)
     node = node->left_;
+
   return node;
 }
 
 
 /* ----------------------------------------------------------------------- */
-static inline void bb_insert (struct bbtree* tree, struct bbnode* node) 
+static inline void bb_insert (struct bbtree *tree, struct bbnode *node)
 {
   tree->root_ = bb_insert_(tree->root_, node, RECURS_LMT);
 }
 
 
 /* ----------------------------------------------------------------------- */
-static inline void bb_delete (struct bbtree* tree, struct bbnode* node) 
+static inline void bb_delete (struct bbtree *tree, struct bbnode *node)
 {
   tree->root_ = bb_delete_(tree, tree->root_, node, RECURS_LMT);
 }

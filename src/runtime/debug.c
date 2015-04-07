@@ -4,18 +4,17 @@
 
 // ----------------------------------------------------------------------------
 typedef struct kSymbol kSymbol_t;
-struct kSymbol
-{
-  const char* name_;
+struct kSymbol {
+  const char *name_;
   uintptr_t   address_;
-  kSymbol_t*  next_;
+  kSymbol_t  *next_;
 };
 
-kSymbol_t* first;
-kSymbol_t* last;
+kSymbol_t *first;
+kSymbol_t *last;
 
 // ----------------------------------------------------------------------------
-void ksymreg (uintptr_t ptr, const char* sym)
+void ksymreg (uintptr_t ptr, const char *sym)
 {
 
   if (first == NULL) {
@@ -32,16 +31,20 @@ void ksymreg (uintptr_t ptr, const char* sym)
 }
 
 // ----------------------------------------------------------------------------
-const char* ksymbol (void* address)
+const char *ksymbol (void *address)
 {
-  kSymbol_t* iter = first;
-  if (first == NULL) 
+  kSymbol_t *iter = first;
+
+  if (first == NULL)
     return "__unamed__";
+
   if ((uintptr_t)address < first->address_)
     return "<<<<<";
+
   while (iter->next_) {
     if (iter->next_->address_ > (uintptr_t)address)
       return iter->name_;
+
     iter = iter->next_;
   }
 
@@ -56,7 +59,7 @@ const char* ksymbol (void* address)
 void kstacktrace(uintptr_t MaxFrames)
 {
   uintptr_t frame;
-  uintptr_t* ebp = &MaxFrames - 2;
+  uintptr_t *ebp = &MaxFrames - 2;
   kprintf("Stack trace: [%x]\n", (uintptr_t)ebp);
 
   for (frame = 0; frame < MaxFrames; ++frame) {
@@ -67,9 +70,9 @@ void kstacktrace(uintptr_t MaxFrames)
       break;
 
     // Unwind to previous stack frame
-    ebp = (uintptr_t*)(ebp[0]);
-    uintptr_t* arguments = &ebp[2];
-    kprintf("  0x%x - %s ()         [args: %x] \n", eip, ksymbol((void*)eip), (uintptr_t)arguments);
+    ebp = (uintptr_t *)(ebp[0]);
+    uintptr_t *arguments = &ebp[2];
+    kprintf("  0x%x - %s ()         [args: %x] \n", eip, ksymbol((void *)eip), (uintptr_t)arguments);
   }
 }
 
@@ -77,7 +80,7 @@ void kstacktrace(uintptr_t MaxFrames)
 /**
     Display hexadeciaml data of a memory area.
  */
-void kdump (void* ptr, size_t lg)
+void kdump (void *ptr, size_t lg)
 {
   int i;
 
@@ -85,21 +88,21 @@ void kdump (void* ptr, size_t lg)
     kprintf ("0x%8x  ", (unsigned int)ptr);
 
     for (i = 0; i < 16; ++i)
-      kprintf (" %02x", ((uint8_t*)ptr)[i]);
+      kprintf (" %02x", ((uint8_t *)ptr)[i]);
 
     kprintf ("  ");
 
     for (i = 0; i < 16; ++i) {
-      if (((uint8_t*)ptr)[i] < 0x20) kprintf (".");
+      if (((uint8_t *)ptr)[i] < 0x20) kprintf (".");
 
-      else if (((uint8_t*)ptr)[i] > 0x7f) kprintf (".");
+      else if (((uint8_t *)ptr)[i] > 0x7f) kprintf (".");
 
-      else kprintf ("%c", ((uint8_t*)ptr)[i]);
+      else kprintf ("%c", ((uint8_t *)ptr)[i]);
     }
 
     kprintf ("\n");
     lg -= 16;
-    ptr = &((uint8_t*)ptr)[16];
+    ptr = &((uint8_t *)ptr)[16];
   }
 
   kprintf ("\n");

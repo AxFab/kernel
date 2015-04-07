@@ -20,7 +20,7 @@ kTty_t screen;
 /**
  * As we need to log early during initialization we need to a temporary tty
  */
-int kTty_PreSystem (uint32_t* base, int width, int height, int depth)
+int kTty_PreSystem (uint32_t *base, int width, int height, int depth)
 {
   int lg;
 
@@ -43,6 +43,7 @@ int kTty_PreSystem (uint32_t* base, int width, int height, int depth)
     screen._bkground = 0x323232;
 
     lg = width * height;
+
     while (lg > 0) screen._ptr[--lg] = screen._bkground;
 
   } else {
@@ -93,20 +94,20 @@ int kTty_PreSystem (uint32_t* base, int width, int height, int depth)
 
 void kTty_MoveCursor (int pos)
 {
-    outb(0x3d4, 0x0f);
-    outb(0x3d5, pos & 0xff);
-    outb(0x3d4, 0x0e);
-    outb(0x3d5, (pos >> 8) & 0xff);
+  outb(0x3d4, 0x0f);
+  outb(0x3d5, pos & 0xff);
+  outb(0x3d4, 0x0e);
+  outb(0x3d5, (pos >> 8) & 0xff);
 }
 
 void kTty_ShowCursor (void)
 {
-    kTty_MoveCursor(screen._cursorX + screen._cursorY * screen._column);
+  kTty_MoveCursor(screen._cursorX + screen._cursorY * screen._column);
 }
 
 void kTty_HideCursor (void)
 {
-    kTty_MoveCursor(0xffff);
+  kTty_MoveCursor(0xffff);
 }
 
 
@@ -128,44 +129,44 @@ static int Insr_enable;
 /*
 void kTty_Update (void)
 {
-	if (Caps_enable) {
-    	kTty_Buffer [0 - 4] = 'C' | 0x0800;
-    	kTty_Buffer [0 - 3] = 'a' | 0x0800;
-    	kTty_Buffer [0 - 2] = 'p' | 0x0800;
+  if (Caps_enable) {
+      kTty_Buffer [0 - 4] = 'C' | 0x0800;
+      kTty_Buffer [0 - 3] = 'a' | 0x0800;
+      kTty_Buffer [0 - 2] = 'p' | 0x0800;
     } else {
-    	kTty_Buffer [0 - 4] = ' ' | 0x0800;
-    	kTty_Buffer [0 - 3] = ' ' | 0x0800;
-    	kTty_Buffer [0 - 2] = ' ' | 0x0800;
+      kTty_Buffer [0 - 4] = ' ' | 0x0800;
+      kTty_Buffer [0 - 3] = ' ' | 0x0800;
+      kTty_Buffer [0 - 2] = ' ' | 0x0800;
     }
 
-	if (Nums_enable) {
-    	kTty_Buffer [0 - 8] = 'N' | 0x0800;
-    	kTty_Buffer [0 - 7] = 'u' | 0x0800;
-    	kTty_Buffer [0 - 6] = 'm' | 0x0800;
+  if (Nums_enable) {
+      kTty_Buffer [0 - 8] = 'N' | 0x0800;
+      kTty_Buffer [0 - 7] = 'u' | 0x0800;
+      kTty_Buffer [0 - 6] = 'm' | 0x0800;
     } else {
-    	kTty_Buffer [0 - 8] = ' ' | 0x0800;
-    	kTty_Buffer [0 - 7] = ' ' | 0x0800;
-    	kTty_Buffer [0 - 6] = ' ' | 0x0800;
+      kTty_Buffer [0 - 8] = ' ' | 0x0800;
+      kTty_Buffer [0 - 7] = ' ' | 0x0800;
+      kTty_Buffer [0 - 6] = ' ' | 0x0800;
     }
 
-	if (Scrl_enable) {
-    	kTty_Buffer [0 - 12] = 'S' | 0x0800;
-    	kTty_Buffer [0 - 11] = 'c' | 0x0800;
-    	kTty_Buffer [0 - 10] = 'l' | 0x0800;
+  if (Scrl_enable) {
+      kTty_Buffer [0 - 12] = 'S' | 0x0800;
+      kTty_Buffer [0 - 11] = 'c' | 0x0800;
+      kTty_Buffer [0 - 10] = 'l' | 0x0800;
     } else {
-    	kTty_Buffer [0 - 12] = ' ' | 0x0800;
-    	kTty_Buffer [0 - 11] = ' ' | 0x0800;
-    	kTty_Buffer [0 - 10] = ' ' | 0x0800;
+      kTty_Buffer [0 - 12] = ' ' | 0x0800;
+      kTty_Buffer [0 - 11] = ' ' | 0x0800;
+      kTty_Buffer [0 - 10] = ' ' | 0x0800;
     }
 
-	if (Insr_enable) {
-    	kTty_Buffer [0 - 16] = 'I' | 0x0800;
-    	kTty_Buffer [0 - 15] = 'n' | 0x0800;
-    	kTty_Buffer [0 - 14] = 's' | 0x0800;
+  if (Insr_enable) {
+      kTty_Buffer [0 - 16] = 'I' | 0x0800;
+      kTty_Buffer [0 - 15] = 'n' | 0x0800;
+      kTty_Buffer [0 - 14] = 's' | 0x0800;
     } else {
-    	kTty_Buffer [0 - 16] = ' ' | 0x0800;
-    	kTty_Buffer [0 - 15] = ' ' | 0x0800;
-    	kTty_Buffer [0 - 14] = ' ' | 0x0800;
+      kTty_Buffer [0 - 16] = ' ' | 0x0800;
+      kTty_Buffer [0 - 15] = ' ' | 0x0800;
+      kTty_Buffer [0 - 14] = ' ' | 0x0800;
     }
 }
 
@@ -174,171 +175,234 @@ void kTty_Update (void)
 
 enum Special_Key {
 
-	Null = '\0',
-	BkSp = 0x07,
-	Tabl = '\t',
-	Entr = '\n',
-	Retr = '\r',
+  Null = '\0',
+  BkSp = 0x07,
+  Tabl = '\t',
+  Entr = '\n',
+  Retr = '\r',
 
-	Home = 0x80,
-	End	 = 0x81,
-	PgUp = 0x82,
-	PgDw = 0x83,
-	Insr = 0x84,
-	Delt = 0x85,
+  Home = 0x80,
+  End  = 0x81,
+  PgUp = 0x82,
+  PgDw = 0x83,
+  Insr = 0x84,
+  Delt = 0x85,
 
-	ArrU = 0x88,
-	ArrD = 0x89,
-	ArrL = 0x8a,
-	ArrR = 0x8b,
+  ArrU = 0x88,
+  ArrD = 0x89,
+  ArrL = 0x8a,
+  ArrR = 0x8b,
 
-	CtrL = 0xc0,
-	CtrR = 0xc1,
-	AltL = 0xc2,
-	AltR = 0xc3,
-	SftL = 0xc4,
-	SftR = 0xc5,
-	HstL = 0xc6,
-	HstR = 0xc7,
+  CtrL = 0xc0,
+  CtrR = 0xc1,
+  AltL = 0xc2,
+  AltR = 0xc3,
+  SftL = 0xc4,
+  SftR = 0xc5,
+  HstL = 0xc6,
+  HstR = 0xc7,
 
-	Caps = 0xe0,
-	Nums = 0xe1,
-	Scrl = 0xe2,
+  Caps = 0xe0,
+  Nums = 0xe1,
+  Scrl = 0xe2,
 
-	Escp = 0xe8,
-	Menu = 0xe9,
+  Escp = 0xe8,
+  Menu = 0xe9,
 
-	Fn01 = 0xf1,
-	Fn02 = 0xf2,
-	Fn03 = 0xf3,
-	Fn04 = 0xf4,
-	Fn05 = 0xf5,
-	Fn06 = 0xf6,
-	Fn07 = 0xf7,
-	Fn08 = 0xf8,
-	Fn09 = 0xf9,
-	Fn10 = 0xfa,
-	Fn11 = 0xfb,
-	Fn12 = 0xfc,
+  Fn01 = 0xf1,
+  Fn02 = 0xf2,
+  Fn03 = 0xf3,
+  Fn04 = 0xf4,
+  Fn05 = 0xf5,
+  Fn06 = 0xf6,
+  Fn07 = 0xf7,
+  Fn08 = 0xf8,
+  Fn09 = 0xf9,
+  Fn10 = 0xfa,
+  Fn11 = 0xfb,
+  Fn12 = 0xfc,
 };
 
-	unsigned char qwerty_US[2][0x80] = { {
-		Null, Escp, '1' , '2' , '3' , '4' , '5' , '6' ,	// 00
-		'7' , '8' , '9' , '0' , '-' , '=' , BkSp, Tabl, // 08
-		'q' , 'w' , 'e' , 'r' , 't' , 'y' , 'u' , 'i' , // 10
-		'o' , 'p' , '[' , ']' , Entr, CtrL, 'a' , 's' , // 18
-		'd' , 'f' , 'g' , 'h' , 'j' , 'k' , 'l' , ';' , // 20
-		'\'', '`' , SftL, '\\', 'z' , 'x' , 'c' , 'v' , // 28
-		'b' , 'n' , 'm' , ',' , '.' , '/' , SftR, '*' , // 30
-		AltL, ' ' , Caps, Fn01, Fn02, Fn03, Fn04, Fn05, // 38
-		Fn06, Fn07, Fn08, Fn09, Fn10, Nums, Scrl, '7' , // 40
-		'8' , '9' , '-' , '4' , '5' , '6' , '+' , '1' , // 48
-		'2' , '3' , '0' , '.' , Null, Null, '\\', Fn11, // 50
-		Fn12, Null, Null, HstL, HstR, Menu, Null, Null, // 58
-		Null, Null, Null, Null, Null, Null, Null, Null, // 60
-		Null, Null, Null, Null, Null, Null, Null, Null, // 68
-		Null, Null, Null, Null, Null, Null, Null, Null, // 70
-		Null, Null, Null, Null, Null, Null, Null, Null, // 78
-	}, {
-		Null, Escp, '!' , '@' , '#' , '$' , '%' , '^' ,	// 00
-		'&' , '*' , '(' , ')' , '_' , '+' , BkSp, Tabl, // 08
-		'Q' , 'W' , 'E' , 'R' , 'T' , 'Y' , 'U' , 'I' , // 10
-		'O' , 'P' , '{' , '}' , Retr, CtrL, 'A' , 'S' , // 18
-		'D' , 'F' , 'G' , 'H' , 'J' , 'K' , 'L' , ':' , // 20
-		'"' , '~' , SftL, '|' , 'Z' , 'X' , 'C' , 'V' , // 28
-		'B' , 'N' , 'M' , '<' , '>' , '?' , SftR, '*' , // 30
-		AltL, ' ' , Caps, Fn01, Fn02, Fn03, Fn04, Fn05, // 38
-		Fn06, Fn07, Fn08, Fn09, Fn10, Nums, Scrl, Home, // 40
-		ArrU, PgUp, '-' , ArrL, '5' , ArrR, '+' , End , // 48
-		ArrD, PgDw, Insr, Delt, Null, Null, '\\', Fn11, // 50
-		Fn12, Null, Null, HstL, HstR, Menu, Null, Null, // 58
-		Null, Null, Null, Null, Null, Null, Null, Null, // 60
-		Null, Null, Null, Null, Null, Null, Null, Null, // 68
-		Null, Null, Null, Null, Null, Null, Null, Null, // 70
-		Null, Null, Null, Null, Null, Null, Null, Null, // 78
-	}};
+unsigned char qwerty_US[2][0x80] = { {
+    Null, Escp, '1' , '2' , '3' , '4' , '5' , '6' , // 00
+    '7' , '8' , '9' , '0' , '-' , '=' , BkSp, Tabl, // 08
+    'q' , 'w' , 'e' , 'r' , 't' , 'y' , 'u' , 'i' , // 10
+    'o' , 'p' , '[' , ']' , Entr, CtrL, 'a' , 's' , // 18
+    'd' , 'f' , 'g' , 'h' , 'j' , 'k' , 'l' , ';' , // 20
+    '\'', '`' , SftL, '\\', 'z' , 'x' , 'c' , 'v' , // 28
+    'b' , 'n' , 'm' , ',' , '.' , '/' , SftR, '*' , // 30
+    AltL, ' ' , Caps, Fn01, Fn02, Fn03, Fn04, Fn05, // 38
+    Fn06, Fn07, Fn08, Fn09, Fn10, Nums, Scrl, '7' , // 40
+    '8' , '9' , '-' , '4' , '5' , '6' , '+' , '1' , // 48
+    '2' , '3' , '0' , '.' , Null, Null, '\\', Fn11, // 50
+    Fn12, Null, Null, HstL, HstR, Menu, Null, Null, // 58
+    Null, Null, Null, Null, Null, Null, Null, Null, // 60
+    Null, Null, Null, Null, Null, Null, Null, Null, // 68
+    Null, Null, Null, Null, Null, Null, Null, Null, // 70
+    Null, Null, Null, Null, Null, Null, Null, Null, // 78
+  }, {
+    Null, Escp, '!' , '@' , '#' , '$' , '%' , '^' , // 00
+    '&' , '*' , '(' , ')' , '_' , '+' , BkSp, Tabl, // 08
+    'Q' , 'W' , 'E' , 'R' , 'T' , 'Y' , 'U' , 'I' , // 10
+    'O' , 'P' , '{' , '}' , Retr, CtrL, 'A' , 'S' , // 18
+    'D' , 'F' , 'G' , 'H' , 'J' , 'K' , 'L' , ':' , // 20
+    '"' , '~' , SftL, '|' , 'Z' , 'X' , 'C' , 'V' , // 28
+    'B' , 'N' , 'M' , '<' , '>' , '?' , SftR, '*' , // 30
+    AltL, ' ' , Caps, Fn01, Fn02, Fn03, Fn04, Fn05, // 38
+    Fn06, Fn07, Fn08, Fn09, Fn10, Nums, Scrl, Home, // 40
+    ArrU, PgUp, '-' , ArrL, '5' , ArrR, '+' , End , // 48
+    ArrD, PgDw, Insr, Delt, Null, Null, '\\', Fn11, // 50
+    Fn12, Null, Null, HstL, HstR, Menu, Null, Null, // 58
+    Null, Null, Null, Null, Null, Null, Null, Null, // 60
+    Null, Null, Null, Null, Null, Null, Null, Null, // 68
+    Null, Null, Null, Null, Null, Null, Null, Null, // 70
+    Null, Null, Null, Null, Null, Null, Null, Null, // 78
+  }
+};
 
 void kTty_KeyPress (int c)
 {
-	int k = (SftL_enable || SftR_enable) ? 1 : 0;
-	if ((c < 0x37 && Caps_enable) || (c >= 0x37 && Nums_enable))
-    	k = (k == 0 ? 1 : 0);
+  int k = (SftL_enable || SftR_enable) ? 1 : 0;
 
-    c = qwerty_US[k][c];
+  if ((c < 0x37 && Caps_enable) || (c >= 0x37 && Nums_enable))
+    k = (k == 0 ? 1 : 0);
 
- 	if (c >= 0x80) {
- 		switch (c) {
- 			case CtrL: CtrL_enable = 1; break;
- 			case CtrR: CtrR_enable = 1; break;
- 			case AltL: AltL_enable = 1; break;
- 			case AltR: AltR_enable = 1; break;
- 			case SftL: SftL_enable = 1; break;
- 			case SftR: SftR_enable = 1; break;
- 			case HstL: HstL_enable = 1; break;
- 			case HstR: HstR_enable = 1; break;
+  c = qwerty_US[k][c];
 
- 			case Caps: Caps_enable = !Caps_enable; break;
- 			case Nums: Nums_enable = !Nums_enable; break;
- 			case Scrl: Scrl_enable = !Scrl_enable; break;
- 			case Insr: Insr_enable = !Insr_enable; break;
+  if (c >= 0x80) {
+    switch (c) {
+    case CtrL:
+      CtrL_enable = 1;
+      break;
+    case CtrR:
+      CtrR_enable = 1;
+      break;
+    case AltL:
+      AltL_enable = 1;
+      break;
+    case AltR:
+      AltR_enable = 1;
+      break;
+    case SftL:
+      SftL_enable = 1;
+      break;
+    case SftR:
+      SftR_enable = 1;
+      break;
+    case HstL:
+      HstL_enable = 1;
+      break;
+    case HstR:
+      HstR_enable = 1;
+      break;
 
- 			case Home: kTty_offsetIn = 0; break;
- 			case End: kTty_offsetIn = 0; break; // strlen (input);
- 			case PgUp: break;
- 			case PgDw: break;
+    case Caps:
+      Caps_enable = !Caps_enable;
+      break;
+    case Nums:
+      Nums_enable = !Nums_enable;
+      break;
+    case Scrl:
+      Scrl_enable = !Scrl_enable;
+      break;
+    case Insr:
+      Insr_enable = !Insr_enable;
+      break;
 
- 			case BkSp: break;
- 			case Delt: break;
+    case Home:
+      kTty_offsetIn = 0;
+      break;
+    case End:
+      kTty_offsetIn = 0;
+      break; // strlen (input);
+    case PgUp:
+      break;
+    case PgDw:
+      break;
 
- 			case ArrU: break;
- 			case ArrD: break;
- 			case ArrL: if (kTty_offsetIn > 0) kTty_offsetIn--; break;
- 			case ArrR: if (kTty_offsetIn < 0) kTty_offsetIn++; break; // strlen (input);
+    case BkSp:
+      break;
+    case Delt:
+      break;
 
- 		}
+    case ArrU:
+      break;
+    case ArrD:
+      break;
+    case ArrL:
 
- 		// kTty_Update ();
- 		return;
- 	}
- 	kTty_Putc (c & 0xff);
+      if (kTty_offsetIn > 0) kTty_offsetIn--;
+
+      break;
+    case ArrR:
+
+      if (kTty_offsetIn < 0) kTty_offsetIn++;
+
+      break; // strlen (input);
+
+    }
+
+    // kTty_Update ();
+    return;
+  }
+
+  kTty_Putc (c & 0xff);
 }
 
 void kTty_KeyUp (int c)
 {
-	int k = (SftL_enable || SftR_enable) ? 1 : 0;
-	if ((c < 0x37 && Caps_enable) || (c >= 0x37 && Nums_enable))
-    	k = (k == 0 ? 1 : 0);
+  int k = (SftL_enable || SftR_enable) ? 1 : 0;
 
-    c = qwerty_US[k][c];
+  if ((c < 0x37 && Caps_enable) || (c >= 0x37 && Nums_enable))
+    k = (k == 0 ? 1 : 0);
 
- 	if (c >= 0x80) {
- 		switch (c) {
- 			case CtrL: CtrL_enable = 0; break;
- 			case CtrR: CtrR_enable = 0; break;
- 			case AltL: AltL_enable = 0; break;
- 			case AltR: AltR_enable = 0; break;
- 			case SftL: SftL_enable = 0; break;
- 			case SftR: SftR_enable = 0; break;
- 			case HstL: HstL_enable = 0; break;
- 			case HstR: HstR_enable = 0; break;
- 		}
- 		return;
-	}
+  c = qwerty_US[k][c];
+
+  if (c >= 0x80) {
+    switch (c) {
+    case CtrL:
+      CtrL_enable = 0;
+      break;
+    case CtrR:
+      CtrR_enable = 0;
+      break;
+    case AltL:
+      AltL_enable = 0;
+      break;
+    case AltR:
+      AltR_enable = 0;
+      break;
+    case SftL:
+      SftL_enable = 0;
+      break;
+    case SftR:
+      SftR_enable = 0;
+      break;
+    case HstL:
+      HstL_enable = 0;
+      break;
+    case HstR:
+      HstR_enable = 0;
+      break;
+    }
+
+    return;
+  }
 }
 
 int kTty_Initialize (void)
 {
-	SftL_enable = SftR_enable = 0;
-	Caps_enable = 0;
-	Nums_enable = 1;
+  SftL_enable = SftR_enable = 0;
+  Caps_enable = 0;
+  Nums_enable = 1;
 
 
   /*
-	kTty_Buffer = (short*)0xB80a0;
-	kTty_offsetX = kTty_offsetY = 0;
-	kTty_style = Regular;
+  kTty_Buffer = (short*)0xB80a0;
+  kTty_offsetX = kTty_offsetY = 0;
+  kTty_style = Regular;
 
-	kTty_Update();
+  kTty_Update();
 
   */
   return __noerror ();
@@ -346,28 +410,28 @@ int kTty_Initialize (void)
 
 void kTty_Write (const char *str)
 {
-	while (*str) {
-		kTty_Putc (*str);
-		str++;
-	}
+  while (*str) {
+    kTty_Putc (*str);
+    str++;
+  }
 
 }
 
 /*
 void kTty_Putc (char c)
 {
-	if (c == '\n') {
-		kTty_Eol ();
-	} else {
-		if (c < 0)
-			c = '?';
-		else if (c < 0x20)
-			c = 0x20;
-		kTty_Buffer[kTty_offsetX + kTty_offsetY] = (c & 0xff) | kTty_style;
-		kTty_offsetX++;
-		if (kTty_offsetX >= 38)
-			kTty_Eol ();
-	}
+  if (c == '\n') {
+    kTty_Eol ();
+  } else {
+    if (c < 0)
+      c = '?';
+    else if (c < 0x20)
+      c = 0x20;
+    kTty_Buffer[kTty_offsetX + kTty_offsetY] = (c & 0xff) | kTty_style;
+    kTty_offsetX++;
+    if (kTty_offsetX >= 38)
+      kTty_Eol ();
+  }
 }
 */
 
@@ -427,10 +491,11 @@ void kTty_EOL ()
 {
   screen._cursorX = 0;
   screen._cursorY++;
+
   if (screen._cursorY >= 58 /* screen._row */) {
     screen._cursorY -= 1;
 
-    memcpy (screen._ptr, &screen._ptr[(fontH+1) * screen._width ], screen._width * (screen._height - fontH-1)*4);
+    memcpy (screen._ptr, &screen._ptr[(fontH + 1) * screen._width ], screen._width * (screen._height - fontH - 1) * 4);
     // memset (screen._ptr, &screen._ptr[600 - (fontH+1) * 800 ], (fontH+1) * 800 *4);
   }
 }
@@ -467,20 +532,22 @@ void kTty_Putc (char ch)
 
 
   if (screen._mode == 1) {
-    k = 1 + screen._width + screen._cursorY * (fontH+1) * screen._width +
+    k = 1 + screen._width + screen._cursorY * (fontH + 1) * screen._width +
         screen._cursorX * (fontW);
     vl = (uint64_t)kTty_Font[c - 0x20];
-    for (j=0; j<fontH; ++j) {
-      for (i=0; i<fontW; ++i) {
+
+    for (j = 0; j < fontH; ++j) {
+      for (i = 0; i < fontW; ++i) {
         screen._ptr[k + j * screen._width + i] = (vl & 1) ? screen._color : screen._bkground;
         vl = vl >> 1;
       }
     }
   } else {
-    ((uint16_t*)screen._ptr)[screen._cursorX + screen._cursorY * 80] = (c & 0xff) | screen._color;
+    ((uint16_t *)screen._ptr)[screen._cursorX + screen._cursorY * 80] = (c & 0xff) | screen._color;
   }
 
   screen._cursorX++;
+
   if (screen._cursorX >= screen._column) {
     kTty_EOL ();
   }
@@ -490,27 +557,30 @@ void kTty_Putc (char ch)
 
 void kTty_HexChar (unsigned int value, int size)
 {
-	value = value << ((8 - size) * 4);
-	while (size-- > 0) {
-		unsigned int digit = (value >> 28) & 0xf;
-		kTty_Putc (digit < 10 ? digit + '0' : digit - 10 + 'a');
-		value = value << 4;
-	}
+  value = value << ((8 - size) * 4);
+
+  while (size-- > 0) {
+    unsigned int digit = (value >> 28) & 0xf;
+    kTty_Putc (digit < 10 ? digit + '0' : digit - 10 + 'a');
+    value = value << 4;
+  }
 }
 
-void kTty_HexDump (unsigned char* ptr, int length)
+void kTty_HexDump (unsigned char *ptr, int length)
 {
-	int i;
-	while (length > 0) {
+  int i;
+
+  while (length > 0) {
     kTty_Write ("0x");
-		kTty_HexChar ((unsigned int)ptr, 8);
-		kTty_Write (" ::  ");
-		for (i=0; i<16; i++) {
+    kTty_HexChar ((unsigned int)ptr, 8);
+    kTty_Write (" ::  ");
+
+    for (i = 0; i < 16; i++) {
       kTty_HexChar ((unsigned int)ptr[i], 2);
       kTty_Putc (' ');
     }
 
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
       if (ptr[i] < 0x20)
         kTty_Putc ('.');
       else if (ptr[i] > 0x80)
@@ -519,11 +589,12 @@ void kTty_HexDump (unsigned char* ptr, int length)
         kTty_Putc (ptr[i]);
     }
 
-		kTty_Putc ('\n');
-		length -= 16;
-		ptr += 16;
-	}
-	kTty_Putc ('\n');
+    kTty_Putc ('\n');
+    length -= 16;
+    ptr += 16;
+  }
+
+  kTty_Putc ('\n');
 }
 
 
@@ -533,18 +604,17 @@ void kTty_HexDump (unsigned char* ptr, int length)
 
 typedef struct kTtyTerm kTtyTerm_t;
 
-struct kTtyTerm
-{
-  char*         buffer_;
+struct kTtyTerm {
+  char         *buffer_;
   size_t        length_;
   int           offset_;
   int           attribute_;
-  kTtyTerm_t*   next_;
+  kTtyTerm_t   *next_;
 };
 
 
 kTtyTerm_t klog = {
-  (char*)0x7000,
+  (char *)0x7000,
   0x10000 - 0x7000,
   // 0x200,
   0,
@@ -553,7 +623,7 @@ kTtyTerm_t klog = {
 };
 
 
-kTtyTerm_t* term = &klog;
+kTtyTerm_t *term = &klog;
 
 
 void kTty_Update ()
@@ -571,12 +641,13 @@ void kTty_Update ()
     while (str[lg] != '\0' && str[lg] != '\n' && lg < max) ++lg;
 
     if (str[lg] == '\0') break;
+
     if (str[lg] == '\n') lg++;
 
     term->offset_ += lg;
     int i;
 
-    for (i=0; i<lg; ++i)
+    for (i = 0; i < lg; ++i)
       kTty_Putc (str[i]);
 
 
@@ -588,9 +659,9 @@ void kTty_Update ()
 
 void kTty_NewTerminal (uintptr_t base, size_t limit)
 {
-  kTtyTerm_t* neo = kalloc(sizeof(kTtyTerm_t), 0);
+  kTtyTerm_t *neo = kalloc(sizeof(kTtyTerm_t), 0);
   neo->next_ = term;
-  neo->buffer_ = (char*)0x7000;
+  neo->buffer_ = (char *)0x7000;
   neo->length_ = limit;
   term = neo;
   kTty_Update ();

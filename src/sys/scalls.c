@@ -2,24 +2,24 @@
 #include <kernel/task.h>
 #include <smoke/syscall.h>
 
-typedef int (*sys_func)(void* stack, ...);
+typedef int (*sys_func)(void *stack, ...);
 
-int sys_reboot(kCpuRegs_t* regs, int code);
-int sys_pause(kCpuRegs_t* regs);
-int sys_exec(kCpuRegs_t* regs, const char* path, void* param);
-int sys_exit(kCpuRegs_t* regs, int code);
+int sys_reboot(kCpuRegs_t *regs, int code);
+int sys_pause(kCpuRegs_t *regs);
+int sys_exec(kCpuRegs_t *regs, const char *path, void *param);
+int sys_exit(kCpuRegs_t *regs, int code);
 
-int sys_open(kCpuRegs_t* regs, const char* path, int flags, int mode);
-int sys_close(kCpuRegs_t* regs, int fd);
-ssize_t sys_read(kCpuRegs_t* regs, int fd, void* buf, size_t count, off_t offset);
-ssize_t sys_write(kCpuRegs_t* regs, int fd, const void* buf, size_t count, off_t offset);
+int sys_open(kCpuRegs_t *regs, const char *path, int flags, int mode);
+int sys_close(kCpuRegs_t *regs, int fd);
+ssize_t sys_read(kCpuRegs_t *regs, int fd, void *buf, size_t count, off_t offset);
+ssize_t sys_write(kCpuRegs_t *regs, int fd, const void *buf, size_t count, off_t offset);
 
 
 
-int sys_itimer(kCpuRegs_t* regs, int miliseconds);
-int sys_sleep(kCpuRegs_t* regs, int miliseconds);
-time_t sys_time(kCpuRegs_t* regs, time_t* now);
-int sys_yield(kCpuRegs_t* regs);
+int sys_itimer(kCpuRegs_t *regs, int miliseconds);
+int sys_sleep(kCpuRegs_t *regs, int miliseconds);
+time_t sys_time(kCpuRegs_t *regs, time_t *now);
+int sys_yield(kCpuRegs_t *regs);
 
 
 #define _SYS(n,f)  [n] = (sys_func)f
@@ -47,18 +47,18 @@ static sys_func sys_table [] = {
 
 
 
-void sys_enter (int no, void* stack)
+void sys_enter (int no, void *stack)
 {
   int ret;
   const int max = (int)(sizeof(sys_table) / sizeof(sys_func));
-  uint32_t ebx = ((kCpuRegs_t*)stack)->ebx;
-  uint32_t ecx = ((kCpuRegs_t*)stack)->ecx;
-  uint32_t edx = ((kCpuRegs_t*)stack)->edx;
-  uint32_t esi = ((kCpuRegs_t*)stack)->esi;
-  uint32_t edi = ((kCpuRegs_t*)stack)->edi;
+  uint32_t ebx = ((kCpuRegs_t *)stack)->ebx;
+  uint32_t ecx = ((kCpuRegs_t *)stack)->ecx;
+  uint32_t edx = ((kCpuRegs_t *)stack)->edx;
+  uint32_t esi = ((kCpuRegs_t *)stack)->esi;
+  uint32_t edi = ((kCpuRegs_t *)stack)->edi;
 
   cli();
-  
+
   kprintf ("SysCall Enter <#%x - Tsk %d> \n", no, kCPU.current_->taskId_);
 
   if (no >= max || sys_table[no] == NULL) {
@@ -72,8 +72,8 @@ void sys_enter (int no, void* stack)
   if (!ksch_ontask()) {
     ksch_pick ();
   } else {
-    ((kCpuRegs_t*)stack)->eax = ret;
-    ((kCpuRegs_t*)stack)->edx = __geterrno();
+    ((kCpuRegs_t *)stack)->eax = ret;
+    ((kCpuRegs_t *)stack)->edx = __geterrno();
     kCpu_SetStatus (CPU_STATE_USERMODE);
   }
 

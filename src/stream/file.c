@@ -44,11 +44,11 @@
  *
  * FIXME ensure that we only wr-open file that are on a writable file system.
  */
-kStream_t* stream_open (int dirfd, const char* path, int flags, int mode)
+kStream_t *stream_open (int dirfd, const char *path, int flags, int mode)
 {
-  kInode_t* dir = NULL;
-  kInode_t* ino = NULL;
-  kStream_t* dirStm = NULL;
+  kInode_t *dir = NULL;
+  kInode_t *ino = NULL;
+  kStream_t *dirStm = NULL;
 
   if (!PARAM_USER_STRING(kCPU.current_->process_->memSpace_, path, PATH_MAX))
     return NULL;
@@ -56,17 +56,21 @@ kStream_t* stream_open (int dirfd, const char* path, int flags, int mode)
   // FIXME Check flags validity
   if (dirfd >= 0) {
     dirStm = stream_get (dirfd, R_OK);
+
     if (dirStm) {
       dir = dirStm->ino_;
+
       if (!S_ISDIR(dir->stat_.mode_)) {
-          __seterrno (ENOTDIR);
-          return NULL;
+        __seterrno (ENOTDIR);
+        return NULL;
       }
     }
+
     return NULL;
   }
 
   ino = search_inode (path, dir);
+
   if (ino == NULL) {
 
     if (__geterrno() != ENOENT)
@@ -94,22 +98,25 @@ kStream_t* stream_open (int dirfd, const char* path, int flags, int mode)
 
 // ---------------------------------------------------------------------------
 /**   */
-kStream_t* stream_create (int dirfd, const char* path, int flags, int mode)
+kStream_t *stream_create (int dirfd, const char *path, int flags, int mode)
 {
-  kInode_t* dir = NULL;
-  kInode_t* ino = NULL;
-  kStream_t* dirStm = NULL;
+  kInode_t *dir = NULL;
+  kInode_t *ino = NULL;
+  kStream_t *dirStm = NULL;
 
   // FIXME Check flags validity
   if (dirfd >= 0) {
     dirStm = stream_get (dirfd, R_OK);
+
     if (dirStm) {
       dir = dirStm->ino_;
+
       if (!S_ISDIR(dir->stat_.mode_)) {
-          __seterrno (ENOTDIR);
-          return NULL;
+        __seterrno (ENOTDIR);
+        return NULL;
       }
     }
+
     return NULL;
   }
 
@@ -122,6 +129,7 @@ kStream_t* stream_create (int dirfd, const char* path, int flags, int mode)
   // FIXME check the mode
 
   ino = create_inode(path, dir, mode, 0);
+
   if (ino == NULL) {
     return NULL;
   }
@@ -134,9 +142,10 @@ kStream_t* stream_create (int dirfd, const char* path, int flags, int mode)
 /**   */
 int stream_close (int fd)
 {
-  kProcess_t* proc = kCPU.current_->process_;
+  kProcess_t *proc = kCPU.current_->process_;
 
   klock (&proc->lock_, LOCK_SYSFILE_FD);
+
   if (fd >= proc->streamCap_) {
     kunlock (&proc->lock_);
     __seterrno (EBADF);
@@ -158,10 +167,10 @@ int stream_close (int fd)
 
 
 // ---------------------------------------------------------------------------
-static kStream_t* stream_new (kProcess_t* proc)
+static kStream_t *stream_new (kProcess_t *proc)
 {
   int i;
-  kStream_t** openFd = proc->openStreams_;
+  kStream_t **openFd = proc->openStreams_;
 
   for (i = 0; i < proc->streamCap_; i++) {
     if (openFd[i] == NULL) {
@@ -178,45 +187,48 @@ static kStream_t* stream_new (kProcess_t* proc)
   }
 
   proc->streamCap_ += 8;
-  openFd = kalloc (sizeof(kStream_t*) * proc->streamCap_, 0);
+  openFd = kalloc (sizeof(kStream_t *) * proc->streamCap_, 0);
   memcpy (openFd, proc->openStreams_,
-    sizeof(kStream_t*) * (proc->streamCap_));
+          sizeof(kStream_t *) * (proc->streamCap_));
   openFd[i] = KALLOC (kStream_t);
   openFd[i]->fd_ = i;
+
   if (proc->openStreams_ != NULL)
     kfree(proc->openStreams_);
+
   proc->openStreams_ = openFd;
   return openFd[i];
 }
 
-static int stream_build (kStream_t* stm, kInode_t* ino, int flags)
+static int stream_build (kStream_t *stm, kInode_t *ino, int flags)
 {
   // Assert ino, flags
   assert (ino != NULL);
-  
+
   inode_open (ino); // TODO if failed !? free readFD cause probably a lock stuff
   stm->ino_ = ino;
   int type = ino->stat_.mode_ & S_IFMT;
+
   switch (type) {
-    case S_IFREG:
-    case S_IFBLK:
-      stm->read = block_read;
-      stm->write = block_write;
-      break;
-    case S_IFDIR:
-      stm->read = dir_data;
-      stm->write = (void*)dir_data;
-      break;
-    case S_IFIFO:
-      stm->read = fifo_read;
-      stm->write = fifo_write;
-      break;
-    case S_IFTTY: 
-      stm->read = term_read;
-      stm->write = term_write;
-      break;
-    default:
-      assert(!0);
+  case S_IFREG:
+  case S_IFBLK:
+    stm->read = block_read;
+    stm->write = block_write;
+    break;
+  case S_IFDIR:
+    stm->read = dir_data;
+    stm->write = (void *)dir_data;
+    break;
+  case S_IFIFO:
+    stm->read = fifo_read;
+    stm->write = fifo_write;
+    break;
+  case S_IFTTY:
+    stm->read = term_read;
+    stm->write = term_write;
+    break;
+  default:
+    assert(!0);
   }
 
   // if ((flags & O_ACCMODE) == O_RDONLY)        stm->flags_ = R_OK;
@@ -227,12 +239,12 @@ static int stream_build (kStream_t* stm, kInode_t* ino, int flags)
   return 0;
 }
 
-int stream_tty (kProcess_t* proc, kInode_t* tty)
+int stream_tty (kProcess_t *proc, kInode_t *tty)
 {
   assert (proc->streamCap_ == 0);
   assert (proc->openStreams_ == NULL);
 
-  kStream_t** openFd = kalloc (sizeof(kStream_t*) * 8, 0);
+  kStream_t **openFd = kalloc (sizeof(kStream_t *) * 8, 0);
   proc->openStreams_ = openFd;
   proc->streamCap_ = 8;
   openFd[0] = KALLOC(kStream_t);
@@ -250,12 +262,13 @@ int stream_tty (kProcess_t* proc, kInode_t* tty)
 
 // ---------------------------------------------------------------------------
 /**   */
-kStream_t* stream_set (kInode_t* ino, int flags)
+kStream_t *stream_set (kInode_t *ino, int flags)
 {
-  kProcess_t* proc = kCPU.current_->process_;
+  kProcess_t *proc = kCPU.current_->process_;
   klock (&proc->lock_);
 
-  kStream_t* stm = stream_new(proc);
+  kStream_t *stm = stream_new(proc);
+
   if (stm == NULL)
     return NULL;
 
@@ -267,10 +280,11 @@ kStream_t* stream_set (kInode_t* ino, int flags)
 
 // ---------------------------------------------------------------------------
 /**   */
-kStream_t* stream_get (int fd, int mode)
+kStream_t *stream_get (int fd, int mode)
 {
-  kStream_t* stream;
-  kProcess_t* proc = kCPU.current_->process_;
+  kStream_t *stream;
+  kProcess_t *proc = kCPU.current_->process_;
+
   if (fd < 0 || fd >= proc->streamCap_) {
     __seterrno (EBADF);
     return NULL;
@@ -278,6 +292,7 @@ kStream_t* stream_get (int fd, int mode)
 
   klock (&proc->lock_, LOCK_SYSFILE_FD);
   stream = proc->openStreams_[fd];
+
   if (stream == NULL) {
     __seterrno (EBADF);
   } else if (!(stream->flags_ & mode)) {

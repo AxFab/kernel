@@ -16,7 +16,7 @@
 
 // ---------------------------------------------------------------------------
 /** Initialize a new address space structure with a first user-stack */
-int addspace_init(kAddSpace_t* mspace, int flags)
+int addspace_init(kAddSpace_t *mspace, int flags)
 {
   memset(mspace, 0, sizeof(mspace));
   mspace->first_ = KALLOC(kVma_t);
@@ -32,9 +32,9 @@ int addspace_init(kAddSpace_t* mspace, int flags)
 
 // ---------------------------------------------------------------------------
 /** Find the area holding an address */
-kVma_t* addspace_find(kAddSpace_t* mspace, size_t address)
+kVma_t *addspace_find(kAddSpace_t *mspace, size_t address)
 {
-  kVma_t* origin = mspace->first_;
+  kVma_t *origin = mspace->first_;
   int maxLoop = MAX_LOOP_BUCKET;
 
   while (origin && --maxLoop) {
@@ -49,20 +49,20 @@ kVma_t* addspace_find(kAddSpace_t* mspace, size_t address)
     origin = origin->next_;
   }
 
-  kVma_t* area = get_item(aa_search_lesseq(&mspace->bbTree_, (long)address), kVma_t, bbNode_);
+  kVma_t *area = get_item(aa_search_lesseq(&mspace->bbTree_, (long)address), kVma_t, bbNode_);
   // kprintf ("addspace_find <%x - %x>\n", area, origin);
   // if (area != NULL)
   //   kprintf ("vma 1 <%8x-%8x  %5x >\n", area->base_, area->limit_, area->flags_, *((char**)area->ino_));
-  // else 
+  // else
   //   kprintf ("vma 1 <null>\n");
 
   // if (origin != NULL)
   //   kprintf ("vma 2 <%8x-%8x  %5x  %s>\n", origin->base_, origin->limit_, origin->flags_, *((char**)origin->ino_));
-  // else 
+  // else
   //   kprintf ("vma 2 <null>\n");
   if (area == NULL || area->limit_ < address)
     assert (origin == NULL);
-  else 
+  else
     assert (area == origin);
 
   return origin;
@@ -71,21 +71,22 @@ kVma_t* addspace_find(kAddSpace_t* mspace, size_t address)
 
 // ---------------------------------------------------------------------------
 
-void addspace_display (kAddSpace_t* mspace)
+void addspace_display (kAddSpace_t *mspace)
 {
-  const char* rights[] = {
+  const char *rights[] = {
     "----", "---x", "--w-",  "--wx",
     "-r--", "-r-x", "-rw-",  "-rwx",
     "S---", "S--x", "S-w-",  "S-wx",
     "Sr--", "Sr-x", "Srw-",  "Srwx"
   };
   int i = 0;
-  void* ptr = NULL;
-  kVma_t* bk = mspace->first_;
+  void *ptr = NULL;
+  kVma_t *bk = mspace->first_;
   kprintf ("MMap debug display ----- %d <%s>\n",
            mspace->vrtPages_, kpsize(mspace->vrtPages_ * PAGE_SIZE));
 
   long pages = 0;
+
   while (bk != NULL) {
     assert (bk->prev_ == ptr);
 
@@ -96,7 +97,7 @@ void addspace_display (kAddSpace_t* mspace)
     if (bk->ino_)
       kprintf ("%2d] [0x%16x - 0x%16x] %s - <%s>  %s :0x%x\n", ++i,
                (uint32_t)bk->base_, (uint32_t)bk->limit_, rights[bk->flags_ & 0xf],
-               kpsize(bk->limit_ - bk->base_),  (*(char**)bk->ino_), (size_t)bk->offset_);
+               kpsize(bk->limit_ - bk->base_),  (*(char **)bk->ino_), (size_t)bk->offset_);
 
     else
       kprintf ("%2d] [0x%16x - 0x%16x] %s - <%s>  %s\n", ++i,

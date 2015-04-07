@@ -5,19 +5,19 @@
 #define IA32_APIC_BASE_MSR 0x1B
 #define IA32_APIC_BASE_MSR_ENABLE 0x800
 
-void cpuid(int leave, int sublv, int* cpu);
+void cpuid(int leave, int sublv, int *cpu);
 int __delayX (int microsecond);
 
 void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 {
   asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
 }
- 
+
 void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi)
 {
   asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
- 
+
 /* Set the physical address for local APIC registers */
 void cpuSetAPICBase(uintptr_t apic)
 {
@@ -31,25 +31,25 @@ void cpuSetAPICBase(uintptr_t apic)
   cpuSetMSR(IA32_APIC_BASE_MSR, eax, edx);
 }
 
- 
+
 /**
  * Get the physical address of the APIC registers page
  * make sure you map it to virtual memory ;)
  */
 uintptr_t cpuGetAPICBase()
 {
-   uint32_t eax, edx;
-   cpuGetMSR(IA32_APIC_BASE_MSR, &eax, &edx);
- 
+  uint32_t eax, edx;
+  cpuGetMSR(IA32_APIC_BASE_MSR, &eax, &edx);
+
 #ifdef __PHYSICAL_MEMORY_EXTENSION__
-   return (eax & 0xfffff100) | ((edx & 0x0f) << 32);
+  return (eax & 0xfffff100) | ((edx & 0x0f) << 32);
 #else
-   return (eax & 0xfffff100);
+  return (eax & 0xfffff100);
 #endif
 }
 
-//       ============================== ============================== 
-//       ============================== ============================== 
+//       ============================== ==============================
+//       ============================== ==============================
 
 int cpuid_features[4]; // EAX, EBX, EDX, ECX
 
@@ -61,7 +61,7 @@ int cpuid_features[4]; // EAX, EBX, EDX, ECX
 
 // int x86_Get4KMemType(size_t base)
 // {
-//   // if (x86_MTRRCAP_FIX && x86_MMTRCAP_FE) 
+//   // if (x86_MTRRCAP_FIX && x86_MMTRCAP_FE)
 //     return -1;
 // }
 
@@ -72,7 +72,7 @@ int cpuid_features[4]; // EAX, EBX, EDX, ECX
 
 //   base = ALIGN_DW (base, PAGE_SIZE);
 //   size = ALIGN_UP (size, PAGE_SIZE);
-//   if (base + size < base || base + size > 4 * _Gb_) 
+//   if (base + size < base || base + size > 4 * _Gb_)
 //     return -1;
 
 //   if (x86_MMTR_E == 0)
@@ -97,14 +97,14 @@ void x86_GetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
     asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
   }
 }
- 
+
 void x86_SetMSR(uint32_t msr, uint32_t lo, uint32_t hi)
 {
   if (x86_FEATURES_MSR) {
     asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
   }
 }
- 
+
 
 void x86_ActiveFPU();
 void x86_ActiveCache();
@@ -124,7 +124,7 @@ x86 Initialization
   IDT
   GDT
   TSS
-  LDT (optional) 
+  LDT (optional)
   MMU (for paging)
   MMTRs
 */
@@ -132,7 +132,7 @@ x86 Initialization
 void ap_start ();
 void acpi_err ();
 void cpu_svr();
- 
+
 #define APIC        ((uint32_t*)_Mb_)
 #define APIC_ID     (*(APIC + 0x20 / 4))
 #define APIC_VERS   (*(APIC + 0x30 / 4))
@@ -156,7 +156,7 @@ int cpu_id ()
 }
 
 
-void __step () 
+void __step ()
 {
   static int step = 0;
   kprintf ("step %d\n", step);
@@ -187,6 +187,7 @@ void enableAPIC()
 
   uint32_t eax, ebx;
   cpuGetMSR(IA32_APIC_BASE_MSR, &eax, &ebx);
+
   if ((eax & (1 << 11)) == 0) {
     kprintf ("Error APIC is disabled\n");
     return;
@@ -205,8 +206,8 @@ void enableAPIC()
   // START APs ------
   int apVector = (uint32_t)ap_start >> 12;
   int aeVector = (uint32_t)acpi_err >> 12;
-  
-  memset ((void*)0x700, 0, 0x100); // Initialize 0x100 bytes of data for AP startup
+
+  memset ((void *)0x700, 0, 0x100); // Initialize 0x100 bytes of data for AP startup
 
   // kprintf ("Read APs count %d\n", cpu_count);
   // kprintf ("ap_start is at  0x%x [%d-%x]\n", ap_start, apVector, apVector);
@@ -240,13 +241,13 @@ void enableAPIC()
 
 
 
-    // ---------------
+  // ---------------
 
-    // int boot_id = cpu_id ();
-    // kprintf ("Load APIC_ID %d \n", boot_id);
-    // kprintf ("AP startup code is at %x [%x]", ap_start, (size_t)ap_start >> 12);
+  // int boot_id = cpu_id ();
+  // kprintf ("Load APIC_ID %d \n", boot_id);
+  // kprintf ("AP startup code is at %x [%x]", ap_start, (size_t)ap_start >> 12);
 
-  
+
 
 }
 

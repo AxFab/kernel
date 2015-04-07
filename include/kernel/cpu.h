@@ -9,15 +9,14 @@ void outw (uint16_t port, uint16_t value);
 uint8_t inb (uint16_t port);
 uint16_t inw (uint16_t port);
 
-void insl (uint16_t port, void* addr, uint32_t count);
-void insw (uint16_t port, void* addr, uint32_t count);
-void outsw (uint16_t port, void* addr, uint32_t count);
+void insl (uint16_t port, void *addr, uint32_t count);
+void insw (uint16_t port, void *addr, uint32_t count);
+void outsw (uint16_t port, void *addr, uint32_t count);
 
 
 
 
-struct kCpuRegs
-{
+struct kCpuRegs {
   uint16_t    gs, rs4;
   uint16_t    fs, rs3;
   uint16_t    es, rs2;
@@ -37,9 +36,9 @@ struct kCpuRegs
   uint16_t    ss, rs5;
 };
 
-void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param, uintptr_t stack);
-void kCpu_Switch (kCpuRegs_t* regs, uint32_t* dir, uint32_t kstack);
-void kCpu_Save (kThread_t* task, kCpuRegs_t* regs);
+void kCpu_Reset (kCpuRegs_t *regs, uintptr_t entry, uintmax_t param, uintptr_t stack);
+void kCpu_Switch (kCpuRegs_t *regs, uint32_t *dir, uint32_t kstack);
+void kCpu_Save (kThread_t *task, kCpuRegs_t *regs);
 
 
 

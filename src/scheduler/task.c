@@ -40,7 +40,7 @@ int ksch_ontask ()
 
 
 // ---------------------------------------------------------------------------
-void ksch_wakeup (kThread_t* task)
+void ksch_wakeup (kThread_t *task)
 {
   atomic_dec_i32 (&kSYS.tasksCount_[task->state_]);
   assert (kSYS.tasksCount_[task->state_] >= 0);
@@ -51,21 +51,23 @@ void ksch_wakeup (kThread_t* task)
 
 // ---------------------------------------------------------------------------
 /** Change the status of the current executing task and save the current registers */
-void ksch_stop (int state, kCpuRegs_t* regs)
+void ksch_stop (int state, kCpuRegs_t *regs)
 {
   assert (ksch_ontask ());
   assert (kCPU.current_->state_ == SCHED_RUNNING ||
-    (kCPU.current_->state_ == SCHED_ABORTING && state == SCHED_ZOMBIE));
+          (kCPU.current_->state_ == SCHED_ABORTING && state == SCHED_ZOMBIE));
   assert (state != SCHED_RUNNING && state != SCHED_ABORTING);
 
-  kThread_t* task = kCPU.current_;
+  kThread_t *task = kCPU.current_;
 
   cli();
+
   if (state != SCHED_ZOMBIE)
     kCpu_Save (task, regs); // FIXME Save registers
 
   task->execOnCpu_ = -1;
   task->elapsedUser_ += kSYS.now_ - task->lastWakeUp_;
+
   if (task->state_ == SCHED_ABORTING)
     task->state_ = SCHED_RUNNING;
 
@@ -76,6 +78,7 @@ void ksch_stop (int state, kCpuRegs_t* regs)
 
   if (state == SCHED_ZOMBIE) {
     atomic_dec_i32 (&task->process_->runningTask_);
+
     if (task->process_->runningTask_ == 0) {
       destroy_process (task->process_);
     }
@@ -84,10 +87,11 @@ void ksch_stop (int state, kCpuRegs_t* regs)
 
 
 // ---------------------------------------------------------------------------
-void ksch_abort (kThread_t* task)
+void ksch_abort (kThread_t *task)
 {
   cli();
   klock (&task->lock_);
+
   if (task->state_ == SCHED_RUNNING) {
     task->state_ = SCHED_ABORTING;
 
@@ -101,6 +105,7 @@ void ksch_abort (kThread_t* task)
     // sched_remove (task);
     atomic_inc_i32 (&kSYS.tasksCount_[task->state_]);
     atomic_dec_i32 (&task->process_->runningTask_);
+
     if (task->process_->runningTask_ == 0) {
       kunlock (&task->lock_);
       destroy_process (task->process_);
@@ -113,7 +118,7 @@ void ksch_abort (kThread_t* task)
 
 
 /** Add the task on the scheduler and mark as READY */
-void sched_insert(kThread_t* thread)
+void sched_insert(kThread_t *thread)
 {
   // assert (thread->state_ == SCHED_ZOMBIE || thread->state_ == SCHED_NONE);
   // atomic_inc_i32(&thread->process_->runningTask_);
@@ -121,13 +126,13 @@ void sched_insert(kThread_t* thread)
   ksch_insert (thread);
 }
 
-void sched_wakeup(kThread_t* thread)
+void sched_wakeup(kThread_t *thread)
 {
   ksch_wakeup (thread);
 }
 
 /** Remove the task form the scheduler */
-void sched_remove(kThread_t* thread)
+void sched_remove(kThread_t *thread)
 {
   ksch_remove (thread);
 }

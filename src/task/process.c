@@ -11,16 +11,15 @@
  */
 #include <kernel/task.h>
 
-struct kSession
-{
-  kUser_t*  user_;
+struct kSession {
+  kUser_t  *user_;
   int32_t   processCount_;
 };
 
 
-static kSession_t* alloc_session (kUser_t* user)
+static kSession_t *alloc_session (kUser_t *user)
 {
-  kSession_t* session = KALLOC(kSession_t);
+  kSession_t *session = KALLOC(kSession_t);
   session->user_ = user;
   session->processCount_ = 1;
   atomic_inc_i32(&user->processCount_);
@@ -28,16 +27,16 @@ static kSession_t* alloc_session (kUser_t* user)
 }
 
 // ---------------------------------------------------------------------------
-static void destroy_session (kSession_t* session) 
+static void destroy_session (kSession_t *session)
 {
   assert (session->processCount_ == 0);
   kfree(session);
 }
 
 // ---------------------------------------------------------------------------
-static kProcess_t* alloc_process (kAssembly_t* asmImg)
+static kProcess_t *alloc_process (kAssembly_t *asmImg)
 {
-  kProcess_t* process = KALLOC (kProcess_t);
+  kProcess_t *process = KALLOC (kProcess_t);
   process->pid_ = ++kSYS.pidAutoInc_;
   process->execStart_ = kSYS.now_;
   // proc->commandLine_ = kstrdup(cmd);
@@ -47,7 +46,8 @@ static kProcess_t* alloc_process (kAssembly_t* asmImg)
   klock (&process->lock_);
   klist_push_back(&kSYS.processes_, &process->allNd_);
 
-  kThread_t* start = create_thread(process, asmImg->entryPoint_, 0xc0ffee);
+  kThread_t *start = create_thread(process, asmImg->entryPoint_, 0xc0ffee);
+
   if (start == NULL) {
     kfree(process);
     return NULL;
@@ -61,14 +61,15 @@ static kProcess_t* alloc_process (kAssembly_t* asmImg)
 
 // ---------------------------------------------------------------------------
 /** Create a parentless process with a new user */
-kProcess_t* login_process (kAssembly_t* asmImg, kUser_t* user, kInode_t* dir, kInode_t* term, const char* cmd)
+kProcess_t *login_process (kAssembly_t *asmImg, kUser_t *user, kInode_t *dir, kInode_t *term, const char *cmd)
 {
   assert (asmImg != NULL);
   assert (user != NULL);
   assert (dir != NULL);
   assert (term != NULL);
 
-  kProcess_t* proc = alloc_process(asmImg);
+  kProcess_t *proc = alloc_process(asmImg);
+
   if (proc == NULL)
     return NULL;
 
@@ -83,7 +84,7 @@ kProcess_t* login_process (kAssembly_t* asmImg, kUser_t* user, kInode_t* dir, kI
     destroy_process (proc);
     return NULL;
   }
-  
+
   kunlock (&proc->lock_);
   return proc;
 }
@@ -91,12 +92,13 @@ kProcess_t* login_process (kAssembly_t* asmImg, kUser_t* user, kInode_t* dir, kI
 
 // ---------------------------------------------------------------------------
 /** Create a new process on the same session of the parent */
-kProcess_t* create_process (kAssembly_t* asmImg, const char* cmd, const char* env)
+kProcess_t *create_process (kAssembly_t *asmImg, const char *cmd, const char *env)
 {
   assert (asmImg != NULL);
   assert (kCPU.current_ != NULL);
 
-  kProcess_t* proc = alloc_process(asmImg);
+  kProcess_t *proc = alloc_process(asmImg);
+
   if (proc == NULL)
     return NULL;
 
@@ -120,22 +122,24 @@ kProcess_t* create_process (kAssembly_t* asmImg, const char* cmd, const char* en
 
 
 // ---------------------------------------------------------------------------
-void destroy_process (kProcess_t* process)
+void destroy_process (kProcess_t *process)
 {
   // assert(proc->flags_ & TK_EXITED);
   // assert(no watcher);
 
   klock (&process->lock_);
-  kThread_t* task;
+  kThread_t *task;
   for_each (task, &process->threads_, kThread_t, taskNd_) {
-    kThread_t* pick = task;
+    kThread_t *pick = task;
     destroy_thread (pick);
   }
 
   klist_remove (&kSYS.processes_, &process->allNd_);
   --process->session_->user_->processCount_;
+
   if (--process->session_->processCount_ <= 0)
     destroy_session (process->session_);
+
   kunlock (&process->lock_);
   kfree(process);
 }

@@ -2,26 +2,26 @@
 
 #define TAR_RECORDSIZE 512
 
-int KRP_Mount (kInode_t* dev, kInode_t* mnt);
+int KRP_Mount (kInode_t *dev, kInode_t *mnt);
 int KRP_Write();
-int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file);
-int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba);
+int KRP_Lookup(const char *name, kInode_t *dir, kStat_t *file);
+int KRP_Read(kInode_t *fp, void *buffer, size_t count, size_t lba);
 
 
-const char* krpPrefix = "./";
+const char *krpPrefix = "./";
 extern char krpPack;
 extern int krpLength;
 // int krpLength;
-char* krpBase;
+char *krpBase;
 
 // ===========================================================================
-int KRP_Mount (kInode_t* dev, kInode_t* mnt)
+int KRP_Mount (kInode_t *dev, kInode_t *mnt)
 {
   time_t now = time(NULL);
   kStat_t root = { 0, S_IFDIR | 0500, 0, 0, 0L, 0L, now, now, now, 0, 0, 0 };
 
   krpBase = &krpPack;
-  kfs_new_device ("krp", mnt, &krpOps, (void*)NULL, &root);
+  kfs_new_device ("krp", mnt, &krpOps, (void *)NULL, &root);
   return __noerror ();
 }
 
@@ -34,7 +34,7 @@ int KRP_Write()
 
 
 // ---------------------------------------------------------------------------
-int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
+int KRP_Lookup(const char *name, kInode_t *dir, kStat_t *file)
 {
   time_t now = time(NULL);
   char uri [PATH_MAX];
@@ -47,6 +47,7 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
     snprintf(search, PATH_MAX, "%s%s/%s", krpPrefix, (strchr (uri, ':') + 2), name);
 
   if (KLOG_FS) kprintf ("krpFs] Look for %s -> '%s' on dir %s \n", name, search, uri);
+
   file->uid_ = 0;
   file->gid_ = 0;
   file->atime_ = now;
@@ -56,7 +57,7 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   file->cblock_ = 512;
   int pos = 0;
   int lg = strlen (search);
-  char* table = krpBase;
+  char *table = krpBase;
 
   while (pos < krpLength) {
     // kprintf ("krpFs] Compare {%s|%s} at %d \n", search, table, pos/512);
@@ -71,7 +72,9 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
         file->mode_ = S_IFREG | 0500;
         file->length_ = strtol(&table[0x7c], NULL, 0);
         file->lba_ = pos;
-        if (KLOG_FS) kprintf ("krpFs] Find %s{%s} at %d \n", name, table, pos/512);
+
+        if (KLOG_FS) kprintf ("krpFs] Find %s{%s} at %d \n", name, table, pos / 512);
+
         return 0;
       }
     }
@@ -83,15 +86,18 @@ int KRP_Lookup(const char* name, kInode_t* dir, kStat_t* file)
   }
 
   if (KLOG_FS) kprintf ("krpFs] Unable to find entry %s\n", search);
+
   return ENOENT;
 }
 
 
 // ---------------------------------------------------------------------------
-int KRP_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
+int KRP_Read(kInode_t *fp, void *buffer, size_t count, size_t lba)
 {
   size_t idx = fp->stat_.lba_ + (lba + 1) * 512;
+
   if (KLOG_FS) kprintf ("krpFs] Read file at %d[%x] for %d cluster on [%x]\n", idx, &krpBase[0], count, buffer);
+
   memcpy (buffer, &krpBase[idx], count * 512);
 
   // kTty_HexDump (&krpBase[idx], 0x50);

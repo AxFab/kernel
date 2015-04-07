@@ -5,9 +5,9 @@
     Allocate and copy a string
     The string returned can be freed using kfree
  */
-char* kstrdup (const char* str)
+char *kstrdup (const char *str)
 {
-  char* ptr;
+  char *ptr;
   int lg;
   lg = strlen(str);
 
@@ -16,7 +16,7 @@ char* kstrdup (const char* str)
     return NULL;
   }
 
-  ptr = (char*)kalloc(lg + 1, 0);
+  ptr = (char *)kalloc(lg + 1, 0);
   memcpy(ptr, str, lg);
   ptr [lg] = '\0';
   return ptr;
@@ -25,9 +25,9 @@ char* kstrdup (const char* str)
 // ============================================================================
 
 // FIXME Why here !?
-time_t time (time_t* ptr) 
-{ 
-  return (time_t)(kSYS.now_ / 1000000); 
+time_t time (time_t *ptr)
+{
+  return (time_t)(kSYS.now_ / 1000000);
 }
 
 #undef kalloc
@@ -39,12 +39,13 @@ time_t time (time_t* ptr)
     The memory is initialized to zero.
     The block of memory can be freed using kfree
  */
-void* kalloc (size_t size, int slab)
+void *kalloc (size_t size, int slab)
 {
-  void* addr = malloc_r(&kSYS.kheap, size);
+  void *addr = malloc_r(&kSYS.kheap, size);
 
   if (addr == 0) {
     __seterrno(ENOMEM);
+    kprintf ("ENOMEM on %s [%d] %x\n", kpsize(size), slab, &kSYS);
     kpanic ("The kernel run out of memory\n");
   }
 
@@ -56,7 +57,7 @@ void* kalloc (size_t size, int slab)
 /**
     Free a memory block allocate on kernel heap
  */
-void kfree (void* addr)
+void kfree (void *addr)
 {
   free_r (&kSYS.kheap, addr);
   // memcorrupt_r (&kSYS.kheap);

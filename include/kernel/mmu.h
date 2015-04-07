@@ -40,12 +40,12 @@
 #define PF_WRITE  (1<<1)
 #define PF_USER   (1<<2)
 #define PF_RSVD   (1<<3)
-#define PF_INSTR  (1<<4) 
+#define PF_INSTR  (1<<4)
 
 
 #define SIGSEV 13
 
-void mmu_prolog (); 
+void mmu_prolog ();
 
 /** Function to inform paging module that some RAM can be used by the system. */
 void mmu_ram (uint64_t base, uint64_t length);
@@ -64,7 +64,7 @@ page_t mmu_new_dir ();
 
 int mmu_resolve (size_t address, page_t page, int access, bool zero);
 
-void* mmu_temporary (page_t* page);
+void *mmu_temporary (page_t *page);
 
 void mmu_reset_stack ();
 
@@ -76,7 +76,7 @@ static inline int mmu_addspace(size_t address)
 
   if (address >= MMU_KHEAP_BASE && address < MMU_KHEAP_LIMIT)
     return AD_KERNEL;
-  
+
   if (address >= MMU_KERNEL_BASE && address < MMU_KERNEL_LIMIT)
     return AD_KERNEL;
 

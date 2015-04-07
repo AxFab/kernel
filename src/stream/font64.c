@@ -44,18 +44,18 @@ const int fontH = 9;
 
 
 uint32_t consoleColor[] = {
-  0xff181818, 0xffa61010,  0xff10a610, 0xffa66010, 
-  0xff1010a6, 0xffa610a6, 0xff10a6a6,  0xffa6a6a6, 
+  0xff181818, 0xffa61010,  0xff10a610, 0xffa66010,
+  0xff1010a6, 0xffa610a6, 0xff10a6a6,  0xffa6a6a6,
   0xffffffff
 };
 uint32_t consoleSecColor[] = {
-  0xff323232, 0xffd01010,  0xff10d010, 0xffd0d010, 
-  0xff1060d0, 0xffd010d0, 0xff10d0d0,  0xffd0d0d0, 
+  0xff323232, 0xffd01010,  0xff10d010, 0xffd0d010,
+  0xff1060d0, 0xffd010d0, 0xff10d0d0,  0xffd0d0d0,
   0xffffffff
 };
 uint32_t consoleBgColor[] = {
-  0xff181818, 0xffa61010,  0xff10a610, 0xffa66010, 
-  0xff1010a6, 0xffa610a6, 0xff10a6a6,  0xffa6a6a6, 
+  0xff181818, 0xffa61010,  0xff10a610, 0xffa66010,
+  0xff1010a6, 0xffa610a6, 0xff10a6a6,  0xffa6a6a6,
   0xffffffff
 };
 
@@ -66,7 +66,7 @@ uint32_t consoleBgColor[] = {
 // ---------------------------------------------------------------------------
 /** Read a text command '\e[xxa'
   */
-static const char* font64_cmd(kTerm_t* term, const char* str, kLine_t* style)
+static const char *font64_cmd(kTerm_t *term, const char *str, kLine_t *style)
 {
   for (;;) {
 
@@ -78,17 +78,20 @@ static const char* font64_cmd(kTerm_t* term, const char* str, kLine_t* style)
 
     } else if (*str == '3') {
       str++;
+
       if (*str >= '0' && *str < '9')
         style->txColor_ = consoleColor[*(str++) - '0'];
 
     } else if (*str == '4') {
       str++;
+
       if (*str >= '0' && *str < '9')
         style->bgColor_ = consoleBgColor[*(str++) - '0'];
 
     } else if (*str == '5') {
       str++;
-      if (*str >= '0' && *str < '9') 
+
+      if (*str >= '0' && *str < '9')
         style->flags_ = *(str++) - '0';
 
     } else if (*str == '7') {
@@ -99,6 +102,7 @@ static const char* font64_cmd(kTerm_t* term, const char* str, kLine_t* style)
 
     } else if (*str == '9') {
       str++;
+
       if (*str >= '0' && *str < '9')
         style->txColor_ = consoleSecColor[*(str++) - '0'];
 
@@ -124,7 +128,7 @@ static const char* font64_cmd(kTerm_t* term, const char* str, kLine_t* style)
 /** Read the next character of the line
   * @bug, what if a command is at the end of the buffer (no '\n')
   */
-static const char* font64_getc(kTerm_t* term, const char* str, int* ch, kLine_t* style)
+static const char *font64_getc(kTerm_t *term, const char *str, int *ch, kLine_t *style)
 {
   for (;;) {
     if (*str < 0) {
@@ -133,15 +137,15 @@ static const char* font64_getc(kTerm_t* term, const char* str, int* ch, kLine_t*
       if (str[0] == '\r' && str[1] == '\n') {
         str++;
       } else if (str[0] == '\e' && str[1] == '[') {
-        str+=2;
+        str += 2;
         str = font64_cmd(term, str, style);
         continue;
-      } else { 
+      } else {
         // @todo handle UTF-8 characters
         str++;
         continue;
       }
-    } 
+    }
 
     *ch = *(str++);
     return str;
@@ -151,27 +155,29 @@ static const char* font64_getc(kTerm_t* term, const char* str, int* ch, kLine_t*
 
 // ---------------------------------------------------------------------------
 
-static void font64_draw (kTerm_t* term, int ch, kLine_t* style, int pen, int width)
+static void font64_draw (kTerm_t *term, int ch, kLine_t *style, int pen, int width)
 {
   int i, j;
   uint64_t vl;
 
   vl = (uint64_t)ttyFont[ch - 0x20];
-  for (j=0; j<fontH; ++j) {
-    for (i=0; i<fontW; ++i) { 
-      ((uint32_t*)term->pixels_)[pen + i] = (vl & 1) ? style->txColor_ : style->bgColor_;
+
+  for (j = 0; j < fontH; ++j) {
+    for (i = 0; i < fontW; ++i) {
+      ((uint32_t *)term->pixels_)[pen + i] = (vl & 1) ? style->txColor_ : style->bgColor_;
       vl = vl >> 1;
     }
+
     pen += width;
   }
-  
+
   if (style->flags_ & 2) {
-    for (i=0; i<fontW; ++i) {
-      ((uint32_t*)term->pixels_)[pen + i] = style->txColor_;
+    for (i = 0; i < fontW; ++i) {
+      ((uint32_t *)term->pixels_)[pen + i] = style->txColor_;
     }
   } else {
-    for (i=0; i<fontW; ++i) {
-      ((uint32_t*)term->pixels_)[pen + i] = style->bgColor_;
+    for (i = 0; i < fontW; ++i) {
+      ((uint32_t *)term->pixels_)[pen + i] = style->bgColor_;
     }
   }
 }
@@ -185,11 +191,12 @@ static void font64_draw (kTerm_t* term, int ch, kLine_t* style, int pen, int wid
   * @param[in] fb     Frame buffer of the terminal
   * @return           The value is the offset of the end of line if marked
   */
-int font64_paint(kTerm_t* term, kLine_t* style, int row)
+int font64_paint(kTerm_t *term, kLine_t *style, int row)
 {
   int ch;
   int col = 0;
-  const char* str = &term->out_buf_[style->offset_];
+  const char *str = &term->out_buf_[style->offset_];
+
   while (*str) {
     str = font64_getc (term, str, &ch, style);
 
@@ -202,9 +209,10 @@ int font64_paint(kTerm_t* term, kLine_t* style, int row)
     font64_draw (term, ch, style, pen, term->width_);
 
     col++;
+
     if (col >= term->line_ / fontW) // @todo colMax_
       return str - term->out_buf_;
-    
+
     if (style->offset_ + col >= term->out_pen_)
       return 0;
   }
@@ -214,14 +222,15 @@ int font64_paint(kTerm_t* term, kLine_t* style, int row)
 
 
 // ---------------------------------------------------------------------------
-/** 
+/**
   */
-void font64_clean(kTerm_t* term)
+void font64_clean(kTerm_t *term)
 {
   int i;
   int lg = term->width_ * term->height_;
+
   for (i = 0; i < lg; ++i)
-    ((uint32_t*)term->pixels_)[i] = term->bgColor_;
+    ((uint32_t *)term->pixels_)[i] = term->bgColor_;
 }
 
 

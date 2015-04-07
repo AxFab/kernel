@@ -17,7 +17,7 @@
 
 // ===========================================================================
 /** Add a new task on the scheduler list as a waiting task. */
-void ksch_insert (kThread_t* task)
+void ksch_insert (kThread_t *task)
 {
   klock(&kSYS.schedLock_, LOCK_SCHED_INSERT);
   klock(&task->lock_, LOCK_SCHED_INSERT);
@@ -25,6 +25,7 @@ void ksch_insert (kThread_t* task)
   atomic_inc_i32 (&kSYS.tasksCount_[0]);
   atomic_inc_i32 (&kSYS.tasksCount_[task->state_]);
   atomic_add_i32 (&kSYS.prioWeight_, 21 - task->niceValue_);
+
   if (kSYS.allTaskFrst_ == NULL) {
     kSYS.allTaskFrst_ = task;
     kSYS.allTaskLast_ = task;
@@ -41,7 +42,7 @@ void ksch_insert (kThread_t* task)
 
 
 // ---------------------------------------------------------------------------
-void ksch_remove (kThread_t* task)
+void ksch_remove (kThread_t *task)
 {
   klock(&kSYS.schedLock_, LOCK_SCHED_REMOVE);
   assert (task->state_ == SCHED_ZOMBIE);
@@ -59,13 +60,15 @@ void ksch_remove (kThread_t* task)
   if (kSYS.allTaskFrst_ == task) {
     kSYS.allTaskLast_->nextSc_ = kSYS.allTaskFrst_->nextSc_;
     kSYS.allTaskFrst_ = kSYS.allTaskFrst_->nextSc_;
+
     if (kSYS.allTaskFrst_ == task) {
       kSYS.allTaskFrst_ = NULL;
       kSYS.allTaskLast_ = NULL;
       kSYS.state_ = SYS_STATE_OFF;
     }
   } else {
-    kThread_t* pick = kSYS.allTaskFrst_;
+    kThread_t *pick = kSYS.allTaskFrst_;
+
     while (pick->nextSc_ != task) {
       pick = pick->nextSc_;
       assert (pick != kSYS.allTaskFrst_);
@@ -73,6 +76,7 @@ void ksch_remove (kThread_t* task)
 
     if (task == kSYS.allTaskLast_)
       kSYS.allTaskLast_ = pick;
+
     pick->nextSc_ = task->nextSc_;
   }
 
@@ -82,14 +86,14 @@ void ksch_remove (kThread_t* task)
 
 // ===========================================================================
 /** Create a new thread, ready to execute */
-kThread_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
+kThread_t *ksch_new_thread (kProcess_t *proc, uintptr_t entry, intmax_t arg)
 {
   assert (proc != NULL);
   // kVma_t vma = {0};
   int flags_ = VMA_STACK | VMA_READ | VMA_WRITE;
 
   // FIXME load memory
-  kThread_t* task = KALLOC (kThread_t);
+  kThread_t *task = KALLOC (kThread_t);
   task->kstack_ = vmarea_map (&proc->memSpace_, PAGE_SIZE * 2, flags_ | VMA_KERNEL)->base_;
   task->ustack_ = vmarea_map (&proc->memSpace_, 1 * _Mb_, flags_)->limit_;
   task->taskId_ = ++kSYS.taskAutoInc_;
@@ -106,7 +110,7 @@ kThread_t* ksch_new_thread (kProcess_t* proc, uintptr_t entry, intmax_t arg)
 
 // ---------------------------------------------------------------------------
 /**  */
-void ksch_destroy_thread (kThread_t* task)
+void ksch_destroy_thread (kThread_t *task)
 {
   klock (&task->lock_, LOCK_TASK_DESTROY);
   ksch_remove (task);

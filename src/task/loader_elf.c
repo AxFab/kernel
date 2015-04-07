@@ -17,24 +17,24 @@
 /** Read a section entry on a ELF image file.
  *  If needed, a new kSection_t object is allocaed and push on assembly.
  */
-static void elf_read_section (kAssembly_t* assembly, kInode_t* ino, ELF_PhEntry_t* phe)
+static void elf_read_section (kAssembly_t *assembly, kInode_t *ino, ELF_PhEntry_t *phe)
 {
-  kSection_t* sec;
+  kSection_t *sec;
   // char* interpret;
 
   switch (phe->type_) {
-    case PT_LOAD:
-      sec = KALLOC (kSection_t);
-      sec->address_ = phe->virtAddr_;
-      sec->length_ = phe->memSize_;
-      sec->align_ = phe->align_;
-      sec->offset_ = phe->fileAddr_;
-      sec->flags_ = phe->flags_ & 7;
-      klist_push_back(&assembly->sections_, &sec->node_);
-      break;
+  case PT_LOAD:
+    sec = KALLOC (kSection_t);
+    sec->address_ = phe->virtAddr_;
+    sec->length_ = phe->memSize_;
+    sec->align_ = phe->align_;
+    sec->offset_ = phe->fileAddr_;
+    sec->flags_ = phe->flags_ & 7;
+    klist_push_back(&assembly->sections_, &sec->node_);
+    break;
 
-    default:
-      break;
+  default:
+    break;
   }
 }
 
@@ -46,20 +46,22 @@ static void elf_read_section (kAssembly_t* assembly, kInode_t* ino, ELF_PhEntry_
  * FIXME log messages
  * TODO think about loading extra information
  */
-kAssembly_t* elf_open (kInode_t* ino)
+kAssembly_t *elf_open (kInode_t *ino)
 {
   int i;
   int err = 0;
-  ELF_Header_t* head;
-  ELF_PhEntry_t* phe;
+  ELF_Header_t *head;
+  ELF_PhEntry_t *phe;
   uint32_t page;
-  kAssembly_t* assembly;
+  kAssembly_t *assembly;
 
   __noerror();
+
   if (ino->assembly_) return ino->assembly_;
 
   inode_page (ino, 0, &page);
-  head = (ELF_Header_t*)mmu_temporary (&page);
+  head = (ELF_Header_t *)mmu_temporary (&page);
+
   if (head == NULL) {
     kprintf ("elf] Read first page failed\n");
     return NULL;
@@ -78,10 +80,11 @@ kAssembly_t* elf_open (kInode_t* ino)
 
   assembly = KALLOC(kAssembly_t);
   assembly->entryPoint_ = (size_t)head->entry_;
+
   for (i = 0; i < head->phCount_; ++i) {
     size_t off = head->phOff_ + i * sizeof(ELF_PhEntry_t);
     assert (off + sizeof(ELF_PhEntry_t) < 4096);
-    phe = (ELF_PhEntry_t*)((size_t)head + off);
+    phe = (ELF_PhEntry_t *)((size_t)head + off);
 
     elf_read_section (assembly, ino, phe);
   }

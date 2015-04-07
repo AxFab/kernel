@@ -20,13 +20,13 @@
           klock(d);                       \
           kunlock(i);                     \
         } while (0);
-          // assert (klockcount() == 1);
+// assert (klockcount() == 1);
 
 #define MODULE_LEAVE(i,d)   do {          \
           klock(i);                       \
           kunlock(d);                     \
         } while (0);
-          // assert (klockcount() == 1);
+// assert (klockcount() == 1);
 
 
 #endif /* PARAMS_H__ */

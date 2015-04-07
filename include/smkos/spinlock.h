@@ -38,14 +38,17 @@ struct spinlock {
 static inline void klock_(struct spinlock *locker, const char *where)
 {
   int t = 100000000;
+
   for (;;) {
     while (locker->key_ != 0) {
       if (--t == 0)
         kpanic("Stuck at %s by %s\n", where, locker->where_);
+
       /* pause(); */
     }
-    
+
     cli();
+
     if (atomic_xchg(&locker->key_, 1) == 0) {
       ++kCPU.lockCounter_;
       locker->cpu_ = kCpuNo;
@@ -65,7 +68,8 @@ static inline void kunlock_(struct spinlock *locker)
   locker->key_ = 0;
   locker->cpu_ = 0;
   locker->where_ = NULL;
-  if (--kCPU.lockCounter_ == 0) 
+
+  if (--kCPU.lockCounter_ == 0)
     sti();
 }
 

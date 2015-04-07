@@ -17,9 +17,9 @@ CC = gcc -c -o
 CCD = gcc -MM -o
 AS = nasm -f elf32 -o
 
-LD = ld -o
+LD = gcc -o
 AR = ar rc
-LDS = ld -shared -o
+LDS = gcc -shared -o
 LDK = ld --oformat=binary -Map $@.map -Ttext 20000 -o
 LDX = ld -T scripts/smoke.ld -o
 
@@ -84,10 +84,10 @@ CFLAGS = -Wall -Wextra -Wno-unused-parameter
 LFLAGS = 
 
 
-C_FLAGS_DEBUG = $(CFLAGS)
-CXX_FLAGS_DEBUG = $(CFLAGS)
-INC_DEBUG = 
-DEF_DEBUG = $(DEF)
+C_FLAGS_DEBUG = $(CFLAGS) -ggdb3
+CXX_FLAGS_DEBUG = $(CFLAGS) -ggdb3
+INC_DEBUG = $(INC)
+DEF_DEBUG = $(DEF) -D__EX -D__x86_64__
 L_FLAGS_DEBUG = $(LFLAGS)
 LIB_DEBUG = 
 

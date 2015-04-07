@@ -7,8 +7,7 @@
 
 // ---------------------------------------------------------------------------
 /** Structure holding fifo cursor. */
-struct kFifo
-{
+struct kFifo {
   ssize_t rpen_;      ///< Offset of the consumer(read) cursor
   ssize_t wpen_;      ///< Offset of the producer(write) cursor
   ssize_t size_;      ///< Total size of the buffers
@@ -19,12 +18,12 @@ struct kFifo
 // ===========================================================================
 /** Read from a FIFO
   */
-ssize_t fifo_read (kStream_t* stm, void* buf, size_t count)
+ssize_t fifo_read (kStream_t *stm, void *buf, size_t count)
 {
   uint32_t page;
   ssize_t bytes = 0;
-  kFifo_t* fifo = stm->ino_->fifo_;
-  
+  kFifo_t *fifo = stm->ino_->fifo_;
+
   // @todo search the next '\n'
 
   // Loop inside the buffer
@@ -36,13 +35,14 @@ ssize_t fifo_read (kStream_t* stm, void* buf, size_t count)
     // @todo, rename mmu_temporary
     ssize_t poff = ALIGN_DW(fifo->rpen_, PAGE_SIZE);
     inode_page (stm->ino_, poff, &page);
-    void* address = (char*)mmu_temporary(&page) + (fifo->rpen_ - poff);
+    void *address = (char *)mmu_temporary(&page) + (fifo->rpen_ - poff);
 
     // Capacity ahead
     ssize_t cap = PAGE_SIZE - fifo->rpen_ + poff;
     cap = MIN(cap, fifo->avail_);
-    cap = MIN (cap, fifo->size_ - fifo->rpen_); 
+    cap = MIN (cap, fifo->size_ - fifo->rpen_);
     cap = MIN (cap, (ssize_t)count);
+
     if (cap == 0)
       break;
 
@@ -52,7 +52,7 @@ ssize_t fifo_read (kStream_t* stm, void* buf, size_t count)
     fifo->rpen_ += cap;
     fifo->avail_ -= cap;
     bytes += cap;
-    buf = ((char*)buf) + cap;
+    buf = ((char *)buf) + cap;
   }
 
   // Force rewind
@@ -66,11 +66,11 @@ ssize_t fifo_read (kStream_t* stm, void* buf, size_t count)
 // ---------------------------------------------------------------------------
 /** Write on a FIFO
   */
-ssize_t fifo_write (kStream_t* stm, const void* buf, size_t count)
+ssize_t fifo_write (kStream_t *stm, const void *buf, size_t count)
 {
   uint32_t page;
   ssize_t bytes = 0;
-  kFifo_t* fifo = stm->ino_->fifo_;
+  kFifo_t *fifo = stm->ino_->fifo_;
 
   // Loop inside the buffer
   while (count > 0) {
@@ -81,13 +81,14 @@ ssize_t fifo_write (kStream_t* stm, const void* buf, size_t count)
     // @todo, rename mmu_temporary
     ssize_t poff = ALIGN_DW(fifo->wpen_, PAGE_SIZE);
     inode_page (stm->ino_, poff, &page);
-    void* address = (char*)mmu_temporary(&page) + (fifo->wpen_ - poff);
+    void *address = (char *)mmu_temporary(&page) + (fifo->wpen_ - poff);
 
     // Capacity ahead
     ssize_t cap = PAGE_SIZE - fifo->wpen_ + poff;
     cap = MIN (cap, fifo->size_ - fifo->avail_);
-    cap = MIN (cap, fifo->size_ - fifo->wpen_); 
+    cap = MIN (cap, fifo->size_ - fifo->wpen_);
     cap = MIN (cap, (ssize_t)count);
+
     if (cap == 0)
       break;
 
@@ -97,7 +98,7 @@ ssize_t fifo_write (kStream_t* stm, const void* buf, size_t count)
     fifo->wpen_ += cap;
     fifo->avail_ += cap;
     bytes += cap;
-    buf = ((char*)buf) + cap;
+    buf = ((char *)buf) + cap;
   }
 
   // Force rewind
@@ -110,16 +111,16 @@ ssize_t fifo_write (kStream_t* stm, const void* buf, size_t count)
 
 // ---------------------------------------------------------------------------
 /** */
-kInode_t* fifo_create()
+kInode_t *fifo_create()
 {
   static int auto_incr = 0;
   char no[10];
 
   snprintf (no, 10, "pi%d", auto_incr++);
-  kInode_t* ino = create_inode(no, kSYS.pipeNd_, S_IFIFO | 0600, FIFO_SIZE);
+  kInode_t *ino = create_inode(no, kSYS.pipeNd_, S_IFIFO | 0600, FIFO_SIZE);
   assert (ino != NULL);
 
-  kFifo_t* fifo = KALLOC(kFifo_t);
+  kFifo_t *fifo = KALLOC(kFifo_t);
   fifo->size_ = FIFO_SIZE;
   ino->fifo_ = fifo;
 

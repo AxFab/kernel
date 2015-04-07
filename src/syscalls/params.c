@@ -3,10 +3,11 @@
 /** Check if this buffer cover a valid user space area
  *  \note the current requierment is to write on a single memory bucket
  */
-int kUserParam_Buffer (kAddSpace_t* addp, const void* base, size_t length)
+int kUserParam_Buffer (kAddSpace_t *addp, const void *base, size_t length)
 {
 #ifdef __KERNEL
-  kVma_t* start = addspace_find (addp, (uintptr_t)base);
+  kVma_t *start = addspace_find (addp, (uintptr_t)base);
+
   if (start == NULL) {
     __seterrno (EFAULT);
     return 0;
@@ -16,14 +17,16 @@ int kUserParam_Buffer (kAddSpace_t* addp, const void* base, size_t length)
     __seterrno (EFAULT);
     return 0;
   }
+
 #endif
   return !0;
 }
 
-int kUserParam_String (kAddSpace_t* addp, const char* str, size_t max)
+int kUserParam_String (kAddSpace_t *addp, const char *str, size_t max)
 {
 #ifdef __KERNEL
-  kVma_t* start = addspace_find (addp, (uintptr_t)str);
+  kVma_t *start = addspace_find (addp, (uintptr_t)str);
+
   if (start == NULL) {
     __seterrno (EFAULT);
     return 0;
@@ -33,6 +36,7 @@ int kUserParam_String (kAddSpace_t* addp, const char* str, size_t max)
     __seterrno (ENAMETOOLONG);
     return 0;
   }
+
 #endif
   return !0;
 }

@@ -15,7 +15,7 @@
 
 // ===========================================================================
 // ---------------------------------------------------------------------------
-int TMPFS_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
+int TMPFS_Read(kInode_t *fp, void *buffer, size_t count, size_t lba)
 {
   memset (buffer, 0, count * PAGE_SIZE);
   return 0;
@@ -23,7 +23,7 @@ int TMPFS_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
 
 
 // ---------------------------------------------------------------------------
-int TMPFS_Create (const char* name, kInode_t* dir, kStat_t* file)
+int TMPFS_Create (const char *name, kInode_t *dir, kStat_t *file)
 {
   time_t now = time(NULL);
   file->atime_ = now;
@@ -43,7 +43,7 @@ int initialize_vfs()
 {
   time_t now = time(NULL);
   kSYS.rootNd_ = KALLOC (kInode_t);
-  kDevice_t* tmpFs = KALLOC (kDevice_t);
+  kDevice_t *tmpFs = KALLOC (kDevice_t);
 
   kSYS.rootNd_->stat_.ino_ = 1;
   kSYS.rootNd_->stat_.mode_ = S_IFDIR | 0755;

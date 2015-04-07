@@ -1,7 +1,7 @@
 #include "ata.h"
 
 
-void atapiDetect (kAtaDrive_t* dr)
+void atapiDetect (kAtaDrive_t *dr)
 {
   uint8_t cl = inb(dr->_pbase + ATA_REG_LBA1);
   uint8_t ch = inb(dr->_pbase + ATA_REG_LBA2);
@@ -18,7 +18,7 @@ void atapiDetect (kAtaDrive_t* dr)
   DELAY;
 }
 
-int ATA_Detect (kAtaDrive_t* dr)
+int ATA_Detect (kAtaDrive_t *dr)
 {
   int res, k;
   uint8_t ptr[2048];
@@ -62,12 +62,12 @@ int ATA_Detect (kAtaDrive_t* dr)
   // (V) Read Identification Space of the Device:
   insl (dr->_pbase + ATA_REG_DATA, ptr, 128);
   // Read Device Parameters:
-  dr->_signature = *((uint16_t*)(ptr + ATA_IDENT_DEVICETYPE));
-  dr->_capabilities = *((uint16_t*)(ptr + ATA_IDENT_CAPABILITIES));
-  dr->_commandsets  = *((uint32_t*)(ptr + ATA_IDENT_COMMANDSETS));
+  dr->_signature = *((uint16_t *)(ptr + ATA_IDENT_DEVICETYPE));
+  dr->_capabilities = *((uint16_t *)(ptr + ATA_IDENT_CAPABILITIES));
+  dr->_commandsets  = *((uint32_t *)(ptr + ATA_IDENT_COMMANDSETS));
   dr->_size = (dr->_commandsets & (1 << 26)) ?
-              *((uint32_t*)(ptr + ATA_IDENT_MAX_LBA_EXT)) :
-              *((uint32_t*)(ptr + ATA_IDENT_MAX_LBA));
+              *((uint32_t *)(ptr + ATA_IDENT_MAX_LBA_EXT)) :
+              *((uint32_t *)(ptr + ATA_IDENT_MAX_LBA));
 
   // String indicates model of device (like Western Digital HDD and SONY DVD-RW...):
   for (k = 0; k < 40; k += 2) {

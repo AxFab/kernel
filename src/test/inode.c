@@ -7,7 +7,7 @@
 
 // ---------------------------------------------------------------------------
 /** Function to called to grab an inodes */
-int inode_open(kInode_t* ino)
+int inode_open(kInode_t *ino)
 {
   ++ino->readers_;
   return __seterrno(0);
@@ -16,7 +16,7 @@ int inode_open(kInode_t* ino)
 
 // ---------------------------------------------------------------------------
 /** Function to release an inodes */
-int inode_close(kInode_t* ino)
+int inode_close(kInode_t *ino)
 {
   --ino->readers_;
   return __seterrno(0);
@@ -25,9 +25,9 @@ int inode_close(kInode_t* ino)
 
 // ---------------------------------------------------------------------------
 /** Find a physique page for the content of an inode. */
-int inode_page(kInode_t* ino, off_t offset, page_t* page)
+int inode_page(kInode_t *ino, off_t offset, page_t *page)
 {
-  if ((size_t)offset >= ino->stat_.length_) 
+  if ((size_t)offset >= ino->stat_.length_)
     return __seterrno (EINVAL);
 
   offset = ALIGN_DW (offset, PAGE_SIZE);
@@ -38,21 +38,22 @@ int inode_page(kInode_t* ino, off_t offset, page_t* page)
 
 
 // ---------------------------------------------------------------------------
-kInode_t* load_inode (const char* file)
+kInode_t *load_inode (const char *file)
 {
-  FILE* fp = fopen(file, "r");
+  FILE *fp = fopen(file, "r");
+
   if (!fp)
     return NULL;
 
-  kInode_t* ino = KALLOC(kInode_t);
+  kInode_t *ino = KALLOC(kInode_t);
   ino->stat_.mode_ = 0755 | S_IFREG;
   fseek(fp, 0, SEEK_END);
-  size_t lg = ftell(fp); 
+  size_t lg = ftell(fp);
   ino->stat_.length_ = lg;
   fseek (fp, 0, SEEK_SET);
-  void* pg = malloc (lg);
+  void *pg = malloc (lg);
   fread(pg, lg, 1, fp);
-  kBucket_t* buck = KALLOC(kBucket_t);
+  kBucket_t *buck = KALLOC(kBucket_t);
   buck->phys_ = (page_t)pg;
   ino->pagesCache_ = buck;
   fclose(fp);
@@ -61,9 +62,9 @@ kInode_t* load_inode (const char* file)
 
 
 // ---------------------------------------------------------------------------
-kInode_t* build_inode_dir ()
+kInode_t *build_inode_dir ()
 {
-  kInode_t* ino = KALLOC(kInode_t);
+  kInode_t *ino = KALLOC(kInode_t);
   ino->stat_.mode_ = 0755 | S_IFDIR;
   return ino;
 }

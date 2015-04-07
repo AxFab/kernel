@@ -27,23 +27,21 @@
 /** Structure for task that are waiting an asynchrone event.
   * @note Some threads may not be waiting, in this case they receive a signal.
   */
-struct kWaiting
-{
+struct kWaiting {
   int         handle_;    ///< Handle for user application and canceling/abort.
-  kThread_t*  task_;      ///< Thread currently waiting.
+  kThread_t  *task_;      ///< Thread currently waiting.
   int         reason_;    ///< Reason of the wait (EV_*).
   nanotime_t  timeout_;   ///< Time before canceling.
   long        param_;     ///< Param depending of the reason.
   llnode_t    waitNd_;    ///< Node for all waiting objects.
   llnode_t    targetNd_;  ///< Node to link to the trigering object.
-  llhead_t*   target_;    ///< Save the list of the target to remove the node.
+  llhead_t   *target_;    ///< Save the list of the target to remove the node.
 };
 
 
 // ---------------------------------------------------------------------------
 /** */
-struct kEvent 
-{
+struct kEvent {
   char size_;
   char type_;
 
@@ -68,9 +66,8 @@ struct kEvent
 
 // ---------------------------------------------------------------------------
 /** */
-enum EV_Reason
-{
-  EV_UNKNOW = 0, 
+enum EV_Reason {
+  EV_UNKNOW = 0,
   EV_SLEEP,       ///< Sleep a defined amount of time
   EV_INTERVAL,    ///< Sleep a repeated amount of time (param period).
   EV_READ,        ///< Wait for to have at least x bytes to read, (or '\n').
@@ -87,13 +84,13 @@ enum EV_Reason
 /** Check the time of registers events */
 void async_ticks ();
 /** Register to an event */
-int async_event(kThread_t* task, llhead_t* targetList, int reason, long param, long maxtime);
+int async_event(kThread_t *task, llhead_t *targetList, int reason, long param, long maxtime);
 /** Wake up the task waiting for an event */
-void async_wakeup (kWaiting_t* wait);
+void async_wakeup (kWaiting_t *wait);
 /** Cancel an event */
-void async_cancel_event (kThread_t* task);
+void async_cancel_event (kThread_t *task);
 /** */
-void async_trigger (llhead_t* targetList, int reason, long param);
+void async_trigger (llhead_t *targetList, int reason, long param);
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

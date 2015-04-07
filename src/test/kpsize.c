@@ -5,9 +5,9 @@ static char sz_format[20];
 /**
     Store in a temporary buffer a size in bytes in a human-friendly format.
  */
-const char* kpsize (uintmax_t number)
+const char *kpsize (uintmax_t number)
 {
-  const char* prefix[] = { "bs", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb" };
+  const char *prefix[] = { "bs", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb" };
   int k = 0;
   int rest = 0;
 

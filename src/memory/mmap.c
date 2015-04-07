@@ -16,10 +16,10 @@
 
 
 /** */
-static kVma_t* kvma_map_begin (kAddSpace_t* mspace, kVma_t* area)
+static kVma_t *kvma_map_begin (kAddSpace_t *mspace, kVma_t *area)
 {
-  kVma_t* vma = NULL;
-  kVma_t* origin = mspace->first_;
+  kVma_t *vma = NULL;
+  kVma_t *origin = mspace->first_;
   uintptr_t base = MMU_USERSP_BASE;
   area->limit_ = ALIGN_UP(area->limit_, PAGE_SIZE);
   size_t length = (size_t)(area->limit_ - area->base_);
@@ -73,10 +73,10 @@ static kVma_t* kvma_map_begin (kAddSpace_t* mspace, kVma_t* area)
 
 // ---------------------------------------------------------------------------
 /** */
-static kVma_t* kvma_map_at (kAddSpace_t* mspace, kVma_t* area)
+static kVma_t *kvma_map_at (kAddSpace_t *mspace, kVma_t *area)
 {
-  kVma_t* vma = NULL;
-  kVma_t* origin = mspace->first_;
+  kVma_t *vma = NULL;
+  kVma_t *origin = mspace->first_;
   uintptr_t address = area->base_;
   area->limit_ = ALIGN_UP(area->limit_, PAGE_SIZE);
   size_t length = (size_t)(area->limit_ - area->base_);
@@ -136,29 +136,31 @@ static kVma_t* kvma_map_at (kAddSpace_t* mspace, kVma_t* area)
 
 // ---------------------------------------------------------------------------
 /** Will allocate a new segment on the address space */
-kVma_t* vmarea_map (kAddSpace_t* mspace, size_t length, int flags) 
+kVma_t *vmarea_map (kAddSpace_t *mspace, size_t length, int flags)
 {
   kVma_t area = {0};
   area.flags_ = flags;
   area.limit_ = length;
+
   if (length == 0 || !IS_PW2(flags & VMA_TYPE)) {
     __seterrno(EINVAL);
     return NULL;
   }
 
   klock (&mspace->lock_);
-  kVma_t* narea;
+  kVma_t *narea;
+
   switch (flags & VMA_TYPE) {
-    case VMA_SHM:
-    case VMA_FILE:
-    case VMA_HEAP:
-    case VMA_STACK:
-      narea = kvma_map_begin (mspace, &area);
-      break;
-    default:
-      assert (0);
+  case VMA_SHM:
+  case VMA_FILE:
+  case VMA_HEAP:
+  case VMA_STACK:
+    narea = kvma_map_begin (mspace, &area);
+    break;
+  default:
+    assert (0);
   }
-  
+
   if (narea == NULL) {
     kunlock (&mspace->lock_);
     return NULL;
@@ -175,7 +177,7 @@ kVma_t* vmarea_map (kAddSpace_t* mspace, size_t length, int flags)
 
 // ---------------------------------------------------------------------------
 /** Will allocate a new segment at a fixed address on the address space */
-kVma_t* vmarea_map_at (kAddSpace_t* mspace, size_t address, size_t length, int flags)
+kVma_t *vmarea_map_at (kAddSpace_t *mspace, size_t address, size_t length, int flags)
 {
   assert ((flags & VMA_TYPE) != VMA_HEAP);
   assert ((flags & VMA_TYPE) != VMA_STACK);
@@ -184,13 +186,15 @@ kVma_t* vmarea_map_at (kAddSpace_t* mspace, size_t address, size_t length, int f
   area.flags_ = flags;
   area.base_ = address;
   area.limit_ = address + length;
+
   if (area.base_ >= area.limit_ || !IS_PW2(flags & VMA_TYPE)) {
     __seterrno(EINVAL);
     return NULL;
   }
 
   klock (&mspace->lock_);
-  kVma_t* narea = kvma_map_at (mspace, &area);
+  kVma_t *narea = kvma_map_at (mspace, &area);
+
   if (narea == NULL) {
     kunlock (&mspace->lock_);
     return NULL;
@@ -211,14 +215,15 @@ kVma_t* vmarea_map_at (kAddSpace_t* mspace, size_t address, size_t length, int f
 
 // ---------------------------------------------------------------------------
 /** Will map an assembly on the address space */
-kVma_t* vmarea_map_section (kAddSpace_t* mspace, kSection_t* section, kInode_t* ino)
+kVma_t *vmarea_map_section (kAddSpace_t *mspace, kSection_t *section, kInode_t *ino)
 {
   int flags = (section->flags_ & (VMA_ACCESS | VMA_ASSEMBLY)) | VMA_FILE;
 
   if ((flags & VMA_WRITE) == 0)
     flags |= VMA_SHARED;
 
-  kVma_t* area = vmarea_map_at (mspace, section->address_, section->length_, flags);
+  kVma_t *area = vmarea_map_at (mspace, section->address_, section->length_, flags);
+
   if (area == NULL)
     return NULL;
 
@@ -232,12 +237,12 @@ kVma_t* vmarea_map_section (kAddSpace_t* mspace, kSection_t* section, kInode_t* 
 
 
 // ---------------------------------------------------------------------------
-int vmarea_map_ino (kVma_t* area, kInode_t* ino, size_t offset)
+int vmarea_map_ino (kVma_t *area, kInode_t *ino, size_t offset)
 {
   //@todo think about link by bucket and add a dir to filter...
-  if ((area->flags_ & (VMA_ASSEMBLY | VMA_FILE)) == 0) 
+  if ((area->flags_ & (VMA_ASSEMBLY | VMA_FILE)) == 0)
     return __seterrno(EINVAL);
-  
+
   if (inode_open (ino)) {
     return __geterrno();
   }
@@ -248,12 +253,13 @@ int vmarea_map_ino (kVma_t* area, kInode_t* ino, size_t offset)
 }
 
 // ---------------------------------------------------------------------------
-int vmarea_grow (kAddSpace_t* mspace, kVma_t* area, size_t extra_size)
+int vmarea_grow (kAddSpace_t *mspace, kVma_t *area, size_t extra_size)
 {
   extra_size = ALIGN_UP(extra_size, PAGE_SIZE);
 
   if ((area->flags_ & VMA_GROWSUP) != 0) {
     klock (&mspace->lock_);
+
     if (area->next_->base_ >= area->limit_ + extra_size) {
       area->limit_ += extra_size;
       mspace->vrtPages_ += extra_size / PAGE_SIZE;
@@ -288,13 +294,13 @@ int vmarea_grow (kAddSpace_t* mspace, kVma_t* area, size_t extra_size)
 // ===========================================================================
 
 // ---------------------------------------------------------------------------
-void vmarea_unmap_area (kAddSpace_t* mspace, kVma_t* area)
+void vmarea_unmap_area (kAddSpace_t *mspace, kVma_t *area)
 {
 }
 
 
 // ---------------------------------------------------------------------------
-void vmarea_unmap (kAddSpace_t* mspace, size_t address, size_t length) 
+void vmarea_unmap (kAddSpace_t *mspace, size_t address, size_t length)
 {
 }
 

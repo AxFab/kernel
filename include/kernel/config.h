@@ -54,14 +54,12 @@
 
 
 
-enum SYS_STATE
-{
+enum SYS_STATE {
   SYS_STATE_ON = 0,
   SYS_STATE_OFF,
 };
 
-enum CPU_STATE
-{
+enum CPU_STATE {
   CPU_STATE_NONE = 0,
   CPU_STATE_USER,
   // CPU_STATE_SYSTEM,
@@ -100,8 +98,7 @@ enum CPU_STATE
 
 #define KRN_LOADAVG_COUNT 3
 
-enum SCHED_STATUS_ENUM 
-{
+enum SCHED_STATUS_ENUM {
   SCHED_NONE = 0,
   SCHED_ZOMBIE,
   SCHED_BLOCKED,
@@ -114,8 +111,7 @@ enum SCHED_STATUS_ENUM
 
 
 
-enum TASK_EVENT
-{
+enum TASK_EVENT {
   TASK_EVENT_NONE = 0,
   TASK_EVENT_SLEEP,
   TASK_EVENT_TTY,
@@ -123,8 +119,7 @@ enum TASK_EVENT
 };
 
 
-enum LOCK
-{
+enum LOCK {
   LOCK_NONE,
 
   // Inodes

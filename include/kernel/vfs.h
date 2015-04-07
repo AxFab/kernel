@@ -31,11 +31,10 @@ extern kDevice_t tmpFs;
 // ===========================================================================
 //      Data Structures
 // ===========================================================================
-/** Structure holding the metadata of an inode 
+/** Structure holding the metadata of an inode
   * @note: This structure will probably be used on user space.
   */
-struct kStat 
-{
+struct kStat {
   id_t            ino_;       ///< Inode number
   mode_t          mode_;      ///< File mode
   id_t            uid_;       ///< User ID
@@ -54,25 +53,24 @@ struct kStat
 /** Structure containing all system information relative to an inode.
   * @todo Think about a clever way to store the name of the inode.
   */
-struct kInode 
-{
+struct kInode {
   // K_OBJECT;
-  const char*     name_;      ///< Name of the inode
+  const char     *name_;      ///< Name of the inode
   kStat_t         stat_;      ///<
   int             readers_;   ///< Usage counter
-  kInode_t*       parent_;    ///< Parent inode
-  kInode_t*       prev_;      ///< Previous inode
-  kInode_t*       next_;      ///< Next inode
-  kInode_t*       child_;     ///< First child inode
+  kInode_t       *parent_;    ///< Parent inode
+  kInode_t       *prev_;      ///< Previous inode
+  kInode_t       *next_;      ///< Next inode
+  kInode_t       *child_;     ///< First child inode
   spinlock_t      lock_;      ///< Lock
-  kDevice_t*      dev_;       ///< Device driver
+  kDevice_t      *dev_;       ///< Device driver
   union {
-    kAssembly_t*  assembly_;
-    kFifo_t*      fifo_;
-    kTerm_t*      term_;
+    kAssembly_t  *assembly_;
+    kFifo_t      *fifo_;
+    kTerm_t      *term_;
   };
   int             pageCount_;  ///< max number of physical pages in cache
-  kBucket_t*      pagesCache_; ///< physical pages caching
+  kBucket_t      *pagesCache_; ///< physical pages caching
   llhead_t        buckets_;
   llhead_t        evList_;      /// Events list
   llnode_t          lruNd_;    /// LRU list
@@ -80,13 +78,12 @@ struct kInode
 
 
 // ---------------------------------------------------------------------------
-struct kDevice 
-{
+struct kDevice {
   // K_OBJECT;
   id_t id_;
   spinlock_t      lock_;      ///< Lock
   llnode_t          all_;      ///< List of all devices.
-  kInode_t*       ino_;
+  kInode_t       *ino_;
 
   // poll / ioctl / map / allocate - getxattr / setxattr / listxattr
   // lookup / create(mkdir) / remove(rmdir) / rename / setmeta
@@ -97,15 +94,15 @@ struct kDevice
   // int (*format)(dev_t dev_, const char* options);
   // freeze / unfreeze / statfs / umount / options
 
-  int (*lookup)(const char* name, kInode_t* dir, kStat_t* file);
-  int (*read)(kInode_t* fp, void* buffer, size_t length, size_t offset);
+  int (*lookup)(const char *name, kInode_t *dir, kStat_t *file);
+  int (*read)(kInode_t *fp, void *buffer, size_t length, size_t offset);
   int (*readdir)();
   int (*readlink)();
 
-  int (*create)(const char* name, kInode_t* dir, kStat_t* file);
-  int (*write)(kInode_t* fp, const void* buffer, size_t length, size_t offset);
+  int (*create)(const char *name, kInode_t *dir, kStat_t *file);
+  int (*write)(kInode_t *fp, const void *buffer, size_t length, size_t offset);
 
-  uint32_t (*map)(kInode_t* fp, off_t offset);
+  uint32_t (*map)(kInode_t *fp, off_t offset);
 };
 
 
@@ -113,8 +110,7 @@ struct kDevice
 /** A bucket is a memory cache for all or part of a file.
   * @note: A bucket must be of size (PAGE_SIZE) or (K x 8 x PAGE_SIZE).
   */
-struct kBucket 
-{
+struct kBucket {
   // K_OBJECT;
   page_t    phys_;    ///< Physique address of this page bucket.
   size_t    length_;  ///< Length of the page bucket.
@@ -131,54 +127,54 @@ struct kBucket
 
 // VFS/DATA ==================================================================
 /** Request the file system to feed the inode page buffer. */
-int feed_inode(kInode_t* ino, void* buffer, size_t length, off_t offset);
+int feed_inode(kInode_t *ino, void *buffer, size_t length, off_t offset);
 /** Request the file system to synchronize against the inode page buffer. */
-int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset);
+int sync_inode(kInode_t *ino, const void *buffer, size_t length, off_t offset);
 /** Find a memory bucket for the content of an inode. */
-kBucket_t* inode_bucket(kInode_t* ino, off_t offset);
+kBucket_t *inode_bucket(kInode_t *ino, off_t offset);
 /** Find a physique page for the content of an inode. */
-int inode_page(kInode_t* ino, off_t offset, page_t* page);
+int inode_page(kInode_t *ino, off_t offset, page_t *page);
 
 
 // VFS/DEVICE ================================================================
 /** Create and register a new device. */
-id_t create_device(const char* nm, kInode_t* ino, kDevice_t* dev, 
-                   kStat_t* stat);
+id_t create_device(const char *nm, kInode_t *ino, kDevice_t *dev,
+                   kStat_t *stat);
 /** Search for device by it's handle. */
-kDevice_t* search_device(id_t dev);
+kDevice_t *search_device(id_t dev);
 /** Try to initalize a driver for a specific device. */
-int mount_device (kInode_t* dev, const char* name, kInode_t* mnt, int fs,
-                  int flags, const char* data);
+int mount_device (kInode_t *dev, const char *name, kInode_t *mnt, int fs,
+                  int flags, const char *data);
 /** Release a device and close it's driver program. */
-int umount_device(kInode_t* dev);
+int umount_device(kInode_t *dev);
 
 
 // VFS/PATH ==================================================================
 /** Read an inode full pathname. */
-ssize_t read_pathname(kInode_t* ino, int method, char* buf, int size);
+ssize_t read_pathname(kInode_t *ino, int method, char *buf, int size);
 /** Read the content of a directory. */
-int read_directory(kInode_t* dir, off_t offset, void* buf, size_t size);
+int read_directory(kInode_t *dir, off_t offset, void *buf, size_t size);
 
 
 // VFS/REGISTER ==============================================================
 /** Try to add a new inode on the VFS tree. */
-kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat);
+kInode_t *register_inode (const char *name, kInode_t *dir, kStat_t *stat);
 /** Release an inode form the inode cache. */
-int unregister_inode (kInode_t* ino);
+int unregister_inode (kInode_t *ino);
 /** Call the inode scavanger which will try to free cached data. */
 int scavenge_inodes(int nodes);
 /** Call the bucket scavanger which will try to free cached page. */
 int scavenge_bucket(int pages);
 /** Function to called to grab an inodes */
-int inode_open (kInode_t* ino);
+int inode_open (kInode_t *ino);
 /** Function to release an inodes */
-int inode_close (kInode_t* ino);
+int inode_close (kInode_t *ino);
 
 // VFS/SEARCH ================================================================
 /** Search an inode on the filetree. */
-kInode_t* search_inode (const char* path, kInode_t* dir);
+kInode_t *search_inode (const char *path, kInode_t *dir);
 /** Give the inode a symbolic link is refering to. */
-kInode_t* follow_symlink(kInode_t* ino, int* links);
+kInode_t *follow_symlink(kInode_t *ino, int *links);
 
 
 // VFS/TMPFS =================================================================
@@ -188,19 +184,19 @@ int initialize_vfs();
 
 // VFS/WMETA =================================================================
 /** Request the file system for the creation of a new inode. */
-kInode_t* create_inode(const char* name, kInode_t* dir, mode_t mode, size_t lg);
+kInode_t *create_inode(const char *name, kInode_t *dir, mode_t mode, size_t lg);
 /** Request the file system to remove an inode. */
-int remove_inode(kInode_t* ino);
+int remove_inode(kInode_t *ino);
 /** Request the file system to update the inode metadata. */
-int chmeta_inode(kInode_t* ino, kStat_t* stat);
+int chmeta_inode(kInode_t *ino, kStat_t *stat);
 /** Request the file system to change the path of the inode. */
-int rename_inode(kInode_t* ino, const char* name, kInode_t* dir);
+int rename_inode(kInode_t *ino, const char *name, kInode_t *dir);
 
 
 // LEGACY - to remove
 // ---------------------------------------------------------------------------
-int kfs_grab(kInode_t* ino);
-int kfs_release(kInode_t* ino);
+int kfs_grab(kInode_t *ino);
+int kfs_release(kInode_t *ino);
 
 
 #endif /* KERNEL_VFS_H__ */

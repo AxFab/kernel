@@ -59,7 +59,7 @@ unsigned char key_layout_us[128][4] = {
   { ',', '<', '\0', '\0' }, // 33
   { '.', '>', '\0', '\0' }, // 34
   { '/', '?', '\0', '\0' }, // 35
-  { _4(KEY_SH_RG) }, // 36 - Right Shift 
+  { _4(KEY_SH_RG) }, // 36 - Right Shift
   { '7', '3', '\0', '\0' }, // 37  Gray *
   { _4(KEY_ALT) }, // 38 - Left Alt
   { ' ', ' ', '\0', '\0' }, // 39 - Space
@@ -83,7 +83,7 @@ unsigned char key_layout_us[128][4] = {
   { _4(KEY_ARROW_LF) }, // 4b - Arrow left   PAD_4
   { 'c', '4', '\0', '\0' }, // 4c            PAD_5
   { _4(KEY_ARROW_RG) }, // 4d - Arrow right  PAD_6
-  { 'e', '4', '\0', '\0' }, // 4e   [Gray Plus]   
+  { 'e', '4', '\0', '\0' }, // 4e   [Gray Plus]
   { _4(KEY_END) }, // 4f - End               PAD_1
   { _4(KEY_ARROW_DW) }, // 50 - Arrow down   PAD_2
   { _4(KEY_PAGE_DW) }, // 51 - Page Down     PAD_3

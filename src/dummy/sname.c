@@ -2,17 +2,16 @@
 
 int write(int fd, const void *buf, unsigned int count);
 int read(int fd, const void *buf, unsigned int count);
-int open(const char* path, int flag, int mode);
+int open(const char *path, int flag, int mode);
 
 typedef struct axKernelInfo axKernelInfo_t;
-struct axKernelInfo
-{
+struct axKernelInfo {
   char    kernel_[8];
 };
 
 int sname (int name, ...);
 
-int main (int argc, char** argv)
+int main (int argc, char **argv)
 {
   axKernelInfo_t info;
   sname (0, &info);
@@ -22,6 +21,7 @@ int main (int argc, char** argv)
   char buff [1024];
   int sc = open ("/master.log", 0, 0); // O_RDONLY
   int lg = read (sc, buff, 1024);
+
   if (lg > 0) {
     write (1, buff, lg);
   }
@@ -31,6 +31,7 @@ int main (int argc, char** argv)
 
   sc = open ("/dev/pts/p1", 0, 0); // O_RDONLY
   lg = read (sc, buff, 1024);
+
   if (lg > 0) {
     // write (1, buff, lg);
   }

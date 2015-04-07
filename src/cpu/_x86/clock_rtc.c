@@ -35,9 +35,10 @@ static inline unsigned char RTC_Read (int reg)
 }
 
 // ----------------------------------------------------------------------------
-static inline void RTC_ReadTm (struct tm* date, int* century)
+static inline void RTC_ReadTm (struct tm *date, int *century)
 {
   while (RTC_OnUpdate());
+
   date->tm_sec = RTC_Read(RTC_SECONDS);
   date->tm_min = RTC_Read(RTC_MINUTES);
   date->tm_hour = RTC_Read(RTC_HOURS);
@@ -45,11 +46,12 @@ static inline void RTC_ReadTm (struct tm* date, int* century)
   date->tm_mday = RTC_Read(RTC_DAY_MONTH);
   date->tm_mon = RTC_Read(RTC_MONTH);
   date->tm_year = RTC_Read(RTC_YEAR);
+
   if (RTC_CENTURY) (*century) = RTC_Read(RTC_CENTURY);
 }
 
 // ----------------------------------------------------------------------------
-static inline int RTC_Equals(struct tm* d1, struct tm* d2)
+static inline int RTC_Equals(struct tm *d1, struct tm *d2)
 {
   return  d1->tm_sec == d2->tm_sec &&
           d1->tm_min == d2->tm_min &&
@@ -70,7 +72,7 @@ void RTC_EnableCMOS ()
   outb(CMOS_DATA, b | 0x40);
 
   outb(CMOS_ADDRESS, 0x8A);   // set index to register A, disable NMI
-  char p =inb(CMOS_DATA);  // get initial value of register A
+  char p = inb(CMOS_DATA); // get initial value of register A
   outb(CMOS_ADDRESS, 0x8A);   // reset index to A
   outb(CMOS_DATA, (p & 0xF0) | rate); //write only our rate to A. Note, rate is the bottom 4 bits.
 }
@@ -83,8 +85,7 @@ void RTC_DisableCMOS ()
 }
 
 // ----------------------------------------------------------------------------
-struct tm RTC_GetTime ()
-{
+struct tm RTC_GetTime () {
   struct tm date;
   struct tm last;
   int century;
@@ -108,6 +109,7 @@ struct tm RTC_GetTime ()
     date.tm_mday = (date.tm_mday & 0x0F) + ((date.tm_mday / 16) * 10);
     date.tm_mon = (date.tm_mon & 0x0F) + ((date.tm_mon / 16) * 10);
     date.tm_year = (date.tm_year & 0x0F) + ((date.tm_year / 16) * 10);
+
     if (RTC_CENTURY)
       century = (century & 0x0F) + ((century / 16) * 10);
   }
@@ -118,7 +120,7 @@ struct tm RTC_GetTime ()
   }
 
   // Calculate the full (4-digit) year
-  if(RTC_CENTURY != 0) {
+  if (RTC_CENTURY != 0) {
     date.tm_year += century * 100;
   } else {
     date.tm_year += CURRENT_CENTURY * 100;

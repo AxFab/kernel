@@ -5,9 +5,9 @@
 
 
 
-void kasm_destroy (kAssembly_t* assembly);
-int kasm_load (kAddSpace_t* mmsp, kInode_t* ino);
-kAssembly_t* kasm_open (kInode_t* ino);
+void kasm_destroy (kAssembly_t *assembly);
+int kasm_load (kAddSpace_t *mmsp, kInode_t *ino);
+kAssembly_t *kasm_open (kInode_t *ino);
 
 
 

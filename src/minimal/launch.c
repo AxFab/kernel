@@ -38,8 +38,8 @@ void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi);
 #define IA32_APIC_BASE_MSR 0x1B
 #define IA32_APIC_BASE_MSR_BSP 0x100 // Processor is a BSP
 #define IA32_APIC_BASE_MSR_ENABLE 0x800
- 
- 
+
+
 /* Set the physical address for local APIC registers */
 void cpuSetAPICBase(uintptr_t apic);
 /**
@@ -47,24 +47,24 @@ void cpuSetAPICBase(uintptr_t apic);
  * make sure you map it to virtual memory ;)
  */
 uintptr_t cpuGetAPICBase();
- 
+
 void enableAPIC();
 
 uint32_t cpuReadIoApic(void *ioapicaddr, uint32_t reg)
 {
-   uint32_t volatile *ioapic = (uint32_t volatile *)ioapicaddr;
-   ioapic[0] = (reg & 0xff);
-   return ioapic[4];
-}
- 
-void cpuWriteIoApic(void *ioapicaddr, uint32_t reg, uint32_t value)
-{
-   uint32_t volatile *ioapic = (uint32_t volatile *)ioapicaddr;
-   ioapic[0] = (reg & 0xff);
-   ioapic[4] = value;
+  uint32_t volatile *ioapic = (uint32_t volatile *)ioapicaddr;
+  ioapic[0] = (reg & 0xff);
+  return ioapic[4];
 }
 
-void cpuid(int leave, int sublv, int* cpu);
+void cpuWriteIoApic(void *ioapicaddr, uint32_t reg, uint32_t value)
+{
+  uint32_t volatile *ioapic = (uint32_t volatile *)ioapicaddr;
+  ioapic[0] = (reg & 0xff);
+  ioapic[4] = value;
+}
+
+void cpuid(int leave, int sublv, int *cpu);
 
 void cpu_info ()
 {
@@ -73,11 +73,11 @@ void cpu_info ()
   cpuid(0, 0, cpuidret);
   int maxCpuidCall = cpuidret[0];
   kprintf("CPUID 0: %x - %x - %x - %x ...\n", cpuidret[0], cpuidret[1], cpuidret[2], cpuidret[3]);
-  kprintf("Model %s \n", (char*)(&cpuidret[1]));
+  kprintf("Model %s \n", (char *)(&cpuidret[1]));
 
   cpuid(1, 0, cpuidret);
   kprintf("CPUID 1: %x - %x - %x - %x ...\n", cpuidret[0], cpuidret[1], cpuidret[2], cpuidret[3]);
-  
+
   int stepping = cpuidret[0] & 0x7;
   int model = (cpuidret[0] >> 3) & 0xf;
   int family = (cpuidret[0] >> 7) & 0xf;
@@ -89,7 +89,7 @@ void cpu_info ()
   int cacheSize = ((cpuidret[1] >> 8) & 0xFF) * 8;
   int maxLogProc = (cpuidret[1] >> 16) & 0xFF;
   int localAPICId = (cpuidret[1] >> 24) & 0xFF;
-  
+
   kprintf ("Stepping: %d\n", stepping);
   kprintf ("Model: %d\n", model);
   kprintf ("Family: %d\n", family);
@@ -103,17 +103,29 @@ void cpu_info ()
   kprintf("APIC Id: %d \n", localAPICId);
 
   if (cpuidret[2] & CPUID_FEATURE1_EDX_FPU) kprintf ("  OnBoard x87 FPU\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_VME) kprintf ("  Virtual 8086 mode extensions\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_TSC) kprintf ("  Time Stamp Counter\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_MSR) kprintf ("  Model-specific registers\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_PAE) kprintf ("  Physical Address Extension\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_APIC) kprintf ("  Onboard Advanced Programmable Interrupt Controller\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_MMTR) kprintf ("  MMTR features\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_PSE36) kprintf ("  36-bit page size extension\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_MMX) kprintf ("  MMX instructions\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_SSE) kprintf ("  SSE extensions\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_SSE2) kprintf ("  SSE2 extensions\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_HHT) kprintf ("  Hyper Threading Tech.\n");
+
   if (cpuidret[2] & CPUID_FEATURE1_EDX_TM) kprintf ("  Therm. Monitor\n");
 
 
@@ -124,12 +136,14 @@ void cpu_info ()
 
   cpuid(2, 0, cpuidret);
   kprintf("CPUID 2: %x - %x - %x - %x ...\n", cpuidret[0], cpuidret[1], cpuidret[2], cpuidret[3]);
-  
+
   int i;
-  uint8_t* cpu_cache = (uint8_t*)cpuidret;
+  uint8_t *cpu_cache = (uint8_t *)cpuidret;
+
   for (i = 1; i < 12; ++i) {
-    if (cpu_cache[i] == 0) 
+    if (cpu_cache[i] == 0)
       continue;
+
     kprintf ("%2x]  ", cpu_cache[i]);
     kprintf ("???\n");
   }
@@ -137,7 +151,7 @@ void cpu_info ()
 
   // cpuid(3, 0, cpuidret);
   // kprintf("CPUID 3: %x - %x - %x - %x ...\n", cpuidret[0], cpuidret[1], cpuidret[2], cpuidret[3]);
-  
+
   cpuid(4, 0, cpuidret);
   kprintf("CPUID 4: %x - %x - %x - %x ...\n", cpuidret[0], cpuidret[1], cpuidret[2], cpuidret[3]);
   int maxProcCore = (cpuidret[0] >> 26) + 1;
@@ -153,7 +167,7 @@ void cpu_info ()
 int kCore_Initialize ()
 {
   if (screen._mode == 1) {
-    screen._ptr = (uint32_t*)(4 * _Mb_);
+    screen._ptr = (uint32_t *)(4 * _Mb_);
   }
 
   // meminit_r(&kSYS.kheap, (void*)0xD0000000, 0x20000000);
@@ -162,11 +176,12 @@ int kCore_Initialize ()
   kprintf ("Kernel Smoke Minimal compiled " _DATE_ " from " _OS_FULLNAME_ "\n");
 
   cpu_info ();
+
   for (;;);
 }
 
 
-void kernel_ready (int eax) 
+void kernel_ready (int eax)
 {
   kprintf ("Oh yeah! From CPU %d <%08x>\n", cpu_id(), &eax);
   // kdump (0x7f0, 0x20);
@@ -179,20 +194,21 @@ void ksch_pick()
 
 }
 
-void ksch_exit(kProcess_t* proc, int status)
+void ksch_exit(kProcess_t *proc, int status)
 {
-  
+
 }
 
-void ksch_stop(int state, kCpuRegs_t* regs)
+void ksch_stop(int state, kCpuRegs_t *regs)
 {
-  
+
 }
 
 
 int page_fault (size_t address, int cause)
 {
   kprintf ("PF 0x%08x -- %4x \n", address, cause);
+
   for (;;);
 }
 
@@ -210,7 +226,7 @@ int vbaWidth;
 int vbaHeight;
 int vbaDepth;
 
-void VBA_Set (void* address, int width, int height, int depth)
+void VBA_Set (void *address, int width, int height, int depth)
 {
   vbaAddress = address;
   vbaWidth = width;
@@ -219,32 +235,34 @@ void VBA_Set (void* address, int width, int height, int depth)
 }
 
 
-int term_event (kStream_t* stm, kEvent_t* event)
+int term_event (kStream_t *stm, kEvent_t *event)
 {
 
 }
 
 
-void sys_enter (int no, void* stack)
+void sys_enter (int no, void *stack)
 {
   kprintf ("SYS_ENTER %d \n", no);
+
   for (;;);
 }
 
 
 extern int PIT_Period;
 int volatile __timer = 0;
-void ksch_ticks (kCpuRegs_t* regs) 
+void ksch_ticks (kCpuRegs_t *regs)
 {
-  __timer+= PIT_Period;
+  __timer += PIT_Period;
   // kprintf (".\n");
 }
 
 
-int __delayX (int microsecond) 
+int __delayX (int microsecond)
 {
   sti();
   __timer = 0;
+
   while (__timer < microsecond);
 }
 

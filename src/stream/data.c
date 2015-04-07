@@ -7,10 +7,11 @@
 /**
  *  \note Read and write are copy-code, try to merge them.
  */
-ssize_t stream_read (int fd, void* buf, size_t length)
+ssize_t stream_read (int fd, void *buf, size_t length)
 {
-  kStream_t* stream = stream_get (fd, O_RDONLY);
-  if (stream == NULL) 
+  kStream_t *stream = stream_get (fd, O_RDONLY);
+
+  if (stream == NULL)
     return -1;
 
   if (!PARAM_USER_BUFFER(kCPU.current_->process_->memSpace_, buf, length))
@@ -25,10 +26,11 @@ ssize_t stream_read (int fd, void* buf, size_t length)
 /**
  *  \note Read and write are copy-code, try to merge them.
  */
-ssize_t stream_write (int fd, const void* buf, size_t length)
+ssize_t stream_write (int fd, const void *buf, size_t length)
 {
-  kStream_t* stream = stream_get (fd, O_WRONLY);
-  if (stream == NULL) 
+  kStream_t *stream = stream_get (fd, O_WRONLY);
+
+  if (stream == NULL)
     return -1;
 
   if (!PARAM_USER_BUFFER(kCPU.current_->process_->memSpace_, buf, length))
@@ -44,20 +46,23 @@ ssize_t stream_write (int fd, const void* buf, size_t length)
  */
 off_t stream_seek(int fd, off_t offset, int whence)
 {
-  kStream_t* stream = stream_get (fd, R_OK | W_OK);
+  kStream_t *stream = stream_get (fd, R_OK | W_OK);
+
   if (stream == NULL) return -1;
 
   int type = stream->ino_->stat_.mode_ & S_IFMT;
   assert (type != S_IFLNK);
+
   if (type == S_IFCHR || type == S_IFIFO || type == S_IFSOCK) {
     __seterrno(ESPIPE);
     return -1;
   } else if (type == S_IFDIR) {
-      __seterrno(ENOSYS);
-      return -1;
+    __seterrno(ENOSYS);
+    return -1;
   }
 
   assert (type == S_IFREG || type == S_IFBLK);
+
   if (whence == SEEK_SET)
     stream->position_ = offset;
   else if (whence == SEEK_CUR)
@@ -68,12 +73,12 @@ off_t stream_seek(int fd, off_t offset, int whence)
     // if (whence == SEEK_DATA || whence == SEEK_HOLE)
     //   __seterrno (ENOSYS);
     // else
-      __seterrno (EINVAL);
+    __seterrno (EINVAL);
     return -1;
   }
 
   stream->position_ = MIN (stream->ino_->stat_.length_,
-                        MAX(0, stream->position_));
+                           MAX(0, stream->position_));
 
   if (stream->position_ != (size_t)((off_t)stream->position_)) {
     __seterrno (EOVERFLOW);

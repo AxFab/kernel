@@ -15,9 +15,9 @@
 
 
 // ---------------------------------------------------------------------------
-/** Request the file system to feed the inode page buffer. 
+/** Request the file system to feed the inode page buffer.
   */
-int feed_inode(kInode_t* ino, void* buffer, size_t length, off_t offset)
+int feed_inode(kInode_t *ino, void *buffer, size_t length, off_t offset)
 {
   assert (PARAM_KOBJECT (ino, kInode_t));
   // @todo assert (PARAM_KERNEL_BUFFER(buffer, length, PAGE_SIZE));
@@ -28,8 +28,8 @@ int feed_inode(kInode_t* ino, void* buffer, size_t length, off_t offset)
   if (ino->dev_->read == NULL)
     return __seterrno (EINVAL);
 
-  kprintf (LOG_VFS, "Read '%s' on LBA %d using %s()\n", 
-    ino->name_, offset, ksymbol(ino->dev_->read));
+  kprintf (LOG_VFS, "Read '%s' on LBA %d using %s()\n",
+           ino->name_, offset, ksymbol(ino->dev_->read));
 
   MODULE_ENTER(&ino->lock_, &ino->dev_->lock_);
   int err = ino->dev_->read (ino, buffer, length, offset);
@@ -40,9 +40,9 @@ int feed_inode(kInode_t* ino, void* buffer, size_t length, off_t offset)
 
 
 // ---------------------------------------------------------------------------
-/** Request the file system to synchronize against the inode page buffer. 
+/** Request the file system to synchronize against the inode page buffer.
   */
-int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset)
+int sync_inode(kInode_t *ino, const void *buffer, size_t length, off_t offset)
 {
   assert (PARAM_KOBJECT (ino, kInode_t));
   assert (PARAM_KERNEL_BUFFER(buffer, length, PAGE_SIZE));
@@ -54,12 +54,13 @@ int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset)
     return -1;
   }
 
-  kprintf (LOG_VFS, "Write '%s' on LBA %d using %x\n", 
-    ino->name_, offset, ksymbol(ino->dev_->write));
+  kprintf (LOG_VFS, "Write '%s' on LBA %d using %x\n",
+           ino->name_, offset, ksymbol(ino->dev_->write));
 
   MODULE_ENTER(&ino->lock_, &ino->dev_->lock_);
   int err = ino->dev_->write (ino, buffer, length, offset);
   MODULE_LEAVE(&ino->lock_, &ino->dev_->lock_);
+
   if (err) {
     __seterrno (err);
     return -1;
@@ -70,23 +71,24 @@ int sync_inode(kInode_t* ino, const void* buffer, size_t length, off_t offset)
 
 
 // ---------------------------------------------------------------------------
-/** Find a memory bucket for the content of an inode. 
+/** Find a memory bucket for the content of an inode.
   */
-kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
+kBucket_t *inode_bucket(kInode_t *ino, off_t offset)
 {
   assert (PARAM_KOBJECT (ino, kInode_t));
+
   if (((size_t)offset >= ino->stat_.length_ && ino->stat_.length_ != 0)) {
     __seterrno (EINVAL);
     return NULL;
   }
 
-  kBucket_t* buck;
+  kBucket_t *buck;
   klock (&ino->lock_);
 
   // Look on already cached buckets
   for_each (buck, &ino->buckets_, kBucket_t, node_) {
-    if (buck->offset_ <= offset && 
-          ((size_t)buck->offset_ + buck->length_) > (size_t)offset) {
+    if (buck->offset_ <= offset &&
+        ((size_t)buck->offset_ + buck->length_) > (size_t)offset) {
       kunlock (&ino->lock_);
       return buck;
     }
@@ -95,6 +97,7 @@ kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
   // Look for the new page
   size_t length = PAGE_SIZE;
   page_t page = 0;
+
   if (ino->dev_->map != NULL) {
     length = PAGE_SIZE;
     offset = ALIGN_DW (offset, PAGE_SIZE);
@@ -105,8 +108,9 @@ kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
   } else {
     // length = ino->stat_.block_;
     offset = ALIGN_DW (offset, PAGE_SIZE); // ino->stat_.block_);
-    void* address = mmu_temporary (&page);
-    if (feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset/ ino->stat_.block_))
+    void *address = mmu_temporary (&page);
+
+    if (feed_inode(ino, address, PAGE_SIZE / ino->stat_.block_, offset / ino->stat_.block_))
       page = 0;
   }
 
@@ -131,14 +135,16 @@ kBucket_t* inode_bucket(kInode_t* ino, off_t offset)
 
 
 // ---------------------------------------------------------------------------
-/** Find a physique page for the content of an inode. 
+/** Find a physique page for the content of an inode.
   * @note Legacy, should be replace progressively by inode_bucket.
   */
-int inode_page(kInode_t* ino, off_t offset, page_t* page)
+int inode_page(kInode_t *ino, off_t offset, page_t *page)
 {
-  kBucket_t* bucket = inode_bucket(ino, offset);
+  kBucket_t *bucket = inode_bucket(ino, offset);
+
   if (bucket == NULL)
     return __geterrno();
+
   *page = bucket->phys_;
   return __seterrno(0);
 }
@@ -146,7 +152,7 @@ int inode_page(kInode_t* ino, off_t offset, page_t* page)
 
 // ---------------------------------------------------------------------------
 /** Function to called to grab an inodes */
-int inode_open (kInode_t* ino) 
+int inode_open (kInode_t *ino)
 {
   if (!ino)
     return __seterrno (EINVAL);
@@ -161,13 +167,14 @@ int inode_open (kInode_t* ino)
 
 // ---------------------------------------------------------------------------
 /** Function to release an inodes */
-int inode_close (kInode_t* ino) 
+int inode_close (kInode_t *ino)
 {
   if (!ino)
     return __seterrno (EINVAL);
 
   // @todo if zero, push pression on scavenger
   klock (&ino->lock_);
+
   if (--ino->readers_ <= 0) {
     klist_remove_if(&kSYS.inodeLru_, &ino->lruNd_);
     klist_push_front(&kSYS.inodeLru_, &ino->lruNd_);

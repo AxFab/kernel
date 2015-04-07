@@ -15,10 +15,10 @@
 
 // ---------------------------------------------------------------------------
 /** Attach an inode to its parent. */
-static int attach_inode (kInode_t* ino, kInode_t* dir, const char* name)
+static int attach_inode (kInode_t *ino, kInode_t *dir, const char *name)
 {
   int k;
-  kInode_t* cursor = dir->child_;
+  kInode_t *cursor = dir->child_;
   assert (kislocked (&dir->lock_));
   assert (kislocked (&ino->lock_));
   ino->parent_ = dir;
@@ -64,7 +64,7 @@ static int attach_inode (kInode_t* ino, kInode_t* dir, const char* name)
 
 // ---------------------------------------------------------------------------
 /** Try to add a new inode on the VFS tree. */
-kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat)
+kInode_t *register_inode (const char *name, kInode_t *dir, kStat_t *stat)
 {
   static id_t auto_incr = 1;
   assert (PARAM_FILENAME(name));
@@ -72,7 +72,8 @@ kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat)
   assert (S_ISDIR (dir->stat_.mode_));
   assert (kislocked(&dir->lock_));
 
-  kInode_t* ino = KALLOC(kInode_t);
+  kInode_t *ino = KALLOC(kInode_t);
+
   if (ino == NULL) {
     __seterrno (ENOMEM);
     return NULL;
@@ -86,6 +87,7 @@ kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat)
   ino->stat_.mode_ &= (0777 | S_IFMT);
   // klock(&dir->lock_);
   klock(&ino->lock_);
+
   if (attach_inode(ino, dir, name)) {
     kunlock (&dir->lock_);
     kunlock (&ino->lock_);
@@ -101,13 +103,13 @@ kInode_t* register_inode (const char* name, kInode_t* dir, kStat_t* stat)
 
 // ---------------------------------------------------------------------------
 /** Release an inode form the inode cache. */
-int unregister_inode (kInode_t* ino)
+int unregister_inode (kInode_t *ino)
 {
   assert (kislocked (&ino->parent_->lock_));
   assert (kislocked (&ino->lock_));
   assert (ino->child_ == NULL);
   assert (ino->readers_ == 0);
-  
+
   // @todo ino->lock_.flags |= LK_DELETED;
   if (ino->prev_ != NULL) {
     klock(&ino->prev_->lock_);
@@ -134,10 +136,10 @@ int unregister_inode (kInode_t* ino)
     kprintf (LOG, "We need to clean pages\n");
   }
 
-  kfree((void*)ino->name_);
+  kfree((void *)ino->name_);
   kfree(ino);
 
-  return __noerror (); 
+  return __noerror ();
 }
 
 
@@ -147,20 +149,23 @@ int scavenge_inodes(int nodes)
 {
   while (nodes-- > 0) {
 
-    kInode_t* ino;
+    kInode_t *ino;
+
     for (ino = klist_begin(&kSYS.inodeLru_, kInode_t, lruNd_);
-        ino != NULL;
-        ino = klist_next(ino, kInode_t, lruNd_)) {
+         ino != NULL;
+         ino = klist_next(ino, kInode_t, lruNd_)) {
 
       assert (ino->parent_ != NULL);
       klock (&ino->parent_->lock_);
       klock (&ino->lock_);
+
       // @todo -- check that we are not closing a mouting point
       if (ino->readers_ == 0 && ino->child_ == NULL) {
         int err = unregister_inode(ino);
-        if (err) 
+
+        if (err)
           return err;
-        
+
         break;
       }
 
@@ -171,6 +176,7 @@ int scavenge_inodes(int nodes)
     if (ino == NULL)
       return __seterrno (EINVAL);
   }
+
   return __seterrno (0);
 }
 

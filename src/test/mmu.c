@@ -12,7 +12,7 @@ int mmu_resolve (size_t address, page_t page, int access, bool zero)
 
 }
 
-void* mmu_temporary (page_t* page)
+void *mmu_temporary (page_t *page)
 {
 
 }

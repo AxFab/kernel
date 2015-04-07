@@ -15,7 +15,7 @@
 
 // ---------------------------------------------------------------------------
 /** Create and register a new device. */
-id_t create_device(const char* nm, kInode_t* dir, kDevice_t* dev, kStat_t* stat)
+id_t create_device(const char *nm, kInode_t *dir, kDevice_t *dev, kStat_t *stat)
 {
   assert (PARAM_FILENAME (nm));
   assert (PARAM_KOBJECT (dir, kInode_t));
@@ -26,7 +26,8 @@ id_t create_device(const char* nm, kInode_t* dir, kDevice_t* dev, kStat_t* stat)
   dev->id_ = ++auto_inc;
 
   klock(&dir->lock_);
-  kInode_t* ino = register_inode (nm, dir, stat);
+  kInode_t *ino = register_inode (nm, dir, stat);
+
   if (!ino)
     return 0;
 
@@ -42,12 +43,13 @@ id_t create_device(const char* nm, kInode_t* dir, kDevice_t* dev, kStat_t* stat)
 
 // ---------------------------------------------------------------------------
 /** Search for device by it's handle. */
-kDevice_t* search_device(id_t id)
+kDevice_t *search_device(id_t id)
 {
-  kDevice_t* dev;
-  for (dev = klist_begin(&kSYS.devices_, kDevice_t, all_); 
-      dev != NULL; 
-      dev = klist_next(dev, kDevice_t, all_)) {
+  kDevice_t *dev;
+
+  for (dev = klist_begin(&kSYS.devices_, kDevice_t, all_);
+       dev != NULL;
+       dev = klist_next(dev, kDevice_t, all_)) {
     if (dev->id_ == id)
       return dev;
   }
@@ -58,8 +60,8 @@ kDevice_t* search_device(id_t id)
 
 // ---------------------------------------------------------------------------
 /** Try to initalize a driver for a specific device. */
-int mount_device (kInode_t* dev, const char* name, kInode_t* mnt, int fs,
-                  int flags, const char* data)
+int mount_device (kInode_t *dev, const char *name, kInode_t *mnt, int fs,
+                  int flags, const char *data)
 {
   __seterrno(ENOSYS);
   return -1;
@@ -68,7 +70,7 @@ int mount_device (kInode_t* dev, const char* name, kInode_t* mnt, int fs,
 
 // ---------------------------------------------------------------------------
 /** Release a device and close it's driver program. */
-int umount_device(kInode_t* dev)
+int umount_device(kInode_t *dev)
 {
   __seterrno(ENOSYS);
   return -1;

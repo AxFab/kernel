@@ -9,7 +9,7 @@
     } while (0)
 
 
-int kAta_Polling (kAtaDrive_t* dr)
+int kAta_Polling (kAtaDrive_t *dr)
 {
   int i;
 
@@ -39,7 +39,7 @@ int kAta_Polling (kAtaDrive_t* dr)
   return 0;
 }
 
-int kAta_Data(int dir, kAtaDrive_t* dr, uint32_t lba,  uint8_t sects, uint8_t* buf)
+int kAta_Data(int dir, kAtaDrive_t *dr, uint32_t lba,  uint8_t sects, uint8_t *buf)
 {
   uint8_t lbaIO[6] = { 0 };
   int mode, cmd, i;
@@ -163,33 +163,38 @@ int IRQ14_LOCK = 0;
 void IRQ14_Enter ()
 {
   IRQ14_LOCK = 0;
+
   if (KLOG_FS) kprintf ("IRQ %d\n", 14);
 }
 
 // ===========================================================================
-void ATA_WaitIRQ (kAtaDrive_t* dr, int irq)
+void ATA_WaitIRQ (kAtaDrive_t *dr, int irq)
 {
   // int k = 0x80000;
   IRQ14_LOCK = 1;
 
   if (KLOG_FS) kprintf ("IRQ 14 WAIT\n");
+
   while (IRQ14_LOCK);
+
   if (IRQ14_LOCK) {
     if (KLOG_FS) kprintf ("IRQ 14 ABORT\n");
   } else {
     if (KLOG_FS)  kprintf ("IRQ 14 NOTICED\n");
   }
+
   IRQ14_LOCK = 0;
 }
 
 void ATA_Grab () {}
 void ATA_Release () {}
 
-int kAtapi_Read2 (kAtaDrive_t* dr, uint32_t lba, uint8_t* buf)
+int kAtapi_Read2 (kAtaDrive_t *dr, uint32_t lba, uint8_t *buf)
 {
   int status;
   uint8_t packet[12] = { ATAPI_CMD_READ, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 };
   size_t size;
+
   if (KLOG_FS) kprintf ("ATAPI] read <%d> at lba: %x for 1 sector on %x\n", dr->_pbase, lba, buf);
 
   // Setup SCSI Packet:
@@ -206,15 +211,18 @@ int kAtapi_Read2 (kAtaDrive_t* dr, uint32_t lba, uint8_t* buf)
   outb(dr->_pbase + ATA_REG_LBA1, 2048 & 0xff );
   outb(dr->_pbase + ATA_REG_LBA2, (2048 >> 8) & 0xff );
   outb(dr->_pbase + ATA_REG_COMMAND, ATA_CMD_PACKET);
+
   while ((status = inb (dr->_pbase + ATA_REG_COMMAND)) & 0x80); /* BUSY */
+
   while (!((status = inb (dr->_pbase + ATA_REG_COMMAND)) & 0x8) && !(status & 0x1));
+
   if (status & 0x1) {
     ATA_Release();
     return __seterrno (EIO);
   }
 
   /* Send ATAPI/SCSI command */
-  outsw (dr->_pbase, (uint16_t*)packet, 6);
+  outsw (dr->_pbase, (uint16_t *)packet, 6);
   ATA_WaitIRQ(dr, 14);
   size = (int) inb (dr->_pbase + ATA_REG_LBA2) << 8;
   size |= (int) inb (dr->_pbase + ATA_REG_LBA1);
@@ -222,17 +230,19 @@ int kAtapi_Read2 (kAtaDrive_t* dr, uint32_t lba, uint8_t* buf)
 
   insw (dr->_pbase, buf, size / 2);
   ATA_WaitIRQ(dr, 14);
+
   while ((status = inb (dr->_pbase)) & 0x88);
 
   ATA_Release();
   return __noerror();
 }
 
-int kAtapi_Read (kAtaDrive_t* dr, uint32_t lba,  uint8_t sects, uint8_t* buf)
+int kAtapi_Read (kAtaDrive_t *dr, uint32_t lba,  uint8_t sects, uint8_t *buf)
 {
   int words = 1024; // Sector Size. ATAPI drives have a sector size of 2048 bytes.
   int i;
   uint8_t packet[12];
+
   if (KLOG_FS) kprintf ("ATAPI] read <%d> at lba: %x for %d sectors on %x\n", dr->_pbase, lba, sects, buf);
 
   cli();
@@ -278,6 +288,7 @@ int kAtapi_Read (kAtaDrive_t* dr, uint32_t lba,  uint8_t sects, uint8_t* buf)
       return __seterrno(EIO);
 
     if (KLOG_FS) kprintf ("ATAPI] Just get data\n");
+
     insw(dr->_pbase, buf, words);
     buf += (words * 2);
   }
@@ -292,58 +303,59 @@ int kAtapi_Read (kAtaDrive_t* dr, uint32_t lba,  uint8_t sects, uint8_t* buf)
   return __noerror();
 }
 
-int ATA_Read (kInode_t* ino, void* bucket, size_t count, size_t lba)
+int ATA_Read (kInode_t *ino, void *bucket, size_t count, size_t lba)
 {
-  kAtaDrive_t* dr = (kAtaDrive_t*)ino->dev_;
+  kAtaDrive_t *dr = (kAtaDrive_t *)ino->dev_;
   size_t i;
+
   if (KLOG_FS) kprintf ("ATA] read <%d> at lba: %x for %d sectors on %x\n", dr->_pbase, lba, count, bucket);
 
   if (bucket == NULL)
     return __seterrno (EINVAL);
 
   switch (dr->_type) {
-    case IDE_NODISC:
-      return __seterrno (ENODEV);
-    case IDE_ATA:
+  case IDE_NODISC:
+    return __seterrno (ENODEV);
+  case IDE_ATA:
 
-      if (lba + count > dr->_size)
-        return __seterrno (ERANGE);
+    if (lba + count > dr->_size)
+      return __seterrno (ERANGE);
 
-      return kAta_Data (ATA_READ, dr, lba, count, bucket);
-    case IDE_ATAPI:
+    return kAta_Data (ATA_READ, dr, lba, count, bucket);
+  case IDE_ATAPI:
 
-      for (i = 0; i < count; ++i) {
-        if (kAtapi_Read (dr, lba + i, 1, ((uint8_t*)bucket) + (i * 2048)))
+    for (i = 0; i < count; ++i) {
+      if (kAtapi_Read (dr, lba + i, 1, ((uint8_t *)bucket) + (i * 2048)))
         // if (kAtapi_Read2 (dr, lba + i, ((uint8_t*)bucket) + (i * 2048)))
-          return __geterrno();
-      }
+        return __geterrno();
+    }
 
-      return __noerror();
-    default:
-      return __seterrno (ENOSYS);
+    return __noerror();
+  default:
+    return __seterrno (ENOSYS);
   }
 }
 
 
-int ATA_Write (kInode_t* ino, const void* bucket, size_t count, size_t lba)
+int ATA_Write (kInode_t *ino, const void *bucket, size_t count, size_t lba)
 {
-  kAtaDrive_t* dr = (kAtaDrive_t*)ino->dev_;
+  kAtaDrive_t *dr = (kAtaDrive_t *)ino->dev_;
 
   if (bucket == NULL)
     return __seterrno (EINVAL);
 
   switch (dr->_type) {
-    case IDE_NODISC:
-      return __seterrno (ENODEV);
-    case IDE_ATAPI:
-      return __seterrno (EROFS);
-    case IDE_ATA:
+  case IDE_NODISC:
+    return __seterrno (ENODEV);
+  case IDE_ATAPI:
+    return __seterrno (EROFS);
+  case IDE_ATA:
 
-      if (lba + count > dr->_size)
-        return __seterrno (ERANGE);
+    if (lba + count > dr->_size)
+      return __seterrno (ERANGE);
 
-      return kAta_Data (ATA_WRITE, dr, lba, count, (void*)bucket);
-    default:
-      return __seterrno (ENOSYS);
+    return kAta_Data (ATA_WRITE, dr, lba, count, (void *)bucket);
+  default:
+    return __seterrno (ENOSYS);
   }
 }

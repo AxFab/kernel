@@ -3,7 +3,7 @@
 #include <kernel/task.h>
 #include <kernel/scheduler.h>
 
-const char* masterPaths[] = {
+const char *masterPaths[] = {
   "sbin/master.xe",
   "bin/master.xe",
   "master.xe",
@@ -74,11 +74,11 @@ void kernel_start ()
   //     kpanic("Unable to locate the program called 'master'\n");
   //   masterIno = search_inode(masterPaths[idx], sysDir);
   //   ++idx;
-  // } 
+  // }
 
   // kAssembly_t* masterImg = load_assembly(masterIno);
   // if (masterImg == NULL) {
-  //   kpanic("The program '%s' can't be loaded: %s.\n", 
+  //   kpanic("The program '%s' can't be loaded: %s.\n",
   //     masterPaths[idx], strerror(__geterrno());
   // }
 

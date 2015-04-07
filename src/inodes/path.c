@@ -15,7 +15,7 @@
 
 // ===========================================================================
 
-int kfs_plink (kInode_t* ino, char* ptr, size_t length)
+int kfs_plink (kInode_t *ino, char *ptr, size_t length)
 {
   int ret;
   char uri [PATH_MAX];
@@ -42,7 +42,7 @@ int kfs_plink (kInode_t* ino, char* ptr, size_t length)
 
 // --------------------------------------------------------------------------
 /** */
-int kfs_puri (kInode_t* ino, char* ptr, size_t length)
+int kfs_puri (kInode_t *ino, char *ptr, size_t length)
 {
 #define ISVOL(ino) (S_ISDIR(ino->stat_.mode_) && ino->dev_ != ino->parent_->dev_)
   int ret;

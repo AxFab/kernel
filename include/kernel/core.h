@@ -20,8 +20,8 @@
 #include <atomic.h>
 
 /* --- MISSING STDLIB --- */
-unsigned long long strtoull (const char * str, char ** endptr, int base);
-int snprintf(char* s, size_t n, const char* format, ... );
+unsigned long long strtoull (const char *str, char **endptr, int base);
+int snprintf(char *s, size_t n, const char *format, ... );
 
 // STDBOOL
 typedef char bool;
@@ -78,33 +78,30 @@ typedef struct kLine        kLine_t;
 struct spinlock {
   int32_t       key_;
   int           cpu_;
-  const char*   where_;
+  const char   *where_;
 };
 
 #define ANCHOR_INIT  {LOCK_INIT, NULL, NULL, 0}
 // struct list_anchor
-struct llhead
-{
+struct llhead {
   spinlock_t  lock_;
-  llnode_t*     first_;
-  llnode_t*     last_;
+  llnode_t     *first_;
+  llnode_t     *last_;
   int         count_;
 };
 
 /** Linked list node */
-struct llnode 
-{
-  llnode_t*     prev_;
-  llnode_t*     next_;
+struct llnode {
+  llnode_t     *prev_;
+  llnode_t     *next_;
 };
 
 #define AAANODE_INIT  { NULL, NULL, 0, 0 }
 
 /** AATree (self-balancing binary tree) node */
-struct aanode 
-{
-  aanode_t*  left_;
-  aanode_t*  right_;
+struct aanode {
+  aanode_t  *left_;
+  aanode_t  *right_;
   long  value_;
   int  level_;
 };
@@ -112,12 +109,11 @@ struct aanode
 #define AAATREE_INIT  { LOCK_INIT, NULL, NULL, NULL, 0, 0, 0 }
 
 /** AATree (self-balancing binary tree) head */
-struct aatree 
-{
+struct aatree {
   spinlock_t  lock_;
-  aanode_t*   root_;
-  aanode_t*   last_;
-  aanode_t*   deleted_;
+  aanode_t   *root_;
+  aanode_t   *last_;
+  aanode_t   *deleted_;
   int         count_;
 };
 
@@ -151,13 +147,14 @@ struct aatree
 #define __AT__  __FILE__ ":" TOSTRING(__LINE__)
 // #define __AT__  __FILE__ ":" TOSTRING(__LINE__) " on " __func__ "()"
 
-#define __noerror()     kseterrno(0,__AT__)
-#define __seterrno(e)   kseterrno(e,__AT__)
-#define __geterrno()    kgeterrno()
 #define __nounused(a)  ((void)a)
+
+
+
 
 // Macro object --------------------------------------------------------------
 #define KALLOC(T)     ((T*)kalloc (sizeof(T), 0))
+
 #define SIZEOF(T)     kprintf ("Sizeof " #T ": %x\n", sizeof(T))
 
 // Configuration header ------------------------------------------------------
@@ -169,29 +166,30 @@ struct aatree
         Kernel runtime
 =========================================================================== */
 // Error ------------------------------------------------
-int kseterrno(int err, const char* at);
+int kseterrno(int err, const char *at);
 int kgeterrno();
-int kpanic(const char* str, ...);
+int kpanic(const char *str, ...);
 
 // Print ---------------------------------------------------------------------
+#define ktrace(s,...) kprintf("  [----] " s,__VA_ARGS__)
 int kputc(int c);
-int kprintf(const char* str, ...);
-int kvprintf (const char* str, va_list ap);
-const char* kpsize (uintmax_t number);
+int kprintf(const char *str, ...);
+int kvprintf (const char *str, va_list ap);
+const char *kpsize (uintmax_t number);
 
 // Alloc ---------------------------------------------------------------------
-void* kalloc(size_t size, int slab);
-void kfree(void* addr);
-char* kstrdup(const char* str);
+void *kalloc(size_t size, int slab);
+void kfree(void *addr);
+char *kstrdup(const char *str);
 
 // Miscallenous --------------------------------------------------------------
 // nanotime_t ltime (nanotime_t* ptr);
 
 // Debug ---------------------------------------------------------------------
-const char* ksymbol (void* address);
+const char *ksymbol (void *address);
 void kstacktrace(uintptr_t max_frames);
-void kdump (void* ptr, size_t lg);
-void kregisters (kCpuRegs_t* regs);
+void kdump (void *ptr, size_t lg);
+void kregisters (kCpuRegs_t *regs);
 
 
 #include <kernel/info.h>
@@ -207,6 +205,26 @@ void kregisters (kCpuRegs_t* regs);
 // // ======================================================
 
 
+#define __noerror()     __seterrno(0)
+#define __seterrno(e)   __seterrno_(e,__AT__)
+
+int *_geterrno();
+
+static inline int __seterrno_(int err, const char *at)
+{
+  *_geterrno() = err;
+
+  if (err)
+    kprintf("er.] Error %d at %s: %s\n", err, at, strerror(err));
+
+  return err;
+}
+
+static inline int __geterrno()
+{
+  return *_geterrno();
+}
+
 
 
 // ======================================================
@@ -217,10 +235,13 @@ void kregisters (kCpuRegs_t* regs);
 void kinit ();
 
 // Debug ------------------------------------------------
-void ksymreg (uintptr_t ptr, const char* sym);
+void ksymreg (uintptr_t ptr, const char *sym);
 
 // CPU -------------------------------------------------
 int kcpu_state();
+struct tm cpu_get_clock();
+int cpu_ticks_interval ();
+int cpu_ticks_delay();
 
 // ======================================================
 
@@ -234,8 +255,7 @@ int kcpu_state();
 // ======================================================
 
 typedef struct  kTty kTty_t;
-struct kTty
-{
+struct kTty {
   uint32_t  _color;
   uint32_t  _bkground;
   int       _cursorX;
@@ -246,7 +266,7 @@ struct kTty
   int       _width;
   int       _height;
   int       _depth;
-  uint32_t* _ptr;
+  uint32_t *_ptr;
   uint32_t  _length;
 };
 

@@ -6,7 +6,7 @@
 #define SC_BSS    3
 
 
-void ksymbols_load (kInode_t* ino)
+void ksymbols_load (kInode_t *ino)
 {
   int i;
   int j;
@@ -26,6 +26,7 @@ void ksymbols_load (kInode_t* ino)
   while (i < lg) {
 
     j = 0;
+
     while (tmp[i + j] != '\n' && (i + j) < lg) {
       str[j] = tmp[i + j];
       ++j;
@@ -43,6 +44,7 @@ void ksymbols_load (kInode_t* ino)
 
     } else {
       if (str[1] != ' ')                          continue;
+
       strncpy (add, &str[16], 18);
       strcpy (sym, &str[50]);
       sym[strlen(sym)] = '\0';

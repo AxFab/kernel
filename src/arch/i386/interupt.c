@@ -2,29 +2,32 @@
 #include <kernel/memory.h>
 #include <kernel/task.h>
 
-void kregisters (kCpuRegs_t* regs);
+void kregisters (kCpuRegs_t *regs);
 
 #include <kernel/mmu.h>
 
 
-        #include <kernel/term.h>
-        #include <kernel/async.h>
-        kStream_t* keyboard_tty;
-        /** IRQ.1 - Keyboard */
-        void KBD_irq() 
-        {
-          unsigned char key;
-          while((inb(0x64) & 0x01) == 0);
-          key = inb(0x60);
+#include <kernel/term.h>
+#include <kernel/async.h>
+kStream_t *keyboard_tty;
+/** IRQ.1 - Keyboard */
+void KBD_irq()
+{
+  unsigned char key;
 
-          kEvent_t ev;
-          ev.type_ = (key < 0x80) ? EV_KEYDW : EV_KEYUP;
-          ev.keyboard_.key_ = key & 0x7F;
+  while ((inb(0x64) & 0x01) == 0);
 
-          if (keyboard_tty != NULL)
-            term_event (keyboard_tty, &ev);
-          return;
-        }
+  key = inb(0x60);
+
+  kEvent_t ev;
+  ev.type_ = (key < 0x80) ? EV_KEYDW : EV_KEYUP;
+  ev.keyboard_.key_ = key & 0x7F;
+
+  if (keyboard_tty != NULL)
+    term_event (keyboard_tty, &ev);
+
+  return;
+}
 
 
 
@@ -49,13 +52,13 @@ void kregisters (kCpuRegs_t* regs);
     IRQ 14 : Primary HDD
     IRQ 15 : Secondary HDD
 */
-void sys_irq (int no, void* stack) 
+void sys_irq (int no, void *stack)
 {
   if (no == 0) {
     kSYS.now_ += CLOCK_PREC / CLOCK_HZ;
-    ksch_ticks((kCpuRegs_t*)stack);
+    ksch_ticks((kCpuRegs_t *)stack);
     return;
-  } 
+  }
 
   if (no == 1) {
     KBD_irq ();
@@ -64,13 +67,14 @@ void sys_irq (int no, void* stack)
 
   kprintf ("IRQ <#%d> \n", no);
   kdump (stack, 96);
+
   for (;;);
 }
 
 
-void sys_page_fault (size_t address, int reason, void* stack) 
+void sys_page_fault (size_t address, int reason, void *stack)
 {
-  if (page_fault(address, reason)) 
+  if (page_fault(address, reason))
     kpanic ("Unhandle page fault <0x%x - %x - Tsk %d> \n", address, reason, kCPU.current_->taskId_);
 }
 
@@ -97,18 +101,20 @@ void sys_page_fault (size_t address, int reason, void* stack)
     0x12  Machine Check
     0x13  SIMD Floating-Point Exception
 */
-void sys_exception (int no, void* stack)
+void sys_exception (int no, void *stack)
 {
   if (no == 0x0D) { // General protection fault
 
     kprintf ("General protection fault <Tsk %d> \n", kCPU.current_->taskId_);
     kdump (stack, 96);
     kregisters(stack);
+
     for (;;);
   }
 
   kprintf ("Exception <#%x - Tsk %d> \n", no, kCPU.current_->taskId_);
   kdump (stack, 96);
+
   for (;;);
 }
 

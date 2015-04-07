@@ -26,13 +26,14 @@
 #elif 0
 #  define assert(e)   ((e) ? ((void)0) : __assert_fail(#e, __AT__))
 #  define DEBUG(c)    do { c } while(0)
-void __assert_fail(const char* ex, const char* at);#else
+void __assert_fail(const char *ex, const char *at);
+#else
 #else
 #  define assert(e)   __assert_do(e,#e, __AT__)
 #  define DEBUG(c)    do { c } while(0)
 #  define assert_pathname(n)  \
     __assert_do(__assert_pathname(n), #n " isn't a valid pathname", __AT__);
-void __assert_do(int as, const char* ex, const char* at);
-bool __assert_pathname (const char* name);
+void __assert_do(int as, const char *ex, const char *at);
+bool __assert_pathname (const char *name);
 #endif
 

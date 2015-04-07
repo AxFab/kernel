@@ -5,7 +5,7 @@
 typedef struct Obj Obj_t;
 struct Obj {
   aanode_t node_;
-  const char* name_;
+  const char *name_;
 };
 
 Obj_t o [256];
@@ -14,23 +14,25 @@ aatree_t tree;
 
 int verbose = 0;
 
-void printo (int *ref, Obj_t* o) 
+void printo (int *ref, Obj_t *o)
 {
   if (o->node_.left_)
-    printo (ref, (Obj_t*)o->node_.left_);
+    printo (ref, (Obj_t *)o->node_.left_);
 
   if (*ref > o->node_.value_)
     printf ("ERROR\n");
+
   if (verbose)
     printf ("  %5ld \t %s (%d)\n", o->node_.value_, o->name_, o->node_.level_);
+
   *ref = o->node_.value_;
 
   if (o->node_.right_)
-    printo (ref, (Obj_t*)o->node_.right_);
+    printo (ref, (Obj_t *)o->node_.right_);
 }
 
 
-void set_obj (int idx, long value, const char* name)
+void set_obj (int idx, long value, const char *name)
 {
   if (verbose)
     printf ("ACTION -- Set object [%d] for %s <%ld>\n", idx, name, value);
@@ -41,7 +43,7 @@ void set_obj (int idx, long value, const char* name)
   aa_insert (&tree, &o[idx].node_);
 
   int ref = 0;
-  printo (&ref, (Obj_t*)tree.root_);
+  printo (&ref, (Obj_t *)tree.root_);
 }
 
 
@@ -53,14 +55,14 @@ void rm_obj (int idx)
   aa_delete (&tree, &o[idx].node_);
 
   int ref = 0;
-  printo (&ref, (Obj_t*)tree.root_);
+  printo (&ref, (Obj_t *)tree.root_);
 }
 
 void throw()
 {
 }
 
-int main () 
+int main ()
 {
 
   set_obj (0, 84, "A");

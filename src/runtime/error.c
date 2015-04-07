@@ -1,27 +1,12 @@
 #include <kernel/core.h>
 #include <stdarg.h>
 
-// ----------------------------------------------------------------------------
-/**
-    Change the kernel error status.
-    On debug/paranoid mode, each error are logged.
- */
-int kseterrno(int err, const char* at)
-{
-  if (err) {
-    kprintf("Error %d at %s [%s]\n", err, at, strerror(err));
-    // kstacktrace (8);
-  }
-
-  kCPU.errNo = err;
-  return kCPU.errNo;
-}
 
 // ----------------------------------------------------------------------------
 /**
     Return last registered kernel error/failure.
  */
-int kgeterrno()
+int *_geterrno()
 {
   return kCPU.errNo;
 }
@@ -45,6 +30,7 @@ int kpanic (const char *str, ...)
 
   kstacktrace (10);
   kTty_Update();
+
   for (;;);
 }
 
@@ -57,7 +43,7 @@ void throw()
 /**
     This overwrite of the assert function is made to retrieve info on kernel
  */
-void _assert (int test, const char* expression, const char* function, const char* file, int line)
+void _assert (int test, const char *expression, const char *function, const char *file, int line)
 {
   if (!test) {
     kpanic ("Assertion: %s at %s:%d on %s\n", expression, file, line, function);

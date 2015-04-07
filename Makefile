@@ -33,12 +33,16 @@ KRN_SRC = $(wildcard src/syscalls/*.c) \
 					$(wildcard src/memory/*.c) \
 					$(wildcard src/task/*.c) \
 					$(wildcard src/sys/*.c) \
-					$(wildcard src/arch/i386/*.c) \
 					$(wildcard src/scheduler/*.c) \
 					$(wildcard src/fs/ata/*.c) \
 					$(wildcard src/fs/vba/*.c) \
-					$(wildcard src/fs/iso/*.c) \
-					$(wildcard src/runtime/*.c)
+					$(wildcard src/fs/iso/*.c) 
+
+ARC_SRC =   $(wildcard src/arch/i386/*.c) \
+            $(wildcard src/cpu/_x86/*.c)  \
+					  $(wildcard src/runtime/*.c)
+
+CHK_SRC =   $(wildcard src/check/*.c)
 
 MST_SRC = $(wildcard src/dummy/master.c)
 
@@ -50,12 +54,16 @@ cdrom: $(BUILD_DIR)/OsCore.iso
 crtk: $(CRTK)
 crt0: $(CRT0)
 
-$(BOOT_DIR)/kImage: $(CRTK) $(call objs,kernel,$(KRN_SRC)) $(AXLIBC)/lib/libAxRaw.a
+$(BOOT_DIR)/kImage: $(CRTK) \
+		$(call objs,kernel,$(KRN_SRC)) \
+		$(call objs,kernel,$(ARC_SRC)) \
+		$(AXLIBC)/lib/libAxRaw.a
 
 $(BIN_DIR)/master.xe: $(call objs,smokeos,src/dummy/master.c) $(AXLIBC)/lib/libaxc.a
 $(BIN_DIR)/deamon.xe: $(call objs,smokeos,src/dummy/deamon.c) $(AXLIBC)/lib/libaxc.a
 $(BIN_DIR)/hello.xe: $(call objs,smokeos,src/dummy/hello.c) $(AXLIBC)/lib/libaxc.a
 $(BIN_DIR)/sname.xe: $(call objs,smokeos,src/dummy/sname.c) $(AXLIBC)/lib/libaxc.a
+$(BIN_DIR)/init.xe: $(call objs,smokeos,src/dummy/init.c) $(AXLIBC)/lib/libaxc.a
 $(BIN_DIR)/kt_itimer.xe: $(call objs,smokeos,src/dummy/kt_itimer.c) $(AXLIBC)/lib/libaxc.a
 
 $(BUILD_DIR)/OsCore.iso: $(BOOT_DIR)/grub/grub.cfg \
@@ -64,5 +72,10 @@ $(BUILD_DIR)/OsCore.iso: $(BOOT_DIR)/grub/grub.cfg \
 	$(BIN_DIR)/deamon.xe											\
 	$(BIN_DIR)/hello.xe												\
 	$(BIN_DIR)/sname.xe												\
+	$(BIN_DIR)/init.xe												\
 	$(BIN_DIR)/kt_itimer.xe
+
+kernSim:$(BIN_DIR)/kernSim
+
+$(BIN_DIR)/kernSim: $(call objs,debug,$(KRN_SRC)) $(call objs,debug,$(CHK_SRC))
 

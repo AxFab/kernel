@@ -1,24 +1,24 @@
 #include "lib.c"
 
 
-int read_registers (const char* file)
+int read_registers (const char *file)
 {
   return -1;
 }
 
-int auth_user (const char* username)
+int auth_user (const char *username)
 {
   char tmp [1000];
   strcpy (tmp, ASCII_BLUE_ON_WHITE "master] " ASCII_RED "unknow username '");
   strcat (tmp, username);
   strcat (tmp, "'!\n" ASCII_RESET);
   _puts (tmp);
-  
+
   execv_s ("KT_ITIME.XE", NULL);
   return -1;
 }
 
-int start_shell (const char* username)
+int start_shell (const char *username)
 {
   sStartInfo_t sinfo;
   sinfo.cmd_ = "axsh -l";
@@ -35,10 +35,12 @@ int login ()
 {
   int err = 0;
   char buffer [250];
+
   while (err < 3) {
     // _puts (ASCII_YELLOW "\nLogin :: " ASCII_RESET);
     _puts ("\n" ASCII_YELLOW "Login :: " ASCII_RESET);
     ssize_t sz = read (0, buffer, 250);
+
     if (sz < 0) {
       ++err;
       _puts ( ASCII_BLUE_ON_WHITE "master] " ASCII_RED "an error occurs unable to read username\n" ASCII_RESET);
@@ -46,15 +48,17 @@ int login ()
     }
 
     err = 0;
+
     if (buffer[sz - 1] == '\n')
       buffer[sz - 1] = '\0';
-    else 
+    else
       buffer[sz] = '\0';
-    
+
     if (auth_user (buffer) != 0)
       continue;
 
     int cmd = start_shell (buffer);
+
     if (cmd == 0)
       continue;
 
@@ -70,7 +74,7 @@ int main ()
 
   // Open register
   // Start a new(1+) thread(s) for reg-service
-  login ();  
+  login ();
 
   // Login loop exited, shutdown...
 
@@ -87,7 +91,7 @@ int main ()
   // int sc = open ("master.log", 0x43, 0644); // O_WRONLY | O_CREAT
   // if (sc != 3) {
   //   write (1, "The first file open on master is not 3!\n", 40);
-  // } 
+  // }
 
   // if (sc == 0) {
   //   write (1, "The first file open on master is zero!!\n", 40);
@@ -100,7 +104,7 @@ int main ()
 
 
   // for (;;) {
-    
+
   //   // _delay();
   //   sleep (1);
 

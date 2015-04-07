@@ -3,15 +3,15 @@
 #include <kernel/memory.h>
 #include <kernel/scheduler.h>
 
-void kregisters (kCpuRegs_t* regs)
+void kregisters (kCpuRegs_t *regs)
 {
   kprintf ("dump registers at %8X\n", regs);
   kprintf ("  eax:%8x  ebx:%8x  ecx:%8x  edx:%8x    eflags:%8x\n",
-    regs->eax, regs->ebx, regs->ecx, regs->edx, regs->eflags);
+           regs->eax, regs->ebx, regs->ecx, regs->edx, regs->eflags);
   kprintf ("  esi:%8x  edi:%8x  esp:%8x  ebp:%8x       eip:%8x\n",
-    regs->esi, regs->edi, regs->esp, regs->ebp, regs->eip);
+           regs->esi, regs->edi, regs->esp, regs->ebp, regs->eip);
   kprintf ("   cs:%4x  ds:%4x  es:%4x  fs:%4x  gs:%4x  ss:%4x\n",
-    regs->cs, regs->ds, regs->es, regs->fs, regs->gs, regs->ss);
+           regs->cs, regs->ds, regs->es, regs->fs, regs->gs, regs->ss);
   kprintf ("   esp:%8x   espx:%8x   eflags:%8x\n", regs->esp, regs->espx, regs->eflags);
 }
 
@@ -20,9 +20,9 @@ void kval (uint32_t value)
   kprintf ("kvalue '0x%8x'\n", value);
 }
 
-void kswitchdump (int ebp) 
+void kswitchdump (int ebp)
 {
-  int* stack = &ebp; 
+  int *stack = &ebp;
   kprintf ("   gs: %4x\n", stack[0]);
   kprintf ("   fs: %4x\n", stack[1]);
   kprintf ("   es: %4x\n", stack[2]);

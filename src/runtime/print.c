@@ -5,15 +5,17 @@
 #include <ax/file.h>
 void kTty_Update();
 
-char* klogStart = (char*)0x7000;
+char *klogStart = (char *)0x7000;
 int klogLg = (0x10000 - 0x7000);
 int kLogPen = 0;
 
-int _kwrite (FILE* fp, const char* buf, size_t length)
+int _kwrite (FILE *fp, const char *buf, size_t length)
 {
   int lg = length;
+
   while (lg--) {
     int c = *(buf++);
+
     if (c <= 0 || c >= 0x80) {
       c = 0x7f;
     }
@@ -33,7 +35,7 @@ int _kwrite (FILE* fp, const char* buf, size_t length)
 #undef kprintf
 
 
-int kvprintf (const char* str, va_list ap)
+int kvprintf (const char *str, va_list ap)
 {
   FILE fp = {
     .count_ = 0,
@@ -48,7 +50,7 @@ int kvprintf (const char* str, va_list ap)
 }
 
 spinlock_t printLock = LOCK_INIT;
-int kprintf (const char* str, ...)
+int kprintf (const char *str, ...)
 {
   klock (&printLock);
   va_list ap;
@@ -68,9 +70,9 @@ static char sz_format[20];
 /**
     Store in a temporary buffer a size in bytes in a human-friendly format.
  */
-const char* kpsize (uintmax_t number)
+const char *kpsize (uintmax_t number)
 {
-  const char* prefix[] = { "bs", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb" };
+  const char *prefix[] = { "bs", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb" };
   int k = 0;
   int rest = 0;
 

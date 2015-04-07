@@ -22,7 +22,7 @@
 
 
 
-const char* cmdl[] = {
+const char *cmdl[] = {
   NULL,
   "",
   "you",
@@ -31,7 +31,7 @@ const char* cmdl[] = {
 };
 
 
-int execv_s(const char *path, const char * args)
+int execv_s(const char *path, const char *args)
 {
   sStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
   return exec (path, &param);
@@ -41,6 +41,7 @@ void delay()
 {
   int volatile k = 0xdeadbeaf;
   int volatile i = 0x8000000;
+
   while (--i > 0) {
     k  = (k | (i >> 3)) * 0x75f;
   }
@@ -63,13 +64,14 @@ int main ()
 
     write (1, "\e[93madmin@vm01:~\e[0m> ", 23);
     int lg = read (0, tmp, 500);
+
     if (lg > 0) {
       tmp[lg] = '\0';
       write (1, "\e[32mOK\e[0m\n", 12);
       write (1, tmp, lg);
     } else if (lg == 0) {
       write (1, "\e[43,30mZr\e[0m\n", 15);
-    } else 
+    } else
       write (1, "\e[31mEr\e[0m\n", 12);
 
 

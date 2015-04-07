@@ -35,10 +35,10 @@
 
 
 
-int syscall_1A(void* a1, int no);
-int syscall_2A(void* a1, void* a2, int no);
-int syscall_3A(void* a1, void* a2, void* a3, int no);
-int syscall_4A(void* a1, void* a2, void* a3, void* a4, int no);
+int syscall_1A(void *a1, int no);
+int syscall_2A(void *a1, void *a2, int no);
+int syscall_3A(void *a1, void *a2, void *a3, int no);
+int syscall_4A(void *a1, void *a2, void *a3, void *a4, int no);
 
 #define SYSCALL1(n,a1)        syscall_1A((void*)(a1), n);
 #define SYSCALL2(n,a1,a2)     syscall_2A((void*)(a1), (void*)(a2), n);
@@ -50,10 +50,9 @@ int syscall_4A(void* a1, void* a2, void* a3, void* a4, int no);
 
 typedef struct sStartInfo sStartInfo_t;
 
-struct sStartInfo
-{
-  const char*     cmd_;
-  const char*     username_;
+struct sStartInfo {
+  const char     *cmd_;
+  const char     *username_;
   int             output_;
   int             input_;
   int             error_;
@@ -62,11 +61,11 @@ struct sStartInfo
   int             mainWindow_;  /// Give a window/tty handler for the program
 };
 
-int exec (const char *path, sStartInfo_t* param);
-int execv_s(const char *path, const char * args);
+int exec (const char *path, sStartInfo_t *param);
+int execv_s(const char *path, const char *args);
 
 
-int open(const char * file, int flags, ...);
+int open(const char *file, int flags, ...);
 int close(int fd);
 ssize_t write(int fd, const void *buf, size_t count);
 ssize_t read(int fd, void *buf, size_t count);

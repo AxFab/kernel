@@ -9,7 +9,7 @@ void kstat();
 #define kobj_ok(e,c) do { ck_assert((e)?(c)==NULL:(c)!=NULL); ck_assert_msg(__geterrno() == e, "errno is '%s'", strerror(__geterrno())); } while(0);
 
 // ---------------------------------------------------------------------------
-void setup () 
+void setup ()
 {
   ck_assert (initialize_vfs() == 0);
 
@@ -19,7 +19,7 @@ void setup ()
 
 
 // ---------------------------------------------------------------------------
-void teardown () 
+void teardown ()
 {
   kstat();
   ck_assert_msg (klockcount() == 0, "Some lock haven't been released!");
@@ -27,23 +27,24 @@ void teardown ()
 
 
 // ---------------------------------------------------------------------------
-void* mmu_temporary (uint32_t* pg)
+void *mmu_temporary (uint32_t *pg)
 {
   if (*pg == 0)
-    posix_memalign((void**)pg, PAGE_SIZE, PAGE_SIZE);
-  return (void*)*pg;
+    posix_memalign((void **)pg, PAGE_SIZE, PAGE_SIZE);
+
+  return (void *) * pg;
 }
 
-int IMG_init (kInode_t* dev);
-int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* name);
+int IMG_init (kInode_t *dev);
+int ISO_mount (kInode_t *dev, kInode_t *mnt, const char *name);
 // ===========================================================================
-START_TEST (vfs_create) 
+START_TEST (vfs_create)
 {
   ck_assert (__geterrno() == 0);
 
   kobj_ok (EINVAL, create_inode(".config", kSYS.rootNd_, 0644, 0));
 
-  kInode_t* ino1 = create_inode(".config", kSYS.rootNd_, 0644 | S_IFREG, 0);
+  kInode_t *ino1 = create_inode(".config", kSYS.rootNd_, 0644 | S_IFREG, 0);
   kobj_ok(0, ino1);
 
   kobj_ok (0, create_inode("stat", kSYS.rootNd_, 0644 | S_IFIFO, 0));
@@ -66,16 +67,16 @@ START_TEST (vfs_create)
   kobj_ok (ENOTDIR, search_inode("/dev/sdA/.ssh", NULL));
   kobj_ok (0, search_inode("/dev/../mnt", NULL));
   kobj_ok (ENOTDIR, search_inode("/dev/sdA/../../mnt", NULL));
-  kInode_t* ino2 = search_inode("/dev", NULL);
+  kInode_t *ino2 = search_inode("/dev", NULL);
   kobj_ok (0, ino2);
   kobj_ok (0, search_inode("./sdA", ino2));
   kobj_ok (0, search_inode("sdA", ino2));
   kobj_ok (ENOTDIR, search_inode("sdA/.", ino2));
 
 
-  kInode_t* ino3 = search_inode("/dev/sdA", NULL);
+  kInode_t *ino3 = search_inode("/dev/sdA", NULL);
   kobj_ok (0, ino3);
-  kInode_t* ino4 = search_inode("/mnt", NULL);
+  kInode_t *ino4 = search_inode("/mnt", NULL);
   kobj_ok (0, ino4);
   // int fsIso = fs_find("iso");
   // kerr_ok(0, mount_device (ino3, "usr", kSYS.rootNd_, fsIso, 0, NULL));
@@ -83,12 +84,12 @@ START_TEST (vfs_create)
   kerr_ok(0, ISO_mount (ino3, ino4, "cd"));
   kunlock(&ino3->lock_);
 
-  kInode_t* ino5 = search_inode("/mnt/cd/BIN/", NULL);
+  kInode_t *ino5 = search_inode("/mnt/cd/BIN/", NULL);
   kobj_ok (0, ino5);
 
   kobj_ok (0, search_inode("MASTER.", ino5));
 
-  kInode_t* ino6 = search_inode("./../BOOT/KIMAGE.MAP", ino5);
+  kInode_t *ino6 = search_inode("./../BOOT/KIMAGE.MAP", ino5);
   kobj_ok (0, ino6);
   kobj_ok (ENOENT, search_inode("./../BOOT/CONFIG", ino5));
 
@@ -102,8 +103,10 @@ START_TEST (vfs_create)
   kerr_ok(0, inode_page(ino6, 8192, &page));
 
   int i;
-  for (i=0; i < ino6->stat_.length_ / PAGE_SIZE; ++i)
+
+  for (i = 0; i < ino6->stat_.length_ / PAGE_SIZE; ++i)
     kerr_ok(0, inode_page(ino6, 4096 * i, &page));
+
   kerr_ok(0, inode_page(ino6, 4096 * i, &page));
   ++i;
   kerr_ok(EINVAL, inode_page(ino6, 4096 * i, &page));
@@ -115,14 +118,14 @@ START_TEST (vfs_create)
 
   scavenge_bucket(5);
   scavenge_inodes(500);
-} 
+}
 END_TEST
 
 
 // ===========================================================================
-void tests_tmpfs_api (Suite* suite)
+void tests_tmpfs_api (Suite *suite)
 {
-  TCase* fixture = tcase_create ("VFS - tmpfs api");
+  TCase *fixture = tcase_create ("VFS - tmpfs api");
   suite_add_tcase (suite, fixture);
   tcase_add_unchecked_fixture (fixture, setup, teardown);
   tcase_add_test (fixture, vfs_create);
@@ -130,21 +133,23 @@ void tests_tmpfs_api (Suite* suite)
 
 
 // ---------------------------------------------------------------------------
-int main (int argc, char** argv) 
+int main (int argc, char **argv)
 {
-  Suite* suite = suite_create ("Kernel VFS unit-tests");
+  Suite *suite = suite_create ("Kernel VFS unit-tests");
 
   tests_tmpfs_api (suite);
 
-  SRunner* runner = srunner_create(suite);
+  SRunner *runner = srunner_create(suite);
+
   if (argc > 1) {
     srunner_set_log (runner, "report_vfsUT.log");
     srunner_set_xml (runner, "report_check_vfsUT.xml");
   }
+
   srunner_run_all (runner, CK_NORMAL);
   int failed_tests = srunner_ntests_failed(runner);
   srunner_free (runner);
-  return (failed_tests == 0) ? EXIT_SUCCESS : EXIT_FAILURE;  
+  return (failed_tests == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 

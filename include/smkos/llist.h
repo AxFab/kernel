@@ -64,10 +64,12 @@ static inline void ll_push_back(struct llhead *list, struct llnode *node)
   assert (node->next_ == NULL);
 
   node->prev_ = list->last_;
+
   if (list->last_ != NULL)
     list->last_->next_ = node;
-  else 
+  else
     list->first_ = node;
+
   node->next_ = NULL;
   list->last_ = node;
   ++list->count_;
@@ -82,10 +84,12 @@ static inline void ll_push_front(struct llhead *list, struct llnode *node)
   assert (node->next_ == NULL);
 
   node->next_ = list->first_;
+
   if (list->first_ != NULL)
     list->first_->prev_ = node;
-  else 
+  else
     list->last_ = node;
+
   node->prev_ = NULL;
   list->first_ = node;
   ++list->count_;
@@ -93,15 +97,17 @@ static inline void ll_push_front(struct llhead *list, struct llnode *node)
 
 
 /* ----------------------------------------------------------------------- */
-/** 
+/**
   */
-static inline void* ll_pop_back_(struct llhead *list, size_t off)
+static inline void *ll_pop_back_(struct llhead *list, size_t off)
 {
   struct llnode *last = list->last_;
+
   if (last == 0)
     return NULL;
-  
+
   assert (last->next_ == NULL);
+
   if (last->prev_) {
     last->prev_->next_ = NULL;
   } else {
@@ -113,8 +119,8 @@ static inline void* ll_pop_back_(struct llhead *list, size_t off)
   last->prev_ = NULL;
   last->next_ = NULL;
   --list->count_;
-  
-  return (char*)last - off;
+
+  return (char *)last - off;
 }
 
 
@@ -127,6 +133,7 @@ static inline void ll_remove(struct llhead *list, struct llnode *node)
   /** @test Check that useless loop is optimized or add #if */
   DEBUG(
     struct llnode *w = node;
+
     while (w->prev_) w = w->prev_;
     assert (w == list->first_);
   );
@@ -157,17 +164,20 @@ static inline void *ll_first_(struct llhead *list, size_t off)
 {
   if (!list->first_)
     return NULL;
-  return (char*)list->first_ - off;
+
+  return (char *)list->first_ - off;
 }
 
 
 /* ----------------------------------------------------------------------- */
 static inline void *ll_next_(void *item, size_t off)
 {
-  struct llnode *node = (struct llnode *)((char*)item + off);
+  struct llnode *node = (struct llnode *)((char *)item + off);
+
   if (!node->next_)
     return NULL;
-  return (char*)node->next_ - off;
+
+  return (char *)node->next_ - off;
 }
 
 

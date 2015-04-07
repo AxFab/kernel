@@ -74,7 +74,7 @@
 //   // kTty_Putc ('.');
 //   if (++ticksCount > CLOCK_HZ / 100) {
 //     ticksCount = 0;
-    
+
 //     // kprintf ("System clock: %lld us\n", kSYS.now_);
 
 //     ksch_ticks((kCpuRegs_t*)&regs);
@@ -95,7 +95,7 @@
 
 // int kInt_KBoard (kCpuRegs_t* registers)
 // {
-//   // IRQ.1 - Keyboard 
+//   // IRQ.1 - Keyboard
 //   unsigned char key;
 //   while((inb(0x64) & 0x01) == 0);
 //   key = inb(0x60);
@@ -119,7 +119,7 @@
 //     2KHz   ->  488281.25   ns
 //     4KHz   ->  244140.625  ns
 //     8KHz   ->  122070.3125 ns
-   
+
 //   value += 9765625000; // Period in pico-seconds
 //   // if (value > /*9765625 */ 1024) {
 //   //   value = 0;
@@ -149,27 +149,27 @@ int kpg_fault (uint32_t address);
 
 int page_fault (size_t address, int cause);
 
-int kInt_PageFault (uint32_t address, kCpuRegs_t* regs)
+int kInt_PageFault (uint32_t address, kCpuRegs_t *regs)
 {
   int errcode = regs->eip;
-  regs = (kCpuRegs_t*)(((char*)regs) + 4); // due to pushed code
+  regs = (kCpuRegs_t *)(((char *)regs) + 4); // due to pushed code
 
   if (regs->cs == 0x08)
     assert ((errcode & PF_USER) == 0);
-  else 
+  else
     assert ((errcode & PF_USER) != 0);
 
   return page_fault ((size_t)address, errcode);
 }
 
 
-int kInt_Protect (unsigned int address, kCpuRegs_t* regs)
+int kInt_Protect (unsigned int address, kCpuRegs_t *regs)
 {
   if (regs->cs == 0x08)
     kpanic ("Kernel throw general protection fault at [%x]\n", address);
 
   kprintf ("task (#%d) throw general protection at [%x]: abort\n",
-      kCPU.current_->taskId_, address);
+           kCPU.current_->taskId_, address);
   kregisters (regs);
   ksch_exit (kCPU.current_->process_, -1);
   ksch_stop (SCHED_ZOMBIE, regs);
@@ -194,7 +194,7 @@ int kIrq_Wait (int no)
   return __noerror();
 }
 
-int kIrq_Do (int no, kCpuRegs_t* registers)
+int kIrq_Do (int no, kCpuRegs_t *registers)
 {
   // kTty_Write ("Irq15!\n");
   kAta_onIRQ = 1;
@@ -202,31 +202,33 @@ int kIrq_Do (int no, kCpuRegs_t* registers)
 }
 
 
-int kInt_Look (unsigned int address, kCpuRegs_t* registers)
+int kInt_Look (unsigned int address, kCpuRegs_t *registers)
 {
   kTty_Write ("LOOK IRQ...\n");
+
   for (;;);
+
   return 0;
 }
 
 void IRQ14_Enter ();
-void kCpu_IRQ (int irq, kCpuRegs_t* regs)
+void kCpu_IRQ (int irq, kCpuRegs_t *regs)
 {
   switch (irq) {
-    case 14:
-      IRQ14_Enter();
-      break;
+  case 14:
+    IRQ14_Enter();
+    break;
 
-    default:
-      kprintf ("Interrupt by IRQ %d\n", irq);
-      break;
+  default:
+    kprintf ("Interrupt by IRQ %d\n", irq);
+    break;
   }
 }
 
 
 
 
-int kInt_Exception (int no, kCpuRegs_t* regs)
+int kInt_Exception (int no, kCpuRegs_t *regs)
 {
   if (regs->cs == 0x08)
     kpanic ("Kernel throw an exception [%d]\n", no);

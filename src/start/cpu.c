@@ -189,7 +189,7 @@
 
 //   /* Initialisation de ICW2 */
 //   outb(0x21, 0x20); /* vecteur de depart = 32 */
-//   outb(0xA1, 0x70);  vecteur de depart = 96 
+//   outb(0xA1, 0x70);  vecteur de depart = 96
 
 //   /* Initialisation de ICW3 */
 //   outb(0x21, 0x04);
@@ -205,7 +205,7 @@
 // }
 
 
-void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param, uintptr_t stack)
+void kCpu_Reset (kCpuRegs_t *regs, uintptr_t entry, uintmax_t param, uintptr_t stack)
 {
   regs->gs = 0x2B;
   regs->fs = 0x2B;
@@ -219,9 +219,10 @@ void kCpu_Reset (kCpuRegs_t* regs, uintptr_t entry, uintmax_t param, uintptr_t s
   regs->ss = 0x33;
 }
 
-void kCpu_Save (kThread_t* task, kCpuRegs_t* regs)
+void kCpu_Save (kThread_t *task, kCpuRegs_t *regs)
 {
   memcpy (&task->regs_, regs, sizeof(kCpuRegs_t));
+
   if (task->regs_.cs == 0x08) {
     task->regs_.esp = task->regs_.espx + 12;
     task->regs_.ss = 0x18;

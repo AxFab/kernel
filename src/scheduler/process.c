@@ -19,9 +19,9 @@
 
 // ===========================================================================
 
-extern kStream_t* keyboard_tty;
+extern kStream_t *keyboard_tty;
 
-int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const char* cmd)
+int process_login(void *user, kInode_t *prg, kInode_t *dir, kInode_t *tty, const char *cmd)
 {
   // assert (user != NULL);
   assert (prg != NULL);
@@ -29,13 +29,14 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   assert (tty != NULL);
   assert (cmd != NULL);
 
-  kAssembly_t* image = load_assembly (prg);
-  if (image == NULL) 
+  kAssembly_t *image = load_assembly (prg);
+
+  if (image == NULL)
     return __geterrno();
 
 
   // FIXME load the image
-  kProcess_t* proc = KALLOC (kProcess_t);
+  kProcess_t *proc = KALLOC (kProcess_t);
   addspace_init (&proc->memSpace_, 0);
   // kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
   map_assembly (&proc->memSpace_, image);
@@ -52,17 +53,19 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
   proc->streamCap_ = 0;
   proc->openStreams_ = NULL; // (kStream_t**)kalloc (sizeof(kStream_t*) * 8);
   stream_tty (proc, tty);
+
   if (keyboard_tty == NULL)
     keyboard_tty = proc->openStreams_[0];
+
   // proc->openStreams_[0] = stream_set(tty, O_RDONLY);
   // proc->openStreams_[1] = stream_set(tty, O_WRONLY);
   // proc->openStreams_[2] = stream_set(tty, O_WRONLY);
 
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   klist_push_back(&kSYS.processes_, &proc->procNd_);
-  kThread_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
+  kThread_t *task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
   klist_push_back(&proc->threads_, &task->taskNd_);
-  
+
   kunlock (&proc->lock_);
   kprintf ("Start login program [%d - %s - root<0> ]\n", proc->pid_, prg->name_);
   return proc->pid_;
@@ -73,18 +76,19 @@ int process_login(void* user, kInode_t* prg, kInode_t* dir, kInode_t* tty, const
 // ===========================================================================
 // ---------------------------------------------------------------------------
 /** Create a new process, ready to start */
-int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, const char* cmd)
+int ksch_create_process (kProcess_t *parent, kInode_t *image, kInode_t *dir, const char *cmd)
 {
   assert (image != NULL);
   assert (parent != NULL);
 
-  kAssembly_t* asmimage = load_assembly (image);
-  if (asmimage == NULL) 
+  kAssembly_t *asmimage = load_assembly (image);
+
+  if (asmimage == NULL)
     return __geterrno();
 
 
   // FIXME load the image
-  kProcess_t* proc = KALLOC (kProcess_t);
+  kProcess_t *proc = KALLOC (kProcess_t);
   addspace_init (&proc->memSpace_, 0);
   // kAddSpace_t* mmsp = kvma_new (4 * _Kb_);
   map_assembly (&proc->memSpace_, asmimage);
@@ -100,7 +104,7 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
   atomic_inc_i32 (&parent->childrenCount_);
 
   proc->streamCap_ = 8;
-  proc->openStreams_ = (kStream_t**)kalloc (sizeof(kStream_t*) * 8, 0);
+  proc->openStreams_ = (kStream_t **)kalloc (sizeof(kStream_t *) * 8, 0);
   // @todo we must clone the stream and check if still here !
   proc->openStreams_[0] = parent->openStreams_[0]; // (kStream_t*)1;
   proc->openStreams_[1] = parent->openStreams_[1]; // kstm_create_pipe (O_WRONLY, 4 * _Kb_);
@@ -109,7 +113,7 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
   klock (&proc->lock_, LOCK_PROCESS_CREATION);
   klist_push_back(&kSYS.processes_, &proc->procNd_);
 
-  kThread_t* task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
+  kThread_t *task = ksch_new_thread (proc, 0x1000000, 0xc0ffee);
   klist_push_back(&proc->threads_, &task->taskNd_);
 
   kunlock (&proc->lock_);
@@ -126,16 +130,16 @@ int ksch_create_process (kProcess_t* parent, kInode_t* image, kInode_t* dir, con
  *  NOTE the only use of process parenting is for waitPid, that can be handle
  *  differently.
  */
-void ksch_destroy_process (kProcess_t* proc)
+void ksch_destroy_process (kProcess_t *proc)
 {
   proc->flags_ |= TK_EXITED;
   // FIXME if (proc->parent_ != NULL && proc->flags_ & PROC_TRACED) { // signal() }
 
   klock (&proc->lock_, LOCK_PROCESS_DESTROY);
-  kThread_t* task; // = proc->threadFrst_;
+  kThread_t *task; // = proc->threadFrst_;
   for_each (task, &proc->threads_, kThread_t, taskNd_) {
-  // while (task != NULL) {
-    kThread_t* pick = task;
+    // while (task != NULL) {
+    kThread_t *pick = task;
     // task = task->nextPr_;
     ksch_destroy_thread (pick);
   }
@@ -155,11 +159,11 @@ void ksch_destroy_process (kProcess_t* proc)
  *  All threads are requested to stop, once none are running,
  *  ksch_destroy_process is called.
  */
-void ksch_exit (kProcess_t* proc, int status)
+void ksch_exit (kProcess_t *proc, int status)
 {
   proc->flags_ |= TK_EXITED;
   proc->exitStatus_ = status;
-  kThread_t* task; // = proc->threadFrst_;
+  kThread_t *task; // = proc->threadFrst_;
   for_each (task, &proc->threads_, kThread_t, taskNd_) {
     ksch_abort (task);
   }

@@ -410,15 +410,6 @@ kCpu_Halt:
 ; =============================================
 ; =============================================
 
-global _geterrno
-errno: 
-    dd 0
-
-_geterrno:
-    mov eax, errno
-    ret
-
-
 
 
 global cpuid

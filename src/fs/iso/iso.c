@@ -4,25 +4,26 @@
 #include <fcntl.h>
 
 
-int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
+int ISO_mount (kInode_t *dev, kInode_t *mnt, const char *mpoint)
 {
   int i;
   int inDesc = 1;
   int sec = 16;
   char name[128];
-  uint8_t* buf;
-  uint32_t* bufi;
-  isoFstDescriptor_t* firstDesc;
+  uint8_t *buf;
+  uint32_t *bufi;
+  isoFstDescriptor_t *firstDesc;
   kStat_t root = { 0 };
   root.mode_ = S_IFDIR | 0555;
-  isoVolume_t* volInfo;
+  isoVolume_t *volInfo;
 
   if (dev->stat_.block_ != 2048)
     return EBADF;
 
 
-  buf = (uint8_t*) kalloc (2048, 0);
-  bufi = (uint32_t*)buf;
+  buf = (uint8_t *) kalloc (2048, 0);
+  bufi = (uint32_t *)buf;
+
   while (inDesc) {
     feed_inode (dev, buf, 1, sec);
 
@@ -34,63 +35,67 @@ int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* mpoint)
     }
 
     switch (buf[0]) {
-      case ISO9660_VOLDESC_PRIM:
-        firstDesc =  (isoFstDescriptor_t*)&buf[8];
-        volInfo = (isoVolume_t*)kalloc (sizeof(isoVolume_t), 0);
-        volInfo->fs_.lookup = ISO_Lookup;
-        volInfo->fs_.read = ISO_Read;
-        volInfo->fs_.write = ISO_Write;
-        volInfo->dev = dev;
-        volInfo->bootable = 0;
-        volInfo->created = 0;
-        volInfo->sectorSize = firstDesc->logicBlockSizeLE;
-        volInfo->sectorCount = firstDesc->volSpaceSizeLE;
-        volInfo->lbaroot = firstDesc->rootDir.locExtendLE;
-        volInfo->lgthroot = firstDesc->rootDir.dataLengthLE;
-        // kprintf ("ROOT { %x - %x }\n", firstDesc->rootDir.locExtendLE, firstDesc->rootDir.dataLengthLE);
-        // kprintf ("VOLUME NAME '%s'\n", firstDesc->volname);
+    case ISO9660_VOLDESC_PRIM:
+      firstDesc =  (isoFstDescriptor_t *)&buf[8];
+      volInfo = (isoVolume_t *)kalloc (sizeof(isoVolume_t), 0);
+      volInfo->fs_.lookup = ISO_Lookup;
+      volInfo->fs_.read = ISO_Read;
+      volInfo->fs_.write = ISO_Write;
+      volInfo->dev = dev;
+      volInfo->bootable = 0;
+      volInfo->created = 0;
+      volInfo->sectorSize = firstDesc->logicBlockSizeLE;
+      volInfo->sectorCount = firstDesc->volSpaceSizeLE;
+      volInfo->lbaroot = firstDesc->rootDir.locExtendLE;
+      volInfo->lgthroot = firstDesc->rootDir.dataLengthLE;
+      // kprintf ("ROOT { %x - %x }\n", firstDesc->rootDir.locExtendLE, firstDesc->rootDir.dataLengthLE);
+      // kprintf ("VOLUME NAME '%s'\n", firstDesc->volname);
 
-        for (i = 127; i > 0; --i)
-          if (firstDesc->applicationId [i] == ' ')
-            firstDesc->applicationId [i] = '\0';
+      for (i = 127; i > 0; --i)
+        if (firstDesc->applicationId [i] == ' ')
+          firstDesc->applicationId [i] = '\0';
 
-          else
-            break;
+        else
+          break;
 
-        strcpy (name, firstDesc->applicationId);
-        if (KLOG_FS) kprintf ("iso9660] This disc is named '%s' \n", firstDesc->applicationId);
-        //err = Fsys_ChangeVolumeName (prim->applicationId);
-        break;
+      strcpy (name, firstDesc->applicationId);
 
-      case ISO9660_VOLDESC_BOOT:
-        // kprintf ("iso9660] Bootable descriptor\n");
-        volInfo->bootable = !0;
-        break;
+      if (KLOG_FS) kprintf ("iso9660] This disc is named '%s' \n", firstDesc->applicationId);
 
-      case ISO9660_VOLDESC_TERM:
-        // kprintf ("iso9660] Terminal descriptor\n");
-        inDesc = 0;
-        break;
+      //err = Fsys_ChangeVolumeName (prim->applicationId);
+      break;
 
-      default:
-        // kprintf ("iso9660] Bad volume descriptor id %d\n", buf[0]);
-        kfree (buf);
-        return __seterrno(ENOSYS);
+    case ISO9660_VOLDESC_BOOT:
+      // kprintf ("iso9660] Bootable descriptor\n");
+      volInfo->bootable = !0;
+      break;
+
+    case ISO9660_VOLDESC_TERM:
+      // kprintf ("iso9660] Terminal descriptor\n");
+      inDesc = 0;
+      break;
+
+    default:
+      // kprintf ("iso9660] Bad volume descriptor id %d\n", buf[0]);
+      kfree (buf);
+      return __seterrno(ENOSYS);
     }
 
-     ++sec;
+    ++sec;
   }
 
   root.mode_ = S_IFDIR | 0555;
   root.lba_ = volInfo->lbaroot;
   root.length_ = volInfo->lgthroot;
+
   // FIXME Fill creation date
   if (mpoint)
     create_device (mpoint, mnt, &volInfo->fs_, &root);
-    // kfs_new_device (mpoint, mnt, &isoOps, (void*)volInfo, &root);
+  // kfs_new_device (mpoint, mnt, &isoOps, (void*)volInfo, &root);
   else
     create_device (name, mnt, &volInfo->fs_, &root);
-    // kfs_new_device (name, mnt, &isoOps, (void*)volInfo, &root);
+
+  // kfs_new_device (name, mnt, &isoOps, (void*)volInfo, &root);
 
   kfree (buf);
   return __noerror ();
@@ -101,25 +106,27 @@ int ISO_Write()
   return EROFS;
 }
 
-int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
+int ISO_Lookup(const char *name, kInode_t *dir, kStat_t *file)
 {
   char filename[PATH_MAX];
   size_t sec = dir->stat_.lba_;
-  isoDirEntry_t* entry;
-  char* buf = kalloc (2048, 0);
-  isoVolume_t* volInfo = (isoVolume_t*)dir->dev_;
+  isoDirEntry_t *entry;
+  char *buf = kalloc (2048, 0);
+  isoVolume_t *volInfo = (isoVolume_t *)dir->dev_;
 
   if (KLOG_FS) kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
+
   if (KLOG_FS) kprintf ("iso9660] Read sector %d on %s \n", sec, volInfo->dev->name_);
 
   klock(&volInfo->dev->lock_);
   feed_inode (volInfo->dev, buf, 1, sec);
+
   if (KLOG_FS) kprintf ("iso9660] Done\n");
 
   // Skip the first two entries
-  entry = (isoDirEntry_t*)buf;
-  entry = (isoDirEntry_t*) & (((char*)entry)[entry->lengthRecord]);
-  entry = (isoDirEntry_t*) & (((char*)entry)[entry->lengthRecord]);
+  entry = (isoDirEntry_t *)buf;
+  entry = (isoDirEntry_t *) & (((char *)entry)[entry->lengthRecord]);
+  entry = (isoDirEntry_t *) & (((char *)entry)[entry->lengthRecord]);
 
   while (entry->lengthRecord) {
     memcpy (filename, entry->fileId, entry->lengthFileId);
@@ -129,6 +136,7 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
       filename[entry->lengthFileId - 2] = '\0';
 
     if (KLOG_FS) kprintf ("iso9660] See entry: '%s' \n", filename);
+
     if (strcmp(name, filename) == 0) {
       file->dev_ = volInfo->dev->stat_.ino_;
       // file->dblock_ = volInfo->dev->stat_.cblock_;
@@ -143,29 +151,31 @@ int ISO_Lookup(const char* name, kInode_t* dir, kStat_t* file)
       file->lba_ = entry->locExtendLE;
       file->length_ = entry->dataLengthLE;
       kfree (buf);
-      kunlock(&volInfo->dev->lock_); 
+      kunlock(&volInfo->dev->lock_);
       return 0;
     }
 
-    entry = (isoDirEntry_t*) & (((char*)entry)[entry->lengthRecord]);
+    entry = (isoDirEntry_t *) & (((char *)entry)[entry->lengthRecord]);
   }
 
   kfree (buf);
   // @todo Pre-lock underlaying devices... brainstorming needed.
-  kunlock(&volInfo->dev->lock_); 
+  kunlock(&volInfo->dev->lock_);
   return ENOENT;
 }
 
-int ISO_Read(kInode_t* fp, void* buffer, size_t count, size_t lba)
+int ISO_Read(kInode_t *fp, void *buffer, size_t count, size_t lba)
 {
-  isoVolume_t* volInfo = (isoVolume_t*)fp->dev_;
+  isoVolume_t *volInfo = (isoVolume_t *)fp->dev_;
   size_t sec = fp->stat_.lba_;
   size_t lg = ALIGN_UP (fp->stat_.length_, fp->stat_.block_) / fp->stat_.block_;
+
   if (lg < lba + count )
     count = lg - lba;
 
   if (count <= 0) {
     if (KLOG_FS) kprintf ("iso9660] File %s have size %d (request until %d)\n", fp->name_, lg, lba + count );
+
     return ERANGE;
   }
 

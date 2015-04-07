@@ -20,7 +20,7 @@ kSysCore_t kSYS;
 static int kSys_RunnableTasks()
 {
   return kSYS.tasksCount_[(int)SCHED_READY] +
-      kSYS.tasksCount_[(int)SCHED_RUNNING];
+         kSYS.tasksCount_[(int)SCHED_RUNNING];
 }
 
 // ---------------------------------------------------------------------------
@@ -65,13 +65,14 @@ void kCpu_Statistics ()
     for (i = 0; i < KRN_LOADAVG_COUNT; ++i) {
       float coef = kSYS.loadCoef_[i];
       kSYS.loadAvg_[i] =
-          kSys_RunnableTasks() * coef + (1.0f - coef) * kSYS.loadAvg_[i];
+        kSys_RunnableTasks() * coef + (1.0f - coef) * kSYS.loadAvg_[i];
     }
   }
 
   kCpu_SetStatus (kCPU.state_);
 
   nanotime_t elapsed = kCPU.stateTime_[0];
+
   for (i = 1; i < CPU_STATE_COUNT; ++i) {
     kCPU.statistics_[i] = (int)(kCPU.stateTime_[i] * KSTATS_PRECISION / elapsed);
   }

@@ -13,8 +13,7 @@
 
 // ---------------------------------------------------------------------------
 typedef struct kCpuCore kCpuCore_t;
-struct kCpuCore
-{
+struct kCpuCore {
   // CORE
   int   cpuNo_;
   int   errNo;
@@ -32,7 +31,7 @@ struct kCpuCore
   int         ticksCount_;
   int         state_;
   nanotime_t     stateTime_ [ CPU_STATE_COUNT ];
-  kThread_t*    current_;
+  kThread_t    *current_;
 
   // STATS
   int         statistics_ [ CPU_STATE_COUNT ];
@@ -41,8 +40,7 @@ struct kCpuCore
 
 // ---------------------------------------------------------------------------
 typedef struct kSysCore kSysCore_t;
-struct kSysCore
-{
+struct kSysCore {
   // CORE
   nanotime_t     now_;       // IMPORTANT! Must be the first field for ASM timers
   int         state_;
@@ -64,17 +62,17 @@ struct kSysCore
 
   llhead_t      devices_;
 
-  kProcess_t* execStart_;
+  kProcess_t *execStart_;
   llhead_t    processes_;
   llhead_t    waitList_;
 
   // INODES
   int         autoIno_;
   int         autoPipe_;
-  kInode_t*   rootNd_;
-  kInode_t*   devNd_;
-  kInode_t*   mntNd_;
-  kInode_t*   pipeNd_;
+  kInode_t   *rootNd_;
+  kInode_t   *devNd_;
+  kInode_t   *mntNd_;
+  kInode_t   *pipeNd_;
   llhead_t    inodeLru_;
 
   // MEMORY
@@ -87,10 +85,10 @@ struct kSysCore
   spinlock_t  schedLock_;
   int         tasksCount_ [ SCHED_COUNT ];
   spinlock_t  procLock_;
-  kProcess_t* allProcFrst_;
-  kProcess_t* allProcLast_;
-  kThread_t*    allTaskFrst_;
-  kThread_t*    allTaskLast_;
+  kProcess_t *allProcFrst_;
+  kProcess_t *allProcLast_;
+  kThread_t    *allTaskFrst_;
+  kThread_t    *allTaskLast_;
   int         prioWeight_;
   spinlock_t  timerLock_;
   nanotime_t     timerMin_;

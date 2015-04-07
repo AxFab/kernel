@@ -12,24 +12,25 @@
 
 void kinit()
 {
-  meminit_r(&kSYS.kheap, (void*)0xD0000000, 0x20000000);
+#ifdef _KERNEL
+  meminit_r(&kSYS.kheap, (void *)0xD0000000, 0x20000000);
   // kCPU.asp = kMem_Create (4 * _Mb_);
 
   // kTty_NewTerminal (0x7000, 0x10000 - 0x7000);
+#endif
 }
 
 
-struct sStartInfo
-{
-  const char*     cmd_;
-  const char*     username_;
+struct sStartInfo {
+  const char     *cmd_;
+  const char     *username_;
   int             output_;
   int             input_;
   int             error_;
   int             workingDir_;  ///
   int             flags_;       ///
   int             mainWindow_;  /// Give a window/tty handler for the program
-}sStartInfo_t;
+} sStartInfo_t;
 
 
 
@@ -37,39 +38,40 @@ struct tm RTC_GetTime ();
 void RTC_EnableCMOS () ;
 void RTC_DisableCMOS () ;
 void PIT_Initialize (uint32_t frequency);
-int ATA_Initialize(kInode_t* dev);
-int VBA_Initialize(kInode_t* dev);
-int ISO_mount (kInode_t* dev, kInode_t* mnt, const char* name);
-void ksymbols_load (kInode_t* ino);
+int ATA_Initialize(kInode_t *dev);
+int VBA_Initialize(kInode_t *dev);
+int ISO_mount (kInode_t *dev, kInode_t *mnt, const char *name);
+void ksymbols_load (kInode_t *ino);
 
 
 // ---------------------------------------------------------------------------
 /** Build the environment for and create the 'master' program.
   * This program is the most thrusted process on the system.
-  * It should be started by ROOT only, on directory '/usr' and be attach to 
+  * It should be started by ROOT only, on directory '/usr' and be attach to
   * TTY0.
   */
 
-int core_master (void) 
+int core_master (void)
 {
   // Create TTY0
   // kInode_t* fb0 = search_inode ("/dev/fb0", NULL);
-  kInode_t* tty0 = term_create((void*)(4 * _Mb_), 800, 600, 400);
+  kInode_t *tty0 = term_create((void *)(4 * _Mb_), 800, 600, 400);
+
   if (tty0 == NULL)
     return -1;
-  
+
   // keyboard_tty = tty0;
-  
+
   // term_write(tty0, "\e[31mBonjour\e[0m", 16);
 
   // Search start directory
-  kInode_t* dir = search_inode ("/usr/BIN/", NULL);
+  kInode_t *dir = search_inode ("/usr/BIN/", NULL);
 
   // Search program
-  kInode_t* msr = search_inode ("MASTER.XE", dir);
+  kInode_t *msr = search_inode ("INIT.XE", dir);
 
   // Start program
-  return process_login (NULL, msr, dir, tty0, ""); 
+  return process_login (NULL, msr, dir, tty0, "");
   // The first arg must be the user!
   // cmd can be ovewrite by grub
 }
@@ -79,7 +81,7 @@ int core_master (void)
 int kCore_Initialize ()
 {
   if (screen._mode == 1) {
-    screen._ptr = (uint32_t*)(4 * _Mb_);
+    screen._ptr = (uint32_t *)(4 * _Mb_);
   }
 
 
@@ -92,7 +94,7 @@ int kCore_Initialize ()
 
   // III. Set Date and initiate timer
   char tmp[510];
-  struct tm dt = RTC_GetTime ();
+  struct tm dt = cpu_get_clock();
 
   asctime_r (&dt, tmp);
   kprintf ("Date: %s\n", tmp);
@@ -112,15 +114,16 @@ int kCore_Initialize ()
 
 
   // V. Mount the disc system
-  kInode_t* cd = search_inode ("/dev/sdA", NULL);
-  kInode_t* mnt = search_inode ("/", NULL);
+  kInode_t *cd = search_inode ("/dev/sdA", NULL);
+  kInode_t *mnt = search_inode ("/", NULL);
   klock (&cd->lock_);
   ISO_mount (cd, mnt, "usr");
   kunlock (&cd->lock_);
   // KRP_Mount (NULL, mnt);
 
   // VI. Look for debug symbols
-  kInode_t* sym = search_inode ("/usr/BOOT/KIMAGE.MAP", NULL);
+  kInode_t *sym = search_inode ("/usr/BOOT/KIMAGE.MAP", NULL);
+
   if (sym != NULL)
     ksymbols_load(sym);
   else

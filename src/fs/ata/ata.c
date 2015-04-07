@@ -5,14 +5,14 @@
 kAtaDrive_t sdx[4];
 
 // ===========================================================================
-void ATA_Initialize (kInode_t* dev)
+void ATA_Initialize (kInode_t *dev)
 {
   int i;
 
   kStat_t stat = { 0 };
   stat.mode_ = S_IFBLK | 0755;
   stat.atime_ = stat.ctime_ = stat.mtime_ = time (NULL);
-  const char* name[] = { "sdA", "sdB", "sdC", "sdD" };
+  const char *name[] = { "sdA", "sdB", "sdC", "sdD" };
 
   memset (sdx, 0, 4 * sizeof(kAtaDrive_t));
   sdx[0]._pbase = 0x1f0;
@@ -38,6 +38,7 @@ void ATA_Initialize (kInode_t* dev)
 
   for (i = 0; i < 4; ++i) {
     kprintf ("%s: ", name[i]);
+
     if (ATA_Detect(&sdx[i])) {
       int block = sdx[i]._type == IDE_ATA ? 512 : 2048;
       stat.block_ = block;

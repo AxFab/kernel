@@ -7,6 +7,7 @@ define objs
 	)))
 endef
 
+DEPS = $(patsubst %.o,%.d,$(call objs,kernel,$(KRN_SRC)))
 
 style:
 	@ astyle $(ASTYLE) $(ALL_SRC) $(ALL_INC)
@@ -15,6 +16,9 @@ style:
 
 sources: 
 	@ echo $(ALL_SRC)
+
+deps:
+	@ echo $(DEPS)
 
 
 ifeq ($(MAKECMDGOALS),clean)

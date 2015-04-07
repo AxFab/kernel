@@ -10,41 +10,41 @@ typedef struct kIdtEntry        kIdtEntry_t;
 typedef struct kTaskSs          kTaskSs_t;
 
 struct kGdtEntry {
-    uint16_t lim0_15;
-    uint16_t base0_15;
-    uint8_t base16_23;
-    uint8_t access;
-    uint8_t lim16_19 : 4;
-    uint8_t other : 4;
-    uint8_t base24_31;
+  uint16_t lim0_15;
+  uint16_t base0_15;
+  uint8_t base16_23;
+  uint8_t access;
+  uint8_t lim16_19 : 4;
+  uint8_t other : 4;
+  uint8_t base24_31;
 } __attribute__ ((packed));
 
 struct kIdtEntry {
-    uint16_t offset0_15;
-    uint16_t segment;
-    uint16_t type;
-    uint16_t offset16_31;
+  uint16_t offset0_15;
+  uint16_t segment;
+  uint16_t type;
+  uint16_t offset16_31;
 } __attribute__ ((packed));
 
 
 struct kTaskSs {
-    uint16_t    previous_task, __previous_task_unused;
-    uint32_t    esp0;
-    uint16_t    ss0, __ss0_unused;
-    uint32_t    esp1;
-    uint16_t    ss1, __ss1_unused;
-    uint32_t    esp2;
-    uint16_t    ss2, __ss2_unused;
-    uint32_t    cr3;
-    uint32_t    eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
-    uint16_t    es, __es_unused;
-    uint16_t    cs, __cs_unused;
-    uint16_t    ss, __ss_unused;
-    uint16_t    ds, __ds_unused;
-    uint16_t    fs, __fs_unused;
-    uint16_t    gs, __gs_unused;
-    uint16_t    ldt_selector, __ldt_sel_unused;
-    uint16_t    debug_flag, io_map;
+  uint16_t    previous_task, __previous_task_unused;
+  uint32_t    esp0;
+  uint16_t    ss0, __ss0_unused;
+  uint32_t    esp1;
+  uint16_t    ss1, __ss1_unused;
+  uint32_t    esp2;
+  uint16_t    ss2, __ss2_unused;
+  uint32_t    cr3;
+  uint32_t    eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
+  uint16_t    es, __es_unused;
+  uint16_t    cs, __cs_unused;
+  uint16_t    ss, __ss_unused;
+  uint16_t    ds, __ds_unused;
+  uint16_t    fs, __fs_unused;
+  uint16_t    gs, __gs_unused;
+  uint16_t    ldt_selector, __ldt_sel_unused;
+  uint16_t    debug_flag, io_map;
 } __attribute__ ((packed));
 
 // ===========================================================================
@@ -90,29 +90,29 @@ void Interrupt_Handler();
 // ===========================================================================
 /** Write an GDT entry on the table */
 static void GDT_entry (int number, uint32_t base, uint32_t limit,
-    int access, int other)
+                       int access, int other)
 {
-    kGdtEntry_t* ptr = (kGdtEntry_t*)(0);
-    ptr += number;
-    ptr->lim0_15 = (limit & 0xffff);
-    ptr->base0_15 = (base & 0xffff);
-    ptr->base16_23 = (base & 0xff0000) >> 16;
-    ptr->access = access;
-    ptr->lim16_19 = (limit & 0xf0000) >> 16;
-    ptr->other = (other & 0xf);
-    ptr->base24_31 = (base & 0xff000000) >> 24;
+  kGdtEntry_t *ptr = (kGdtEntry_t *)(0);
+  ptr += number;
+  ptr->lim0_15 = (limit & 0xffff);
+  ptr->base0_15 = (base & 0xffff);
+  ptr->base16_23 = (base & 0xff0000) >> 16;
+  ptr->access = access;
+  ptr->lim16_19 = (limit & 0xf0000) >> 16;
+  ptr->other = (other & 0xf);
+  ptr->base24_31 = (base & 0xff000000) >> 24;
 }
 
 // ---------------------------------------------------------------------------
 static void IDT_entry (int number, int segment, uint32_t address,
-    int type)
+                       int type)
 {
-    kIdtEntry_t* ptr = (kIdtEntry_t*)(0x800);
-    ptr += number;
-    ptr->offset0_15 = (address & 0xffff);
-    ptr->segment = segment;
-    ptr->type = type;
-    ptr->offset16_31 = (address & 0xffff0000) >> 16;
+  kIdtEntry_t *ptr = (kIdtEntry_t *)(0x800);
+  ptr += number;
+  ptr->offset0_15 = (address & 0xffff);
+  ptr->segment = segment;
+  ptr->type = type;
+  ptr->offset16_31 = (address & 0xffff0000) >> 16;
 }
 
 // ---------------------------------------------------------------------------
@@ -157,13 +157,13 @@ void cpu_init_table ()
   GDT_entry(7, i386_TssAddress, 0x67, 0xe9, 0x00);  // TSS
 
   // TSS - Task State Segment
-  ((kTaskSs_t*)i386_TssAddress)->debug_flag = 0x00;
-  ((kTaskSs_t*)i386_TssAddress)->io_map = 0x00;
-  ((kTaskSs_t*)i386_TssAddress)->esp0 = (0x7000 - 4); // TODO Kernel Stack !
-  ((kTaskSs_t*)i386_TssAddress)->ss0 = 0x18;   // TODO Kernel stack segment
+  ((kTaskSs_t *)i386_TssAddress)->debug_flag = 0x00;
+  ((kTaskSs_t *)i386_TssAddress)->io_map = 0x00;
+  ((kTaskSs_t *)i386_TssAddress)->esp0 = (0x7000 - 4); // TODO Kernel Stack !
+  ((kTaskSs_t *)i386_TssAddress)->ss0 = 0x18;  // TODO Kernel stack segment
 
   // IDT - Interupt Descriptor Table
-  for (i=0; i<256; ++i) {
+  for (i = 0; i < 256; ++i) {
     IDT_entry(i, 0x08, (uint32_t)Interrupt_Handler, INTGATE);
   }
 
@@ -183,7 +183,7 @@ void cpu_init_table ()
   IDT_entry(0x0c, 0x08, (uint32_t)IntEx0C_Handler, TRAPGATE);
   IDT_entry(0x0d, 0x08, (uint32_t)IntEx0D_Handler, TRAPGATE);
   IDT_entry(0x0e, 0x08, (uint32_t)IntEx0E_Handler, TRAPGATE);
-  
+
   // Hardware Interrupt Request - Master
   IDT_entry(0x20, 0x08, (uint32_t)IRQ0_Handler, INTGATE);
   IDT_entry(0x21, 0x08, (uint32_t)IRQ1_Handler, INTGATE);
