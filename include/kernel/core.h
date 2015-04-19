@@ -14,10 +14,10 @@
 #include <stdint.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <unistd.h>
+// #include <unistd.h>
 #include <time.h>
 #include <sys/types.h>
-#include <atomic.h>
+#include <smkos/atomic.h>
 
 /* --- MISSING STDLIB --- */
 unsigned long long strtoull (const char *str, char **endptr, int base);
@@ -33,11 +33,6 @@ typedef char bool;
         Kernel types
 =========================================================================== */
 /* CORE ------------------------------------------------------------------- */
-typedef struct spinlock     spinlock_t;
-typedef struct llnode       llnode_t;
-typedef struct llhead       llhead_t;
-typedef struct aanode       aanode_t;
-typedef struct aatree       aatree_t;
 /// nanotime_t is an accurate time counter with nanoseconds since epoch.
 typedef int64_t nanotime_t;
 
@@ -74,50 +69,7 @@ typedef struct kNTty        kNTty_t;
 typedef struct kLine        kLine_t;
 
 /* ======================================================================== */
-#define LOCK_INIT  {0, 0, NULL}
-struct spinlock {
-  int32_t       key_;
-  int           cpu_;
-  const char   *where_;
-};
 
-#define ANCHOR_INIT  {LOCK_INIT, NULL, NULL, 0}
-// struct list_anchor
-struct llhead {
-  spinlock_t  lock_;
-  llnode_t     *first_;
-  llnode_t     *last_;
-  int         count_;
-};
-
-/** Linked list node */
-struct llnode {
-  llnode_t     *prev_;
-  llnode_t     *next_;
-};
-
-#define AAANODE_INIT  { NULL, NULL, 0, 0 }
-
-/** AATree (self-balancing binary tree) node */
-struct aanode {
-  aanode_t  *left_;
-  aanode_t  *right_;
-  long  value_;
-  int  level_;
-};
-
-#define AAATREE_INIT  { LOCK_INIT, NULL, NULL, NULL, 0, 0, 0 }
-
-/** AATree (self-balancing binary tree) head */
-struct aatree {
-  spinlock_t  lock_;
-  aanode_t   *root_;
-  aanode_t   *last_;
-  aanode_t   *deleted_;
-  int         count_;
-};
-
-#define get_item(a,s,m)   ((a) == NULL ? NULL : ((s*)(((char*)(a)) - offsetof(s,m))))
 
 /* ===========================================================================
         Kernel macros
@@ -159,7 +111,7 @@ struct aatree {
 
 // Configuration header ------------------------------------------------------
 #include <kernel/config.h>
-#include <arch/define.h>
+#include <kernel/define.h>
 
 
 /* ===========================================================================
@@ -193,9 +145,9 @@ void kregisters (kCpuRegs_t *regs);
 
 
 #include <kernel/info.h>
-#include <kernel/spinlock.h>
-#include <kernel/list.h>
-#include <kernel/aatree.h>
+#include <smkos/spinlock.h>
+#include <smkos/llist.h>
+#include <smkos/bbtree.h>
 
 
 

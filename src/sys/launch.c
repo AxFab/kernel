@@ -1,99 +1,75 @@
-#include <kernel/core.h>
-#include <kernel/vfs.h>
-#include <kernel/task.h>
-#include <kernel/scheduler.h>
+#include <smkos/kernel.h>
+#include <smkos/core.h>
+#include <smkos/io.h>
+#include <smkos/memory.h>
+#include <smkos/arch.h>
 
-const char *masterPaths[] = {
+
+static const char *masterPaths[] = {
   "sbin/master.xe",
   "bin/master.xe",
   "master.xe",
+  "sbin/master",
+  "bin/master",
+  "master",
   NULL
 };
 
+
+/* ----------------------------------------------------------------------- */
 void kernel_ready ()
 {
-
+  kprintf ("CPU %d is ready\n", kCpuNo);
+  // while (!kSYS.ready_) __delayX(10000);
 }
 
 
+/* ----------------------------------------------------------------------- */
 void kernel_start ()
 {
-  // assert (1); // kalloc is available, memory is virtual, screen is OK, timer is set
+  int idx;
+  kUser_t* user;
+  kInode_t *ino;
+  struct tm dateTime;
+  
+  /* Initialize kernel environment */
+  kernel_state (KST_KERNSP);
+  kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ " from git:" _GITH_ " on " _OSNAME_ ".\n");
+  mmu_load_env();
 
+  /* Initialize time managment */
+  dateTime = cpu_get_clock();
+  kprintf ("Date: %s\n", asctime(&dateTime));
 
-  // // I. Set kalloc !
-  // meminit_r(&kSYS.kheap, (void*)0xD0000000, 0x20000000);
+  /* Initialize the VFS */
+  initialize_vfs();
 
+  /* Search kernel helper files */
+  ino = search_inode ("boot/kImage.map", kSYS.sysIno_, 0);
+  //if (ino)
+  //  ksymbol_load(ino);
 
-  // // II. Map the main screen
-  // if (screen._mode == 1) {
-  //   screen._ptr = (uint32_t*)(4 * _Mb_);
-  // }
+  /* Create basic users */
+  user = create_user("system", CAP_SYSTEM);
+  if (!user)
+    kpanic("Unable to create system user.\n");
 
+  /* Load master program */
+  idx = 0;
+  while (masterPaths[idx]) {
+    ino = search_inode (masterPaths[idx], kSYS.sysIno_, 0);
+    if (ino && NULL != load_assembly(ino))
+      break;
+    ++idx;
+  }
 
-  // // III. Set timer and datetime
-  // char dateStr[30];
-  // struct tm dateTime;
-  // RTC_GetTime (&dateTime); // todo - architecture dependant
-  // asctime_r (&dateTime, dateStr);
-  // kprintf ("Date: %s\n", dateStr);
-  // kprintf ("Kernel Smoke v0.0 Build 0 compiled " _DATE_ "from " _OS_FULLNAME_ "\n");
+  if (!masterPaths[idx])
+    kpanic("Unable to find startup program 'MASTER'\n");
 
-
-  // // IV. Initialize the VFS
-  // initialize_vfs ();
-
-
-  // // V. Initialize device driver and use plug & play
-  // VBA_Initialize (kSYS.devNd_);
-  // ATA_Initialize (kSYS.devNd_);
-  // kInode_t* cd = search_inode ("/dev/sdA", NULL);
-  // kInode_t* mnt = search_inode ("/", NULL);
-  // klock (&cd->lock_);
-  // ISO_mount (cd, mnt, "usr");
-  // kunlock (&cd->lock_);
-  // kInode_t* sysDir = search_inode ("usr", NULL);
-
-
-  // // VI. Search for debug symbols (.map)
-  // kInode_t* symbIno = search_inode ("boot/kImage.map", sysDir);
-  // if (symbIno != NULL)
-  //   ksymbols_load(symbIno);
-
-
-  // // VII. Create first terminal
-  // kInode_t* screen = search_inode("/dev/fb0", NULL);
-  // kInode_t* terminal = create_terminal(screen);
-
-
-  // // VIII. Search for master program
-  // int idx = 0;
-  // kInode_t* masterIno = NULL;
-  // while (masterIno == NULL) {
-  //   if (masterPaths[i] == NULL)
-  //     kpanic("Unable to locate the program called 'master'\n");
-  //   masterIno = search_inode(masterPaths[idx], sysDir);
-  //   ++idx;
-  // }
-
-  // kAssembly_t* masterImg = load_assembly(masterIno);
-  // if (masterImg == NULL) {
-  //   kpanic("The program '%s' can't be loaded: %s.\n",
-  //     masterPaths[idx], strerror(__geterrno());
-  // }
-
-
-  // // VIII. Initialize master program
-  // kUser_t* sysUser = create_user("system", CAP_SYSTEM);
-  // login_process(masterImg, sysUser, sysDir, terminal, masterPaths[idx]);
-
-  // // IX. Initialize per-cpu scheduler
-  // kprintf ("Starting...\n");
-  // ksch_init ();
+  create_logon_process(ino, user, kSYS.sysIno_, masterPaths[idx]);
+  scavenge_area(kSYS.mspace_);
 }
 
-int __delayX (int microsecond)
-{
 
-}
-
+/* ----------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------- */

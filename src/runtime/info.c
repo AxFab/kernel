@@ -26,13 +26,13 @@ static int kSys_RunnableTasks()
 // ---------------------------------------------------------------------------
 int kSys_NewPid()
 {
-  return atomic_add_i32 (&kSYS.autoPid_, 1);
+  return atomic_add(&kSYS.autoPid_, 1);
 }
 
 // ---------------------------------------------------------------------------
 int kSys_NewIno()
 {
-  return atomic_add_i32 (&kSYS.autoIno_, 1);
+  return atomic_add(&kSYS.autoIno_, 1);
 }
 
 // ===========================================================================

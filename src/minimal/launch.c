@@ -173,7 +173,7 @@ int kCore_Initialize ()
   // meminit_r(&kSYS.kheap, (void*)0xD0000000, 0x20000000);
 
 
-  kprintf ("Kernel Smoke Minimal compiled " _DATE_ " from " _OS_FULLNAME_ "\n");
+  kprintf ("Kernel Smoke Minimal compiled " _DATE_ " from " _OSNAME_ "\n");
 
   cpu_info ();
 

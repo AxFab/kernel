@@ -21,14 +21,23 @@
  */
 #pragma once
 #include <stddef.h>
-#include <assert.h>
+#include <smkos/_assert.h>
 
 #define RECURS_LMT 25
 #define RECURS_ERR() assert(0)
 
 #ifndef offsetof
 #  define offsetof(t,m)   (size_t)&(((t*)0)->m)
-#  define itemof(p,t,m)   (t*)(!(p)?NULL:((char*)p-offsetof(t,m)))
+#endif
+
+#ifndef itemof
+#  define itemof(p,t,m)   (t*)item_(p,offsetof(t,m))
+static inline void* item_(void* p, size_t off)
+{
+  if (p == NULL)
+    return NULL;
+  return ((char*)p - off);
+}
 #endif
 
 #define bb_best(t,s,m)        (s*)itemof(bb_best_((t)->root_),s,m)

@@ -10,7 +10,7 @@
 
 # *** C runtime ***
 
-$(OBJS_DIR)/crt%.o: $(ORIGIN_DIR)/arch/$(ARCH)/crt%.asm
+$(OBJS_DIR)/crt%.o: $(ORIGIN_DIR)/src/crt/_x86/crt%.asm
 	@ mkdir -p $(dir $@)
 	$(E) '  AS   - Compile C runtime: $@'
 	$(V) $(AS) $@ $< $(S_FLAGS_CRT)

@@ -33,24 +33,25 @@ struct spinlock {
 #define klock(l)         klock_(l,__AT__);
 #define kunlock(l)       kunlock_(l);
 
+#define LockCounter  (*__lockcounter())
+int* __lockcounter();
 
 /* ----------------------------------------------------------------------- */
 static inline void klock_(struct spinlock *locker, const char *where)
 {
-  int t = 100000000;
+  // int t = 100000000;
 
   for (;;) {
     while (locker->key_ != 0) {
-      if (--t == 0)
-        kpanic("Stuck at %s by %s\n", where, locker->where_);
-
-      /* pause(); */
+      // if (--t == 0)
+      //   kpanic("Stuck at %s by %s\n", where, locker->where_);
+      cpause();
     }
 
     cli();
 
     if (atomic_xchg(&locker->key_, 1) == 0) {
-      ++kCPU.lockCounter_;
+      ++LockCounter;
       locker->cpu_ = kCpuNo;
       locker->where_ = where;
       return;
@@ -69,7 +70,7 @@ static inline void kunlock_(struct spinlock *locker)
   locker->cpu_ = 0;
   locker->where_ = NULL;
 
-  if (--kCPU.lockCounter_ == 0)
+  if (--LockCounter == 0 && NULL)
     sti();
 }
 

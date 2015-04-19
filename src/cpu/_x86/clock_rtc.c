@@ -1,4 +1,5 @@
-#include <kernel/cpu.h>
+#include <smkos/kernel.h>
+#include <smkos/pio.h>
 #include <time.h> /* struct tm */
 
 #define CURRENT_YEAR        2014
@@ -130,6 +131,7 @@ struct tm RTC_GetTime () {
   date.tm_yday = 0;
   date.tm_isdst = 0;
   date.tm_year -= 1900;
+  // date.tm_mon--;
 
   return date;
 }

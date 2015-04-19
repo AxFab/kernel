@@ -20,7 +20,8 @@ AS = nasm -f elf32 -o
 LD = gcc -o
 AR = ar rc
 LDS = gcc -shared -o
-LDK = ld --oformat=binary -Map $@.map -Ttext 20000 -o
+# LDK = ld --oformat=binary -Map $@.map -Ttext 20000 -o
+LDK = ld -T scripts/kernel.ld -o
 LDX = ld -T scripts/smoke.ld -o
 
 
@@ -43,6 +44,7 @@ LIB_DIR = $(BUILD_DIR)/lib
 BINR_DIR = $(BUILD_DIR)/release/bin
 LIBR_DIR = $(BUILD_DIR)/release/lib
 INCR_DIR = $(BUILD_DIR)/release/include
+TEST_DIR = $(BUILD_DIR)/test
 
 ALL_SRC  = $(wildcard src/*/*.c)
 ALL_SRC += $(wildcard src/*/*/*.cpp)
@@ -58,8 +60,11 @@ ALL_INC += $(wildcard include/*/*.hpp)
 # *** 3rdParty Libraries ***
 AXLIBC = $(ORIGIN_DIR)/3rdparty/axlibc
 
-INC  = -I $(ORIGIN_DIR)/include -I arch/$(ARCH)/include/
+INC  = -I $(ORIGIN_DIR)/include -I $(ORIGIN_DIR)/include/_x86
 INC += -I $(AXLIBC)/include/ -I $(AXLIBC)/internal/
+
+
+
 
 DEF  = -D_DATE_=\"'$(date)'\" -D_OSNAME_=\"'$(linuxname)'\" 
 DEF += -D_GITH_=\"'$(git_hash)'\" -D_VTAG_=\"'$(vtag)'\"
@@ -98,17 +103,17 @@ DEF_RELEASE = $(DEF)
 L_FLAGS_RELEASE = $(LFLAGS)
 LIB_RELEASE = 
 
-C_FLAGS_TESTING = $(CFLAGS) --coverage -fprofile-arcs -ftest-coverage
-CXX_FLAGS_TESTING = $(CFLAGS) --coverage -fprofile-arcs -ftest-coverage
-INC_TESTING = 
+C_FLAGS_TESTING = $(CFLAGS) -ggdb3 --coverage -fprofile-arcs -ftest-coverage
+CXX_FLAGS_TESTING = $(CFLAGS) -ggdb3 --coverage -fprofile-arcs -ftest-coverage
+INC_TESTING = -I include -I include/_um
 DEF_TESTING = $(DEF)
-L_FLAGS_TESTING = $(LFLAGS)
+L_FLAGS_TESTING = $(LFLAGS) --coverage
 LIB_TESTING = -lcheck
 
 
-S_FLAGS_CRT = 
-C_FLAGS_KERNEL = $(CFLAGS) -nostdinc
-CXX_FLAGS_KERNEL = $(CFLAGS) -nostdinc
+S_FLAGS_CRT = -g
+C_FLAGS_KERNEL = $(CFLAGS) -nostdinc -g -ggdb3
+CXX_FLAGS_KERNEL = $(CFLAGS) -nostdinc -g -ggdb3
 INC_KERNEL = $(INC)
 DEF_KERNEL = $(DEF) -D__EX -D__KERNEL -D__x86_64__
 S_FLAGS_KERNEL = 

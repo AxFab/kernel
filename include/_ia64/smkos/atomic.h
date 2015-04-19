@@ -63,7 +63,7 @@ static inline atomic_t atomic_add(volatile atomic_t *ref, atomic_t val)
 /* ----------------------------------------------------------------------- */
 static inline void cli() { asm volatile("cli"); }
 static inline void sti() { asm volatile("sti"); }
-static inline void pause() { asm volatile("pause"); }
+static inline void cpause() { asm volatile("pause"); }
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

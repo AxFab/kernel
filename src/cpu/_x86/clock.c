@@ -1,3 +1,4 @@
+#include <smkos/kernel.h>
 #include <time.h>
 
 struct tm RTC_GetTime();
@@ -5,7 +6,8 @@ void PIT_Initialize (uint32_t frequency);
 
 
 /* ----------------------------------------------------------------------- */
-struct tm cpu_get_clock() {
+struct tm cpu_get_clock() 
+{
   return RTC_GetTime();
 }
 

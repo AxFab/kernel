@@ -26,7 +26,7 @@ void ksymreg (uintptr_t ptr, const char *sym)
   }
 
   // kprintf ("[%6x] <%s>\n", (uint32_t)ptr, sym);
-  last->name_ = kstrdup(sym);
+  last->name_ = strdup(sym);
   last->address_ = ptr;
 }
 

@@ -6,6 +6,9 @@
 #endif
 
 #include <kernel/cpu.h>
+#include <smkos/spinlock.h>
+#include <smkos/llist.h>
+#include <smkos/bbtree.h>
 #ifdef __KERNEL
 #  include <ax/alloc.h>
 #endif
@@ -58,13 +61,13 @@ struct kSysCore {
   long          pidAutoInc_;
   long          taskAutoInc_;
 
-  llhead_t      userList_;
+  struct llhead      userList_;
 
-  llhead_t      devices_;
+  struct llhead      devices_;
 
   kProcess_t *execStart_;
-  llhead_t    processes_;
-  llhead_t    waitList_;
+  struct llhead    processes_;
+  struct llhead    waitList_;
 
   // INODES
   int         autoIno_;
@@ -73,7 +76,7 @@ struct kSysCore {
   kInode_t   *devNd_;
   kInode_t   *mntNd_;
   kInode_t   *pipeNd_;
-  llhead_t    inodeLru_;
+  struct llhead    inodeLru_;
 
   // MEMORY
 
@@ -82,15 +85,15 @@ struct kSysCore {
   int         ticksCountMax_;
   int         schedLatency_;
   int         minTimeSlice_;
-  spinlock_t  schedLock_;
+  struct spinlock  schedLock_;
   int         tasksCount_ [ SCHED_COUNT ];
-  spinlock_t  procLock_;
+  struct spinlock  procLock_;
   kProcess_t *allProcFrst_;
   kProcess_t *allProcLast_;
   kThread_t    *allTaskFrst_;
   kThread_t    *allTaskLast_;
   int         prioWeight_;
-  spinlock_t  timerLock_;
+  struct spinlock  timerLock_;
   nanotime_t     timerMin_;
 
   // STATS
@@ -122,8 +125,8 @@ int kSys_NewPid();
 int kSys_NewIno();
 
 // ---------------------------------------------------------------------------
-extern kCpuCore_t kCPU;
-extern kSysCore_t kSYS;
+// extern kCpuCore_t kCPU;
+// extern kSysCore_t kSYS;
 // extern kHdwCore_t kHDW;
 
 #endif /* KINFO_H__ */

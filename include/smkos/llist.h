@@ -21,7 +21,7 @@
  */
 #pragma once
 #include <stddef.h>
-#include <assert.h>
+#include <smkos/_assert.h>
 
 #ifndef offsetof
 #  define offsetof(t,m)   (size_t)&(((t*)0)->m)
@@ -131,12 +131,12 @@ static inline void *ll_pop_back_(struct llhead *list, size_t off)
 static inline void ll_remove(struct llhead *list, struct llnode *node)
 {
   /** @test Check that useless loop is optimized or add #if */
-  DEBUG(
+#ifdef DEBUG
     struct llnode *w = node;
 
     while (w->prev_) w = w->prev_;
     assert (w == list->first_);
-  );
+#endif
 
   if (node->prev_) {
     node->prev_->next_ = node->next_;
@@ -157,6 +157,15 @@ static inline void ll_remove(struct llhead *list, struct llnode *node)
   --list->count_;
 }
 
+
+/* ----------------------------------------------------------------------- */
+static inline void ll_remove_if(struct llhead *list, struct llnode *node)
+{
+  if (node->next_ == NULL && node->prev_ == NULL && list->first_ != node)
+    return;
+
+  ll_remove(list, node);
+}
 
 
 /* ----------------------------------------------------------------------- */
