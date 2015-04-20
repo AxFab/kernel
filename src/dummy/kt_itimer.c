@@ -11,28 +11,9 @@ int syscall_4A(void *a1, void *a2, void *a3, void *a4, int no);
 
 
 
-int strlen(const char *str)
-{
-  int i = 0;
-
-  while (*(str++)) ++i;
-
-  return i;
-}
-
-void _puts (const char *str)
-{
-  write(1, str, strlen(str));
-}
-
 int itimer(int miliseconds)
 {
   return SYSCALL2(SYS_ITIMER, (void *)miliseconds, 0);
-}
-
-time_t time(time_t *now)
-{
-  return (time_t)SYSCALL1(SYS_TIME, now);
 }
 
 int wait_obj(int handle, int what, int flags)
@@ -40,10 +21,6 @@ int wait_obj(int handle, int what, int flags)
   return SYSCALL3(SYS_WAIT, handle, what, flags);
 }
 
-int sleep (int seconds)
-{
-  return SYSCALL1(SYS_SLEEP, seconds * 1000);
-}
 
 int main()
 {

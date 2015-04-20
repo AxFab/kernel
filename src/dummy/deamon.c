@@ -31,11 +31,11 @@ const char *cmdl[] = {
 };
 
 
-int execv_s(const char *path, const char *args)
-{
-  sStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
-  return exec (path, &param);
-}
+// int execv_s(const char *path, const char *args)
+// {
+//   sStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
+//   return exec (path, &param);
+// }
 
 void delay()
 {

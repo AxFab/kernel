@@ -66,13 +66,14 @@ void kernel_start ()
     ++idx;
   }
 
+  display_inodes();
+  
   if (!masterPaths[idx])
     kpanic("Unable to find startup program 'MASTER'\n");
 
   create_logon_process(ino, user, kSYS.sysIno_, masterPaths[idx]);
   scavenge_area(kSYS.mspace_);
 
-  // display_inodes();
   kprintf ("CPU %d is ready\n", kCpuNo);
   cpu_start_scheduler();
 }

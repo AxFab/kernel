@@ -70,7 +70,7 @@ void sys_irq (int no)
 int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
 {
   kprintf("SYSCALL %d] %8x, %8x, %8x, %8x, %8x\n", no, p1, p2, p3, p4, p5);
-  for (;;);
+  // for (;;);
   return 0;
 }
 

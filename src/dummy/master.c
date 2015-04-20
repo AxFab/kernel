@@ -1,5 +1,5 @@
-#include "lib.c"
-
+#include <string.h>
+#include <smkos/scall.h>
 
 int read_registers (const char *file)
 {

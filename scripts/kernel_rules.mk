@@ -90,7 +90,8 @@ $(LIB_DIR)/lib%.xo:
 $(BUILD_DIR)/%.iso:
 	@ mkdir -p $(@:.iso=/iso)
 	$(V) echo $^ | tr ' ' '\n' | xargs -I % cp --parents -t $(@:.iso=/iso) % 
-	$(V) grub-mkrescue -o $@ $(@:.iso=/iso) -A $(@:.iso=) > /dev/null
+	$(V) grub-mkrescue -o $@ $(@:.iso=/iso) > /dev/null
+#	$(V) grub-mkrescue -o $@ $(@:.iso=/iso) -A $(@:.iso=) > /dev/null
 # @ rm -rf $(@:.iso=/iso)
 
 $(BOOT_DIR)/grub/grub.cfg: 

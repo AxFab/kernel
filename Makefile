@@ -15,6 +15,9 @@ destroy: clean
 	$(V) rm -rf $(BIN_DIR)
 	$(V) rm -rf $(LIB_DIR)
 	$(V) rm -rf $(BOOT_DIR)
+	$(V) rm -rf $(TEST_DIR)
+
+distclean: destroy
 	$(V) rm -rf *.iso
 
 include scripts/kernel_rules.mk
@@ -25,26 +28,6 @@ include scripts/common_rules.mk
 CRTK = $(OBJS_DIR)/crtk.o
 CRT0 = $(OBJS_DIR)/crt0.o
 
-# KRN_SRC = $(wildcard src/syscalls/*.c) \
-# 					$(wildcard src/start/*.c) \
-# 					$(wildcard src/vfs/*.c) \
-# 					$(wildcard src/stream/*.c) \
-# 					$(wildcard src/memory/*.c) \
-# 					$(wildcard src/task/*.c) \
-# 					$(wildcard src/sys/*.c) \
-# 					$(wildcard src/scheduler/*.c) \
-# 					$(wildcard src/fs/ata/*.c) \
-# 					$(wildcard src/fs/vba/*.c) \
-# 					$(wildcard src/fs/iso/*.c) 
-
-MIN_SRC = $(wildcard src/start/*.c) \
-					$(wildcard src/minimal/*.c) 
-
-ARC_SRC =   $(wildcard src/arch/i386/*.c) \
-            $(wildcard src/cpu/_x86/*.c)  \
-					  $(wildcard src/runtime/*.c)
-
-CHK_SRC =   $(wildcard src/check/*.c)
 
 MST_SRC = $(wildcard src/dummy/master.c)
 
@@ -54,9 +37,9 @@ UM_SRC = $(wildcard src/*.c) \
  				 $(wildcard src/_um/*.c)
 
 KRN_SRC = $(wildcard src/*.c) \
-					$(wildcard src/fs/*.c) \
 					$(wildcard src/libc/*.c) \
-					$(wildcard src/_x86/*.c)
+					$(wildcard src/_x86/*.c) \
+					src/fs/ata.c src/fs/iso.c src/fs/gpt.c src/fs/tmpfs.c
 
 include scripts/global_commands.mk
 
@@ -68,7 +51,7 @@ crt0: $(CRT0)
 
 
 ifeq ($(MIN),)
-$(BOOT_DIR)/kImage: $(CRTK) $(call objs,kernel,$(KR2_SRC)) 
+$(BOOT_DIR)/kImage: $(CRTK) $(call objs,kernel,$(KRN_SRC)) 
 
 # $(BOOT_DIR)/kImage: $(CRTK) \
 # 		$(call objs,kernel,$(KR2_SRC)) 
@@ -84,21 +67,34 @@ $(BOOT_DIR)/kImage: $(CRTK) \
 		$(AXLIBC)/lib/libAxRaw.a
 endif
 
-$(BIN_DIR)/master.xe: $(call objs,smokeos,src/dummy/master.c) $(AXLIBC)/lib/libaxc.a
-$(BIN_DIR)/deamon.xe: $(call objs,smokeos,src/dummy/deamon.c) $(AXLIBC)/lib/libaxc.a
-$(BIN_DIR)/hello.xe: $(call objs,smokeos,src/dummy/hello.c) $(AXLIBC)/lib/libaxc.a
-$(BIN_DIR)/sname.xe: $(call objs,smokeos,src/dummy/sname.c) $(AXLIBC)/lib/libaxc.a
-$(BIN_DIR)/init.xe: $(call objs,smokeos,src/dummy/init.c) $(AXLIBC)/lib/libaxc.a
-$(BIN_DIR)/kt_itimer.xe: $(call objs,smokeos,src/dummy/kt_itimer.c) $(AXLIBC)/lib/libaxc.a
+# $(BIN_DIR)/master.xe: $(call objs,smokeos,src/dummy/master.c) $(AXLIBC)/lib/libaxc.a
+# $(BIN_DIR)/deamon.xe: $(call objs,smokeos,src/dummy/deamon.c) $(AXLIBC)/lib/libaxc.a
+# $(BIN_DIR)/hello.xe: $(call objs,smokeos,src/dummy/hello.c) $(AXLIBC)/lib/libaxc.a
+# $(BIN_DIR)/sname.xe: $(call objs,smokeos,src/dummy/sname.c) $(AXLIBC)/lib/libaxc.a
+# $(BIN_DIR)/init.xe: $(call objs,smokeos,src/dummy/init.c) $(AXLIBC)/lib/libaxc.a
+# $(BIN_DIR)/kt_itimer.xe: $(call objs,smokeos,src/dummy/kt_itimer.c) $(AXLIBC)/lib/libaxc.a
 
-$(BUILD_DIR)/OsCore.iso: $(BOOT_DIR)/grub/grub.cfg \
-	$(BOOT_DIR)/kImage \
-	$(BIN_DIR)/master.xe											\
-	$(BIN_DIR)/deamon.xe											\
-	$(BIN_DIR)/hello.xe												\
-	$(BIN_DIR)/sname.xe												\
-	$(BIN_DIR)/init.xe												\
-	$(BIN_DIR)/kt_itimer.xe
+LIBC_SRC = src/dummy/lib.c src/libc/string.c  \
+		src/libc/printf.c src/libc/vfprintf.c \
+		src/libc/ctype.c src/libc/integer.c \
+		src/libc/int64.c
+
+$(BIN_DIR)/master.xe: $(call objs,smokeos,src/dummy/master.c $(LIBC_SRC))
+$(BIN_DIR)/deamon.xe: $(call objs,smokeos,src/dummy/deamon.c $(LIBC_SRC))
+$(BIN_DIR)/hello.xe: $(call objs,smokeos,src/dummy/hello.c $(LIBC_SRC))
+$(BIN_DIR)/sname.xe: $(call objs,smokeos,src/dummy/sname.c $(LIBC_SRC))
+$(BIN_DIR)/init.xe: $(call objs,smokeos,src/dummy/init.c $(LIBC_SRC))
+$(BIN_DIR)/kt_itimer.xe: $(call objs,smokeos,src/dummy/kt_itimer.c $(LIBC_SRC))
+
+PROGS  = $(BIN_DIR)/master.xe
+PROGS += $(BIN_DIR)/deamon.xe
+PROGS += $(BIN_DIR)/hello.xe
+PROGS += $(BIN_DIR)/sname.xe
+PROGS += $(BIN_DIR)/init.xe
+PROGS += $(BIN_DIR)/kt_itimer.xe
+
+
+$(BUILD_DIR)/OsCore.iso: $(BOOT_DIR)/grub/grub.cfg $(BOOT_DIR)/kImage $(PROGS)
 
 # $(BOOT_DIR)/kImage.map \
 
