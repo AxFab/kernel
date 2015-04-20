@@ -25,17 +25,17 @@ include scripts/common_rules.mk
 CRTK = $(OBJS_DIR)/crtk.o
 CRT0 = $(OBJS_DIR)/crt0.o
 
-KRN_SRC = $(wildcard src/syscalls/*.c) \
-					$(wildcard src/start/*.c) \
-					$(wildcard src/vfs/*.c) \
-					$(wildcard src/stream/*.c) \
-					$(wildcard src/memory/*.c) \
-					$(wildcard src/task/*.c) \
-					$(wildcard src/sys/*.c) \
-					$(wildcard src/scheduler/*.c) \
-					$(wildcard src/fs/ata/*.c) \
-					$(wildcard src/fs/vba/*.c) \
-					$(wildcard src/fs/iso/*.c) 
+# KRN_SRC = $(wildcard src/syscalls/*.c) \
+# 					$(wildcard src/start/*.c) \
+# 					$(wildcard src/vfs/*.c) \
+# 					$(wildcard src/stream/*.c) \
+# 					$(wildcard src/memory/*.c) \
+# 					$(wildcard src/task/*.c) \
+# 					$(wildcard src/sys/*.c) \
+# 					$(wildcard src/scheduler/*.c) \
+# 					$(wildcard src/fs/ata/*.c) \
+# 					$(wildcard src/fs/vba/*.c) \
+# 					$(wildcard src/fs/iso/*.c) 
 
 MIN_SRC = $(wildcard src/start/*.c) \
 					$(wildcard src/minimal/*.c) 
@@ -48,17 +48,15 @@ CHK_SRC =   $(wildcard src/check/*.c)
 
 MST_SRC = $(wildcard src/dummy/master.c)
 
-UM_SRC = $(wildcard src/rtime/*.c) \
- 				 $(wildcard src/core/*.c) \
+UM_SRC = $(wildcard src/*.c) \
  				 $(wildcard src/fs/*.c) \
  				 $(wildcard src/libc/*.c) \
- 				 $(wildcard src/cpu/_um/*.c)
+ 				 $(wildcard src/_um/*.c)
 
-KR2_SRC = $(wildcard src/rtime/*.c) \
- 				 $(wildcard src/core/*.c) \
- 				 src/fs/ata.c src/fs/gpt.c src/fs/iso.c src/fs/tmpfs.c \
- 				 $(wildcard src/libc/*.c) \
- 				 $(wildcard src/cpu/_x86/*.c)
+KRN_SRC = $(wildcard src/*.c) \
+					$(wildcard src/fs/*.c) \
+					$(wildcard src/libc/*.c) \
+					$(wildcard src/_x86/*.c)
 
 include scripts/global_commands.mk
 

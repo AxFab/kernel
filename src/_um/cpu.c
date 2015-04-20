@@ -123,6 +123,15 @@ void kernel_start();
 struct kSys kSYS;
 
 
+void cpu_sched_ticks()
+{
+  sched_next(kSYS.scheduler_);
+}
+
+void cpu_start_scheduler()
+{
+}
+
 /* ----------------------------------------------------------------------- */
   /* At this point we leave CRTK. */
 int main ()
