@@ -20,6 +20,7 @@ static const char *masterPaths[] = {
 void kernel_ready ()
 {
   kprintf ("CPU %d is ready\n", kCpuNo);
+  // for (;;);
   // while (!kSYS.ready_) __delayX(10000);
 }
 
@@ -71,7 +72,6 @@ void kernel_start ()
   create_logon_process(ino, user, kSYS.sysIno_, masterPaths[idx]);
   scavenge_area(kSYS.mspace_);
 
-  kprintf("==>\n");
   display_inodes();
   for (;;);
 

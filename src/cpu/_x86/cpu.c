@@ -56,13 +56,6 @@ void cpu_run_task(kThread_t *thread)
 }
 
 
-/* ----------------------------------------------------------------------- */
-int cpu_no()
-{
-  return 0;
-}
-
-
 struct kSys kSYS;
 
 

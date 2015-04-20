@@ -24,7 +24,7 @@ global cpuid
 global cpu_halt_
 
 extern grub_initialize
-extern kernel_start
+extern kernel_start, kernel_ready
 extern cpu_init_table
 
 _start:
@@ -68,9 +68,7 @@ start:
     mov byte [0xB8001], 0x57
     mov byte [0xB8002], 'n'
     mov byte [0xB8003], 0x57
-    mov byte [0xB8004], '!'
-    mov byte [0xB8005], 0x57
-    mov byte [0xB8006], 0x00
+    mov byte [0xB8004], 0x00
     jmp .failed
 
   .errorLoader:
@@ -412,7 +410,8 @@ global IRQ15_Handler
 global SysCall_Handler
 global Interrupt_Handler
 
-extern kpanic, sys_ex, sys_irq, page_fault
+extern kpanic, sys_ex, sys_irq, sys_call, 
+extern page_fault
 
 
 %macro SAVE_REGS 0
@@ -439,45 +438,59 @@ extern kpanic, sys_ex, sys_irq, page_fault
 
 
 IntEx00_Handler:
+    SAVE_REGS
     push dword 0x00
     jmp IntEx_Handler
 IntEx01_Handler:
+    SAVE_REGS
     push dword 0x01
     jmp IntEx_Handler
 IntEx02_Handler:
+    SAVE_REGS
     push dword 0x02
     jmp IntEx_Handler
 IntEx03_Handler:
+    SAVE_REGS
     push dword 0x03
     jmp IntEx_Handler
 IntEx04_Handler:
+    SAVE_REGS
     push dword 0x04
     jmp IntEx_Handler
 IntEx05_Handler:
+    SAVE_REGS
     push dword 0x05
     jmp IntEx_Handler
 IntEx06_Handler:
+    SAVE_REGS
     push dword 0x06
     jmp IntEx_Handler
 IntEx07_Handler:
+    SAVE_REGS
     push dword 0x07
     jmp IntEx_Handler
 IntEx08_Handler:
+    SAVE_REGS
     push dword 0x08
     jmp IntEx_Handler
 IntEx09_Handler:
+    SAVE_REGS
     push dword 0x09
     jmp IntEx_Handler
 IntEx0A_Handler:
+    SAVE_REGS
     push dword 0x0a
     jmp IntEx_Handler
 IntEx0B_Handler:
+    SAVE_REGS
     push dword 0x0b
     jmp IntEx_Handler
 IntEx0C_Handler:
+    SAVE_REGS
     push dword 0x0c
     jmp IntEx_Handler
 IntEx0D_Handler:
+    SAVE_REGS
     push dword 0x0d
     jmp IntEx_Handler
 IntEx0E_Handler: ; Page fault
@@ -499,30 +512,63 @@ IntEx_Handler:
     call sys_ex
     iret
 
-IRQ0_Handler:
-    push dword 0
-    jmp IRQ_Handler
-IRQ1_Handler:
-IRQ2_Handler:
-IRQ3_Handler:
-IRQ4_Handler:
-IRQ5_Handler:
-IRQ6_Handler:
-IRQ7_Handler:
-IRQ8_Handler:
-IRQ9_Handler:
-IRQ10_Handler:
-IRQ11_Handler:
-IRQ12_Handler:
-IRQ13_Handler:
-IRQ14_Handler:
-IRQ15_Handler:
-    push dword 15
-IRQ_Handler:
-    call sys_irq
-    iret
+; ================================
 
+%macro IRQ_HANDLER 1
+    SAVE_REGS
+    push esp
+    push %1
+    call sys_irq
+    add esp, 8
+    mov al,0x20
+    out 0x20,al
+    LOAD_REGS
+    iret
+%endmacro
+
+IRQ0_Handler:
+  IRQ_HANDLER 0
+IRQ1_Handler:
+  IRQ_HANDLER 1
+IRQ2_Handler:
+  IRQ_HANDLER 2
+IRQ3_Handler:
+  IRQ_HANDLER 3
+IRQ4_Handler:
+  IRQ_HANDLER 4
+IRQ5_Handler:
+  IRQ_HANDLER 5
+IRQ6_Handler:
+  IRQ_HANDLER 6
+IRQ7_Handler:
+  IRQ_HANDLER 7
+IRQ8_Handler:
+  IRQ_HANDLER 8
+IRQ9_Handler:
+  IRQ_HANDLER 9
+IRQ10_Handler:
+  IRQ_HANDLER 10
+IRQ11_Handler:
+  IRQ_HANDLER 11
+IRQ12_Handler:
+  IRQ_HANDLER 12
+IRQ13_Handler:
+  IRQ_HANDLER 13
+IRQ14_Handler:
+  IRQ_HANDLER 14
+IRQ15_Handler:
+  IRQ_HANDLER 15
+
+; ================================
 SysCall_Handler:
+    SAVE_REGS
+    push esp
+    call sys_call
+    add esp, 4
+    LOAD_REGS
+    iret
+    
+
 Interrupt_Handler:
     push .msg
     call kpanic
@@ -635,4 +681,162 @@ outsw: ;(p,b,l)
 
 
 
+
+
+
+; ==========================================
+; CR0 Register
+;   PE [0] - Real-address mode:0
+;   MP [1] - WAIT/FWAIT instruction not trapped:0
+;   EM [2] - x87 FPU instruction not trapped:0
+;   TS [3] - No task switch:0
+;   NE [5] - External x87 FPU error reporting:0
+;   WP [16] - Write-protect disabled:0
+;   AM [18] - Alignement check disabled:0
+;   NW [29] - Not write-through disabled:1
+;   CD [30] - Caching disabled:1
+;   PG [31] - Paging disabled:0
+; ------------------------------------------
+global x86_ActiveFPU
+global x86_ActiveCache
+
+
+x86_ActiveFPU:
+    mov eax, cr0
+    and eax, 0xfffffffb
+    or eax, 2
+    mov cr0, eax
+    ret
+
+
+x86_ActiveCache:
+    mov eax, cr0
+    and eax, 0x9fffffff
+    mov cr0, eax
+    ret
+
+
+
+
+%define  CPU_GDT    0x700
+%define  CPU_LOCK   0x7f0
+%define  CPU_COUNT  0x7f8
+
+; ==========================================
+global x86_ApStart 
+align 4096
+x86_ApStart:
+use16
+    cli
+    mov ax, 0x0
+    mov ds, ax
+    mov es, ax
+
+    ; Activate GDT
+    mov di, CPU_GDT
+    mov word [di], 0xF8
+    lgdt [di]
+
+    ; Mode protected
+    mov eax, cr0
+    or  ax, 1
+    mov cr0, eax        ; PE set to 1 (CR0)
+
+    lock inc word [CPU_COUNT]
+
+    jmp .next
+  .next:
+
+    mov ax, 0x10                  ; data segment
+    mov ds, ax
+    mov fs, ax
+    mov gs, ax
+    mov es, ax
+    mov ss, ax
+
+    jmp dword 0x8:ap_32start    ; code segment
+
+
+; ------------------------------------------
+align 128
+use32
+
+; ------------------------------------------
+extern mmu_newpage, mmu_resolve
+; extern kprintf
+
+ap_32start:
+    cli
+
+    lidt [startup.idtregs]
+
+    ; mov ax, _x86_TSS_Sgmt
+    ; ltr ax
+
+    mov eax, 0x2000 ; PAGE kernel
+    mov cr3, eax
+    mov eax, cr0
+    or eax, (1 << 31) ; CR0 31b to activate mmu
+    mov cr0, eax
+
+    ; Lock CPU Initialization Spin-Lock
+  .spinlock:
+    cmp dword [CPU_LOCK], 0    ; Check if lock is free
+    je .getlock
+    pause
+    jmp .spinlock
+  .getlock:
+    mov eax, 1
+    xchg eax, [CPU_LOCK]  ; Try to get lock
+    cmp eax, 0            ; Test is successful
+    jne .spinlock
+  .criticalsection:
+
+    ; Parameters
+    mov esp, 0x67e0
+    mov eax, [.stack]
+    add eax, 0x1000
+    mov [.stack], eax
+    mov [esp], eax                   ; Address of mapping
+    mov dword [esp + 8], 0x10006     ; WMA_WRITE | WMA_KERNEL
+    mov dword [esp + 12], 1          ; reset to zero
+
+    call mmu_newpage
+    mov [esp + 4], eax
+    call mmu_resolve
+    mov esp, [esp]
+    add esp, 0x1000 - 0x10
+
+    ; Print a message
+    ; push esp
+    ; push .msg 
+    ; call kprintf
+
+    ; Unlock the spinlock
+    xor eax, eax
+    mov [CPU_LOCK], eax
+
+    call kernel_ready
+
+  .pause:
+    sti
+    hlt
+    jmp .pause
+
+  .msg:
+    db "Stack 0x%08x...", 10, 0
+
+
+  .stack:
+    dd 0x100000
+
+
+
+
+
+global x86_ApError 
+align 4096
+x86_ApError:
+    nop
+    jmp $
 

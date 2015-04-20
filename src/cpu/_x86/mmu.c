@@ -139,7 +139,7 @@ page_t mmu_newdir()
 /* ----------------------------------------------------------------------- */
 void mmu_load_env()
 {
-  alloc_init(2 * _Mb_, 2 * _Mb_);
+  alloc_init(_Mb_, _Mb_);
   kSYS.mspace_ = KALLOC(kMemSpace_t);
   kSYS.scheduler_ = KALLOC(kScheduler_t);
   area_init (kSYS.mspace_, (size_t)MMU_KHEAP_BASE, MMU_KHEAP_LIMIT - MMU_KHEAP_BASE);

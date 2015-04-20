@@ -30,10 +30,10 @@ void mmu_ram (int64_t base, int64_t length)
   length = ALIGN_DW(length - (base - obase), PAGE_SIZE);
 
 
-  // The first 4Mo is reserved to kernel
-  if (base < 4 * _Mb_) {
-    length -= (4 * _Mb_ - base);
-    base = 4 * _Mb_;
+  // The first 2 Mo is reserved to kernel
+  if (base < 2 * _Mb_) {
+    length -= (2 * _Mb_ - base);
+    base = 2 * _Mb_;
     if (length <= 0)
       return;
   }
@@ -67,8 +67,8 @@ int mmu_init ()
   // Mirror
   krnDir[1023] = MMU_PREALLOC_DIR | MMU_ACCESS_WR;
 
-  // The first 4Mo is reserved to kernel
-  for (i = 0; i < 1024; ++i) { 
+  // The first 2 Mo is reserved to kernel
+  for (i = 0; i < 512; ++i) { 
     // This one is temporary
     if (i == MMU_PREALLOC_NEW / PAGE_SIZE)
       continue;
