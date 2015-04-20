@@ -72,9 +72,9 @@ void kernel_start ()
   create_logon_process(ino, user, kSYS.sysIno_, masterPaths[idx]);
   scavenge_area(kSYS.mspace_);
 
-  display_inodes();
-  for (;;);
-
+  // display_inodes();
+  kprintf ("CPU %d is ready\n", kCpuNo);
+  cpu_start_scheduler();
 }
 
 

@@ -40,7 +40,6 @@ int* __lockcounter();
 static inline void klock_(struct spinlock *locker, const char *where)
 {
   // int t = 100000000;
-
   for (;;) {
     while (locker->key_ != 0) {
       // if (--t == 0)

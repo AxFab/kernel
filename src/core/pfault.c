@@ -110,34 +110,35 @@ static int page_inode (kMemArea_t *area, size_t address)
 /* ----------------------------------------------------------------------- */
 int page_fault (size_t address, int cause)
 {
-  kMemSpace_t *mspace = NULL;
+  kMemSpace_t *mspace = kSYS.mspace_;
   kMemArea_t *area = NULL;
   bool userspace = cause & PF_USER;
-  int space = AD_KERNEL;
 
-  if (!(cause & PF_KERN)) {
-    kprintf("PF] %x (%d)\n", address, cause);
-    kstacktrace();
-    for(;;);
-  }
+  // if (!(cause & PF_KERN)) {
+  // if (address < 0xd0000000) {
+  //   kprintf("PF] %x (%d)\n", address, cause);
+  //   kstacktrace();
+  //   for(;;);
+  // }
+  // }
 
-  if (kCPU.current_ != NULL)
-    mspace = &kCPU.current_->process_->mspace_;
-  // TODO ===
+  if (address < mspace->base_ || address >= mspace->limit_) {
+    if (kCPU.current_ != NULL)
+      mspace = &kCPU.current_->process_->mspace_;
+    else 
+      kpanic("Kernel try to access a task when idle.\n");
 
-  assert(kCPU.lockCounter_ == 0);
-
-  if (space == AD_UNUSED)
-    return sched_signal(SIGSEV, address);
-
-  if (space == AD_KERNEL) {
-    if (userspace)
+    if (address < mspace->base_ || address >= mspace->limit_)
       return sched_signal(SIGSEV, address);
 
-    mspace = kSYS.mspace_;
+  } else if (userspace) {
+    // @todo Assert with stronger check
+    return sched_signal(SIGSEV, address);
   }
 
+  assert(kCPU.lockCounter_ == 0);
   assert(mspace != NULL);
+  
   area = area_find(mspace, address);
   if (area == NULL)
     return sched_signal(SIGSEV, address);
@@ -149,6 +150,10 @@ int page_fault (size_t address, int cause)
     assert (area->ino_ != NULL);
     return page_inode(area, ALIGN_DW((size_t)address, PAGE_SIZE));
   }
+
+    kprintf("PF] %x (%d)\n", address, cause);
+    kstacktrace();
+    for(;;);
 
   assert (POW2(area->flags_ & (VMA_STACK | VMA_SHM)));
   return mmu_resolve(address, 0, area->flags_ & VMA_MMU, true);

@@ -39,6 +39,8 @@ void cpu_save_task(kThread_t *thread)
 {
 }
 
+
+void cpu_restart_(size_t cr3, size_t kstk, size_t entry, size_t param, size_t ustack, size_t tssAdd);
 /* ----------------------------------------------------------------------- */
 void cpu_run_task(kThread_t *thread)
 {
@@ -52,6 +54,23 @@ void cpu_run_task(kThread_t *thread)
   kCPU.current_->state_ = SCHED_EXEC;
   kunlock (&thread->process_->lock_);
   kernel_state(KST_USERSP);
+  // kprintf ("Start task \n");
+  // kprintf ("  Kstack :: %x\n", thread->kstack_->limit_ - 0x10);
+  // kprintf ("  Ustack :: %x\n", thread->ustack_->limit_ - 0x10);
+  // kprintf ("  PgDir :: %x\n", thread->process_->pageDir_);
+  // kprintf ("  Entry :: %x\n", thread->paramEntry_);
+  // kprintf ("  Param :: %x\n", thread->paramValue_);
+  // @todo - Change TSS, CR3*, Entry*, Params*
+  //         * Only if needed
+
+  // for (;;);
+  cpu_restart_(thread->process_->pageDir_,
+    thread->kstack_->limit_ - 0x10,
+    thread->paramEntry_,
+    thread->paramValue_,
+    thread->ustack_->limit_ - 0x10,
+    0x1000);
+
   cpu_halt();
 }
 

@@ -216,6 +216,19 @@ void initialize_smp()
   // Wait timer interrupt - We should have init all CPUs
   kprintf (KLOG_TRACE "BSP found a count of %d CPUs\n", cpu_count + 1);
   // for (;;);
+  cli();
+}
+
+void cpu_sched_ticks()
+{
+  sched_next(kSYS.scheduler_);
+}
+
+void cpu_start_scheduler()
+{
+  x86_IRQ_handler(0, cpu_sched_ticks);
+  PIT_Initialize(CLOCK_HZ);
+  sti();
 }
 
 

@@ -13,10 +13,10 @@ extern code, bss, end
 %define SGMT_KRN_CODE     0x08
 %define SGMT_KRN_DATA     0x10
 %define SGMT_KRN_STACK    0x18
-%define _x86_uCode_Sgmt     0x23
-%define _x86_uData_Sgmt     0x2d
-%define _x86_uStack_Sgmt    0x33
-%define _x86_TSS_Sgmt       0x38
+%define SGMT_USR_CODE     0x23
+%define SGMT_USR_DATA     0x2d
+%define SGMT_USR_STACK    0x33
+%define _x86_TSS_Sgmt     0x38
 
 
 global _start
@@ -312,7 +312,100 @@ kCpu_Switch2:
     ; call kregisters
 
 
+%macro SAVE_REGS 0
+    pushad
+    push ds
+    push es
+    push fs
+    push gs
+    push ebx
+    mov bx,0x10
+    mov ds,bx
+    pop ebx
+%endmacro
 
+%macro LOAD_REGS 0
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    popad
+%endmacro
+
+
+
+; @todo - Change TSS, CR3*, Entry*, Params*
+;          * Only if needed
+
+; void cpu_restart_(cr3, kstk, entry, param, ustack, tssAdd)
+global cpu_restart_
+cpu_restart_:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 8] ; Cr3
+    mov ebx, [ebp + 12] ; Tss.esp
+    mov ecx, [ebp + 16] ; Entry
+    mov edx, [ebp + 20] ; Param
+    mov esi, [ebp + 24] ; UserStack
+    mov edi, [ebp + 28] ; TSS Address
+
+  ; Set TSS ESP0
+    add edi, 4
+    mov [edi], ebx
+
+  ; Set Page directory
+    mov cr3, eax
+    mov byte [ebx], 0
+    ; mov byte [esi], 0
+
+  ; Create Stack
+  ; Rewrite CS SS EIP EAX ESP EFLAGS
+    xor ebx, ebx
+    mov bx, SGMT_USR_DATA
+    mov [esp + 0] , bx  ; gs
+    mov [esp + 4] , bx  ; fs
+    mov [esp + 8] , bx  ; es
+    mov [esp + 12], bx  ; ds
+    xor ebx, ebx
+    mov [esp + 16], ebx ; edi
+    mov [esp + 20], ebx ; esi
+    mov [esp + 24], ebx ; ebp
+    mov [esp + 28], ebx ; esp
+    mov [esp + 32], ebx ; ebx
+    mov [esp + 36], ebx ; edx
+    mov [esp + 40], ebx ; ecx
+    mov [esp + 44], edx ; eax
+    mov [esp + 48], ecx ; eip
+    xor ebx, ebx
+    mov bx, SGMT_USR_CODE
+    mov [esp + 52], bx  ; cs
+    mov ebx, 0x00000200
+    mov [esp + 56], ebx  ; eflags
+    mov [esp + 60], esi  ; esp
+    xor ebx, ebx
+    mov bx, SGMT_USR_STACK
+    mov [esp + 64], ebx  ; ss
+
+  ; End of interupt (IN CASE)
+    mov al,0x20
+    out 0x20,al
+    LOAD_REGS
+    iret
+
+
+; cpu_start ----------------------------------
+cpu_start_:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 8]
+    mov edi, [ebp + 12]
+    sub eax, 10
+    
+  ; End of interupt (IN CASE)
+    mov al,0x20
+    out 0x20,al
+    LOAD_REGS
+    iret
 
 
 ; cpu_hlt ----------------------------------
@@ -326,7 +419,7 @@ cpu_halt_:
     cli
     mov esp, eax
 
-    mov dword [esp + 0], cpu_halt_.pause    ; eip
+    mov dword [esp + 0], cpu_halt_.pause  ; eip
     mov dword [esp + 4], 0x8              ; cs
     mov dword [esp + 8], 0x200            ; eflags
 
@@ -338,11 +431,9 @@ cpu_halt_:
     mov ds, ax
     mov es, ax
 
-  ; End of interupt
+  ; End of interupt (IN CASE)
     mov al,0x20
     out 0x20,al
-
-  ; Jump
     iret
 
   .pause:
@@ -411,29 +502,7 @@ global SysCall_Handler
 global Interrupt_Handler
 
 extern kpanic, sys_ex, sys_irq, sys_call, 
-extern page_fault
-
-
-%macro SAVE_REGS 0
-    pushad
-    push ds
-    push es
-    push fs
-    push gs
-    push ebx
-    mov bx,0x10
-    mov ds,bx
-    pop ebx
-%endmacro
-
-%macro LOAD_REGS 0
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    popad
-%endmacro
-
+extern general_protection, page_fault
 
 
 
@@ -489,10 +558,17 @@ IntEx0C_Handler:
     SAVE_REGS
     push dword 0x0c
     jmp IntEx_Handler
+
 IntEx0D_Handler:
     SAVE_REGS
-    push dword 0x0d
-    jmp IntEx_Handler
+    push esp
+    push dword [esp + 52] ; get error code
+    call general_protection
+    add esp, 8
+    LOAD_REGS
+    add esp, 4
+    iret
+
 IntEx0E_Handler: ; Page fault
     SAVE_REGS
     push esp
@@ -570,6 +646,9 @@ SysCall_Handler:
     
 
 Interrupt_Handler:
+  IRQ_HANDLER -1
+
+
     push .msg
     call kpanic
     ret
@@ -716,6 +795,9 @@ x86_ActiveCache:
     ret
 
 
+global UM_TEST
+UM_TEST:
+    jmp $
 
 
 %define  CPU_GDT    0x700
@@ -792,20 +874,24 @@ ap_32start:
     jne .spinlock
   .criticalsection:
 
-    ; Parameters
-    mov esp, 0x67e0
+    ; Create stack
+    ; @todo Lock up to max CPU (Stack: 1024 CPUs, GDT: 120, TSS:8)
     mov eax, [.stack]
     add eax, 0x1000
     mov [.stack], eax
-    mov [esp], eax                   ; Address of mapping
-    mov dword [esp + 8], 0x10006     ; WMA_WRITE | WMA_KERNEL
-    mov dword [esp + 12], 1          ; reset to zero
+    add eax, 0x1000 - 0x10
+    mov esp, eax
 
-    call mmu_newpage
-    mov [esp + 4], eax
-    call mmu_resolve
-    mov esp, [esp]
-    add esp, 0x1000 - 0x10
+    ; @todo fillout TSS
+
+    ;mov [esp], eax                   ; Address of mapping
+    ;push dword [esp + 8], 0x10006     ; WMA_WRITE | WMA_KERNEL
+    ;push dword [esp + 12], 1          ; reset to zero
+    ;call mmu_newpage
+    ;mov [esp + 4], eax
+    ;call mmu_resolve
+    ; mov esp, [esp]
+    ; add esp, 0x1000 - 0x10
 
     ; Print a message
     ; push esp
@@ -832,11 +918,11 @@ ap_32start:
 
 
 
-
-
 global x86_ApError 
 align 4096
 x86_ApError:
     nop
     jmp $
+
+
 

@@ -27,6 +27,7 @@ struct tm cpu_get_clock();
 void cpu_halt();
 void cpu_save_task(kThread_t *thread);
 void cpu_run_task(kThread_t *thread);
+void cpu_start_scheduler();
 void initialize_smp();
 
 /* === MMU =============================================================== */
