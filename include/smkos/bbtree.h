@@ -23,7 +23,7 @@
 #include <stddef.h>
 #include <smkos/_assert.h>
 
-#define RECURS_LMT 25
+#define RECURS_LMT 64
 #define RECURS_ERR() assert(0)
 
 #ifndef offsetof

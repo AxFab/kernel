@@ -7,6 +7,9 @@ void FATFS(kDriver_t *);
 void ATA(kDriver_t *);
 void HDD(kDriver_t *);
 void GPT(kDriver_t *);
+void SVGA(kDriver_t *);
+void KDB(kDriver_t *);
+
 
 #define ATA NULL
 

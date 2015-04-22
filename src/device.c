@@ -193,11 +193,12 @@ void initialize_vfs()
   register_driver(GPT);
   register_driver(ISO9660);
   // register_driver(KEYBD);
-  // register_driver(VBA);
   // register_driver(FATFS);
   register_driver(ATA);
   // register_driver(BMP); // Usermode
   register_driver(HDD); // Usermode
+  register_driver(SVGA);
+  register_driver(KDB);
 
   mount_alls ();
 }

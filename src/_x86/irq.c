@@ -1,4 +1,5 @@
 #include <smkos/kernel.h>
+#include <smkos/core.h>
 
 /* ----------------------------------------------------------------------- */
 /** Hardware Exception:
@@ -33,7 +34,6 @@ void(*x86_irq_hanlder[16])();
 
 
 /* ----------------------------------------------------------------------- */
-
 /**Hardware Interrupt Request
     IRQ 0 (0x20) : System Clock
     IRQ 1 : Keyboard
@@ -52,8 +52,10 @@ void(*x86_irq_hanlder[16])();
     IRQ 14 : Primary HDD
     IRQ 15 : Secondary HDD
 */
-void sys_irq (int no)
+void sys_irq (int no, size_t* params)
 {
+  kCPU.current_->stackPtr_ = params;
+
   if (no < 0 || no >= 16)
     kpanic ("IRQ no %d !?\n", no);
 
@@ -67,16 +69,12 @@ void sys_irq (int no)
 
 
 /* ----------------------------------------------------------------------- */
-int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
-{
-  kprintf("SYSCALL %d] %8x, %8x, %8x, %8x, %8x\n", no, p1, p2, p3, p4, p5);
-  // for (;;);
-  return 0;
-}
+int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5);
 
 
 void sys_call(size_t* params)
 {
+  kCPU.current_->stackPtr_ = params;
   int err = system_call(params[11], params[10], params[9], params[8], params[7], params[6]);
   params[11] = err;
   params[9] = __geterrno();

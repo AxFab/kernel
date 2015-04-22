@@ -14,18 +14,22 @@ void kpanic(const char *msg, ...)
   vsnprintf(buf, 256, msg, ap);
   va_end(ap);
   kwrite(buf);
+  kstacktrace(12);
   exit_();
 }
 
 /* ----------------------------------------------------------------------- */
+struct spinlock sysLogLock;
 void kprintf(const char *msg, ...)
 {
   char buf[256];
   va_list ap;
+  klock(&sysLogLock);
   va_start(ap, msg);
   vsnprintf(buf, 256, msg, ap);
   va_end(ap);
   kwrite(buf);
+  kunlock(&sysLogLock);
 }
 
 

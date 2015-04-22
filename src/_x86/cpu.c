@@ -44,6 +44,7 @@ void cpu_restart_(size_t cr3, size_t kstk, size_t entry, size_t param, size_t us
 /* ----------------------------------------------------------------------- */
 void cpu_run_task(kThread_t *thread)
 {
+  size_t eip;
   assert(thread->state_ == SCHED_READY);
 
   klock (&thread->process_->lock_);
@@ -64,12 +65,24 @@ void cpu_run_task(kThread_t *thread)
   //         * Only if needed
 
   // for (;;);
-  cpu_restart_(thread->process_->pageDir_,
-    thread->kstack_->limit_ - 0x10,
-    thread->paramEntry_,
-    thread->paramValue_,
-    thread->ustack_->limit_ - 0x10,
-    0x1000);
+  if (thread->paramEntry_ != 0) {
+    eip = thread->paramEntry_;
+    thread->paramEntry_ = 0;
+    cpu_restart_(thread->process_->pageDir_,
+      thread->kstack_->limit_ - 0x10,
+      eip,
+      thread->paramValue_,
+      thread->ustack_->limit_ - 0x10,
+      0x1000);
+  } else {
+    cpu_resume_(thread->process_->pageDir_,
+      thread->kstack_->limit_ - 0x10,
+      thread->stackPtr_,
+      0x1000);
+
+
+  }
+
 
   cpu_halt();
 }

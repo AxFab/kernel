@@ -18,10 +18,13 @@ _start:
     mov [esp], eax
     mov [esp + 4], eax
     call main
-    mov ecx, eax
+    mov [esp], eax
+  .exit:
+    mov ecx, [esp]
+    xor edx, edx
     mov eax, 0x10
     int 0x30
-    jmp $
+    jmp .exit
 
 _errno:
     dd 0

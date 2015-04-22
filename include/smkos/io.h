@@ -57,6 +57,8 @@ typedef struct SMK_stat SMK_stat_t;
 #define GPT_No 35
 #define ATA_No 41
 #define HDD_No 42
+#define SVGA_No 23
+#define KDB_No 38
 
 
 /** Structure holding the metadata of an inode
@@ -143,7 +145,10 @@ struct kInode {
   kDevice_t *dev_;
   struct bbtree pageTree_;
 
-  kAssembly_t *assembly_;
+  union {
+    kAssembly_t *assembly_;
+    kPipe_t *pipe_;
+  };
 };
 
 

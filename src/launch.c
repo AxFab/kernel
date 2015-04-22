@@ -49,8 +49,8 @@ void kernel_start ()
 
   /* Search kernel helper files */
   ino = search_inode ("boot/kImage.map", kSYS.sysIno_, 0);
-  //if (ino)
-  //  ksymbol_load(ino);
+  if (ino)
+   ksymbols_load(ino);
   
   /* Create basic users */
   user = create_user("system", CAP_SYSTEM);
@@ -66,13 +66,18 @@ void kernel_start ()
     ++idx;
   }
 
-  display_inodes();
+  // display_inodes();
   
   if (!masterPaths[idx])
     kpanic("Unable to find startup program 'MASTER'\n");
 
   create_logon_process(ino, user, kSYS.sysIno_, masterPaths[idx]);
   scavenge_area(kSYS.mspace_);
+
+  // Open Graphic buffer
+  ino = search_inode ("/dev/Fb0", NULL, 0);
+  if (ino) 
+    ktty(ino);
 
   kprintf ("CPU %d is ready\n", kCpuNo);
   cpu_start_scheduler();

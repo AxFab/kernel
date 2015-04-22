@@ -45,5 +45,6 @@ enum KDR_TYPE {
   KDR_NONE = 0,
   KDR_FS,
   KDR_BK,
+  KDR_CH,
 };
 

@@ -101,32 +101,6 @@ clock_t clock()
 #endif
 
 
-/* ----------------------------------------------------------------------- */
-#ifndef kwrite
-static uint16_t* txtBuffer = (uint16_t*)0xB8000;
-static int txtIdx = 0;
-void ascii_cmd(const char **m)
-{
-}
-
-void kwrite(const char *m)
-{
-  for (; *m; ++m) {
-    if (*m < 0x20) {
-      if (*m == '\n') 
-        txtIdx += 80 - (txtIdx % 80);
-      else if (*m == '\t')
-        txtIdx += 4 - (txtIdx % 4);
-      else if (*m == '\e')
-        ascii_cmd(&m);
-      continue;
-    }
-
-    txtBuffer[txtIdx] = (*m & 0xff) | 0x700;
-    txtIdx++;
-  }
-}
-#endif
 
 /* ----------------------------------------------------------------------- */
 

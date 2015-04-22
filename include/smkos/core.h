@@ -22,6 +22,7 @@
 
 
 
+/* ----------------------------------------------------------------------- */
 struct kAssembly {
   size_t entryPoint_;
   kInode_t* ino_;
@@ -29,6 +30,8 @@ struct kAssembly {
   atomic_t usage_;
 };
 
+
+/* ----------------------------------------------------------------------- */
 struct kSection {
   size_t address_;
   size_t length_;
@@ -38,6 +41,8 @@ struct kSection {
   int flags_;
 };
 
+
+/* ----------------------------------------------------------------------- */
 struct kScheduler {
   kThread_t        *anchor_;
   struct spinlock lock_;
@@ -45,6 +50,8 @@ struct kScheduler {
   atomic_t          totalWeight_;
 };
 
+
+/* ----------------------------------------------------------------------- */
 struct kThread {
   kProcess_t *process_;
   kThread_t *schNext_;
@@ -55,14 +62,19 @@ struct kThread {
   size_t paramValue_;
   size_t paramEntry_;
   time_t start_;
+  size_t stackPtr_;
 };
 
+
+/* ----------------------------------------------------------------------- */
 struct kSession {
   kUser_t *user_;
   kInode_t *workingDir_;
   atomic_t usage_;
 };
 
+
+/* ----------------------------------------------------------------------- */
 struct kProcess {
   kAssembly_t* assembly_;
   kSession_t* session_;
@@ -81,6 +93,20 @@ struct kProcess {
   int pagePrivate_;
   int pageShared_;
 };
+
+
+/* ----------------------------------------------------------------------- */
+/** */
+struct kPipe 
+{
+  size_t rpen_; /**< Offset of the consumer(read) cursor */
+  size_t wpen_; /**< Offset of the producer(write) cursor */
+  size_t size_; /**< Total size of the buffer */
+  size_t avail_; /**< Byte available to reading */
+  struct spinlock lock_;
+  kMemArea_t* mmap_;
+};
+
 
 
 

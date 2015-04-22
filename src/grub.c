@@ -41,7 +41,9 @@ static int grub_memory (uint32_t *mmap)
 /** Using grub at boot, we send to the kernel all known machine infos. */
 int grub_initialize (uint32_t *bTable)
 {
-  // if (bTable[0] & (1 << 11) && bTable[22] != 0x000B8000) {
+  if (bTable[0] & (1 << 11) && bTable[22] != 0x000B8000) {
+    VGA_Info(bTable[22], bTable[25], bTable[26], 4);
+  }
   //   kTty_PreSystem ((void *)bTable[22], bTable[25], bTable[26], 4);
   //   VBA_Set ((void *)bTable[22], bTable[25], bTable[26], 4);
   // } else  {

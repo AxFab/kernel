@@ -39,7 +39,8 @@ UM_SRC = $(wildcard src/*.c) \
 KRN_SRC = $(wildcard src/*.c) \
 					$(wildcard src/libc/*.c) \
 					$(wildcard src/_x86/*.c) \
-					src/fs/ata.c src/fs/iso.c src/fs/gpt.c src/fs/tmpfs.c
+					src/fs/ata.c src/fs/iso.c src/fs/gpt.c \
+					src/fs/tmpfs.c src/fs/svga.c src/fs/kdb.c
 
 include scripts/global_commands.mk
 
@@ -48,6 +49,8 @@ cdrom: $(BUILD_DIR)/OsCore.iso
 
 crtk: $(CRTK)
 crt0: $(CRT0)
+
+
 
 
 ifeq ($(MIN),)
@@ -94,7 +97,9 @@ PROGS += $(BIN_DIR)/init.xe
 PROGS += $(BIN_DIR)/kt_itimer.xe
 
 
-$(BUILD_DIR)/OsCore.iso: $(BOOT_DIR)/grub/grub.cfg $(BOOT_DIR)/kImage $(PROGS)
+$(BUILD_DIR)/OsCore.iso: $(BOOT_DIR)/grub/grub.cfg \
+	$(BOOT_DIR)/kImage $(BOOT_DIR)/kImage.map \
+	$(PROGS)
 
 # $(BOOT_DIR)/kImage.map \
 

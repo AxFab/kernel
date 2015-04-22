@@ -59,6 +59,7 @@ typedef struct kThread kThread_t;
 typedef struct kScheduler kScheduler_t;
 typedef struct kSession kSession_t;
 typedef struct kPage kPage_t;
+typedef struct kPipe kPipe_t;
 
 
 /* FUNCTIONS ============================================================= */

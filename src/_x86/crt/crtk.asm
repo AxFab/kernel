@@ -4,7 +4,7 @@ use32
 
 %define GRUB_MAGIC1     0x1BADB002
 %define GRUB_MAGIC2     0x2BADB002
-%define GRUB_FLAGS      0x00010003; 0x00010007
+%define GRUB_FLAGS      0x00010007 ;0x00010003; 0x00010007
 
 extern code, bss, end
 
@@ -338,7 +338,7 @@ kCpu_Switch2:
 ;          * Only if needed
 
 ; void cpu_restart_(cr3, kstk, entry, param, ustack, tssAdd)
-global cpu_restart_
+global cpu_restart_, cpu_resume_
 cpu_restart_:
     push ebp
     mov ebp, esp
@@ -354,6 +354,7 @@ cpu_restart_:
     mov [edi], ebx
 
   ; Set Page directory
+    mov esp, MEM_KSTACK_PTR - 64 - 16
     mov cr3, eax
     mov byte [ebx], 0
     ; mov byte [esi], 0
@@ -394,13 +395,29 @@ cpu_restart_:
 
 
 ; cpu_start ----------------------------------
+; void cpu_resume_(cr3, kstk, sp, tssAdd)
+cpu_resume_:
 cpu_start_:
     push ebp
     mov ebp, esp
-    mov eax, [ebp + 8]
-    mov edi, [ebp + 12]
-    sub eax, 10
-    
+    mov eax, [ebp + 8] ; Cr3
+    mov ebx, [ebp + 12] ; Tss.esp
+    mov ecx, [ebp + 16] ; SP
+    mov edi, [ebp + 28] ; TSS Address
+
+  ; Set TSS ESP0
+    add edi, 4
+    mov [edi], ebx
+
+  ; Set Page directory
+    mov cr3, eax
+    mov byte [ebx], 0
+    ; mov byte [esi], 0
+
+  ; Create Stack
+  ; Rewrite CS SS EIP EAX ESP EFLAGS
+    mov esp, ecx
+
   ; End of interupt (IN CASE)
     mov al,0x20
     out 0x20,al
@@ -664,7 +681,7 @@ Interrupt_Handler:
 
 ; ---------------------------------
 ; ---------------------------------
-global outb, outw, inb, inw
+global outb, outw, outl, inb, inw, inl
 global insl, insw, outsw
 
 %define Stck_Port   8
@@ -692,6 +709,16 @@ outw:
         ret
 
 ; ---------------------------------
+outl:
+        push ebp
+        mov ebp, esp
+        mov dx, [esp + Stck_Port]
+        mov eax, [esp + Stck_Value]
+        out dx, eax
+        leave
+        ret
+
+; ---------------------------------
 inb:
         push ebp
         mov ebp, esp
@@ -708,6 +735,16 @@ inw:
         mov dx, [esp + Stck_Port]
         xor eax, eax
         in ax, dx
+        leave
+        ret
+
+; ---------------------------------
+inl:
+        push ebp
+        mov ebp, esp
+        mov dx, [esp + Stck_Port]
+        xor eax, eax
+        in eax, dx
         leave
         ret
 
