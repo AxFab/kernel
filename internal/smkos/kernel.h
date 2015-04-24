@@ -161,3 +161,9 @@ char* strdup(const char*);
 int strcmpi (const char* str1, const char* str2);
 unsigned long long strtoull(const char*, char**, int);
 #define exit_() assert(0)
+int snprintf(char *, size_t, const char *, ...);
+int vsnprintf(char *str, size_t lg, const char *format, va_list ap);
+
+void kstacktrace(size_t MaxFrames);
+void kdump(void*, int);
+

@@ -4,6 +4,7 @@
 #include <smkos/spinlock.h>
 #include <smkos/llist.h>
 
+#undef __axlog
 #define __axlog kprintf
 void __axlog(const char *msg, ...);
 
@@ -541,7 +542,7 @@ void alloc_init(size_t base, size_t length)
   if (gHeapArea.count_ != 0)
     area = malloc_(sizeof(struct SMK_HeapArea));
 
-  meminit_r(area, base, length);
+  meminit_r(area, (void *)base, length);
   ll_push_back(&gHeapArea, & area->node_);
 }
 

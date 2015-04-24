@@ -21,8 +21,7 @@
  */
 #include <smkos/kfs.h>
 
-
-// typedef int kPipe_t;
+void x86_IRQ_handler(int no, void (*handler)());
 
 
 // int KDB_read (kInode_t* ino, void* buf, size_t lg)

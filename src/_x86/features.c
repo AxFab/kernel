@@ -23,10 +23,9 @@
 #include <smkos/klimits.h>
 #include <smkos/arch.h>
 #include <smkos/kstruct/map.h>
-// #include <smkos/core.h>
-// #include <smkos/arch.h>
+ 
 
-
+void PIT_Initialize (uint32_t frequency);
 int cpu_features[4];
 
 #define IA32_APIC_BASE_MSR 0x1B

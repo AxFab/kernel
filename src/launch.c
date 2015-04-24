@@ -2,6 +2,10 @@
 #include <smkos/kstruct/user.h>
 
 
+void ksymbols_load (kInode_t* ino);
+void ktty(kInode_t* ino);
+
+
 static const char *masterPaths[] = {
   "sbin/master.xe",
   "bin/master.xe",

@@ -95,7 +95,7 @@ void x86_IRQ_handler(int no, void (*handler)())
 
 void general_protection (size_t errcode)
 {
-  kdump(&errcode, 64);
+  /* kdump(&errcode, 64); */
   kpanic ("General Protection Fault : '0x%08x'\n", errcode);
 }
 

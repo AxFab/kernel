@@ -26,6 +26,10 @@
 
 #include "mmu.h"
 
+void cpu_halt_(size_t, size_t);
+void cpu_restart_(size_t cr3, size_t kstk, size_t entry, size_t param, size_t ustack, size_t tssAdd);
+void cpu_resume_(size_t cr3, size_t kstk, size_t stk, size_t tssAdd);
+size_t mmu_newdir();
 
 /* ----------------------------------------------------------------------- */
 void cpu_halt()
@@ -41,7 +45,6 @@ void cpu_save_task(kThread_t *thread)
 }
 
 
-void cpu_restart_(size_t cr3, size_t kstk, size_t entry, size_t param, size_t ustack, size_t tssAdd);
 /* ----------------------------------------------------------------------- */
 void cpu_run_task(kThread_t *thread)
 {

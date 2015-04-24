@@ -1,6 +1,8 @@
 #include <string.h>
+#include <stdarg.h>
 #include <smkos.h>
 
+int vsnprintf(char*, int lg, const char *msg, va_list ap);
 
 
 void _puts (const char *str)
@@ -42,10 +44,14 @@ int *_geterrno()
 }
 
 
-void printf(const char *msg, ...)
+int printf(const char *msg, ...)
 {
+  int res;
   char tmp[120];
-  void *ap = ((&msg) + sizeof(void *));
-  vsnprintf(tmp, 120, msg, ap);
+  va_list ap;
+  va_start(ap, msg);
+  res = vsnprintf(tmp, 120, msg, ap);
+  va_end (ap);
+  return res;
 }
 

@@ -4,11 +4,16 @@
 #include <stdint.h>
 #include <smkos/file.h>
 
+/* All of those methods are bind over vfprintf 
+ * which is implemented in another file.
+ */
+int vfprintf (FILE *fp, const char *str, va_list ap);
+
 #undef INT_MAX
-#define INT_MAX 2147483648
+#define INT_MAX 2147483648UL
 
 #undef UINT_MAX
-#define UINT_MAX 2147483648
+#define UINT_MAX 4294967296UL
 
 // ---------------------------------------------------------------------------
 /** Write on a string streaming */
@@ -18,7 +23,7 @@ static int _swrite (FILE *restrict fp, const char *restrict buf, size_t length)
   memcpy (fp->wpos_, buf, lg);
   fp->wpos_ += lg;
   fp->count_ += lg;
-  return length > lg ? EOF : lg;
+  return (length > lg) ? EOF : (int)lg;
 }
 
 

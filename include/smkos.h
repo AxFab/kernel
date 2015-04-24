@@ -25,11 +25,12 @@ int exec (const char *path, sStartInfo_t *param);
 int execv_s(const char *path, const char *args);
 
 
+int sleep(int);
 int open(const char *file, int flags, ...);
 int close(int fd);
 ssize_t write(int fd, const void *buf, size_t count);
 ssize_t read(int fd, void *buf, size_t count);
-
+int printf (const char*, ...);
 
 #define ASCII_RESET   "\e[0m"
 #define ASCII_U_WHITE "\e[53,38m"

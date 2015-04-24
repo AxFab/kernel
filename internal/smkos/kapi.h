@@ -51,7 +51,12 @@ void mount_alls ();
 void initialize_vfs();
 kDriver_t *register_driver(void (*init)(kDriver_t *));
 kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *stat, void* info);
+
+
 int fs_block_read(kInode_t *fp, void* buffer, size_t length, size_t offset);
+int fs_pipe_read(kInode_t *ino, void* buf, size_t lg);
+size_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg, int flags);
+int fs_event(kInode_t *ino, int type, int value);
 
 
 /* === INODES ============================================================ */

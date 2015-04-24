@@ -258,7 +258,6 @@ int ISO_read(kInode_t *fp, void *buffer, size_t length, size_t offset)
 /* ----------------------------------------------------------------------- */
 int ISO_lookup (const char *name, kInode_t *dir, SMK_stat_t *stat)
 {
-  int i;
   char *filename = kalloc(PATH_MAX);
   size_t sec = dir->stat_.lba_;
   struct ISO_dirEntry *entry;

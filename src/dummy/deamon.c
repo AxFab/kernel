@@ -1,27 +1,5 @@
 #include <smkos.h>
 
-// #define NULL ((void*)0)
-// typedef struct sStartInfo sStartInfo_t;
-
-
-// int write(int fd, const void *buf, unsigned int count);
-// int exec (const char *path, sStartInfo_t* param);
-
-
-// struct sStartInfo
-// {
-//   const char*     cmd_;
-//   const char*     username_;
-//   int             output_;
-//   int             input_;
-//   int             error_;
-//   int             workingDir_;  ///
-//   int             flags_;       ///
-//   int             mainWindow_;  /// Give a window/tty handler for the program
-// };
-
-
-
 const char *cmdl[] = {
   NULL,
   "",
@@ -29,13 +7,6 @@ const char *cmdl[] = {
   "babe! /tmp/hey.txt",
 
 };
-
-
-// int execv_s(const char *path, const char *args)
-// {
-//   sStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
-//   return exec (path, &param);
-// }
 
 void delay()
 {
@@ -50,9 +21,7 @@ void delay()
 
 int main ()
 {
-  int j;
   int o = 0;
-  int m = 4; // sizeof (cmdl) / sizeof (char*);
 
   write (1, "Deamon v1.0\n", 12);
 

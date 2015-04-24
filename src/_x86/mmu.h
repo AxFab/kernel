@@ -30,3 +30,4 @@
 
 #define MMU_KSYS (0x5000)
 
+int area_init(kMemSpace_t* sp, size_t base, size_t length);

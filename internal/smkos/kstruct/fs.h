@@ -45,7 +45,7 @@ struct kDriver {
 
   int (*mount)(kInode_t* dev, const char *name);
 
-  page_t (*map)(kInode_t *fp, size_t offset, page_t *page);
+  int (*map)(kInode_t *fp, size_t offset, page_t *page);
   int (*sync)(kInode_t *fp, size_t offset, page_t page);
 
   int (*lookup)(const char *name, kInode_t *dir, SMK_stat_t *file);

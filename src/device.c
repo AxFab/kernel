@@ -192,16 +192,7 @@ void initialize_vfs()
   kSYS.devIno_ = create_inode ("dev", root, S_IFDIR | 0775, 0);
   kSYS.mntIno_ = create_inode ("mnt", root, S_IFDIR | 0775, 0);
 
-  register_driver(GPT);
-  register_driver(ISO9660);
-  // register_driver(KEYBD);
-  // register_driver(FATFS);
-  register_driver(ATA);
-  // register_driver(BMP); // Usermode
-  register_driver(HDD); // Usermode
-  register_driver(VGA);
-  register_driver(KDB);
-
+  init_driver();
   mount_alls ();
 }
 

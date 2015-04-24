@@ -142,7 +142,7 @@ void IRQ14_Enter ()
 
 
 /* ----------------------------------------------------------------------- */
-static void ATA_WaitIRQ (struct ATA_Drive *dr, int irq)
+void ATA_WaitIRQ (struct ATA_Drive *dr, int irq)
 {
   // int k = 0x80000;
   IRQ14_LOCK = 1;
@@ -164,8 +164,6 @@ static void ATA_WaitIRQ (struct ATA_Drive *dr, int irq)
 /* ----------------------------------------------------------------------- */
 static int ATA_Polling (struct ATA_Drive *dr)
 {
-  int i;
-
   // (I) Delay 400 nanosecond for BSY to be set:
   ATA_DELAY;
 
@@ -313,18 +311,7 @@ static int ATA_Data(int dir, struct ATA_Drive *dr, uint32_t lba,  uint8_t sects,
 
 
 /* ----------------------------------------------------------------------- */
-static void ATA_Grab ()
-{
-}
-
-
-/* ----------------------------------------------------------------------- */
-static void ATA_Release ()
-{
-}
-
-
-/* ----------------------------------------------------------------------- */
+/*
 static int ATAPI_Read2 (struct ATA_Drive *dr, uint32_t lba, uint8_t *buf)
 {
   int status;
@@ -349,7 +336,7 @@ static int ATAPI_Read2 (struct ATA_Drive *dr, uint32_t lba, uint8_t *buf)
   outb(dr->pbase_ + ATA_REG_LBA2, (2048 >> 8) & 0xff );
   outb(dr->pbase_ + ATA_REG_COMMAND, ATA_CMD_PACKET);
 
-  while ((status = inb (dr->pbase_ + ATA_REG_COMMAND)) & 0x80); /* BUSY */
+  while ((status = inb (dr->pbase_ + ATA_REG_COMMAND)) & 0x80); / * BUSY * /
 
   while (!((status = inb (dr->pbase_ + ATA_REG_COMMAND)) & 0x8) && !(status & 0x1));
 
@@ -358,7 +345,7 @@ static int ATAPI_Read2 (struct ATA_Drive *dr, uint32_t lba, uint8_t *buf)
     return EIO;
   }
 
-  /* Send ATAPI/SCSI command */
+  / * Send ATAPI/SCSI command * /
   outsw (dr->pbase_, (uint16_t *)packet, 6);
   // ATA_WaitIRQ(dr, 14);
   size = (int) inb (dr->pbase_ + ATA_REG_LBA2) << 8;
@@ -373,7 +360,7 @@ static int ATAPI_Read2 (struct ATA_Drive *dr, uint32_t lba, uint8_t *buf)
   ATA_Release();
   return 0;
 }
-
+*/
 
 /* ----------------------------------------------------------------------- */
 int ATAPI_Read (struct ATA_Drive *dr, uint32_t lba,  uint8_t sects, uint8_t *buf)
