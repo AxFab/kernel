@@ -34,7 +34,7 @@ struct spinlock {
 #define kunlock(l)       kunlock_(l);
 
 #define LockCounter  (*__lockcounter())
-int* __lockcounter();
+int *__lockcounter();
 
 /* ----------------------------------------------------------------------- */
 static inline void klock_(struct spinlock *locker, const char *where)

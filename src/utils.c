@@ -1,5 +1,7 @@
 #include <smkos/kernel.h>
-#include <smkos/_spec.h>
+#include <smkos/klimits.h>
+#include <smkos/alloc.h>
+// #include <smkos/_spec.h>
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -65,7 +67,7 @@ char *strdup (const char *str)
 
 /* ----------------------------------------------------------------------- */
 #ifndef strcmpi
-// Compare two null-terminated char strings
+/* Compare two null-terminated char strings */
 int strcmpi (const char* str1, const char* str2)
 {
   while ( *str1 && ( tolower(*str1) == tolower(*str2) ) ) {

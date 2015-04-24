@@ -1,4 +1,4 @@
-#include <smoke/syscall.h>
+#include <smkos.h>
 
 // #define NULL ((void*)0)
 // typedef struct sStartInfo sStartInfo_t;

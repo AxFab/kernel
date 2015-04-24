@@ -19,21 +19,19 @@
  *
  *      Driver for Keyboard.
  */
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-
+#include <smkos/kfs.h>
 
 
 // typedef int kPipe_t;
 
 
-// int KDB_read (kInode_t* ino, void* buf, size_t lg) 
+// int KDB_read (kInode_t* ino, void* buf, size_t lg)
 // {
 //   kPipe_t pipe* ino->pipe_;
 //   return fs_pipe_read(pipe, buf, lg);
 // }
 
-// int KDB_write (kInode_t* ino, void* buf, size_t lg) 
+// int KDB_write (kInode_t* ino, void* buf, size_t lg)
 // {
 //   kPipe_t pipe* ino->pipe_;
 //   return fs_pipe_write(pipe, buf, lg);
@@ -60,7 +58,7 @@ void KDB_irq ()
 
 
 /* ----------------------------------------------------------------------- */
-int KDB_mount (kInode_t* dev, const char* name)
+int KDB_mount (kInode_t *dev, const char *name)
 {
   SMK_stat_t stat;
   time_t now = time(NULL);
@@ -87,7 +85,6 @@ int KDB_mount (kInode_t* dev, const char* name)
 /* ----------------------------------------------------------------------- */
 void KDB(kDriver_t *driver)
 {
-  driver->type_ = KDR_CH;
   driver->major_ = KDB_No;
   driver->name_ = strdup("PS2 keyboard");
   driver->mount = KDB_mount;

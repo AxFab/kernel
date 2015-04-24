@@ -20,10 +20,38 @@
  *      Intel x86 MMU wrapper implementation.
  */
 #include <smkos/kernel.h>
-#include <smkos/core.h>
 #include <smkos/arch.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/map.h>
+#include <smkos/kstruct/task.h>
+#include <smkos/alloc.h>
+#include "mmu.h"
 
-#include "mmu.h"  
+/* ----------------------------------------------------------------------- */
+/** Allocat a single page for the system and return it's physical address */
+page_t mmu_newpage()
+{
+  static uint8_t *bitmap = (uint8_t *)PG_BITMAP_ADD;
+  int i = 0, j = 0;
+
+  while (i < PG_BITMAP_LG && bitmap[i] == 0xFF)
+    i++;
+
+  if (i >= PG_BITMAP_LG)
+    kpanic ("Not a single page available\n");
+
+  uint8_t value = bitmap[i];
+
+  while (value & 1) {
+    ++j;
+    value = value >> 1;
+  }
+
+  bitmap[i] = bitmap[i] | (1 << j);
+  --kSYS.pageAvailable_;
+  return (page_t)(uint32_t)((i * 8 + j) * PAGE_SIZE);
+}
+
 
 /* ----------------------------------------------------------------------- */
 int mmu_resolve (size_t address, page_t page, int access, bool zero)
@@ -64,31 +92,6 @@ int mmu_resolve (size_t address, page_t page, int access, bool zero)
 }
 
 
-/* ----------------------------------------------------------------------- */
-/** Allocat a single page for the system and return it's physical address */
-page_t mmu_newpage()
-{
-  static uint8_t *bitmap = (uint8_t *)PG_BITMAP_ADD;
-  int i = 0, j = 0;
-
-  while (i < PG_BITMAP_LG && bitmap[i] == 0xFF)
-    i++;
-
-  if (i >= PG_BITMAP_LG)
-    kpanic ("Not a single page available\n");
-
-  uint8_t value = bitmap[i];
-
-  while (value & 1) {
-    ++j;
-    value = value >> 1;
-  }
-
-  bitmap[i] = bitmap[i] | (1 << j);
-  --kSYS.pageAvailable_;
-  return (page_t)(uint32_t)((i * 8 + j) * PAGE_SIZE);
-}
-
 
 /* ----------------------------------------------------------------------- */
 /** Mark a single physique page, returned by mmu_newpage, as available again */
@@ -113,7 +116,7 @@ page_t mmu_newdir()
   page_t *table = (page_t *)MMU_PREALLOC_TBL;
   page_t *dir = (page_t *)MMU_PREALLOC_NEW;
   page_t page = mmu_newpage();
-  
+
   assert(kCPU.current_ != NULL);
   assert(kislocked(&kCPU.current_->process_->lock_));
 

@@ -8,7 +8,7 @@ uint64_t __udivmoddi4(uint64_t num, uint64_t den, uint64_t *rem_p)
   uint64_t quot = 0, qbit = 1;
 
   if ( den == 0 )
-    return 1/((unsigned)den); /* INT: divide by zero */
+    return 1 / ((unsigned)den); /* INT: divide by zero */
 
   /* Left-justify denominator and count shift */
   while ( (int64_t)den >= 0 ) {
@@ -50,6 +50,7 @@ int64_t __divdi3(int64_t num, int64_t den)
   }
 
   v = __udivmoddi4(num, den, NULL);
+
   if ( minus )
     v = -v;
 
@@ -73,7 +74,8 @@ int64_t __moddi3(int64_t num, int64_t den)
     minus ^= 1;
   }
 
-  __udivmoddi4(num, den, (uint64_t*)&v);
+  __udivmoddi4(num, den, (uint64_t *)&v);
+
   if ( minus )
     v = -v;
 
@@ -112,9 +114,15 @@ long long llabs (long long value)
   return ( value >= 0 ) ? value : -value;
 }
 
-typedef struct { int quot, rem; } div_t;
-typedef struct { long quot, rem; } ldiv_t;
-typedef struct { long long quot, rem; } lldiv_t;
+typedef struct {
+  int quot, rem;
+} div_t;
+typedef struct {
+  long quot, rem;
+} ldiv_t;
+typedef struct {
+  long long quot, rem;
+} lldiv_t;
 
 div_t div (int numer, int denom)
 {

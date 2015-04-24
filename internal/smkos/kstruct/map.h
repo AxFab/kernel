@@ -1,6 +1,30 @@
+/*
+ *      This file is part of the SmokeOS project.
+ *  Copyright (C) 2015  <Fabien Bavent>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Structure and macros for memory mapping module.
+ */
 #pragma once
+
 #include <smkos/kernel.h>
 
+
+/* ----------------------------------------------------------------------- */
 #define VMA_WRITE         0x002 ///< Pages can be written to
 #define VMA_EXEC          0x001 ///< Pages can be executed
 #define VMA_READ          0x004 ///< Pages can be read from
@@ -29,6 +53,7 @@
 #define VMA_TYPE        (VMA_SHM | VMA_FILE | VMA_HEAP | VMA_STACK)
 
 
+/* ----------------------------------------------------------------------- */
 #define PF_PROT   (1<<0)
 #define PF_WRITE  (1<<1)
 #define PF_USER   (1<<2)
@@ -36,6 +61,8 @@
 #define PF_INSTR  (1<<4)
 #define PF_KERN   (1<<8)
 
+
+/* ----------------------------------------------------------------------- */
 struct kMemArea {
   size_t address_;
   size_t offset_;
@@ -49,6 +76,8 @@ struct kMemArea {
   struct bbnode bbNode_;
 };
 
+
+/* ----------------------------------------------------------------------- */
 struct kMemSpace {
   size_t phyPages_;
   size_t vrtPages_;
@@ -62,3 +91,25 @@ struct kMemSpace {
   size_t limit_;
 };
 
+
+/* ----------------------------------------------------------------------- */
+struct kAssembly {
+  size_t entryPoint_;
+  kInode_t* ino_;
+  struct llhead sections_;
+  atomic_t usage_;
+};
+
+
+/* ----------------------------------------------------------------------- */
+struct kSection {
+  size_t address_;
+  size_t length_;
+  size_t align_;
+  size_t offset_;
+  struct llnode node_;
+  int flags_;
+};
+
+/* ----------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------- */

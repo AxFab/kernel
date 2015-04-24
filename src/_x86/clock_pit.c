@@ -1,5 +1,5 @@
 #include <smkos/kernel.h>
-#include <smkos/pio.h>
+#include <smkos/arch.h>
 
 #define MICROSEC_IN_SEC (1000 * 1000)
 #define PIT_CH0   0x40  // Channel 0 data port (read/write)

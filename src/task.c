@@ -19,8 +19,12 @@
  *
  *      Process, thread and session managment.
  */
-#include <smkos/core.h>
-#include <smkos/arch.h>
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
+#include <smkos/kstruct/task.h>
+#include <smkos/kstruct/user.h>
 
 /* ----------------------------------------------------------------------- */
 static kThread_t *alloc_thread(kProcess_t *process)

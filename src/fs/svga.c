@@ -1,6 +1,5 @@
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/pio.h>
+
+#include <smkos/kfs.h>
 
 
 #define SVGA_IO_CRTC_ADDRESS    0x3b4
@@ -14,19 +13,18 @@
 #define SVGA_IRQSTATUS_PORT     0x8
 
 
-struct SVGA_Device 
-{
+struct SVGA_Device {
   int ioBase_;
 };
 
 /* ======================================================================= */
-// static inline int SVGA_getRegister(struct SVGA_Device *dr, int idx) 
+// static inline int SVGA_getRegister(struct SVGA_Device *dr, int idx)
 // {
 //   outl(dr->ioBase_ + SVGA_INDEX_PORT, idx);
 //   return inl(dr->ioBase_ + SVGA_VALUE_PORT);
 // }
 
-// static inline void SVGA_setRegister(struct SVGA_Device *dr, int idx) 
+// static inline void SVGA_setRegister(struct SVGA_Device *dr, int idx)
 // {
 //   outl(dr->ioBase_ + SVGA_INDEX_PORT, idx);
 //   outl(dr->ioBase_ + SVGA_VALUE_PORT, idx);
@@ -49,9 +47,9 @@ void VGA_Info(size_t add, int width, int height, int depth)
 }
 
 
-int SVGA_map (kInode_t *ino, size_t offset, page_t *phys)
+int VGA_map (kInode_t *ino, size_t offset, page_t *phys)
 {
-  struct VGA_Frame* fr = (struct VGA_Frame*)ino->dev_->data_;
+  struct VGA_Frame *fr = (struct VGA_Frame *)ino->dev_->data_;
   *phys = fr->address_ + offset;
   return 0;
 }
@@ -59,18 +57,19 @@ int SVGA_map (kInode_t *ino, size_t offset, page_t *phys)
 
 
 /* ----------------------------------------------------------------------- */
-int SVGA_mount (kInode_t* dev, const char* name)
+int VGA_mount (kInode_t *dev, const char *name)
 {
   time_t now = time(NULL);
   struct SVGA_Device *device = kalloc(sizeof(struct SVGA_Device));
   device->ioBase_ = SVGA_IO_CRTC_ADDRESS;
 
   SMK_stat_t stat;
+
   if (dev != NULL)
     return ENODEV;
-  
+
   if (FB0.address_ != 0) {
-    stat.major_ = SVGA_No;
+    stat.major_ = VGA_No;
     stat.mode_ = S_IFBLK | 0755;
     stat.atime_ = now;
     stat.ctime_ = now;
@@ -88,17 +87,16 @@ int SVGA_mount (kInode_t* dev, const char* name)
   // kprintf ("   -> 2 %d \n", SVGA_getRegister(device, 2));
   // kprintf ("   -> 3 %d \n", SVGA_getRegister(device, 3));
   // kprintf ("   -> 5 %d \n", SVGA_getRegister(device, 5));
-  
+
   return 0;
 }
 
 /* ----------------------------------------------------------------------- */
-void SVGA(kDriver_t *driver)
+void VGA(kDriver_t *driver)
 {
-  driver->type_ = KDR_BK;
-  driver->major_ = SVGA_No;
-  driver->name_ = strdup("VGA/SVGA");
-  driver->mount = SVGA_mount;
-  driver->map = SVGA_map;
+  driver->major_ = VGA_No;
+  driver->name_ = strdup("VGA");
+  driver->mount = VGA_mount;
+  driver->map = VGA_map;
 }
 

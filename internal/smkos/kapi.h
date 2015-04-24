@@ -1,115 +1,29 @@
+/*
+ *      This file is part of the SmokeOS project.
+ *  Copyright (C) 2015  <Fabien Bavent>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      List of all inter-module functions.
+ */
 #pragma once
+
 #include <smkos/kernel.h>
-#include <smkos/memory.h>
-#include <smkos/io.h>
-
-
-#define CAP_SYSTEM    0xffff
-#define CAP_ADMIN    0xffff
-
-
-#define SCHED_ZOMBIE 0
-#define SCHED_SLEEP 1 // Can't be interrupted
-#define SCHED_BLOCKED 2 // Can be interupted
-#define SCHED_READY 3
-#define SCHED_EXEC 4
-#define SCHED_ABORT 5
-
-
-
-#define CAP_NOBODY 0
-#define CAP_EVERYBODY 1
-
-
-
-/* ----------------------------------------------------------------------- */
-struct kAssembly {
-  size_t entryPoint_;
-  kInode_t* ino_;
-  struct llhead sections_;
-  atomic_t usage_;
-};
-
-
-/* ----------------------------------------------------------------------- */
-struct kSection {
-  size_t address_;
-  size_t length_;
-  size_t align_;
-  size_t offset_;
-  struct llnode node_;
-  int flags_;
-};
-
-
-/* ----------------------------------------------------------------------- */
-struct kScheduler {
-  kThread_t        *anchor_;
-  struct spinlock lock_;
-  struct semaphore  taskSem_;
-  atomic_t          totalWeight_;
-};
-
-
-/* ----------------------------------------------------------------------- */
-struct kThread {
-  kProcess_t *process_;
-  kThread_t *schNext_;
-  struct llnode taskNd_;
-  kMemArea_t *kstack_;
-  kMemArea_t *ustack_;
-  int state_;
-  size_t paramValue_;
-  size_t paramEntry_;
-  time_t start_;
-  size_t stackPtr_;
-};
-
-
-/* ----------------------------------------------------------------------- */
-struct kSession {
-  kUser_t *user_;
-  kInode_t *workingDir_;
-  atomic_t usage_;
-};
-
-
-/* ----------------------------------------------------------------------- */
-struct kProcess {
-  kAssembly_t* assembly_;
-  kSession_t* session_;
-  time_t start_;
-  kMemSpace_t mspace_;
-  struct spinlock lock_;
-  struct llnode allNd_;
-  struct llnode siblingNd_;
-  struct llhead children_;
-  struct llhead threads_;
-  // kProcess_t *parent_;
-  int runningTask_;
-  page_t pageDir_;
-  int exitStatus_;
-  
-  int pagePrivate_;
-  int pageShared_;
-};
-
-
-/* ----------------------------------------------------------------------- */
-/** */
-struct kPipe 
-{
-  size_t rpen_; /**< Offset of the consumer(read) cursor */
-  size_t wpen_; /**< Offset of the producer(write) cursor */
-  size_t size_; /**< Total size of the buffer */
-  size_t avail_; /**< Byte available to reading */
-  struct spinlock lock_;
-  kMemArea_t* mmap_;
-};
-
-
-
-
+#include <smkos/arch.h>
+#include <smkos/stat.h>
 
 
 /* === ASSEMBLY ========================================================== */
@@ -117,6 +31,15 @@ struct kPipe
 void destroy_assembly (kAssembly_t *image);
 /** Read an image file and create the corresponding assembly.*/
 kAssembly_t *load_assembly (kInode_t *ino);
+
+
+/* === CPU =============================================================== */
+struct tm cpu_get_clock();
+void cpu_halt();
+void cpu_save_task(kThread_t *thread);
+void cpu_run_task(kThread_t *thread);
+void cpu_start_scheduler();
+void initialize_smp();
 
 
 /* === DEVICE ============================================================ */
@@ -166,6 +89,19 @@ int area_assembly (kMemSpace_t *sp, kAssembly_t* assembly);
 void scavenge_area(kMemSpace_t* sp);
 
 
+/* === MMU =============================================================== */
+page_t mmu_newdir();
+int mmu_resolve (size_t address, page_t page, int access, bool zero);
+page_t mmu_newpage();
+void mmu_load_env();
+void mmu_map_userspace(kMemSpace_t *sp);
+
+void mmu_prolog ();
+/** Function to inform paging module that some RAM can be used by the system. */
+void mmu_ram (int64_t base, int64_t length);
+int mmu_init ();
+
+
 /* === PAGE FAULT ======================================================== */
 int page_fault (size_t address, int cause);
 
@@ -195,4 +131,7 @@ kUser_t *search_user (const char *name, const char *domain);
 kUser_t *create_user(const char* username, int capacity);
 void destroy_user (kUser_t *user);
 
+
+/* ----------------------------------------------------------------------- */
+void kstacktrace(size_t MaxFrames);
 

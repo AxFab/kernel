@@ -1,6 +1,6 @@
 #include <smkos/kernel.h>
-#include <smkos/pio.h>
-#include <smkos/_compiler.h>
+#include <smkos/arch.h>
+#include <smkos/compiler.h>
 
 #define INTGATE  0x8E00     /**< used for interruptions */
 #define TRAPGATE 0xEF00     /**< used for system calls */
@@ -82,7 +82,7 @@ void IRQ15_Handler();
 void SysCall_Handler();
 void Interrupt_Handler();
 
-struct x86_TaskSs* i386_TssAddress = (struct x86_TaskSs*)0x1000;
+struct x86_TaskSs *i386_TssAddress = (struct x86_TaskSs *)0x1000;
 
 /* ----------------------------------------------------------------------- */
 /** Write an GDT entry on the table */

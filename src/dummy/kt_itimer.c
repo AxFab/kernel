@@ -1,14 +1,4 @@
-#include <smoke/syscall.h>
-
-int syscall_1A(void *a1, int no);
-int syscall_2A(void *a1, void *a2, int no);
-int syscall_3A(void *a1, void *a2, void *a3, int no);
-int syscall_4A(void *a1, void *a2, void *a3, void *a4, int no);
-
-#define SYSCALL1(n,a1)        syscall_1A((void*)(a1), n);
-#define SYSCALL2(n,a1,a2)     syscall_2A((void*)(a1), (void*)(a2), n);
-#define SYSCALL3(n,a1,a2,a3)  syscall_3A((void*)(a1), (void*)(a2), (void*)(a3), n);
-
+#include <smkos.h>
 
 
 int itimer(int miliseconds)

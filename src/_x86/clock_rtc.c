@@ -1,5 +1,5 @@
 #include <smkos/kernel.h>
-#include <smkos/pio.h>
+#include <smkos/arch.h>
 #include <time.h> /* struct tm */
 
 #define CURRENT_YEAR        2014

@@ -12,7 +12,7 @@
 
 // ---------------------------------------------------------------------------
 /** Write on a string streaming */
-static int _swrite (FILE *restrict fp, const char* restrict buf, size_t length)
+static int _swrite (FILE *restrict fp, const char *restrict buf, size_t length)
 {
   size_t lg = MIN (length, (size_t)(fp->wend_ - fp->wpos_));
   memcpy (fp->wpos_, buf, lg);
@@ -36,14 +36,14 @@ static inline int _vsnprintf(char *restrict str, size_t lg, const char *restrict
     .wend_ = str + lg,
   };
 
-  if (lg-1 > INT_MAX-1) {
+  if (lg - 1 > INT_MAX - 1) {
     errno = EOVERFLOW;
     return -1;
   } else if (!lg) {
     fp.wpos_ = &b;
     fp.wend_ = fp.wpos_++;
   } else if (fp.wend_ < fp.wpos_) {
-    fp.wend_ = (char*)SIZE_MAX;
+    fp.wend_ = (char *)SIZE_MAX;
   }
 
   res = vfprintf(&fp, format, ap);
@@ -184,9 +184,10 @@ int vasprintf(char **s, const char *format, va_list ap)
   int l = vfprintf(NULL, format, ap);
   va_end(ap2);
 
-  if (l<0 || !(*s = malloc_(l + 1)))
+  if (l < 0 || !(*s = malloc_(l + 1)))
     return -1;
-  return _vsnprintf(*s, l+1, format, ap);
+
+  return _vsnprintf(*s, l + 1, format, ap);
 }
 
 #endif

@@ -4,8 +4,9 @@
 /* ----------------------------------------------------------------------- */
 int isctype_(int c, int flg, locale_t local)
 {
-  if (c < 0 || c >= 128) 
+  if (c < 0 || c >= 128)
     return 0;
+
   return local[c].flags_ & flg;
 }
 
@@ -14,24 +15,27 @@ int isctype_(int c, int flg, locale_t local)
 /** checks for any printable character including space */
 int isprint (int c)
 {
-  if (c < 0 || c >= 128) 
+  if (c < 0 || c >= 128)
     return 0;
+
   return (_getLocale()[c].flags_ & CTYPE_GRAPH ) || ( c == ' ' );
 }
 
 /** convert to lowercase */
 int tolower (int c)
 {
-  if (c < 0 || c >= 128) 
+  if (c < 0 || c >= 128)
     return c;
+
   return _getLocale()[c].lower_;
 }
 
 /** convert to uppercase */
 int toupper (int c)
 {
-  if (c < 0 || c >= 128) 
+  if (c < 0 || c >= 128)
     return c;
+
   return _getLocale()[c].upper_;
 }
 
@@ -40,6 +44,7 @@ int toupper (int c)
 int isprint_l (int c, locale_t locale)
 {
   if (c < 0 || c >= 128) return 0;
+
   return (locale[c].flags_ & CTYPE_GRAPH ) || ( c == ' ' );
 }
 
@@ -47,6 +52,7 @@ int isprint_l (int c, locale_t locale)
 int tolower_l (int c, locale_t locale)
 {
   if (c < 0 || c >= 128) return c;
+
   return locale[c].lower_;
 }
 
@@ -54,6 +60,7 @@ int tolower_l (int c, locale_t locale)
 int toupper_l (int c, locale_t locale)
 {
   if (c < 0 || c >= 128) return c;
+
   return locale[c].upper_;
 }
 

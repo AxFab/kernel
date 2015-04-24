@@ -3,7 +3,7 @@
 #include <smkos/arch.h>
 
 #ifdef alloc_init
-void alloc_init() 
+void alloc_init()
 {
 }
 #endif

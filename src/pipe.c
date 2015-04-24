@@ -1,13 +1,8 @@
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-
-
-
-struct SMK_Event {
-  clock_t clock_;
-  int type_;
-  int value_;
-};
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
+#include <smkos/event.h>
 
 
 /* ----------------------------------------------------------------------- */

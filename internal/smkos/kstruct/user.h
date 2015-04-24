@@ -17,53 +17,43 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Atomical operations on an integer value.
+ *      Structure and macros for task managment module.
  */
 #pragma once
 
-typedef long atomic_t;
+#include <smkos/kernel.h>
 
 
 /* ----------------------------------------------------------------------- */
-static inline void atomic_inc (volatile atomic_t* ref)
+
+#define CAP_SYSTEM    0xffff
+#define CAP_ADMIN    0xffff
+
+
+#define CAP_NOBODY 0
+#define CAP_EVERYBODY 1
+
+
+
+
+/* ----------------------------------------------------------------------- */
+struct kSession {
+  kUser_t *user_;
+  kInode_t *workingDir_;
+  atomic_t usage_;
+};
+
+
+/* ----------------------------------------------------------------------- */
+struct kUser
 {
-  volatile long tmp;
-  asm volatile ("fetchadd8.rel %0=[%1],1"
-                : "=r"(tmp) : "r"(ref): "memory");
-}
+  const char* name_;
+  int capacity_;
+  int processCount_;
+  struct llnode allNd_;
+};
 
 
-/* ----------------------------------------------------------------------- */
-static inline void atomic_dec (volatile atomic_t* ref)
-{
-  volatile long tmp;
-  asm volatile ("fetchadd8.rel %0=[%1],-1"
-                : "=r"(tmp) : "r"(ref): "memory");
-}
-
-
-/* ----------------------------------------------------------------------- */
-static inline atomic_t atomic_xchg (volatile atomic_t* ref, atomic_t val)
-{
-  asm volatile ("xchg8 %0=[%1],%0 "
-                :"=r"(res): "r"(ref) : "memory");
-}
-
-
-/* ----------------------------------------------------------------------- */
-static inline atomic_t atomic_add(volatile atomic_t *ref, atomic_t val)
-{
-  volatile long tmp;
-  asm volatile ("fetchadd8.rel %0=[%1],%2"
-                : "=r"(tmp) : "r"(ref), "i"(val) : "memory");
-  return tmp ;
-}
-
-
-/* ----------------------------------------------------------------------- */
-static inline void cli() { asm volatile("cli"); }
-static inline void sti() { asm volatile("sti"); }
-static inline void cpause() { asm volatile("pause"); }
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

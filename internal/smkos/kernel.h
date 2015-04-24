@@ -38,8 +38,9 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include <smkos/_spec.h>
-#include <smkos/_assert.h>
+// #include <smkos/_spec.h>
+
+#include <smkos/assert.h>
 #include <smkos/atomic.h>
 #include <smkos/llist.h>
 #include <smkos/bbtree.h>
@@ -156,4 +157,7 @@ static inline void kernel_state(enum kState state)
   kCPU.lastClock_ = now;
 }
 
-
+char* strdup(const char*);
+int strcmpi (const char* str1, const char* str2);
+unsigned long long strtoull(const char*, char**, int);
+#define exit_() assert(0)

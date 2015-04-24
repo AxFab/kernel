@@ -13,7 +13,7 @@
 
 // ---------------------------------------------------------------------------
 /** Read from a string streaming */
-static int _sread(FILE *restrict fp, char* restrict buf, size_t length)
+static int _sread(FILE *restrict fp, char *restrict buf, size_t length)
 {
   size_t lg = MIN (length, fp->rend_ - fp->rpos_);
   memcpy (buf, fp->rpos_, lg);
@@ -67,8 +67,8 @@ int sscanf(const char *restrict str, const char *restrict format, ...)
   va_list ap;
   va_start(ap, format);
   FILE fp = {
-    .rpos_ = (char*)str,
-    .rend_ = (char*)SIZE_MAX,
+    .rpos_ = (char *)str,
+    .rend_ = (char *)SIZE_MAX,
     .read_ = _sread,
     .lock_ = -1
   };
@@ -83,8 +83,8 @@ int sscanf(const char *restrict str, const char *restrict format, ...)
 int vsscanf(const char *restrict str, const char *restrict format, va_list ap)
 {
   FILE fp = {
-    .rpos_ = (char*)str,
-    .rend_ = (char*)SIZE_MAX,
+    .rpos_ = (char *)str,
+    .rend_ = (char *)SIZE_MAX,
     .read_ = _sread,
     .lock_ = -1
   };

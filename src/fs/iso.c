@@ -19,11 +19,7 @@
  *
  *      File system driver ISO 9660.
  */
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/io.h>
-#include <smkos/memory.h>
-#include <smkos/_compiler.h>
+#include <smkos/kfs.h>
 
 
 /* Identificators for volume descriptors */
@@ -101,7 +97,7 @@ PACK(struct ISO_descFirst {
 struct ISO_info {
   time_t      created;
   char        bootable;
-  char*       name;
+  char       *name;
   int         lbaroot;
   int         lgthroot;
   int         sectorCount;
@@ -110,7 +106,7 @@ struct ISO_info {
 
 
 /* ----------------------------------------------------------------------- */
-int ISO_mount (kInode_t* dev, const char* name)
+int ISO_mount (kInode_t *dev, const char *name)
 {
   int i;
   int inDesc = 1;
@@ -121,7 +117,7 @@ int ISO_mount (kInode_t* dev, const char* name)
   struct ISO_descFirst *firstDesc;
   struct ISO_info *volume = NULL;
   SMK_stat_t stat;
-  kMemArea_t* area;
+  kMemArea_t *area;
   time_t now = time(NULL);
 
   if (dev == NULL || !S_ISBLK(dev->stat_.mode_) || dev->stat_.block_ != 2048)
@@ -130,8 +126,8 @@ int ISO_mount (kInode_t* dev, const char* name)
   while (inDesc) {
 
     area = area_map_ino(kSYS.mspace_, dev, sec * 2048, 2048, 0);
-    address = (uint8_t*)area->address_ + (sec * 2048 - area->offset_);
-    addressInt = (uint32_t*)address;
+    address = (uint8_t *)area->address_ + (sec * 2048 - area->offset_);
+    addressInt = (uint32_t *)address;
     // kdump (address, 64);
 
     if ((addressInt[0] & 0xFFFFFF00) != ISO9660_STD_ID1 ||
@@ -139,6 +135,7 @@ int ISO_mount (kInode_t* dev, const char* name)
         (address[0] != ISO9660_VOLDESC_PRIM && !volume)) {
       if (volume)
         kfree (volume);
+
       area_unmap(kSYS.mspace_, area);
       return EBADF;
     }
@@ -181,9 +178,11 @@ int ISO_mount (kInode_t* dev, const char* name)
       break;
 
     default:
+
       // kprintf ("iso9660] Bad volume descriptor id %d\n", buf[0]);
       if (volume)
         kfree (volume);
+
       area_unmap(kSYS.mspace_, area);
       return ENOSYS;
     }
@@ -214,43 +213,43 @@ int ISO_mount (kInode_t* dev, const char* name)
 /* ----------------------------------------------------------------------- */
 // int ISO_readdir (const _pFileNode fn) {
 
-  // _Error err;
-  // _pByte buff = (_pByte)kalloc (2048, 0);
-  // _Iso9660_FileInfo nInfo;
-  // _pIso9660_FileInfo pInfo = (_pIso9660_FileInfo)fn;
-  // _pIso9660_Directory dir = (_pIso9660_Directory)buff;
-  // nInfo.structSize = sizeof (_Iso9660_FileInfo);
-  // err = STO_readSectors (buff, pInfo->lba, 0, 1); //FS_Infos->lbaroot
-  // if (err) {
-  //   kfree (buff);
-  //   return err;
-  // }
+// _Error err;
+// _pByte buff = (_pByte)kalloc (2048, 0);
+// _Iso9660_FileInfo nInfo;
+// _pIso9660_FileInfo pInfo = (_pIso9660_FileInfo)fn;
+// _pIso9660_Directory dir = (_pIso9660_Directory)buff;
+// nInfo.structSize = sizeof (_Iso9660_FileInfo);
+// err = STO_readSectors (buff, pInfo->lba, 0, 1); //FS_Infos->lbaroot
+// if (err) {
+//   kfree (buff);
+//   return err;
+// }
 
-  // while (dir->lengthRecord) {
-  //   // The first 2 are usaly '.' and '..' hard link
-  //   if (dir->locExtendLE == pInfo->lba || dir->locExtendLE == pInfo->parentLba) {
-  //     dir = (_pIso9660_Directory)&(((_pByte)dir)[dir->lengthRecord]);
-  //     continue;
-  //   }
-  //   nInfo.attribute = (dir->fileFlag & 0x2 ? _FsysNode_Directory_ : 0);
-  //   nInfo.rights = _FsysRight_All_;
-  //   nInfo.length = dir->dataLengthLE;
-  //   nInfo.lba = dir->locExtendLE;
-  //   nInfo.parentLba = pInfo->lba;
-  //   err = Fsys_RegisterFile (dir->fileId, (_pFileNode)&nInfo);
-  //   if (err) {
-  //     kfree (buff);
-  //     return err;
-  //   }
-  //   dir = (_pIso9660_Directory)&(((_pByte)dir)[dir->lengthRecord]);
-  // }
-  // kfree (buff);
-  // return __Err_None_;
+// while (dir->lengthRecord) {
+//   // The first 2 are usaly '.' and '..' hard link
+//   if (dir->locExtendLE == pInfo->lba || dir->locExtendLE == pInfo->parentLba) {
+//     dir = (_pIso9660_Directory)&(((_pByte)dir)[dir->lengthRecord]);
+//     continue;
+//   }
+//   nInfo.attribute = (dir->fileFlag & 0x2 ? _FsysNode_Directory_ : 0);
+//   nInfo.rights = _FsysRight_All_;
+//   nInfo.length = dir->dataLengthLE;
+//   nInfo.lba = dir->locExtendLE;
+//   nInfo.parentLba = pInfo->lba;
+//   err = Fsys_RegisterFile (dir->fileId, (_pFileNode)&nInfo);
+//   if (err) {
+//     kfree (buff);
+//     return err;
+//   }
+//   dir = (_pIso9660_Directory)&(((_pByte)dir)[dir->lengthRecord]);
+// }
+// kfree (buff);
+// return __Err_None_;
 // }
 
 
 /* ----------------------------------------------------------------------- */
-int ISO_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
+int ISO_read(kInode_t *fp, void *buffer, size_t length, size_t offset)
 {
   return fs_block_read(fp->dev_->underlyingDev_, buffer, length, fp->stat_.lba_ * 2048 + offset);
 }
@@ -265,13 +264,13 @@ int ISO_lookup (const char *name, kInode_t *dir, SMK_stat_t *stat)
   struct ISO_dirEntry *entry;
   // struct ISO_info* volume = (struct ISO_info*)dir->dev_->data_;
   uint8_t *address;
-  kMemArea_t* area;
+  kMemArea_t *area;
 
   // kprintf ("iso9660] Search %s on dir at lba[%x]\n", name, sec);
   // kprintf ("iso9660] Read sector %d on %s \n", sec, dir->name_);
 
   area = area_map_ino(kSYS.mspace_, dir->dev_->underlyingDev_->dev_->ino_, sec * 2048, 2048, 0);
-  address = (uint8_t*)area->address_ + (sec * 2048 - area->offset_);
+  address = (uint8_t *)area->address_ + (sec * 2048 - area->offset_);
 
   //if (KLOG_FS) kprintf ("iso9660] Done\n");
 
@@ -314,7 +313,6 @@ int ISO_lookup (const char *name, kInode_t *dir, SMK_stat_t *stat)
 /* ----------------------------------------------------------------------- */
 void ISO9660(kDriver_t *driver)
 {
-  driver->type_ = KDR_FS;
   driver->major_ = ISO_No;
   driver->name_ = strdup("iso9660");
   driver->mount = ISO_mount;

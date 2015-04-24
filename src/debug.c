@@ -1,7 +1,9 @@
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/_spec.h>
-#include <smkos/_types.h>
+#include <smkos/kapi.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
+// #include <smkos/core.h>
+// #include <smkos/_spec.h>
+// #include <smkos/_types.h>
 
 
 // ----------------------------------------------------------------------------

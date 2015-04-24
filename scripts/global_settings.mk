@@ -60,10 +60,10 @@ ALL_INC += $(wildcard include/*/*.hpp)
 # *** 3rdParty Libraries ***
 AXLIBC = $(ORIGIN_DIR)/3rdparty/axlibc
 
+
 INC  = -I $(ORIGIN_DIR)/include -I $(ORIGIN_DIR)/include/_x86
+INC += -I $(ORIGIN_DIR)/internal -I $(ORIGIN_DIR)/internal/_x86
 INC += -I $(AXLIBC)/include/ -I $(AXLIBC)/internal/
-
-
 
 
 DEF  = -D_DATE_=\"'$(date)'\" -D_OSNAME_=\"'$(linuxname)'\" 

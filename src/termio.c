@@ -1,5 +1,6 @@
-#include <smkos/kernel.h>
-#include <smkos/core.h>
+#include <smkos/kapi.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
 
 struct kTty {
 
@@ -14,7 +15,7 @@ void _kwrite_font64(const char *m)
 }
 
 /* ----------------------------------------------------------------------- */
-int ktty(kInode_t* ino)
+void ktty(kInode_t* ino)
 {
   int idx;
   kMemArea_t* area;
@@ -23,7 +24,7 @@ int ktty(kInode_t* ino)
 
   area = area_map_ino(kSYS.mspace_, ino, 0, ino->stat_.length_, 0);
   pixels = (unsigned int*)area->address_;
-  for (idx = 0; idx < (ino->stat_.length_ / 4); idx++) {
+  for (idx = 0; idx < (int)(ino->stat_.length_ / 4); idx++) {
     pixels[idx] = 0x181818; 
   }
 
@@ -36,10 +37,10 @@ int ktty(kInode_t* ino)
 
 void ascii_cmd(const char **m)
 {
-  int idx = 0;
-  char sign;
-  char *mL;
-  int values[5];
+  // int idx = 0;
+  // char sign;
+  // char *mL;
+  // int values[5];
 
   for (;;) {
 

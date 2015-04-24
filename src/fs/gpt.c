@@ -19,11 +19,7 @@
  *
  *      Driver for MBR and GPT.
  */
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/io.h>
-#include <smkos/memory.h>
-#include <smkos/_compiler.h>
+#include <smkos/kfs.h>
 
 PACK(struct GPT_mbrEntry {
   char status_;
@@ -37,20 +33,22 @@ PACK(struct GPT_mbrEntry {
 int GPT_count = 0;
 
 /* ----------------------------------------------------------------------- */
-int GPT_mount (kInode_t* dev, const char* name)
+int GPT_mount (kInode_t *dev, const char *name)
 {
   int idx;
   char subname [10];
   SMK_stat_t stat;
-  struct GPT_mbrEntry* entry;
-  unsigned char* address;
-  kMemArea_t* area;
+  struct GPT_mbrEntry *entry;
+  unsigned char *address;
+  kMemArea_t *area;
   time_t now = time(NULL);
+
   if (dev == NULL || !S_ISBLK(dev->stat_.mode_) || dev->stat_.block_ != 512)
     return ENODEV;
 
   area = area_map_ino(kSYS.mspace_, dev, 0, 512, 0);
-  address = (unsigned char*)area->address_;
+  address = (unsigned char *)area->address_;
+
   if (address[510] != 0x55 || address[511] != 0xAA) {
     area_unmap(kSYS.mspace_, area);
     return ENOSYS;
@@ -62,7 +60,8 @@ int GPT_mount (kInode_t* dev, const char* name)
   stat.mtime_ = now;
   stat.block_ = dev->stat_.block_;
 
-  entry = (struct GPT_mbrEntry*)&address[446];
+  entry = (struct GPT_mbrEntry *)&address[446];
+
   for (idx = 0; idx < 4; ++idx, ++entry) {
     if (entry->sectors_ == 0)
       continue;
@@ -82,7 +81,7 @@ int GPT_mount (kInode_t* dev, const char* name)
 
 
 /* ----------------------------------------------------------------------- */
-int GPT_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
+int GPT_read(kInode_t *fp, void *buffer, size_t length, size_t offset)
 {
   return fs_block_read(fp->dev_->underlyingDev_, buffer, length, fp->stat_.lba_ * fp->stat_.block_ + offset);
 }
@@ -91,7 +90,6 @@ int GPT_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
 /* ----------------------------------------------------------------------- */
 void GPT(kDriver_t *driver)
 {
-  driver->type_ = KDR_BK;
   driver->major_ = GPT_No;
   driver->name_ = strdup("gpt/mbr");
   driver->mount = GPT_mount;

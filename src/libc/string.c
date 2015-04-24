@@ -1,4 +1,4 @@
-#include <string.h> 
+#include <string.h>
 #include <stdint.h>
 
 
@@ -8,7 +8,7 @@
 
 static char _strerror_tmp[LINE_MAX];
 
-static char* errMsgs[] = {
+static char *errMsgs[] = {
   "",
   "Operation not permitted", // EPERM
   "No such file or directory",
@@ -143,7 +143,7 @@ static char* errMsgs[] = {
 
 
 
-static const char* strerror_p ( int err )
+static const char *strerror_p ( int err )
 {
   if ( err == 0 ) {
     return "No error";
@@ -153,22 +153,23 @@ static const char* strerror_p ( int err )
 
 
   switch ( grp ) {
-    case 0:
+  case 0:
     // TODO ERANGE, try with sizeof !
     return errMsgs[err];
 
-    default:
-      return "Unknown Error";
+  default:
+    return "Unknown Error";
   }
 }
 
 /**
  * @brief Set a suite of bits on a single byte
  */
-int bsetbyte (uint8_t* byte, int off, int lg)
+int bsetbyte (uint8_t *byte, int off, int lg)
 {
   uint8_t v = byte[0];
   int mask = (0xFF << off) & 0xFF;
+
   if (lg + off < 8) {
     mask = (mask & ~(0xFF << (off + lg))) & 0xFF;
   }
@@ -180,10 +181,11 @@ int bsetbyte (uint8_t* byte, int off, int lg)
 /**
  * @brief Clear a suite of bits on a single byte
  */
-int bclearbyte (uint8_t* byte, int off, int lg)
+int bclearbyte (uint8_t *byte, int off, int lg)
 {
   uint8_t v = byte[0];
   int mask = (0xFF << off) & 0xFF;
+
   if (lg + off < 8) {
     mask = (mask & ~(0xFF << (off + lg))) & 0xFF;
   }
@@ -195,11 +197,12 @@ int bclearbyte (uint8_t* byte, int off, int lg)
 /**
  * @brief Set a suite of bits on a byte map
  */
-int bsetbytes (uint8_t* table, int offset, int length)
+int bsetbytes (uint8_t *table, int offset, int length)
 {
   int ox = offset / 8;
   int oy = offset % 8;
   int r = 0;
+
   if (oy != 0 || length < 8) {
     if (length + oy < 8) {
       r |= bsetbyte(&table[ox], oy, length);
@@ -208,6 +211,7 @@ int bsetbytes (uint8_t* table, int offset, int length)
       r |= bsetbyte(&table[ox], oy, 8 - oy);
       length -= 8 - oy;
     }
+
     ox++;
   }
 
@@ -221,17 +225,19 @@ int bsetbytes (uint8_t* table, int offset, int length)
   if (length > 0) {
     r |= bsetbyte(&table[ox], 0, length);
   }
+
   return r;
 }
 
 
 /* ----------------------------------------------------------------------- */
 /** Unset a suite of bits on a byte map. */
-int bclearbytes (uint8_t* table, int offset, int length)
+int bclearbytes (uint8_t *table, int offset, int length)
 {
   int ox = offset / 8;
   int oy = offset % 8;
   int r = 0;
+
   if (oy != 0 || length < 8) {
     if (length + oy < 8) {
       r |= bclearbyte(&table[ox], oy, length);
@@ -240,6 +246,7 @@ int bclearbytes (uint8_t* table, int offset, int length)
       r |= bclearbyte(&table[ox], oy, 8 - oy);
       length -= 8 - oy;
     }
+
     ox++;
   }
 
@@ -253,16 +260,17 @@ int bclearbytes (uint8_t* table, int offset, int length)
   if (length > 0) {
     r |= bclearbyte(&table[ox], 0, length);
   }
+
   return r;
 }
 
 
 /* ----------------------------------------------------------------------- */
 /** Copy block of memory */
-void* memcpy ( void* dest, const void* src, size_t length )
+void *memcpy ( void *dest, const void *src, size_t length )
 {
-  register uint8_t* ptr1 = ( uint8_t* ) dest;
-  register const uint8_t* ptr2 = ( const uint8_t* ) src;
+  register uint8_t *ptr1 = ( uint8_t * ) dest;
+  register const uint8_t *ptr2 = ( const uint8_t * ) src;
 
   while (length--) {
     *ptr1++ = *ptr2++;
@@ -273,10 +281,10 @@ void* memcpy ( void* dest, const void* src, size_t length )
 
 /* ----------------------------------------------------------------------- */
 /** Copy source buffer to destination buffer */
-void* memmove ( void* dest, const void* src, size_t length )
+void *memmove ( void *dest, const void *src, size_t length )
 {
-  register uint8_t* ptr1 = ( uint8_t* ) dest;
-  register const uint8_t* ptr2 = ( const uint8_t* ) src;
+  register uint8_t *ptr1 = ( uint8_t * ) dest;
+  register const uint8_t *ptr2 = ( const uint8_t * ) src;
 
   if ( ptr1 >= ptr2 || ptr1 >= ptr2 + length ) {
     while (length--) {
@@ -296,10 +304,10 @@ void* memmove ( void* dest, const void* src, size_t length )
 
 /* ----------------------------------------------------------------------- */
 /** Compare two blocks of memory */
-int memcmp ( const void* dest, const void* src, size_t length )
+int memcmp ( const void *dest, const void *src, size_t length )
 {
-  register const uint8_t* ptr1 = ( const uint8_t* ) dest;
-  register const uint8_t* ptr2 = ( const uint8_t* ) src;
+  register const uint8_t *ptr1 = ( const uint8_t * ) dest;
+  register const uint8_t *ptr2 = ( const uint8_t * ) src;
 
   while ( --length && *ptr1 == *ptr2 ) {
     ++ptr1;
@@ -311,23 +319,23 @@ int memcmp ( const void* dest, const void* src, size_t length )
 
 /* ----------------------------------------------------------------------- */
 /** Search a character into a block of memory */
-void* memchr ( const void* ptr, int chr, size_t length )
+void *memchr ( const void *ptr, int chr, size_t length )
 {
-  register const uint8_t* ptr0 = ( const uint8_t* ) ptr;
+  register const uint8_t *ptr0 = ( const uint8_t * ) ptr;
 
   while ( length > 0 && ( *ptr0 != ( uint8_t ) chr ) ) {
     ++ptr0;
     --length;
   }
 
-  return ( void* ) ( length ? ptr0 : 0 );
+  return ( void * ) ( length ? ptr0 : 0 );
 }
 
 /* ----------------------------------------------------------------------- */
 /** Set all byte of a block of memory to the same value */
-void* memset ( void* ptr, int val, size_t length )
+void *memset ( void *ptr, int val, size_t length )
 {
-  register uint8_t* org = ( uint8_t* ) ptr;
+  register uint8_t *org = ( uint8_t * ) ptr;
 
   while (length--) {
     *org++ = ( uint8_t ) val;
@@ -338,11 +346,13 @@ void* memset ( void* ptr, int val, size_t length )
 
 
 /* Copy error string on the buffer */
-int strerror_r (int err, char* buffer, size_t length)
+int strerror_r (int err, char *buffer, size_t length)
 {
-  const char* str;
+  const char *str;
+
   if (buffer == NULL || length == 0)
     return -1;
+
   str = strerror_p ( err );
   strncpy ( buffer, str, length );
   return strlen(str) <= length ? 0 : -1;
@@ -350,22 +360,22 @@ int strerror_r (int err, char* buffer, size_t length)
 
 
 /* Copy error string on the buffer */
-void strerror_s ( char* str, size_t length, int err )
+void strerror_s ( char *str, size_t length, int err )
 {
   strncpy ( str, strerror_p ( err ), length );
 }
 
 
 /* Return error string */
-char* strerror ( int err )
+char *strerror ( int err )
 {
   return strncpy ( _strerror_tmp, strerror_p ( err ), LINE_MAX );
 }
 
 /* return length of a null-terminated char string */
-size_t strlen ( const char* str )
+size_t strlen ( const char *str )
 {
-  register const char* end = str;
+  register const char *end = str;
 
   while ( *end ) {
     ++end;
@@ -375,7 +385,7 @@ size_t strlen ( const char* str )
 }
 
 /* return length of a null-terminated char string */
-size_t strnlen ( const char* str, size_t length )
+size_t strnlen ( const char *str, size_t length )
 {
   register size_t count;
 
@@ -387,87 +397,87 @@ size_t strnlen ( const char* str, size_t length )
 
 
 // Copy a null-terminated char string
-char* strcpy ( char* dest, const char* src )
+char *strcpy ( char *dest, const char *src )
 {
-    register char* ptr1 = ( char* ) dest;
-    register const char* ptr2 = ( const char* ) src;
+  register char *ptr1 = ( char * ) dest;
+  register const char *ptr2 = ( const char * ) src;
 
-    while ( ( *ptr1++ = *ptr2++ ) );
+  while ( ( *ptr1++ = *ptr2++ ) );
 
-    return dest;
+  return dest;
 }
 
 // Copy a char string
-char* strncpy ( char* dest, const char* src, size_t length )
+char *strncpy ( char *dest, const char *src, size_t length )
 {
-    register char* ptr1 = ( char* ) dest;
-    register const char* ptr2 = ( const char* ) src;
+  register char *ptr1 = ( char * ) dest;
+  register const char *ptr2 = ( const char * ) src;
 
-    while ( length-- > 0 && ( *ptr1++ = *ptr2++ ) );
+  while ( length-- > 0 && ( *ptr1++ = *ptr2++ ) );
 
-    return dest;
+  return dest;
 }
 
 // Concat two null-terminated char strings
-char* strcat ( char* dest, const char* src )
+char *strcat ( char *dest, const char *src )
 {
-    register char* ptr1 = ( char* ) dest;
-    register const char* ptr2 = ( const char* ) src;
+  register char *ptr1 = ( char * ) dest;
+  register const char *ptr2 = ( const char * ) src;
 
-    while ( *ptr1 ) {
-        ++ptr1;
-    }
+  while ( *ptr1 ) {
+    ++ptr1;
+  }
 
-    while ( ( *ptr1++ = *ptr2++ ) );
+  while ( ( *ptr1++ = *ptr2++ ) );
 
-    return dest;
+  return dest;
 }
 
 // Concat two null-terminated char strings
-char* strncat ( char* dest, const char* src, size_t length )
+char *strncat ( char *dest, const char *src, size_t length )
 {
-    register char* ptr1 = ( char* ) dest;
-    register const char* ptr2 = ( const char* ) src;
+  register char *ptr1 = ( char * ) dest;
+  register const char *ptr2 = ( const char * ) src;
 
-    while ( *ptr1 ) {
-        ++ptr1;
-    }
+  while ( *ptr1 ) {
+    ++ptr1;
+  }
 
-    while ( length-- > 0 && ( *ptr1++ = *ptr2++ ) );
+  while ( length-- > 0 && ( *ptr1++ = *ptr2++ ) );
 
-    return dest;
+  return dest;
 }
 
 // Compare two null-terminated char strings
-int strcmp ( const char* str1, const char* str2 )
+int strcmp ( const char *str1, const char *str2 )
 {
-    while ( *str1 && ( *str1 == *str2 ) ) {
-        ++str1;
-        ++str2;
-    }
+  while ( *str1 && ( *str1 == *str2 ) ) {
+    ++str1;
+    ++str2;
+  }
 
-    return *str1 - *str2;
+  return *str1 - *str2;
 }
 
 // Compare two char strings
-int strncmp ( const char* str1, const char* str2, size_t length )
+int strncmp ( const char *str1, const char *str2, size_t length )
 {
-    while ( --length && *str1 && *str1 == *str2 ) {
-        ++str1;
-        ++str2;
-    }
+  while ( --length && *str1 && *str1 == *str2 ) {
+    ++str1;
+    ++str2;
+  }
 
-    return *str1 - *str2;
+  return *str1 - *str2;
 }
 
 
 // ---------------------------------------------------------------------------
 // Search a string for a character
-char* strchr (const char* string, int ch)
+char *strchr (const char *string, int ch)
 {
   while (*string) {
     if (*string == (char) ch) {
-      return (char*) string;
+      return (char *) string;
     }
 
     string++;
@@ -478,12 +488,13 @@ char* strchr (const char* string, int ch)
 
 // ---------------------------------------------------------------------------
 // Search a string for a character
-char* strrchr (const char* string, int ch)
+char *strrchr (const char *string, int ch)
 {
-  int lg = strlen (string) -1;
+  int lg = strlen (string) - 1;
+
   for (; lg >= 0; --lg) {
     if (string[lg] == (char) ch) {
-      return (char*) string;
+      return (char *) string;
     }
   }
 
@@ -493,72 +504,72 @@ char* strrchr (const char* string, int ch)
 
 // ---------------------------------------------------------------------------
 // Split string into tokens - reentrent (TODO suppress goto and that is not the best way)
-char* strtok_r ( register char* s, register const char* delim, char** lasts )
+char *strtok_r ( register char *s, register const char *delim, char **lasts )
 {
-    int skip_leading_delim = 1;
-    register char* spanp;
-    register int c, sc;
-    char* tok;
+  int skip_leading_delim = 1;
+  register char *spanp;
+  register int c, sc;
+  char *tok;
 
-    if ( s == NULL && ( s = *lasts ) == NULL ) {
-        return NULL;
-    }
+  if ( s == NULL && ( s = *lasts ) == NULL ) {
+    return NULL;
+  }
 
-    /*
-     * Skip (span) leading delimiters (s += strspn(s, delim), sort of).
-     */
+  /*
+   * Skip (span) leading delimiters (s += strspn(s, delim), sort of).
+   */
 cont:
+  c = *s++;
+
+  for ( spanp = ( char * ) delim; ( sc = *spanp++ ) != 0; ) {
+    if ( c == sc ) {
+      if ( skip_leading_delim ) {
+        goto cont;
+      } else {
+        *lasts = s;
+        s[-1] = 0;
+        return ( s - 1 );
+      }
+    }
+  }
+
+  if ( c == 0 ) {      /* no non-delimiter characters */
+    *lasts = NULL;
+    return NULL;
+  }
+
+  tok = s - 1;
+
+  /*
+   * Scan token (scan for delimiters: s += strcspn(s, delim), sort of).
+   * Note that delim must have one NUL; we stop if we see that, too.
+   */
+  for ( ;; ) {
     c = *s++;
+    spanp = ( char * ) delim;
 
-    for ( spanp = ( char* ) delim; ( sc = *spanp++ ) != 0; ) {
-        if ( c == sc ) {
-            if ( skip_leading_delim ) {
-                goto cont;
-            } else {
-                *lasts = s;
-                s[-1] = 0;
-                return ( s - 1 );
-            }
+    do {
+      if ( ( sc = *spanp++ ) == c ) {
+        if ( c == 0 ) {
+          s = NULL;
+        } else {
+          s[-1] = 0;
         }
-    }
 
-    if ( c == 0 ) {      /* no non-delimiter characters */
-        *lasts = NULL;
-        return NULL;
-    }
+        *lasts = s;
+        return ( tok );
+      }
+    } while ( sc != 0 );
+  }
 
-    tok = s - 1;
-
-    /*
-     * Scan token (scan for delimiters: s += strcspn(s, delim), sort of).
-     * Note that delim must have one NUL; we stop if we see that, too.
-     */
-    for ( ;; ) {
-        c = *s++;
-        spanp = ( char* ) delim;
-
-        do {
-            if ( ( sc = *spanp++ ) == c ) {
-                if ( c == 0 ) {
-                    s = NULL;
-                } else {
-                    s[-1] = 0;
-                }
-
-                *lasts = s;
-                return ( tok );
-            }
-        } while ( sc != 0 );
-    }
-
-    /* NOTREACHED */
+  /* NOTREACHED */
 }
 
-static char* strtok_reent = 0;
+static char *strtok_reent = 0;
 
 // Split string into tokens
-char* strtok ( register char* string , register const char* delimitors )
+char *strtok ( register char *string , register const char *delimitors )
 {
-    return strtok_r ( string, delimitors, &strtok_reent );
+  return strtok_r ( string, delimitors, &strtok_reent );
 }
 

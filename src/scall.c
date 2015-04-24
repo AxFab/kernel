@@ -20,8 +20,13 @@
  *      Open and Load assembly file.
  */
 #include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/scall.h>
+// #include <smkos/core.h>
+#include <smkos/kapi.h>
+#include <smkos/sysapi.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
+#include <smkos/kstruct/task.h>
+#include <smkos/kstruct/user.h>
 
 typedef int(*kScHandler)(size_t p1, size_t p2, size_t p3, size_t p4, size_t p5);
 #define SYS_CALL_ENTRY(n,f)  [n] = ((kScHandler)(f))
@@ -47,6 +52,7 @@ int sys_exit(int errcode, int pid)
   if (kCPU.current_)
     process_exit(kCPU.current_->process_, 0);
   sched_next(kSYS.scheduler_);
+  return EAGAIN;
 }
 
 int sys_mmap(int fd, size_t address, size_t length, int flags)
@@ -54,6 +60,7 @@ int sys_mmap(int fd, size_t address, size_t length, int flags)
   // GET Inode of FD
   // Check MMAP Rights
   // Map on kProcess
+  return ENOSYS;
 }
 
 

@@ -19,7 +19,9 @@
  *
  *      Virtual memory area managment.
  */
-#include <smkos/core.h>
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/map.h>
 
 /* ----------------------------------------------------------------------- */
 /** */

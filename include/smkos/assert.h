@@ -1,7 +1,5 @@
 #pragma once
 
-#include <smkos/_types.h>
-
 /* Define some useful macros */
 #define _Kb_ (1024L)
 #define _Mb_ (1024L*_Kb_)
@@ -21,13 +19,10 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define __AT__  __FILE__ ":" TOSTRING(__LINE__)
 
+
 #if 0
 #  define assert(e) ((void)0)
 #  define DEBUG(c)  ((void)0)
-#elif 0
-#  define assert(e)   ((e) ? ((void)0) : __assert_fail(#e, __AT__))
-#  define DEBUG(c)    do { c } while(0)
-void __assert_fail(const char *ex, const char *at);
 #else
 #  define assert(e)   __assert_do(e,#e, __AT__)
 #  define DEBUG(c)    do { c } while(0)
@@ -35,16 +30,7 @@ void __assert_do(int as, const char *ex, const char *at);
 #endif
 
 
+/* Interface to get cpu_no() -- should precced kernel.h */
 int cpu_no();
 #define kCpuNo cpu_no()
-
-#define KLOG_TRACE "[info] "
-#define NO_MMU 1
-
-enum KDR_TYPE {
-  KDR_NONE = 0,
-  KDR_FS,
-  KDR_BK,
-  KDR_CH,
-};
 

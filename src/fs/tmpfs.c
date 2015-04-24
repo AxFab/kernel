@@ -19,15 +19,16 @@
  *
  *      File system driver tmpfs.
  */
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/io.h>
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/fs.h>
 
 /* ----------------------------------------------------------------------- */
-int TMPFS_mount(kInode_t* dev, const char *name)
+int TMPFS_mount(kInode_t *dev, const char *name)
 {
   if (dev != NULL)
     return ENOSYS;
+
   return EIO;
 }
 
@@ -43,21 +44,20 @@ int TMPFS_create(const char *name, kInode_t *dir, int mode, size_t lg, SMK_stat_
   stat->block_ = PAGE_SIZE;
   stat->mode_ = mode;
 
-  switch(mode & S_IFMT) {
-    case S_IFREG:
-    case S_IFDIR:
-      return 0;
+  switch (mode & S_IFMT) {
+  case S_IFREG:
+  case S_IFDIR:
+    return 0;
 
-    default:
-      return EINVAL;
+  default:
+    return EINVAL;
   }
 }
 
 
 /* ----------------------------------------------------------------------- */
-void TMPFS (kDriver_t* driver)
+void TMPFS (kDriver_t *driver)
 {
-  driver->type_ = KDR_FS;
   driver->name_ = strdup("tmpfs");
   driver->mount = TMPFS_mount;
   driver->create = TMPFS_create;

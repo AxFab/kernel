@@ -19,9 +19,10 @@
  *
  *      Scheduling, tasks and cpu ressources managment.
  */
-#include <smkos/core.h>
+#include <smkos/kapi.h>
+#include <smkos/kstruct/map.h>
+#include <smkos/kstruct/task.h>
 #include <smkos/sync.h>
-#include <smkos/arch.h>
 
 /* SCHEDULER
   * The smoke OS scheduler is a customized round-robin based algorithm.

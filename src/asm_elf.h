@@ -20,7 +20,7 @@
  *      Definition for ELF file format.
  */
 #pragma once
-#include <smkos/_compiler.h>
+#include <smkos/compiler.h>
 
 enum ELF_Class {
   ELFCLASSNONE = 0,     /// Invalid class

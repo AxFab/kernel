@@ -19,7 +19,10 @@
  *
  *      Open and Load assembly file.
  */
-#include <smkos/core.h>
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
 
 #include "asm_elf.h"
 

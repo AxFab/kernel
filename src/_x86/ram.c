@@ -1,8 +1,9 @@
 #include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/arch.h>
+#include <smkos/klimits.h>
+// #include <smkos/core.h>
+// #include <smkos/arch.h>
 
-#include "mmu.h"  
+#include "mmu.h"
 
 
 /* ----------------------------------------------------------------------- */
@@ -25,7 +26,7 @@ void mmu_ram (int64_t base, int64_t length)
     return;
 
   kSYS.memMax_ = base + length;
-  
+
   base = ALIGN_UP(base, PAGE_SIZE);
   length = ALIGN_DW(length - (base - obase), PAGE_SIZE);
 
@@ -34,6 +35,7 @@ void mmu_ram (int64_t base, int64_t length)
   if (base < 2 * _Mb_) {
     length -= (2 * _Mb_ - base);
     base = 2 * _Mb_;
+
     if (length <= 0)
       return;
   }
@@ -68,7 +70,7 @@ int mmu_init ()
   krnDir[1023] = MMU_PREALLOC_DIR | MMU_ACCESS_WR;
 
   // The first 2 Mo is reserved to kernel
-  for (i = 0; i < 512; ++i) { 
+  for (i = 0; i < 512; ++i) {
     // This one is temporary
     if (i == MMU_PREALLOC_NEW / PAGE_SIZE)
       continue;

@@ -22,7 +22,7 @@ unsigned long read_cr0(void)
 }
 
 
-void invlpg(void* m)
+void invlpg(void *m)
 {
   /* Clobber memory to avoid optimizer re-ordering access before invlpg, which may cause nasty bugs. */
   asm volatile ( "invlpg (%0)" : : "b"(m) : "memory" );

@@ -1,4 +1,4 @@
-#include <smkos/scall.h>
+#include <smkos.h>
 
 // void smk_run_thread(void(*entry)(long), long param)
 // {

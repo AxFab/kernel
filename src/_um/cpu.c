@@ -29,8 +29,7 @@
 static jmp_buf cpuJmp;
 
 /* ----------------------------------------------------------------------- */
-struct tm cpu_get_clock()
-{
+struct tm cpu_get_clock() {
   time_t now;
   struct tm *ptm;
 
@@ -59,6 +58,7 @@ void cpu_run_task(kThread_t *thread)
   assert(thread->state_ == SCHED_READY);
 
   klock (&thread->process_->lock_);
+
   if (thread->process_->pageDir_ == 0) {
     thread->process_->pageDir_ = mmu_newdir();
   }
@@ -84,7 +84,7 @@ void initialize_smp()
 
 
 /* ----------------------------------------------------------------------- */
-int main_jmp_loop() 
+int main_jmp_loop()
 {
   int idx = setjmp(cpuJmp);
 
@@ -95,7 +95,7 @@ int main_jmp_loop()
     break;
 
   case 1:
-    return 0; 
+    return 0;
     // Do we have event to send !!
     kernel_state (KST_KERNSP);
     sched_next(kSYS.scheduler_);
@@ -106,14 +106,17 @@ int main_jmp_loop()
     assert (kCPU.state_ == KST_USERSP);
     assert (kCPU.current_ != NULL);
     sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
+
     if (kCPU.current_)
       process_exit(kCPU.current_->process_, 0);
+
     sched_next(kSYS.scheduler_);
     break;
 
   default:
     return 0;
   }
+
   return -1;
 }
 
@@ -133,16 +136,16 @@ void cpu_start_scheduler()
 }
 
 /* ----------------------------------------------------------------------- */
-  /* At this point we leave CRTK. */
+/* At this point we leave CRTK. */
 int main ()
 {
   // Start threads for CPUs at { kernel_ready(); main_jmp_loop(); }
   kernel_start();
-  
+
   // DEBUG ONLY
   display_inodes();
   kprintf("\n");
-  
+
   // assert (1); // kalloc is available, memory is virtual, screen is OK, timer is set
   // @todo Set kalloc !
   // @todo Map the main screen

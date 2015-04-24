@@ -19,15 +19,17 @@
  *
  *      Device support and driver managment.
  */
-#include <smkos/core.h>
-#include <smkos/_drv.h>
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/drivers.h>
 
 
 /* ----------------------------------------------------------------------- */
-static int unregister_driver ()
-{
-  return __seterrno(ENOSYS);
-}
+// static int unregister_driver ()
+// {
+//   return __seterrno(ENOSYS);
+// }
 
 
 /* ----------------------------------------------------------------------- */
@@ -168,7 +170,7 @@ void initialize_vfs()
   time_t now = time(NULL);
   // char buf[2048];
 
-  kprintf (KLOG_TRACE "Initializing virtual file system...\n");
+  kprintf ("Initializing virtual file system...\n");
 
   root = KALLOC(kInode_t);
   root->stat_.mode_ = S_IFDIR | 0775;
@@ -197,7 +199,7 @@ void initialize_vfs()
   register_driver(ATA);
   // register_driver(BMP); // Usermode
   register_driver(HDD); // Usermode
-  register_driver(SVGA);
+  register_driver(VGA);
   register_driver(KDB);
 
   mount_alls ();

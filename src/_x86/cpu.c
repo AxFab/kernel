@@ -20,8 +20,9 @@
  *      Intel x86 CPU wrapper implementation.
  */
 #include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/arch.h>
+#include <smkos/kstruct/task.h>
+
+// #include <smkos/core.h>
 
 #include "mmu.h"
 
@@ -48,6 +49,7 @@ void cpu_run_task(kThread_t *thread)
   assert(thread->state_ == SCHED_READY);
 
   klock (&thread->process_->lock_);
+
   if (thread->process_->pageDir_ == 0) {
     thread->process_->pageDir_ = mmu_newdir();
   }
@@ -69,16 +71,16 @@ void cpu_run_task(kThread_t *thread)
     eip = thread->paramEntry_;
     thread->paramEntry_ = 0;
     cpu_restart_(thread->process_->pageDir_,
-      thread->kstack_->limit_ - 0x10,
-      eip,
-      thread->paramValue_,
-      thread->ustack_->limit_ - 0x10,
-      0x1000);
+                 thread->kstack_->limit_ - 0x10,
+                 eip,
+                 thread->paramValue_,
+                 thread->ustack_->limit_ - 0x10,
+                 0x1000);
   } else {
     cpu_resume_(thread->process_->pageDir_,
-      thread->kstack_->limit_ - 0x10,
-      thread->stackPtr_,
-      0x1000);
+                thread->kstack_->limit_ - 0x10,
+                thread->stackPtr_,
+                0x1000);
 
 
   }

@@ -19,8 +19,11 @@
  *
  *      Page fault handling.
  */
-#include <smkos/core.h>
-#include <smkos/arch.h>
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
+#include <smkos/kstruct/task.h>
 
 #define SIGSEV 13
 
@@ -152,7 +155,7 @@ int page_fault (size_t address, int cause)
   }
 
     kprintf("PF] %x (%d)\n", address, cause);
-    kstacktrace();
+    kstacktrace(8);
     for(;;);
 
   assert (POW2(area->flags_ & (VMA_STACK | VMA_SHM)));

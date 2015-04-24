@@ -19,7 +19,9 @@
  *
  *      File and device entries managment.
  */
-#include <smkos/core.h>
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
+#include <smkos/kstruct/fs.h>
 
 /* INODES
   * The inode module manage files entry.
@@ -50,7 +52,6 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
   assert (name != NULL && strnlen(name, FNAME_MAX) < FNAME_MAX);
   assert (dir != NULL);
   assert (kislocked(&dir->lock_));
-  assert (dir->dev_->fs_->type_ == KDR_FS);
 
   // Loop over present children.
   while (ino) {
@@ -299,7 +300,7 @@ static int unregister_inode (kInode_t *ino)
   // @todo Free name
   // @todo Free page cache first
   // if (ino->pagesCache_ != NULL) {
-  //  kprintf (KLOG_TRACE "We need to clean pages\n");
+  //  kprintf ("We need to clean pages\n");
   // }
 
   kfree((void *)ino->name_);

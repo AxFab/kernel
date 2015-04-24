@@ -6,8 +6,8 @@
 // #include <ax/slib.h>
 
 
-extern const char* _utoa_digits;
-extern const char* _utoa_digitsX;
+extern const char *_utoa_digits;
+extern const char *_utoa_digitsX;
 
 #define ALT_FORM   (1<<('#'-' '))
 #define ZERO_PAD   (1<<('0'-' '))
@@ -55,39 +55,77 @@ enum {
 };
 
 
-static inline void pop_arg(union SMK_FmtArg* arg, int type, va_list *ap)
+static inline void pop_arg(union SMK_FmtArg *arg, int type, va_list *ap)
 {
   /* Give the compiler a hint for optimizing the switch. */
   if ((unsigned)type > MAXSTATE) return;
+
   switch (type) {
-    case PTR:     arg->p = va_arg(*ap, void *);                 break;
-    case INT:     arg->s = va_arg(*ap, int);                    break;
-    case UINT:    arg->i = va_arg(*ap, unsigned int);           break;
+  case PTR:
+    arg->p = va_arg(*ap, void *);
+    break;
+  case INT:
+    arg->s = va_arg(*ap, int);
+    break;
+  case UINT:
+    arg->i = va_arg(*ap, unsigned int);
+    break;
 #ifndef LONG_IS_INT
-    case LONG:    arg->s = va_arg(*ap, long);                   break;
-    case ULONG:   arg->i = va_arg(*ap, unsigned long);          break;
+  case LONG:
+    arg->s = va_arg(*ap, long);
+    break;
+  case ULONG:
+    arg->i = va_arg(*ap, unsigned long);
+    break;
 #endif
-    case ULLONG:  arg->i = va_arg(*ap, unsigned long long);     break;
-    case SHORT:   arg->s = (short)va_arg(*ap, int);             break;
-    case USHORT:  arg->i = (unsigned short)va_arg(*ap, int);    break;
-    case CHAR:    arg->s = (signed char)va_arg(*ap, int);       break;
-    case UCHAR:   arg->i = (unsigned char)va_arg(*ap, int);     break;
+  case ULLONG:
+    arg->i = va_arg(*ap, unsigned long long);
+    break;
+  case SHORT:
+    arg->s = (short)va_arg(*ap, int);
+    break;
+  case USHORT:
+    arg->i = (unsigned short)va_arg(*ap, int);
+    break;
+  case CHAR:
+    arg->s = (signed char)va_arg(*ap, int);
+    break;
+  case UCHAR:
+    arg->i = (unsigned char)va_arg(*ap, int);
+    break;
 #ifdef ODD_TYPES
-    case LLONG:   arg->s = va_arg(*ap, long long);              break;
-    case SIZET:   arg->i = va_arg(*ap, size_t);                 break;
-    case IMAX:    arg->s = va_arg(*ap, intmax_t);               break;
-    case UMAX:    arg->i = va_arg(*ap, uintmax_t);              break;
-    case PDIFF:   arg->i = va_arg(*ap, ptrdiff_t);              break;
-    case UIPTR:   arg->i = (uintptr_t)va_arg(*ap, void *);      break;
+  case LLONG:
+    arg->s = va_arg(*ap, long long);
+    break;
+  case SIZET:
+    arg->i = va_arg(*ap, size_t);
+    break;
+  case IMAX:
+    arg->s = va_arg(*ap, intmax_t);
+    break;
+  case UMAX:
+    arg->i = va_arg(*ap, uintmax_t);
+    break;
+  case PDIFF:
+    arg->i = va_arg(*ap, ptrdiff_t);
+    break;
+  case UIPTR:
+    arg->i = (uintptr_t)va_arg(*ap, void *);
+    break;
 #endif
-    case DBL:     arg->f = va_arg(*ap, double);                 break;
-    case LDBL:    arg->f = va_arg(*ap, long double);            break;
+  case DBL:
+    arg->f = va_arg(*ap, double);
+    break;
+  case LDBL:
+    arg->f = va_arg(*ap, long double);
+    break;
   }
 }
 
 #define _I(x) [(x)-'A']
-static const char state[]_I('z'+ 1) = {
-  { // BARE
+static const char state[]_I('z' + 1) = {
+  {
+    // BARE
     _I('d') = INT,   _I('i') = INT,
     _I('o') = UINT,  _I('u') = UINT,  _I('x') = UINT,  _I('X') = UINT,
     _I('e') = DBL,   _I('E') = DBL,   _I('f') = DBL,   _I('F') = DBL,
@@ -97,51 +135,58 @@ static const char state[]_I('z'+ 1) = {
     _I('m') = NOARG, _I('l') = LPRE,  _I('h') = HPRE,  _I('L') = BIGLPRE,
     _I('z') = ZTPRE, _I('j') = JPRE,  _I('t') = ZTPRE,
   },
-  { // LPRE
+  {
+    // LPRE
     _I('d') = LONG,  _I('i') = LONG,
     _I('o') = ULONG, _I('u') = ULONG, _I('x') = ULONG, _I('X') = ULONG,
     _I('e') = DBL,   _I('E') = DBL,   _I('f') = DBL,   _I('F') = DBL,
     _I('g') = DBL,   _I('G') = DBL,   _I('a') = DBL,   _I('A') = DBL,
     _I('c') = CHAR,  _I('s') = PTR,   _I('n') = PTR,   _I('l') = LLPRE,
   },
-  { // LLPRE
+  {
+    // LLPRE
     _I('d') = LLONG, _I('i') = LLONG,
-    _I('o') = ULLONG,_I('u') = ULLONG,_I('x') = ULLONG,_I('X') = ULLONG,
+    _I('o') = ULLONG, _I('u') = ULLONG, _I('x') = ULLONG, _I('X') = ULLONG,
     _I('n') = PTR,
   },
-  { // HPRE
+  {
+    // HPRE
     _I('d') = SHORT, _I('i') = SHORT,
-    _I('o') = USHORT,_I('u') = USHORT,_I('x') = USHORT,_I('X') = USHORT,
+    _I('o') = USHORT, _I('u') = USHORT, _I('x') = USHORT, _I('X') = USHORT,
     _I('n') = PTR,   _I('h') = HHPRE,
   },
-  { // HHPRE
+  {
+    // HHPRE
     _I('d') = CHAR,  _I('i') = CHAR,
     _I('o') = UCHAR, _I('u') = UCHAR, _I('x') = UCHAR, _I('X') = UCHAR,
     _I('n') = PTR,
   },
-  { // BIGLPRE
+  {
+    // BIGLPRE
     _I('e') = LDBL,  _I('E') = LDBL,  _I('f') = LDBL,  _I('F') = LDBL,
     _I('g') = LDBL,  _I('G') = LDBL,  _I('a') = LDBL,  _I('A') = LDBL,
     _I('n') = PTR,
   },
-  { // ZTPRE
+  {
+    // ZTPRE
     _I('d') = PDIFF, _I('i') = PDIFF,
     _I('o') = SIZET, _I('u') = SIZET, _I('x') = SIZET, _I('X') = SIZET,
     _I('n') = PTR,
   },
-  { // JPRE
+  {
+    // JPRE
     _I('d') = IMAX,  _I('i') = IMAX,
     _I('o') = UMAX,  _I('u') = UMAX,  _I('x') = UMAX,  _I('X') = UMAX,
     _I('n') = PTR,
   },
 };
 
-static inline int read_format_specifier (struct SMK_FmtSpec* sb, const char** ptr, va_list *ap)
+static inline int read_format_specifier (struct SMK_FmtSpec *sb, const char **ptr, va_list *ap)
 {
   char sign;
   const char *str = *ptr;
 
-  if (isdigit(str[0]) && str[1]=='$') {
+  if (isdigit(str[0]) && str[1] == '$') {
     // FIXME change arg position
   }
 
@@ -155,7 +200,7 @@ static inline int read_format_specifier (struct SMK_FmtSpec* sb, const char** pt
     str++;
     sb->field_ = va_arg(*ap, int);
   } else {
-    sb->field_ = (int)_strtox(str, (char**)&str, 10, &sign);
+    sb->field_ = (int)_strtox(str, (char **)&str, 10, &sign);
   }
 
   // Read precision
@@ -164,20 +209,23 @@ static inline int read_format_specifier (struct SMK_FmtSpec* sb, const char** pt
     sb->precis_ = va_arg(*ap, int);
   } else if (str[0] == '.') {
     str++;
-    sb->precis_ = (int)_strtox(str, (char**)&str, 10, &sign);
+    sb->precis_ = (int)_strtox(str, (char **)&str, 10, &sign);
   } else {
     sb->precis_ = -1;
   }
 
   // Format specifier state machine
   int ty = BARE;
+
   do {
     if (*str > 'z') return -1;
+
     sb->type_ = ty;
     ty = state[ty]_I(*(str++));
-  } while (ty-1<STOP);
+  } while (ty - 1 < STOP);
 
   sb->type_ = ty;
+
   if (!ty)
     return -1;
 
@@ -187,7 +235,7 @@ static inline int read_format_specifier (struct SMK_FmtSpec* sb, const char** pt
   return 0;
 }
 
-int vfprintf (FILE* fp, const char* str, va_list ap)
+int vfprintf (FILE *fp, const char *str, va_list ap)
 {
   int lg;
   char ch;
@@ -196,24 +244,28 @@ int vfprintf (FILE* fp, const char* str, va_list ap)
   struct SMK_FmtSpec sb;
 
   FLOCK(fp);
+
   while (*str) {
 
     // Write litteral characters
     if (*str != '%') {
       if (fp->write_(fp, str++, 1) < 0)
         return -1;
+
       continue;
 
-    // Handle %% escape code
+      // Handle %% escape code
     } else if (str[1] == '%') {
       if (fp->write_(fp, str, 1) < 0)
         return -1;
+
       str += 2;
       continue;
     }
 
     // Read format specifier
     str++;
+
     if (read_format_specifier(&sb, &str, &ap) < 0)
       return -1;
 
@@ -223,87 +275,107 @@ int vfprintf (FILE* fp, const char* str, va_list ap)
 
     pop_arg (&arg, sb.type_, &ap);
     lg = 0;
+
     switch (str[-1]) {
-      case 'n':
-        break;
+    case 'n':
+      break;
 
-      case 'p':
-        sb.flag_ = ALT_FORM | ZERO_PAD;
-      case 'x': case 'X':
-        if (sb.flag_ & ALT_FORM)
-          lg -= 2;
+    case 'p':
+      sb.flag_ = ALT_FORM | ZERO_PAD;
+    case 'x':
+    case 'X':
 
-        if (str[-1] & 32)
-          _utoa(arg.i, tmp, 16, _utoa_digits);
-        else
-          _utoa(arg.i, tmp, 16, _utoa_digitsX);
-        break;
+      if (sb.flag_ & ALT_FORM)
+        lg -= 2;
 
-      case 'o':
-        _utoa(arg.i, tmp, 8, _utoa_digits);
-        break;
+      if (str[-1] & 32)
+        _utoa(arg.i, tmp, 16, _utoa_digits);
+      else
+        _utoa(arg.i, tmp, 16, _utoa_digitsX);
 
-      case 'u':
-        _utoa(arg.i, tmp, 10, _utoa_digits);
-        break;
+      break;
 
-      case 'd': case 'i':
-        if (arg.s >= 0)
-          _utoa(arg.s, tmp, 10, _utoa_digits);
-        else {
-          lg--;
-          if (fp->write_(fp, "-", 1) < 0)
-            return -1;
-          _utoa(-arg.s, tmp, 10, _utoa_digits);
-        }
-        break;
+    case 'o':
+      _utoa(arg.i, tmp, 8, _utoa_digits);
+      break;
 
-      case 'c':
-        ch = arg.s;
-        if (fp->write_(fp, &ch, 1) < 0)
+    case 'u':
+      _utoa(arg.i, tmp, 10, _utoa_digits);
+      break;
+
+    case 'd':
+    case 'i':
+
+      if (arg.s >= 0)
+        _utoa(arg.s, tmp, 10, _utoa_digits);
+      else {
+        lg--;
+
+        if (fp->write_(fp, "-", 1) < 0)
           return -1;
-        break;
 
-      case 's':
-        if (arg.p == NULL)
-          arg.p = "(null)";
-        lg = strlen((char*)arg.p);
-        if (fp->write_(fp, (char*)arg.p, lg) < 0)
-          return -1;
-        break;
+        _utoa(-arg.s, tmp, 10, _utoa_digits);
+      }
+
+      break;
+
+    case 'c':
+      ch = arg.s;
+
+      if (fp->write_(fp, &ch, 1) < 0)
+        return -1;
+
+      break;
+
+    case 's':
+
+      if (arg.p == NULL)
+        arg.p = "(null)";
+
+      lg = strlen((char *)arg.p);
+
+      if (fp->write_(fp, (char *)arg.p, lg) < 0)
+        return -1;
+
+      break;
     }
 
 
     switch (str[-1]) {
 
-      case 'p':
-      case 'x': case 'X':
-      case 'o': case 'u':
-      case 'd': case 'i':
-        lg += sb.field_ - strlen(tmp);
-        ch = (sb.flag_ & ZERO_PAD ? '0' : ' ');
-        if (lg > 0 && !(sb.flag_ & LEFT_ADJ)) {
-          while (lg--) {
-              if (fp->write_(fp, &ch, 1) < 0)
-                return -1;
-            }
-        }
+    case 'p':
+    case 'x':
+    case 'X':
+    case 'o':
+    case 'u':
+    case 'd':
+    case 'i':
+      lg += sb.field_ - strlen(tmp);
+      ch = (sb.flag_ & ZERO_PAD ? '0' : ' ');
 
-        if (sb.flag_ & ALT_FORM && (str[-1] & 32) == 'x') {
-          if (fp->write_(fp, "0x", 2) < 0)
+      if (lg > 0 && !(sb.flag_ & LEFT_ADJ)) {
+        while (lg--) {
+          if (fp->write_(fp, &ch, 1) < 0)
             return -1;
         }
+      }
 
-        if (fp->write_(fp, tmp, strlen(tmp)) < 0)
+      if (sb.flag_ & ALT_FORM && (str[-1] & 32) == 'x') {
+        if (fp->write_(fp, "0x", 2) < 0)
           return -1;
+      }
 
-        if (lg > 0) {
-          while (lg--) {
-              if (fp->write_(fp, &ch, 1) < 0)
-                return -1;
-            }
+      if (fp->write_(fp, tmp, strlen(tmp)) < 0)
+        return -1;
+
+      if (lg > 0) {
+        while (lg--) {
+          if (fp->write_(fp, &ch, 1) < 0)
+            return -1;
         }
-        break;
+      }
+
+      break;
     }
 
   }

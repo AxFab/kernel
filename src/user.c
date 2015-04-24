@@ -19,16 +19,8 @@
  *
  *      User ressources, and security managment.
  */
-#include <smkos/core.h>
-
-struct kUser
-{
-  const char* name_;
-  int capacity_;
-  int processCount_;
-  struct llnode allNd_;
-};
-
+#include <smkos/kernel.h>
+#include <smkos/kstruct/user.h>
 
 /* ----------------------------------------------------------------------- */
 kUser_t *search_user (const char *name, const char *domain)

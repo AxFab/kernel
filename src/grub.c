@@ -1,5 +1,5 @@
-#include <smkos/kernel.h>
-#include <smkos/arch.h>
+#include <smkos/kapi.h>
+// #include <smkos/arch.h>
 
 // void VBA_Set (void *address, int width, int height, int depth);
 // int kTty_PreSystem (uint32_t *base, int width, int height, int depth);

@@ -19,12 +19,7 @@
  *
  *      Driver for ATA API.
  */
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/io.h>
-#include <smkos/memory.h>
-#include <smkos/_compiler.h>
-#include <smkos/pio.h>
+#include <smkos/kfs.h>
 
 
 #define ATA_SR_BSY     0x80
@@ -318,13 +313,13 @@ static int ATA_Data(int dir, struct ATA_Drive *dr, uint32_t lba,  uint8_t sects,
 
 
 /* ----------------------------------------------------------------------- */
-static void ATA_Grab () 
+static void ATA_Grab ()
 {
 }
 
 
 /* ----------------------------------------------------------------------- */
-static void ATA_Release () 
+static void ATA_Release ()
 {
 }
 
@@ -442,7 +437,7 @@ int ATAPI_Read (struct ATA_Drive *dr, uint32_t lba,  uint8_t sects, uint8_t *buf
 
   // Waiting for BSY & DRQ to clear
   while (inb(dr->pbase_ + ATA_REG_STATUS) & (ATA_SR_BSY | ATA_SR_DRQ));
-  
+
   return 0;
 }
 
@@ -499,8 +494,9 @@ static int ATA_Detect (struct ATA_Drive *dr)
       break;
 
     } // else if (!(res & ATA_SR_BSY) && (res & ATA_SR_DRQ)) {
-      // kprintf ("ATA ");
-      dr->type_ = IDE_ATA;
+
+    // kprintf ("ATA ");
+    dr->type_ = IDE_ATA;
 
     break;
   }
@@ -536,6 +532,7 @@ int ATA_read (kInode_t *ino, void *bucket, size_t length, size_t lba)
   int err;
 
   lba /= ino->stat_.block_;
+
   // kprintf (" - ATA] read <%d> at lba: %x for %d sectors on %x\n", dr->pbase_, lba, count, bucket);
   if (bucket == NULL)
     return EINVAL;
@@ -545,19 +542,22 @@ int ATA_read (kInode_t *ino, void *bucket, size_t length, size_t lba)
     return ENODEV;
 
   case IDE_ATA:
+
     if (lba + count > dr->size_)
       return ERANGE;
 
-    return ATA_Data (ATA_READ, dr, lba, count, (uint8_t*)bucket);
+    return ATA_Data (ATA_READ, dr, lba, count, (uint8_t *)bucket);
 
   case IDE_ATAPI:
+
     for (i = 0; i < count; ++i) {
       err = ATAPI_Read (dr, lba + i, 1, ((uint8_t *)bucket) + (i * 2048));
+
       // err = ATAPI_Read2 (dr, lba + i, ((uint8_t*)bucket) + (i * 2048));
       if (err)
         return err;
     }
-    
+
     return 0;
 
   default:
@@ -586,10 +586,11 @@ int ATA_write (kInode_t *ino, const void *bucket, size_t length, size_t lba)
     return EROFS;
 
   case IDE_ATA:
+
     if (lba + count > dr->size_)
       return ERANGE;
 
-    return ATA_Data (ATA_WRITE, dr, lba, count, (uint8_t*)bucket);
+    return ATA_Data (ATA_WRITE, dr, lba, count, (uint8_t *)bucket);
 
   default:
     return ENOSYS;
@@ -598,7 +599,7 @@ int ATA_write (kInode_t *ino, const void *bucket, size_t length, size_t lba)
 
 
 /* ----------------------------------------------------------------------- */
-int ATA_mount (kInode_t* dev, const char* name)
+int ATA_mount (kInode_t *dev, const char *name)
 {
   int i;
   time_t now = time(NULL);
@@ -649,7 +650,6 @@ int ATA_mount (kInode_t* dev, const char* name)
 /* ----------------------------------------------------------------------- */
 void ATA(kDriver_t *driver)
 {
-  driver->type_ = KDR_BK;
   driver->major_ = ATA_No;
   driver->name_ = strdup("ata/atapi");
   driver->mount = ATA_mount;

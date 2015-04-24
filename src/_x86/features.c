@@ -19,9 +19,12 @@
  *
  *      Intel x86 CPU features.
  */
-#include <smkos/kernel.h>
-#include <smkos/core.h>
+#include <smkos/kapi.h>
+#include <smkos/klimits.h>
 #include <smkos/arch.h>
+#include <smkos/kstruct/map.h>
+// #include <smkos/core.h>
+// #include <smkos/arch.h>
 
 
 int cpu_features[4];
@@ -106,7 +109,7 @@ void x86_WriteMSR(uint32_t msr, uint32_t lo, uint32_t hi)
 }
 
 atomic_t volatile __delayTimer;
-void __delayIRQ() 
+void __delayIRQ()
 {
   // Timer is in microseconds
   atomic_add (&__delayTimer, 1000000 / CLOCK_HZ);
@@ -116,6 +119,7 @@ void __delayX(int microsecond)
 {
   __delayTimer = 0;
   x86_IRQ_handler (0, __delayIRQ);
+
   while (__delayTimer < microsecond) cpause();
 }
 
@@ -126,6 +130,7 @@ int cpu_no()
 {
   if (!APIC_ON)
     return 0;
+
   return (APIC_ID >> 24) & 0xf;
 }
 
@@ -137,7 +142,7 @@ void initialize_smp()
   uint32_t eax, ebx;
 
   // Request CPU features
-  kprintf (KLOG_TRACE "Initializing multi-processing...\n");
+  kprintf ("Initializing multi-processing...\n");
   cpuid(1, 0, cpu_features);
   x86_InitializeFPU ();
   x86_ActiveCache();
@@ -157,7 +162,7 @@ void initialize_smp()
   // if (x86_FEATURES_HHT) kprintf ("  Hyper Threading Tech.\n");
   // if (x86_FEATURES_TM) kprintf ("  Therm. Monitor\n");
 
-  // 
+  //
   if (!x86_FEATURES_MSR) {
     kprintf ("No MSR capability\n");
     return;
@@ -214,7 +219,7 @@ void initialize_smp()
   __delayX(200); // 200-microsecond delay loop.
 
   // Wait timer interrupt - We should have init all CPUs
-  kprintf (KLOG_TRACE "BSP found a count of %d CPUs\n", cpu_count + 1);
+  kprintf ("BSP found a count of %d CPUs\n", cpu_count + 1);
   // for (;;);
   cli();
 }

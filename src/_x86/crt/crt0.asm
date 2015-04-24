@@ -66,6 +66,59 @@ write:
 
 ; ----------------------------------------------------------------------------
 ; ----------------------------------------------------------------------------
+global __syscall_1, __syscall_2, __syscall_3, __syscall_4, __syscall_5
+__syscall_1:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 8]
+    mov ecx, [ebp + 12]
+  .push:
+    int 0x30
+    leave
+    ret
+
+__syscall_2:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 8]
+    mov ecx, [ebp + 12]
+    mov edx, [ebp + 16]
+    jmp __syscall_1.push
+
+__syscall_3:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 8]
+    mov ecx, [ebp + 12]
+    mov edx, [ebp + 16]
+    mov ebx, [ebp + 20]
+    jmp __syscall_1.push
+
+__syscall_4:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 8]
+    mov ecx, [ebp + 12]
+    mov edx, [ebp + 16]
+    mov ebx, [ebp + 20]
+    mov esi, [ebp + 24]
+    jmp __syscall_1.push
+
+__syscall_5:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 8]
+    mov ecx, [ebp + 12]
+    mov edx, [ebp + 16]
+    mov ebx, [ebp + 20]
+    mov esi, [ebp + 24]
+    mov edi, [ebp + 28]
+    jmp __syscall_1.push
+
+
+; ----------------------------------------------------------------------------
+; ----------------------------------------------------------------------------
+; ----------------------------------------------------------------------------
 syscall_1A:
     push ebp
     mov ebp, esp

@@ -19,17 +19,15 @@
  *
  *      Driver for Um HDD images.
  */
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/io.h>
+#include <smkos/kfs.h>
 
 #include <stdio.h>
 
 /* ----------------------------------------------------------------------- */
-int HDD_mount (kInode_t* dev, const char* name)
+int HDD_mount (kInode_t *dev, const char *name)
 {
   time_t now = time(NULL);
-  FILE* fpa, *fpc;
+  FILE *fpa, *fpc;
   SMK_stat_t stat;
 
   if (dev)
@@ -44,8 +42,9 @@ int HDD_mount (kInode_t* dev, const char* name)
   stat.mode_ =  S_IFBLK | 0770;
 
   fpa = fopen("../SD/hdd.img", "r+");
+
   if (fpa) {
-    fseek(fpa, 64 * _Mb_-1, SEEK_SET);
+    fseek(fpa, 64 * _Mb_ - 1, SEEK_SET);
     fwrite("", 1, 1, fpa);
     fseek(fpa, 0, SEEK_END);
     fflush(fpa);
@@ -56,6 +55,7 @@ int HDD_mount (kInode_t* dev, const char* name)
   }
 
   fpc = fopen("../SD/OsCore.iso", "r");
+
   if (fpc) {
     fseek(fpc, 0, SEEK_END);
     stat.length_ = ftell(fpc);
@@ -68,9 +68,9 @@ int HDD_mount (kInode_t* dev, const char* name)
 }
 
 /* ----------------------------------------------------------------------- */
-int HDD_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
+int HDD_read(kInode_t *fp, void *buffer, size_t length, size_t offset)
 {
-  FILE* fio = (FILE*)fp->dev_->data_;
+  FILE *fio = (FILE *)fp->dev_->data_;
   fseek(fio, offset, SEEK_SET);
   fread(buffer, length, 1, fio);
   return 0;
@@ -78,9 +78,9 @@ int HDD_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
 
 
 /* ----------------------------------------------------------------------- */
-int HDD_write(kInode_t *fp, const void* buffer, size_t length, size_t offset)
+int HDD_write(kInode_t *fp, const void *buffer, size_t length, size_t offset)
 {
-  FILE* fio = (FILE*)fp->dev_->data_;
+  FILE *fio = (FILE *)fp->dev_->data_;
   fseek(fio, offset, SEEK_SET);
   fwrite(buffer, length, 1, fio);
   return 0;
@@ -90,7 +90,6 @@ int HDD_write(kInode_t *fp, const void* buffer, size_t length, size_t offset)
 /* ----------------------------------------------------------------------- */
 void HDD(kDriver_t *driver)
 {
-  driver->type_ = KDR_BK;
   driver->major_ = HDD_No;
   driver->name_ = strdup("hdd");
   driver->mount = HDD_mount;

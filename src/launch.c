@@ -1,8 +1,5 @@
-#include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/io.h>
-#include <smkos/memory.h>
-#include <smkos/arch.h>
+#include <smkos/kapi.h>
+#include <smkos/kstruct/user.h>
 
 
 static const char *masterPaths[] = {

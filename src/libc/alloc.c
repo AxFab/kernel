@@ -5,7 +5,7 @@
 #include <smkos/llist.h>
 
 #define __axlog kprintf
-void __axlog(const char*msg, ...);
+void __axlog(const char *msg, ...);
 
 
 /* Private Macros ---------------------------------------------------------- */
@@ -26,33 +26,33 @@ void __axlog(const char*msg, ...);
 /* Structures definitions -------------------------------------------------- */
 
 struct SMK_HeapChunk {
-    uint32_t prev_size;
-    uint32_t reserved;
-    uint32_t chunk_size;
-    uint32_t is_used;
-    union {
-        // If the block is empty
-        struct {
-            struct SMK_HeapChunk* prev_chunk;
-            struct SMK_HeapChunk* next_chunk;
-        };
-        // If the block is used
-        uint32_t data[4];
+  uint32_t prev_size;
+  uint32_t reserved;
+  uint32_t chunk_size;
+  uint32_t is_used;
+  union {
+    // If the block is empty
+    struct {
+      struct SMK_HeapChunk *prev_chunk;
+      struct SMK_HeapChunk *next_chunk;
     };
+    // If the block is used
+    uint32_t data[4];
+  };
 };
 
 
 struct SMK_HeapArea {
-    struct SMK_HeapChunk* start;
-    struct SMK_HeapChunk* free_list;
-    size_t max;
-    size_t available;
-    size_t begin_;
-    size_t end_;
-    char lock;
-    long flags;
-    struct spinlock lock_;
-    struct llnode node_;
+  struct SMK_HeapChunk *start;
+  struct SMK_HeapChunk *free_list;
+  size_t max;
+  size_t available;
+  size_t begin_;
+  size_t end_;
+  char lock;
+  long flags;
+  struct spinlock lock_;
+  struct llnode node_;
 };
 
 
@@ -68,64 +68,64 @@ struct SMK_HeapArea gArea;
 
 /* ----------------------------------------------------------------------- */
 /** Append a memory block on the list of free blocks. */
-static void alloc_add_to_free (struct SMK_HeapArea* heap, struct SMK_HeapChunk* chunk)
+static void alloc_add_to_free (struct SMK_HeapArea *heap, struct SMK_HeapChunk *chunk)
 {
-    struct SMK_HeapChunk* curs = heap->free_list;
-    chunk->is_used = 0; //  &= ~ALLOC_ISUSED;
+  struct SMK_HeapChunk *curs = heap->free_list;
+  chunk->is_used = 0; //  &= ~ALLOC_ISUSED;
 
-    // In case there is no available blocks
-    if ( !curs ) {
-        heap->free_list = chunk;
-        chunk->prev_chunk = NULL;
-        chunk->next_chunk = NULL;
-        return;
+  // In case there is no available blocks
+  if ( !curs ) {
+    heap->free_list = chunk;
+    chunk->prev_chunk = NULL;
+    chunk->next_chunk = NULL;
+    return;
+  }
+
+  // In case the free block is the smallest of all
+  if ( curs->chunk_size > chunk->chunk_size ) {
+    heap->free_list = chunk;
+    chunk->prev_chunk = NULL;
+    chunk->next_chunk = curs;
+    curs->prev_chunk = chunk;
+    return;
+  }
+
+  // Browse the list until we found a bigger block or the end of the list
+  while ( curs->next_chunk ) {
+    if ( curs->next_chunk->chunk_size > chunk->chunk_size ) {
+      break;
     }
 
-    // In case the free block is the smallest of all
-    if ( curs->chunk_size > chunk->chunk_size ) {
-        heap->free_list = chunk;
-        chunk->prev_chunk = NULL;
-        chunk->next_chunk = curs;
-        curs->prev_chunk = chunk;
-        return;
-    }
+    curs = curs->next_chunk;
+  }
 
-    // Browse the list until we found a bigger block or the end of the list
-    while ( curs->next_chunk ) {
-        if ( curs->next_chunk->chunk_size > chunk->chunk_size ) {
-            break;
-        }
+  if ( curs->next_chunk ) {
+    curs->next_chunk->prev_chunk = chunk;
+  }
 
-        curs = curs->next_chunk;
-    }
-
-    if ( curs->next_chunk ) {
-        curs->next_chunk->prev_chunk = chunk;
-    }
-
-    chunk->prev_chunk = curs;
-    chunk->next_chunk = curs->next_chunk;
-    curs->next_chunk = chunk;
+  chunk->prev_chunk = curs;
+  chunk->next_chunk = curs->next_chunk;
+  curs->next_chunk = chunk;
 }
 
 
 /* ----------------------------------------------------------------------- */
 /** Remove a memory block of the list of free blocks. */
-static void alloc_rem_of_free (struct SMK_HeapArea* heap, struct SMK_HeapChunk* chunk)
+static void alloc_rem_of_free (struct SMK_HeapArea *heap, struct SMK_HeapChunk *chunk)
 {
-    if ( chunk->next_chunk ) {
-        chunk->next_chunk->prev_chunk = chunk->prev_chunk;
-    }
+  if ( chunk->next_chunk ) {
+    chunk->next_chunk->prev_chunk = chunk->prev_chunk;
+  }
 
-    if ( chunk->prev_chunk ) {
-        chunk->prev_chunk->next_chunk = chunk->next_chunk;
-    } else {
-        heap->free_list = chunk->next_chunk;
-    }
+  if ( chunk->prev_chunk ) {
+    chunk->prev_chunk->next_chunk = chunk->next_chunk;
+  } else {
+    heap->free_list = chunk->next_chunk;
+  }
 
-    chunk->prev_chunk = (struct SMK_HeapChunk*)0xcccccccc;
-    chunk->next_chunk = (struct SMK_HeapChunk*)0xcccccccc;
-    chunk->is_used |= ALLOC_ISUSED;
+  chunk->prev_chunk = (struct SMK_HeapChunk *)0xcccccccc;
+  chunk->next_chunk = (struct SMK_HeapChunk *)0xcccccccc;
+  chunk->is_used |= ALLOC_ISUSED;
 }
 
 /* ----------------------------------------------------------------------- */
@@ -138,28 +138,33 @@ static void alloc_rem_of_free (struct SMK_HeapArea* heap, struct SMK_HeapChunk* 
  * the number of blocks. Compare that to the free list and check list
  * consistency.
  */
-int memcorrupt_r (struct SMK_HeapArea* heap)
+int memcorrupt_r (struct SMK_HeapArea *heap)
 {
   int err = 0;
   int free_chunks = 0;
   int total_chunks = 0;
   uintmax_t lsize = 0;
-  struct SMK_HeapChunk* chunk = heap->free_list;
-  struct SMK_HeapChunk* prev = NULL;
+  struct SMK_HeapChunk *chunk = heap->free_list;
+  struct SMK_HeapChunk *prev = NULL;
+
   while (chunk != NULL) {
     free_chunks++;
+
     if (chunk->is_used) {
       __axlog ("Free chunk at 0x%x mark as used\n", chunk);
       err++;
     }
+
     if (chunk->prev_chunk != prev) {
       __axlog ("Free Chunk at 0x%x isn't link to previous\n", chunk);
       err++;
     }
+
     if (chunk->chunk_size < lsize) {
       __axlog ("Free chunk at 0x%x is smaller than previous ones\n", chunk);
       err++;
     }
+
     lsize = chunk->chunk_size;
     prev = chunk;
     chunk = chunk->next_chunk;
@@ -167,8 +172,10 @@ int memcorrupt_r (struct SMK_HeapArea* heap)
 
   chunk = heap->start;
   lsize = 0;
+
   while ((size_t)chunk < heap->max) {
     total_chunks++;
+
     if (chunk->is_used) {
       /*
       if (chunk->next_chunk != (struct SMK_HeapChunk*)0xcccccccc)
@@ -177,8 +184,10 @@ int memcorrupt_r (struct SMK_HeapArea* heap)
           err++; */
     } else {
       free_chunks--;
+
       if ((uint32_t)chunk->next_chunk & 7)
         err++;
+
       if ((uint32_t)chunk->prev_chunk & 7)
         err++;
     }
@@ -187,14 +196,16 @@ int memcorrupt_r (struct SMK_HeapArea* heap)
       __axlog ("Wrong prev size mark at 0x%x\n", chunk);
       err++;
     }
+
     lsize = chunk->chunk_size;
-    chunk = (struct SMK_HeapChunk*)((size_t)chunk + (size_t)chunk->chunk_size);
+    chunk = (struct SMK_HeapChunk *)((size_t)chunk + (size_t)chunk->chunk_size);
   }
 
   if (free_chunks != 0) {
     __axlog ("Free chunks not referenced\n", chunk);
     err++;
   }
+
   if ((size_t)chunk != heap->max) {
     __axlog ("Incomplete chunk map\n", chunk);
     err++;
@@ -205,10 +216,10 @@ int memcorrupt_r (struct SMK_HeapArea* heap)
 
 /* ----------------------------------------------------------------------- */
 /** Initialize a heap segment structure info. */
-void meminit_r(struct SMK_HeapArea* heap, void* base, size_t length)
+void meminit_r(struct SMK_HeapArea *heap, void *base, size_t length)
 {
   heap->flags |= ALLOC_PARANOID;
-  heap->start = ( struct SMK_HeapChunk* ) ALIGN ( (uintptr_t)base, ALLOC_MIN_CHUNK );
+  heap->start = ( struct SMK_HeapChunk * ) ALIGN ( (uintptr_t)base, ALLOC_MIN_CHUNK );
   heap->begin_ = (size_t)base;
   heap->end_ = (size_t)base + length;
   heap->free_list = NULL;
@@ -246,12 +257,12 @@ void meminit_r(struct SMK_HeapArea* heap, void* base, size_t length)
  * guarantee that the memory really is available. In case it turns out that
  * the system is out of memory, one or more processes will be killed.
  */
-void* malloc_r(struct SMK_HeapArea* heap, size_t size)
+void *malloc_r(struct SMK_HeapArea *heap, size_t size)
 {
-  struct SMK_HeapChunk* chunk = heap->free_list;
-  struct SMK_HeapChunk* split = NULL;
-  struct SMK_HeapChunk* prev = NULL;
-  struct SMK_HeapChunk* next = NULL;
+  struct SMK_HeapChunk *chunk = heap->free_list;
+  struct SMK_HeapChunk *split = NULL;
+  struct SMK_HeapChunk *prev = NULL;
+  struct SMK_HeapChunk *next = NULL;
   size_t lsize = 0;
 
   _LOCK(heap);
@@ -267,7 +278,9 @@ void* malloc_r(struct SMK_HeapArea* heap, size_t size)
     _UNLOCK(heap);
     return NULL;
   }
+
   size = ALIGN (size + ALLOC_CHUNK_HEAD, ALLOC_MIN_CHUNK );
+
   if (size < ALLOC_MIN_CHUNK) size = ALLOC_MIN_CHUNK;
 
   // Browse the free chunk list
@@ -277,10 +290,13 @@ void* malloc_r(struct SMK_HeapArea* heap, size_t size)
     if (heap->flags & ALLOC_CHECK) {
       if (chunk->is_used)
         heap->flags |= ALLOC_CORRUPTED;
+
       if (chunk->prev_chunk != prev)
         heap->flags |= ALLOC_CORRUPTED;
+
       if (chunk->chunk_size < lsize)
         heap->flags |= ALLOC_CORRUPTED;
+
       if (heap->flags & ALLOC_CORRUPTED) {
         _UNLOCK(heap);
         return NULL;
@@ -292,12 +308,14 @@ void* malloc_r(struct SMK_HeapArea* heap, size_t size)
 
     if ( chunk->chunk_size >= size) {
       alloc_rem_of_free ( heap, chunk );
+
       if (chunk->chunk_size >= size + ALLOC_MIN_CHUNK ) {
         // If the size is enough for a new block
-        split = ( struct SMK_HeapChunk* ) ((( size_t ) chunk ) + size);
+        split = ( struct SMK_HeapChunk * ) ((( size_t ) chunk ) + size);
         split->chunk_size = chunk->chunk_size - size;
         split->prev_size = size;
-        next =  (struct SMK_HeapChunk*)((size_t)split + (size_t)split->chunk_size);
+        next =  (struct SMK_HeapChunk *)((size_t)split + (size_t)split->chunk_size);
+
         if ((size_t)next < heap->max)
           next->prev_size = split->chunk_size;
         else if ((heap->flags & ALLOC_CHECK) && (size_t)next != heap->max) {
@@ -305,6 +323,7 @@ void* malloc_r(struct SMK_HeapArea* heap, size_t size)
           _UNLOCK(heap);
           return NULL;
         }
+
         alloc_add_to_free ( heap, split );
         chunk->chunk_size = size;
         chunk->is_used |= ALLOC_ISUSED;
@@ -353,11 +372,11 @@ void* malloc_r(struct SMK_HeapArea* heap, size_t size)
  * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
  * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
  */
-void free_r(struct SMK_HeapArea* heap, void* ptr)
+void free_r(struct SMK_HeapArea *heap, void *ptr)
 {
-  struct SMK_HeapChunk* chunk = alloc_chunk(ptr);
-  struct SMK_HeapChunk* prev = NULL;
-  struct SMK_HeapChunk* next = NULL;
+  struct SMK_HeapChunk *chunk = alloc_chunk(ptr);
+  struct SMK_HeapChunk *prev = NULL;
+  struct SMK_HeapChunk *next = NULL;
 
   if (heap->flags & ALLOC_PARANOID) {
     if (memcorrupt_r(heap)) {
@@ -370,17 +389,20 @@ void free_r(struct SMK_HeapArea* heap, void* ptr)
   }
 
   _LOCK(heap);
-  prev = (struct SMK_HeapChunk*)((size_t)chunk - (size_t)chunk->prev_size);
-  next = (struct SMK_HeapChunk*)((size_t)chunk + (size_t)chunk->chunk_size);
+  prev = (struct SMK_HeapChunk *)((size_t)chunk - (size_t)chunk->prev_size);
+  next = (struct SMK_HeapChunk *)((size_t)chunk + (size_t)chunk->chunk_size);
 
   // If we ask for heap corruption checks
   if (heap->flags & ALLOC_CHECK) {
     if (!chunk->is_used)
       heap->flags |= ALLOC_CORRUPTED;
+
     if (prev != chunk && prev->chunk_size != chunk->prev_size)
       heap->flags |= ALLOC_CORRUPTED;
+
     if ((size_t)next < heap->max && next->prev_size != chunk->chunk_size)
       heap->flags |= ALLOC_CORRUPTED;
+
     if (heap->flags & ALLOC_CORRUPTED) {
       _UNLOCK(heap);
 
@@ -402,8 +424,10 @@ void free_r(struct SMK_HeapArea* heap, void* ptr)
     alloc_rem_of_free(heap, prev);
     // prev->is_used = FALSE;
     prev->chunk_size += chunk->chunk_size;
+
     if ((size_t)next < heap->max)
       next->prev_size = prev->chunk_size;
+
     chunk = prev;
   }
 
@@ -412,7 +436,8 @@ void free_r(struct SMK_HeapArea* heap, void* ptr)
     alloc_rem_of_free(heap, next);
     // next->is_used = FALSE;
     chunk->chunk_size += next->chunk_size;
-    next = (struct SMK_HeapChunk*)((size_t)chunk + (size_t)chunk->chunk_size);
+    next = (struct SMK_HeapChunk *)((size_t)chunk + (size_t)chunk->chunk_size);
+
     if ((size_t)next < heap->max)
       next->prev_size = chunk->chunk_size;
   }
@@ -447,31 +472,32 @@ void free_r(struct SMK_HeapArea* heap, void* ptr)
  * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
  */
 #if 0
-void* memalign_r(struct SMK_HeapArea* heap, size_t alignment, size_t size)
+void *memalign_r(struct SMK_HeapArea *heap, size_t alignment, size_t size)
 {
-    xHeapChunk_t* chunk;
-    int* ptr, *aptr;
+  xHeapChunk_t *chunk;
+  int *ptr, *aptr;
 
-    if (!bpw2(alignment)) {
-        // TODO errno = EINVAL
-        return NULL;
-    }
+  if (!bpw2(alignment)) {
+    // TODO errno = EINVAL
+    return NULL;
+  }
 
-    if (alignment <= 16)
-        return (malloc_r(heap, size));
+  if (alignment <= 16)
+    return (malloc_r(heap, size));
 
-    ptr = (int*)malloc_r(heap, size + alignment);
-    if (((size_t)ptr & (alignment - 1)) == 0) {
-        // Is already aligned
-        chunk = alloc_chunk(ptr);
+  ptr = (int *)malloc_r(heap, size + alignment);
+
+  if (((size_t)ptr & (alignment - 1)) == 0) {
+    // Is already aligned
+    chunk = alloc_chunk(ptr);
     //  chunk->chunk_size = ;
-    }
+  }
 
-    aptr = (int*)ALIGN((uintptr_t)ptr, alignment);
+  aptr = (int *)ALIGN((uintptr_t)ptr, alignment);
 
 
 
-    return (ptr);
+  return (ptr);
 }
 #endif
 
@@ -479,12 +505,13 @@ void* memalign_r(struct SMK_HeapArea* heap, size_t alignment, size_t size)
 
 
 /* ----------------------------------------------------------------------- */
-void* malloc_(size_t length)
+void *malloc_(size_t length)
 {
-  void* ptr;
+  void *ptr;
   struct SMK_HeapArea *area;
   ll_for_each (&gHeapArea, area, struct SMK_HeapArea, node_) {
     ptr = malloc_r(area, length);
+
     if (ptr)
       return ptr;
   }
@@ -494,7 +521,7 @@ void* malloc_(size_t length)
 
 
 /* ----------------------------------------------------------------------- */
-void free_(void* ptr)
+void free_(void *ptr)
 {
   struct SMK_HeapArea *area;
   ll_for_each (&gHeapArea, area, struct SMK_HeapArea, node_) {
@@ -510,7 +537,8 @@ void free_(void* ptr)
 void alloc_init(size_t base, size_t length)
 {
   struct SMK_HeapArea *area = &gArea;
-  if (gHeapArea.count_ != 0) 
+
+  if (gHeapArea.count_ != 0)
     area = malloc_(sizeof(struct SMK_HeapArea));
 
   meminit_r(area, base, length);

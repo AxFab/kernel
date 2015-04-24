@@ -43,7 +43,7 @@ int isascii(int c);
 #define isgraph(c)  isctype_(c, CTYPE_GRAPH, _getLocale())
 /** checks for a lowercase character */
 #define islower(c)  isctype_(c, CTYPE_LOWER, _getLocale())
-/** checks for any printable character which is not a space or an 
+/** checks for any printable character which is not a space or an
   * alphanumeric character */
 #define ispunct(c)  isctype_(c, CTYPE_PUNCT, _getLocale())
 /** checks for white-space characters */
@@ -77,7 +77,7 @@ int toupper (int c);
 #define isgraph_l(c,l)  isctype_(c, CTYPE_GRAPH, l)
 /** checks for a lowercase character */
 #define islower_l(c,l)  isctype_(c, CTYPE_LOWER, l)
-/** checks for any printable character which is not a space or an 
+/** checks for any printable character which is not a space or an
   * alphanumeric character */
 #define ispunct_l(c,l)  isctype_(c, CTYPE_PUNCT, l)
 /** checks for white-space characters */

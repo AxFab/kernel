@@ -21,7 +21,7 @@
  */
 #pragma once
 #include <stddef.h>
-#include <smkos/_assert.h>
+#include <smkos/assert.h>
 
 #define RECURS_LMT 64
 #define RECURS_ERR() assert(0)
@@ -32,11 +32,12 @@
 
 #ifndef itemof
 #  define itemof(p,t,m)   (t*)item_(p,offsetof(t,m))
-static inline void* item_(void* p, size_t off)
+static inline void *item_(void *p, size_t off)
 {
   if (p == NULL)
     return NULL;
-  return ((char*)p - off);
+
+  return ((char *)p - off);
 }
 #endif
 
