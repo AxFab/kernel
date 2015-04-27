@@ -26,7 +26,12 @@ $(OBJS_DIR)/kernel/%.o: $(SOURCE_DIR)/%.c
 $(OBJS_DIR)/kernel/%.d: $(SOURCE_DIR)/%.c
 	@ mkdir -p $(dir $@)
 	$(E) '  CC   - Dependancies of C source file: $@'
-	$(V) $(CCD) $@ $< $(C_FLAGS_KERNEL) $(INC_KERNEL) $(DEF_KERNEL)
+	$(V) $(CCD) $< $(C_FLAGS_KERNEL) $(INC_KERNEL) $(DEF_KERNEL) | sed 's%.*:%$(@:.d=.o):%' > $@
+#	@ cp $@ $@.tmp
+#	@ cat $@ | fmt -1 | sed -e 's/.*://' -e 's/\\$$//' -e 's/^\s*//' | grep -v '^\s*$$' | sed 's/$$/:/' >> @$.tmp
+#	@ rm $@.tmp
+
+#	@ cat $@.tmp | fmt -1 | sed -e 's/.*://' -e 's/\$//' -e 's/^\s*//' | grep -v '^\s*$' | sed 's/$/:/' >> @$
 
 $(OBJS_DIR)/kernel/%.o: $(SOURCE_DIR)/%.cpp
 	@ mkdir -p $(dir $@)
@@ -36,7 +41,8 @@ $(OBJS_DIR)/kernel/%.o: $(SOURCE_DIR)/%.cpp
 $(OBJS_DIR)/kernel/%.d: $(SOURCE_DIR)/%.cpp
 	@ mkdir -p $(dir $@)
 	$(E) '  CXXD - Dependancies of C++ source file: $@'
-	$(V) $(CXXD) $@ $< $(CXX_FLAGS_KERNEL) $(INC_KERNEL) $(DEF_KERNEL)
+	$(V) $(CXXD) $< $(CXX_FLAGS_KERNEL) $(INC_KERNEL) $(DEF_KERNEL) | sed 's%.*:%$(@:.d=.o):%' > $@
+
 
 $(OBJS_DIR)/kernel/%.o: $(SOURCE_DIR)/%.asm
 	@ mkdir -p $(dir $@)
@@ -55,6 +61,8 @@ $(OBJS_DIR)/smokeos/%.d: $(SOURCE_DIR)/%.c
 	@ mkdir -p $(dir $@)
 	$(E) '  CC   - Dependancies of C source file: $@'
 	$(V) $(CCD) $@ $< $(C_FLAGS_SMOKEOS) $(INC_SMOKEOS) $(DEF_SMOKEOS)
+	@ cp $@ $@.tmp
+
 
 $(OBJS_DIR)/smokeos/%.o: $(SOURCE_DIR)/%.cpp
 	@ mkdir -p $(dir $@)

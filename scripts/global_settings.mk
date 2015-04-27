@@ -14,7 +14,7 @@ endif
 ARCH ?= i386
 
 CC = gcc -c -o
-CCD = gcc -MM -o
+CCD = gcc -MM
 AS = nasm -f elf32 -o
 
 LD = gcc -o

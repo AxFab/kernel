@@ -2,17 +2,23 @@
 #include <smkos/klimits.h>
 #include <smkos/kstruct/fs.h>
 #include <smkos/kstruct/map.h>
+#include <smkos/kstruct/user.h>
 #include <smkos/event.h>
 
 
 /* ----------------------------------------------------------------------- */
 /**  */
-static kPipe_t * fs_create_pipe(kInode_t *ino)
+kPipe_t * fs_create_pipe(kInode_t *ino)
 {
   int vmaRg = VMA_FIFO | VMA_READ | VMA_WRITE;
   kPipe_t *pipe;
 
   klock(&ino->lock_);
+  if (ino->pipe_) {
+    kunlock(&ino->lock_);
+    return ino->pipe_;
+  }
+
   pipe = KALLOC (kPipe_t);
 
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
@@ -129,6 +135,11 @@ int fs_event(kInode_t *ino, int type, int value)
   event.clock_ = clock();
   event.type_ = type;
   event.value_ = value;
+
+  if (ino->subsys_) {
+    ino->subsys_->event(type, value);
+    return __seterrno(0);
+  }
 
   kprintf ("[E%x,%d-%s]", type,value,ino->name_);
 

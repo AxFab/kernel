@@ -62,7 +62,7 @@ typedef struct kSession kSession_t;
 typedef struct kPage kPage_t;
 typedef struct kPipe kPipe_t;
 typedef struct kResx kResx_t;
-
+typedef struct kSubSystem kSubSystem_t;
 
 /* FUNCTIONS ============================================================= */
 /** Display a message on system logs. */
@@ -163,7 +163,7 @@ static inline void kernel_state(enum kState state)
 char* strdup(const char*);
 int strcmpi (const char* str1, const char* str2);
 unsigned long long strtoull(const char*, char**, int);
-#define exit_() assert(0)
+#define exit_() do { cpu_halt(); for(;;); } while(0);
 int snprintf(char *, size_t, const char *, ...);
 int vsnprintf(char *str, size_t lg, const char *format, va_list ap);
 

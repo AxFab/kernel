@@ -18,7 +18,10 @@ $(OBJS_DIR)/debug/%.o: $(SOURCE_DIR)/%.c
 $(OBJS_DIR)/debug/%.d: $(SOURCE_DIR)/%.c
 	@ mkdir -p $(dir $@)
 	$(E) '  CC   - Dependancies of C source file: $@'
-	$(V) $(CCD) $@ $< $(C_FLAGS_DEBUG) $(INC_DEBUG) $(DEF_DEBUG)
+	$(V) $(CCD) $< $(C_FLAGS_DEBUG) $(INC_DEBUG) $(DEF_DEBUG) > $@
+	@ cp $@ $@.tmp
+	@ cat $@.tmp | fmt -1 | sed -e 's/.*://' -e 's/\$//' -e 's/^\s*//' | grep -v '^\s*$' | sed 's/$/:/' >> @$
+	@ rm $@.tmp
 
 $(OBJS_DIR)/debug/%.o: $(SOURCE_DIR)/%.cpp
 	@ mkdir -p $(dir $@)
@@ -28,7 +31,11 @@ $(OBJS_DIR)/debug/%.o: $(SOURCE_DIR)/%.cpp
 $(OBJS_DIR)/debug/%.d: $(SOURCE_DIR)/%.cpp
 	@ mkdir -p $(dir $@)
 	$(E) '  CXXD - Dependancies of C++ source file: $@'
-	$(V) $(CXXD) $@ $< $(CXX_FLAGS_DEBUG) $(INC_DEBUG) $(DEF_DEBUG)
+	$(V) $(CXXD) $< $(CXX_FLAGS_DEBUG) $(INC_DEBUG) $(DEF_DEBUG) > $@
+	@ cp $@ $@.tmp
+	@ cat $@.tmp | fmt -1 | sed -e 's/.*://' -e 's/\$//' -e 's/^\s*//' | grep -v '^\s*$' | sed 's/$/:/' >> @$
+	@ rm $@.tmp
+
 
 
 # *** Intermediate release files ***

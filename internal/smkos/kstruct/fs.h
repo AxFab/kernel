@@ -87,6 +87,7 @@ struct kInode {
   kDevice_t *dev_;
   struct bbtree pageTree_;
 
+  kSubSystem_t *subsys_;
   union {
     kAssembly_t *assembly_;
     kPipe_t *pipe_;

@@ -423,29 +423,29 @@ void term_close (kTerm_t *term)
 }
 
 
-// ---------------------------------------------------------------------------
-kInode_t *term_create (void *pixels, int width, int height, int line)
-{
-  char no[10];
-  static int auto_incr = 0;
+// // ---------------------------------------------------------------------------
+// kInode_t *term_create (void *pixels, int width, int height, int line)
+// {
+//   char no[10];
+//   static int auto_incr = 0;
 
 
-  kTerm_t *term = KALLOC(kTerm_t);
-  term->txColor_ = 0xffa6a6a6; // 0xff5c5c5c;
-  term->bgColor_ = 0xff323232;
-  term->out_size_ = TERM_OUT_BUFFER;
-  term->out_buf_ = kalloc(term->out_size_, 0);
-  term->in_size_ = TERM_IN_BUFFER;
-  term->in_buf_ = kalloc(term->in_size_, 0);
-  term->row_ = 1;
-  term->first_ = KALLOC(kLine_t);
-  term->first_->txColor_ = 0xffa6a6a6;
-  term->first_->bgColor_ = 0xff323232;
-  term->last_ = term->first_;
-  term->top_ = term->first_;
-  ino->term_ = term;
+//   kTerm_t *term = KALLOC(kTerm_t);
+//   term->txColor_ = 0xffa6a6a6; // 0xff5c5c5c;
+//   term->bgColor_ = 0xff323232;
+//   term->out_size_ = TERM_OUT_BUFFER;
+//   term->out_buf_ = kalloc(term->out_size_, 0);
+//   term->in_size_ = TERM_IN_BUFFER;
+//   term->in_buf_ = kalloc(term->in_size_, 0);
+//   term->row_ = 1;
+//   term->first_ = KALLOC(kLine_t);
+//   term->first_->txColor_ = 0xffa6a6a6;
+//   term->first_->bgColor_ = 0xff323232;
+//   term->last_ = term->first_;
+//   term->top_ = term->first_;
+//   ino->term_ = term;
 
-  term_frame (ino->term_, pixels, width, height, line, font64_paint, font64_clean);
-  return ino;
-}
+//   term_frame (ino->term_, pixels, width, height, line, font64_paint, font64_clean);
+//   return ino;
+// }
 

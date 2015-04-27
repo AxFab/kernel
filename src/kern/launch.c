@@ -32,6 +32,8 @@ void kernel_start ()
   int idx;
   kUser_t* user;
   kInode_t *ino;
+  kInode_t *kb;
+  kInode_t *fb;
   struct tm dateTime;
   
   /* Initialize kernel environment */
@@ -67,6 +69,11 @@ void kernel_start ()
     ++idx;
   }
 
+  // Open Graphic buffer
+  kb = search_inode ("/dev/Kb0", NULL, 0);
+  fb = search_inode ("/dev/Fb0", NULL, 0);
+  create_subsys(kb, fb);
+
   // display_inodes();
   
   if (!masterPaths[idx])
@@ -75,10 +82,6 @@ void kernel_start ()
   create_logon_process(ino, user, kSYS.sysIno_, masterPaths[idx]);
   scavenge_area(kSYS.mspace_);
 
-  // Open Graphic buffer
-  ino = search_inode ("/dev/Fb0", NULL, 0);
-  if (ino) 
-    ktty(ino);
 
   kprintf ("CPU %d is ready\n", kCpuNo);
   cpu_start_scheduler();

@@ -20,6 +20,9 @@
  *      Driver for Keyboard.
  */
 #include <smkos/kfs.h>
+#include <smkos/keys.h>
+
+
 
 void x86_IRQ_handler(int no, void (*handler)());
 
@@ -51,8 +54,10 @@ void KDB_irq ()
     rg = inb(0x64);
   } while ((rg & 0x01) == 0);
 
-  rg = inb(0x60) - 1;
-  fs_event(devKeyBoard->ino_, rg > 0x80 ? EV_KEYUP : EV_KEYDW, rg & 0x7F);
+  rg = inb(0x60); // - 1;
+
+  int ccode = key_layout_us[rg & 0x7F][0];
+  fs_event(devKeyBoard->ino_, rg > 0x80 ? EV_KEYUP : EV_KEYDW, ccode);
 }
 
 
@@ -76,7 +81,7 @@ int KDB_mount (kInode_t *dev, const char *name)
   stat.major_ = KDB_No;
   stat.minor_ = 0;
 
-  devKeyBoard = create_device("kb0", NULL, &stat, NULL);
+  devKeyBoard = create_device("Kb0", NULL, &stat, NULL);
   return 0;
 }
 
