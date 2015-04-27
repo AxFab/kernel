@@ -21,16 +21,6 @@
  */
 #pragma once
 
-#include <smkos/assert.h>
-#include <smkos/alimits.h>
-
-#define FNAME_MAX 256
-#define FBUFFER_MAX (64*_Mb_) /**< Maximum size of a file buffer (read/write) */
-#define STRING_MAX 512
-#define PATH_MAX 8192
-#define MAX_LOOP 500
-#define CLOCK_HZ 100
-
-#define MAX_FD_PER_PROCESS 0xC000000 /**< We need a limit: 200 milions */
-
+#define PAGE_SIZE 4096
+#define PAGE_MAX (1024 * 1024)
 

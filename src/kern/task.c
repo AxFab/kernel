@@ -84,11 +84,11 @@ static kSession_t *alloc_session(kUser_t *user, kInode_t *dir)
 
 
 /* ----------------------------------------------------------------------- */
-static kProcess_t *alloc_process(kAssembly_t* assembly)
+static kProcess_t *alloc_process(kAssembly_t* assembly, int pid)
 {
   kThread_t *thread;
   kProcess_t *process = KALLOC (kProcess_t);
-  // process->pid_ = ++kSYS.pidAutoInc_;
+  process->pid_ = pid;
   // process->commandLine_ = strdup(cmd);
   process->start_ = time(NULL);
   inode_open(assembly->ino_);
@@ -177,18 +177,29 @@ void destroy_process (kProcess_t *process)
   kfree(process);
 }
 
-
 /* ----------------------------------------------------------------------- */
 kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, const char*cmd)
 {
   kProcess_t *process;
+  kInode_t* stdin;
+  kInode_t* stdout;
+  kInode_t* stderr;
+  kInode_t* procdir;
+  char bufPid[12];
+  int pid = ++kSYS.pidAutoInc_;
 
   assert(ino != NULL);
   assert(user != NULL);
   assert(dir != NULL);
   assert(cmd != NULL);
 
-  process = alloc_process(ino->assembly_);
+  snprintf(bufPid, 12, "%d", pid);
+  procdir = create_inode (bufPid, kSYS.procIno_, S_IFDIR | 0400, 0);
+  stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  stderr = stdout;
+
+  process = alloc_process(ino->assembly_, pid);
   if (process == NULL)
     return NULL;
 
@@ -200,7 +211,14 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
     return NULL;
   }
 
+  process_set_resx(process, stdin, 0); // O_RDLY | 
+  process_set_resx(process, stdout, 0); // O_WRLY | 
+  process_set_resx(process, stderr, 0); // O_WRLY | O_DIRECT
+
+  open_subsys(/*subsys, */stdin, stdout);
+
   kunlock (&process->lock_);
+  
   return process;
 }
 
@@ -209,12 +227,14 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
 kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, const char*cmd)
 {
   kProcess_t *process;
+  char bufPid[12];
+  int pid = ++kSYS.pidAutoInc_;
 
   assert(ino != NULL);
   assert(parent != NULL);
   assert(cmd != NULL);
 
-  process = alloc_process(ino->assembly_);
+  process = alloc_process(ino->assembly_, pid);
   if (process == NULL)
     return NULL;
 
@@ -274,6 +294,45 @@ void process_exit(kProcess_t *process, int status)
   kunlock(&process->lock_);
 }
 
+
+/* ----------------------------------------------------------------------- */
+kResx_t *process_get_resx(kProcess_t *process, int fd, int access)
+{
+  kResx_t* resx;
+  klock(&process->lock_);
+  resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
+  if (resx == NULL) {
+    kunlock(&process->lock_);
+    return __seterrnoN(EBADF, kResx_t);
+  }
+
+  assert ((int)resx->fdNd_.value_ == fd);
+  // @todo check capacity (access rights)
+
+  kunlock(&process->lock_);
+  return resx;
+}
+
+
+/* ----------------------------------------------------------------------- */
+kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags)
+{
+  kResx_t* resx;
+
+  assert (kislocked(&process->lock_));
+  if (process->fdCount_ > MAX_FD_PER_PROCESS)
+    return NULL;
+  
+
+  resx = KALLOC(kResx_t);
+  resx->ino_ = ino;
+  resx->type_ = ino->stat_.mode_ & S_IFMT;
+  resx->oflags_ = oflags;
+  // @todo check capacity (access rights)
+  resx->fdNd_.value_ = process->fdCount_++;
+  bb_insert (&process->resxTree_, &resx->fdNd_);
+  return resx;
+}
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

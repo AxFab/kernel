@@ -2,39 +2,55 @@
 #include <smkos/kstruct/fs.h>
 #include <smkos/kstruct/map.h>
 
-struct kTty {
+/* ----------------------------------------------------------------------- */
+void kwrite_tty(const char *m);
+void kwrite_pipe(const char *m);
 
+
+struct kSubSystem {
   void (*write)(const char *m);
 };
 
+struct kSubSystem vgaText = {
+  .write = _kwrite_txt
+};
+
+struct kSubSystem {
+  .write = kwrite_pipe
+};
+
+
+struct kSubSystem *sysLogTty = &vgaText;
+kInode_t* sysOut = NULL;
 
 
 /* ----------------------------------------------------------------------- */
-void _kwrite_font64(const char *m)
+void kwrite_pipe (const char *m) 
 {
-}
-
-/* ----------------------------------------------------------------------- */
-void ktty(kInode_t* ino)
-{
-  int idx;
-  kMemArea_t* area;
-  unsigned int* pixels;
-  struct kTty* tty;
-
-  area = area_map_ino(kSYS.mspace_, ino, 0, ino->stat_.length_, 0);
-  pixels = (unsigned int*)area->address_;
-  for (idx = 0; idx < (int)(ino->stat_.length_ / 4); idx++) {
-    pixels[idx] = 0x181818; 
-  }
-
-  tty = KALLOC(struct kTty);
-  tty->write = _kwrite_font64;
+  int lg = strlen (m);
+  fs_pipe_write (sysOut, m, lg, 0);
+  
 }
 
 
-/* ----------------------------------------------------------------------- */
+void create_subsys(kInode_t* kbd, kInode_t* screen)
+{
+}
 
+
+void open_subsys(kInode_t* input, kInode_t* output)
+{
+  assert(S_ISFIFO(input->stat_.mode_) || S_ISCHR(input->stat_.mode_));
+  assert(S_ISFIFO(output->stat_.mode_) || S_ISCHR(output->stat_.mode_));
+
+  fs_create_pipe(input);
+  fs_create_pipe(output);
+
+  sysOut = output;
+}
+
+
+/* ----------------------------------------------------------------------- */
 void ascii_cmd(const char **m)
 {
   // int idx = 0;
@@ -52,7 +68,7 @@ void ascii_cmd(const char **m)
     
     // *m = mL;
     return;
-/*
+    /*
     switch (**m) {
       case ';':
         (*m)++;
@@ -71,6 +87,7 @@ void ascii_cmd(const char **m)
     */
   }
 }
+
 
 static uint16_t* txtBuffer = (uint16_t*)0xB8000;
 static int txtIdx = 0;
@@ -96,10 +113,6 @@ void _kwrite_txt(const char *m)
   }
 }
 
-struct kTty vgaText = {
-  .write = _kwrite_txt
-};
-struct kTty *sysLogTty = &vgaText;
 
 /* ----------------------------------------------------------------------- */
 #ifndef kwrite

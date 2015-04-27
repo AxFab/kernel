@@ -242,6 +242,7 @@ kMemArea_t* area_map(kMemSpace_t* sp, size_t length, int flags)
     case VMA_SHM:
     case VMA_FILE:
     case VMA_HEAP:
+    case VMA_FIFO:
     case VMA_STACK:
       narea = area_map_begin_(sp, &area);
       break;

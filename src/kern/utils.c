@@ -29,7 +29,7 @@ void *kalloc (size_t size)
     kpanic ("The kernel run out of memory\n");
   }
   
-  kSYS.objMemory_ += size;
+  // kSYS.objMemory_ += size;
   memset(addr, 0, size);
   return addr;
 }
@@ -38,8 +38,8 @@ void *kalloc (size_t size)
 /* ----------------------------------------------------------------------- */
 void kfree (void *addr)
 {
-  size_t size = ((int*)addr)[-4];
-  kSYS.objMemory_ -= size;
+  // size_t size = ((int*)addr)[-4];
+  // kSYS.objMemory_ -= size;
   free_(addr);
 }
 

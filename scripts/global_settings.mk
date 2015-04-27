@@ -105,8 +105,8 @@ LIB_RELEASE =
 
 C_FLAGS_TESTING = $(CFLAGS) -ggdb3 --coverage -fprofile-arcs -ftest-coverage
 CXX_FLAGS_TESTING = $(CFLAGS) -ggdb3 --coverage -fprofile-arcs -ftest-coverage
-INC_TESTING = -I include -I include/_um
-DEF_TESTING = $(DEF)
+INC_TESTING = -I include -I internal -I include/_um -I internal/_um
+DEF_TESTING = $(DEF) -D_FS -D_FS_UM
 L_FLAGS_TESTING = $(LFLAGS) --coverage
 LIB_TESTING = -lcheck
 

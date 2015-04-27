@@ -129,6 +129,8 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
 kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, const char*cmd);
 void thread_abort (kThread_t* thread);
 void process_exit(kProcess_t *process, int status);
+kResx_t *process_get_resx(kProcess_t *process, int fd, int access);
+kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags);
 
 
 /* === USERS ============================================================= */

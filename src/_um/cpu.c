@@ -20,13 +20,22 @@
  *      Usermode CPU wrapper implementation.
  */
 #include <smkos/kernel.h>
-#include <smkos/core.h>
-#include <smkos/arch.h>
+#include <smkos/kapi.h>
+#include <smkos/kstruct/task.h>
+#include <smkos/kstruct/fs.h>
 
 #include <stdlib.h>
 #include <setjmp.h>
 
 static jmp_buf cpuJmp;
+
+void sleep(int);
+
+uint8_t inb (uint16_t port) {}
+
+void x86_IRQ_handler(int no, void (*handler)())
+{
+}
 
 /* ----------------------------------------------------------------------- */
 struct tm cpu_get_clock() {
@@ -84,6 +93,15 @@ void initialize_smp()
 
 
 /* ----------------------------------------------------------------------- */
+int evt = 0;
+
+
+
+extern kDevice_t *devKeyBoard;
+
+#define EV_KEYUP 10
+#define EV_KEYDW 11
+
 int main_jmp_loop()
 {
   int idx = setjmp(cpuJmp);
@@ -95,11 +113,20 @@ int main_jmp_loop()
     break;
 
   case 1:
-    return 0;
-    // Do we have event to send !!
-    kernel_state (KST_KERNSP);
-    sched_next(kSYS.scheduler_);
+    if (evt > 1)
+      return 0;
+
+    ++evt;
+    fs_event(devKeyBoard->ino_, EV_KEYDW, 0x20);
+    fs_event(devKeyBoard->ino_, EV_KEYUP, 0x20);
+    fs_event(devKeyBoard->ino_, EV_KEYDW, 0x20);
+    fs_event(devKeyBoard->ino_, EV_KEYUP, 0x20);
     break;
+
+    // Do we have event to send !!
+    // kernel_state (KST_KERNSP);
+    // sched_next(kSYS.scheduler_);
+    // break;
 
   case 5:
     // We are inside a program, choose SYSCALL

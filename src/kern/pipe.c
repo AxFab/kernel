@@ -9,14 +9,23 @@
 /**  */
 static kPipe_t * fs_create_pipe(kInode_t *ino)
 {
-  int vmaRg = VMA_FILE | VMA_READ | VMA_WRITE;
-  kPipe_t *pipe = KALLOC (kPipe_t);
+  int vmaRg = VMA_FIFO | VMA_READ | VMA_WRITE;
+  kPipe_t *pipe;
+
+  klock(&ino->lock_);
+  pipe = KALLOC (kPipe_t);
 
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
 
+  if (ino->stat_.length_ == 0)
+    ino->stat_.length_ = PAGE_SIZE;
   pipe->size_ = ALIGN_UP(ino->stat_.length_, PAGE_SIZE);
+  klock(&kSYS.mspace_->lock_);
   pipe->mmap_ = area_map(kSYS.mspace_, pipe->size_, vmaRg);
+  kunlock(&kSYS.mspace_->lock_);
   ino->pipe_ = pipe;
+
+  kunlock(&ino->lock_);
   return pipe;
 }
 
@@ -33,10 +42,10 @@ int fs_pipe_read(kInode_t *ino, void* buf, size_t lg)
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
 
   /* Loop inside the buffer */
-  klock(&ino->lock_);
   if (!pipe)
     pipe = fs_create_pipe (ino);
 
+  // TODO Mutex on pipes
   while (lg > 0) {
     if (pipe->rpen_ >= pipe->size_)
       pipe->rpen_ = 0;
@@ -60,7 +69,6 @@ int fs_pipe_read(kInode_t *ino, void* buf, size_t lg)
     buf = ((char *)buf) + cap;
   }
 
-  kunlock(&ino->lock_);
   return bytes;
 }
 
@@ -77,12 +85,12 @@ size_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg, int flags)
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
 
   /* Loop inside the buffer */
-  klock(&ino->lock_);
   if (!pipe)
     pipe = fs_create_pipe (ino);
 
+  // TODO Mutex on pipes
   if (flags) {
-    if (pipe->avail_ < lg)
+    if (pipe->size_ - pipe->avail_ < lg)
       return 0;
   }
 
@@ -109,7 +117,6 @@ size_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg, int flags)
     buf = ((char *)buf) + cap;
   }
 
-  kunlock(&ino->lock_);
   return bytes;
 }
 
@@ -123,10 +130,12 @@ int fs_event(kInode_t *ino, int type, int value)
   event.type_ = type;
   event.value_ = value;
 
+  kprintf ("[E%x,%d-%s]", type,value,ino->name_);
+
   // if (ino->subSystem_ == NULL) {
-    if (fs_pipe_write(ino, &event, sizeof(event), 1) == 0)
-      return __seterrno(EAGAIN);
-    return __seterrno(0);
+  if (fs_pipe_write(ino, &event, sizeof(event), 1) == 0)
+    return __seterrno(EAGAIN);
+  return __seterrno(0);
   // }
 
   // return ENOSYS;

@@ -69,13 +69,13 @@ $(OBJS_DIR)/smokeos/%.d: $(SOURCE_DIR)/%.cpp
 
 # *** Deliveries files ***
 
-$(BOOT_DIR)/%.map: $(BOOT_DIR)/%
-	$(V) objcopy --only-keep-debug $< $@
+# $(BOOT_DIR)/%.map: $(BOOT_DIR)/%
+# 	$(V) objcopy --only-keep-debug $< $@
 
 $(BOOT_DIR)/%:
 	@ mkdir -p $(dir $@)
 	$(E) '  LD   - Link kernel image: $@'
-	$(V) $(LDK) $@ $^ $(L_FLAGS_KERNEL)
+	$(V) $(LDK) $@ -Map $@.map $^ $(L_FLAGS_KERNEL)
 
 $(BIN_DIR)/%.xe:
 	@ mkdir -p $(dir $@)

@@ -1,28 +1,33 @@
 #include <smkos/kernel.h>
 #include <smkos/kapi.h>
 
+#include <stdlib.h>
+#include <stdio.h>
 
 /* ----------------------------------------------------------------------- */
-void mmu_prolog ()
+void alloc_init()
 {
+}
+
+/* ----------------------------------------------------------------------- */
+void *malloc_ (size_t size)
+{
+  return malloc(size);
 }
 
 
 /* ----------------------------------------------------------------------- */
-/** Function to inform paging module that some RAM can be used by the system .
-  * @note this function should be used before mmu_init after mmu_prolog.
-  */
-void mmu_ram (int64_t base, int64_t length)
+void free_ (void *addr)
+{
+  free(addr);
+}
+
+/* ----------------------------------------------------------------------- */
+void VGA_Info()
 {
 }
 
-
-/* ----------------------------------------------------------------------- */
-int mmu_init ()
+void kwrite(const char *m)
 {
-  return 0;
+  printf("%s", m);
 }
-
-
-/* ----------------------------------------------------------------------- */
-/* ----------------------------------------------------------------------- */

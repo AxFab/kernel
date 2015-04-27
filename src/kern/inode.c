@@ -121,7 +121,7 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
   else if (dir == NULL)
     dir = kSYS.rootIno_; // @todo replace by PWD
 
-  strncpy (uri, path, PATH_MAX);
+  strncpy (uri, path, uriLg);
   klock (&dir->lock_);
 
   // For each folder inside the pathname.
@@ -311,8 +311,7 @@ static int unregister_inode (kInode_t *ino)
 
 
 /* ----------------------------------------------------------------------- */
-/** Create a new inode.
-  */
+/** Request the file system for the creation of a new inode. */
 kInode_t *create_inode(const char* name, kInode_t* dir, int mode, size_t lg)
 {
   int err;

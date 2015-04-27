@@ -28,19 +28,20 @@ include scripts/common_rules.mk
 CRTK = $(OBJS_DIR)/crtk.o
 CRT0 = $(OBJS_DIR)/crt0.o
 
+UM_SRC =  $(wildcard src/kern/*.c) \
+					$(wildcard src/scall/*.c) \
+					$(wildcard src/_um/*.c) \
+					src/fs/iso.c src/fs/gpt.c \
+					src/fs/tmpfs.c src/fs/hdd.c src/fs/kdb.c \
+					src/fs/font64.c
 
-MST_SRC = $(wildcard src/dummy/master.c)
-
-UM_SRC = $(wildcard src/*.c) \
- 				 $(wildcard src/fs/*.c) \
- 				 $(wildcard src/libc/*.c) \
- 				 $(wildcard src/_um/*.c)
-
-KRN_SRC = $(wildcard src/*.c) \
+KRN_SRC = $(wildcard src/kern/*.c) \
 					$(wildcard src/libc/*.c) \
+					$(wildcard src/scall/*.c) \
 					$(wildcard src/_x86/*.c) \
 					src/fs/ata.c src/fs/iso.c src/fs/gpt.c \
-					src/fs/tmpfs.c src/fs/svga.c src/fs/kdb.c
+					src/fs/tmpfs.c src/fs/svga.c src/fs/kdb.c \
+					src/fs/font64.c
 
 include scripts/global_commands.mk
 
@@ -70,24 +71,18 @@ $(BOOT_DIR)/kImage: $(CRTK) \
 		$(AXLIBC)/lib/libAxRaw.a
 endif
 
-# $(BIN_DIR)/master.xe: $(call objs,smokeos,src/dummy/master.c) $(AXLIBC)/lib/libaxc.a
-# $(BIN_DIR)/deamon.xe: $(call objs,smokeos,src/dummy/deamon.c) $(AXLIBC)/lib/libaxc.a
-# $(BIN_DIR)/hello.xe: $(call objs,smokeos,src/dummy/hello.c) $(AXLIBC)/lib/libaxc.a
-# $(BIN_DIR)/sname.xe: $(call objs,smokeos,src/dummy/sname.c) $(AXLIBC)/lib/libaxc.a
-# $(BIN_DIR)/init.xe: $(call objs,smokeos,src/dummy/init.c) $(AXLIBC)/lib/libaxc.a
-# $(BIN_DIR)/kt_itimer.xe: $(call objs,smokeos,src/dummy/kt_itimer.c) $(AXLIBC)/lib/libaxc.a
 
-LIBC_SRC = src/dummy/lib.c src/libc/string.c  \
+LIBC_SRC = src/utilities/lib.c src/libc/string.c  \
 		src/libc/printf.c src/libc/vfprintf.c \
 		src/libc/ctype.c src/libc/integer.c \
 		src/libc/int64.c
 
-$(BIN_DIR)/master.xe: $(call objs,smokeos,src/dummy/master.c $(LIBC_SRC))
-$(BIN_DIR)/deamon.xe: $(call objs,smokeos,src/dummy/deamon.c $(LIBC_SRC))
-$(BIN_DIR)/hello.xe: $(call objs,smokeos,src/dummy/hello.c $(LIBC_SRC))
-$(BIN_DIR)/sname.xe: $(call objs,smokeos,src/dummy/sname.c $(LIBC_SRC))
-$(BIN_DIR)/init.xe: $(call objs,smokeos,src/dummy/init.c $(LIBC_SRC))
-$(BIN_DIR)/kt_itimer.xe: $(call objs,smokeos,src/dummy/kt_itimer.c $(LIBC_SRC))
+$(BIN_DIR)/master.xe: $(call objs,smokeos,src/utilities/master.c $(LIBC_SRC))
+$(BIN_DIR)/deamon.xe: $(call objs,smokeos,src/utilities/deamon.c $(LIBC_SRC))
+$(BIN_DIR)/hello.xe: $(call objs,smokeos,src/utilities/hello.c $(LIBC_SRC))
+$(BIN_DIR)/sname.xe: $(call objs,smokeos,src/utilities/sname.c $(LIBC_SRC))
+$(BIN_DIR)/init.xe: $(call objs,smokeos,src/utilities/init.c $(LIBC_SRC))
+$(BIN_DIR)/kt_itimer.xe: $(call objs,smokeos,src/utilities/kt_itimer.c $(LIBC_SRC))
 
 PROGS  = $(BIN_DIR)/master.xe
 PROGS += $(BIN_DIR)/deamon.xe

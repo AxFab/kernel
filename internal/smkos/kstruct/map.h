@@ -43,14 +43,15 @@
 #define VMA_FILE          0x800 ///< The area map an executable file
 #define VMA_HEAP          0x1000 ///< The area map a process heap
 #define VMA_STACK         0x2000 ///< The area map a thread stack
+#define VMA_FIFO          0x4000
 
-#define VMA_CODE          0x4000
-#define VMA_DATA          0x8000
+#define VMA_CODE          0x10000
+#define VMA_DATA          0x20000
 
 #define VMA_ACCESS      (VMA_WRITE | VMA_EXEC | VMA_READ)
 #define VMA_MMU         (VMA_ACCESS | VMA_KERNEL)
 #define VMA_ASSEMBLY    (VMA_CODE | VMA_DATA)
-#define VMA_TYPE        (VMA_SHM | VMA_FILE | VMA_HEAP | VMA_STACK)
+#define VMA_TYPE        (VMA_SHM | VMA_FILE | VMA_HEAP | VMA_STACK | VMA_FIFO)
 
 
 /* ----------------------------------------------------------------------- */

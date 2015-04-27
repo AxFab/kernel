@@ -141,7 +141,7 @@ void initialize_smp()
   uint32_t eax, ebx;
 
   // Request CPU features
-  kprintf ("Initializing multi-processing...\n");
+  // kprintf ("Initializing multi-processing...\n");
   cpuid(1, 0, cpu_features);
   x86_InitializeFPU ();
   x86_ActiveCache();
@@ -169,7 +169,7 @@ void initialize_smp()
     kprintf ("No APIC capability\n");
     return;
   } else if (!x86_FEATURES_X2APIC) {
-    kprintf ("No x2APIC implemented\n");
+    // kprintf ("No x2APIC implemented\n");
   }
 
 

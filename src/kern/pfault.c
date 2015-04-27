@@ -149,12 +149,18 @@ int page_fault (size_t address, int cause)
   if (area->flags_ & VMA_STACK)
     return mmu_resolve(address, 0, VMA_READ | VMA_WRITE, true);
 
+  if (area->flags_ & VMA_FIFO) {
+    /* Pipe can only be mounted on kernel space */
+    assert (mspace == kSYS.mspace_); 
+    return mmu_resolve(address, 0, VMA_READ | VMA_WRITE | VMA_KERNEL, true);
+  }
+
   if (area->flags_ & VMA_FILE) {
     assert (area->ino_ != NULL);
     return page_inode(area, ALIGN_DW((size_t)address, PAGE_SIZE));
   }
 
-    kprintf("PF] %x (%d)\n", address, cause);
+    kprintf("PF] %x (%d)  { %x }\n", address, cause, area->flags_);
     kstacktrace(8);
     for(;;);
 

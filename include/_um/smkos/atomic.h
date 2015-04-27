@@ -17,83 +17,50 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Structure and macros for task managment module.
+ *      Atomical operations on an integer value.
  */
 #pragma once
 
-#include <smkos/kernel.h>
-#include <smkos/sync.h>
-#include <smkos/arch.h>
-#include <smkos/kstruct/map.h>
+typedef int atomic_t;
 
 
 /* ----------------------------------------------------------------------- */
-#define SCHED_ZOMBIE 0
-#define SCHED_SLEEP 1 /* Can't be interrupted */
-#define SCHED_BLOCKED 2 /* Can be interupted */
-#define SCHED_READY 3
-#define SCHED_EXEC 4
-#define SCHED_ABORT 5
-
-
-/* ----------------------------------------------------------------------- */
-struct kScheduler {
-  kThread_t        *anchor_;
-  struct spinlock lock_;
-  struct semaphore  taskSem_;
-  atomic_t          totalWeight_;
-};
-
-
-/* ----------------------------------------------------------------------- */
-struct kThread {
-  kProcess_t *process_;
-  kThread_t *schNext_;
-  struct llnode taskNd_;
-  kMemArea_t *kstack_;
-  kMemArea_t *ustack_;
-  int state_;
-  size_t paramValue_;
-  size_t paramEntry_;
-  time_t start_;
-  size_t stackPtr_;
-};
-
-
-
-/* ----------------------------------------------------------------------- */
-struct kProcess {
-  int pid_;
-  kAssembly_t* assembly_;
-  kSession_t* session_;
-  time_t start_;
-  kMemSpace_t mspace_;
-  struct spinlock lock_;
-  struct llnode allNd_;
-  struct llnode siblingNd_;
-  struct llhead children_;
-  struct llhead threads_;
-  /* kProcess_t *parent_; */
-  int runningTask_;
-  page_t pageDir_;
-  int exitStatus_;
-  
-  int pagePrivate_;
-  int pageShared_;
-
-  struct bbtree resxTree_;
-  int fdCount_;
-};
-
-
-/* ----------------------------------------------------------------------- */
-struct kResx 
+static inline void atomic_inc (volatile atomic_t* ref)
 {
-  int oflags_;
-  int type_;
-  kInode_t *ino_;
-  struct bbnode fdNd_;
-};
+  asm volatile ("lock incl %0" : "=m"(*ref));
+}
+
+
+/* ----------------------------------------------------------------------- */
+static inline void atomic_dec (volatile atomic_t* ref)
+{
+  asm volatile ("lock decl %0" : "=m"(*ref));
+}
+
+
+/* ----------------------------------------------------------------------- */
+static inline atomic_t atomic_xchg (volatile atomic_t* ref, atomic_t val)
+{
+  register atomic_t rval = val;
+  asm volatile ( "lock xchg %1,%0" : "=m" (*ref), "=r" (rval) : "1" (val));
+  return rval;
+}
+
+
+/* ----------------------------------------------------------------------- */
+static inline atomic_t atomic_add(volatile atomic_t *ref, atomic_t val)
+{
+  asm volatile("lock xaddl %%eax, %2;"
+               :"=a" (val) :"a" (val), "m" (*ref) :"memory");
+  return val;
+}
+
+
+/* ----------------------------------------------------------------------- */
+static inline void cli() { /*asm volatile("cli");*/ }
+static inline void sti() { /*asm volatile("sti");*/ }
+static inline void cpause() { asm volatile("pause"); }
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
+#define kwrite kwrite

@@ -30,13 +30,14 @@ static inline void init_driver()
   register_driver(ISO9660);
   /* register_driver(FATFS); */
 
-#if 1 /* _x86 */
+#if !defined(_FS) || defined(_FS_x86) /* _x86 */
   register_driver(ATA);
   register_driver(VGA);
   register_driver(KDB);
-#else /* _um */
+#elif defined(_FS) && defined(_FS_UM) /* _um */
   register_driver(HDD);
-  register_driver(BMP);
+  // register_driver(BMP);
+  register_driver(KDB);
 #endif
 }
 

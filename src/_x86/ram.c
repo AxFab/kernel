@@ -59,8 +59,10 @@ int mmu_init ()
 {
   int i;
   kSYS.pageMax_ = kSYS.pageAvailable_;
-  kprintf ("Memory detected %s\n", kpsize((uintmax_t)kSYS.memMax_));
-  kprintf ("Memory available %s\n", kpsize(kSYS.pageAvailable_ * PAGE_SIZE));
+  kprintf ("Memory available ");
+  kprintf ("%s on ", kpsize((uintmax_t)kSYS.memMax_));
+  kprintf ("%s\n", kpsize((uintmax_t)kSYS.pageAvailable_ * PAGE_SIZE));
+  // kprintf ("Memory available %s\n", kpsize(kSYS.pageAvailable_ * PAGE_SIZE));
 
   uint32_t *krnDir = (uint32_t *)MMU_PREALLOC_DIR;
   uint32_t *krnTbl = (uint32_t *)MMU_PREALLOC_TBL;

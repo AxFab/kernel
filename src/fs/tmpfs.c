@@ -43,10 +43,12 @@ int TMPFS_create(const char *name, kInode_t *dir, int mode, size_t lg, SMK_stat_
   stat->mtime_ = now;
   stat->block_ = PAGE_SIZE;
   stat->mode_ = mode;
+  stat->length_ = lg;
 
   switch (mode & S_IFMT) {
   case S_IFREG:
   case S_IFDIR:
+  case S_IFIFO:
     return 0;
 
   default:

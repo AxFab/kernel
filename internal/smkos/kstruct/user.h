@@ -30,9 +30,12 @@
 #define CAP_ADMIN    0xffff
 
 
-#define CAP_NOBODY 0
-#define CAP_EVERYBODY 1
+#define CAP_NOBODY        0
+#define CAP_EVERYBODY     (1 << 0)
 
+#define CAP_READ          (1 << 1)
+#define CAP_WRITE         (1 << 2)
+#define CAP_EXEC          (1 << 3)
 
 
 

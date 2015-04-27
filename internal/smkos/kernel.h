@@ -61,6 +61,7 @@ typedef struct kScheduler kScheduler_t;
 typedef struct kSession kSession_t;
 typedef struct kPage kPage_t;
 typedef struct kPipe kPipe_t;
+typedef struct kResx kResx_t;
 
 
 /* FUNCTIONS ============================================================= */
@@ -102,6 +103,7 @@ struct kSys {
   kInode_t *devIno_;
   kInode_t *mntIno_;
   kInode_t *sysIno_;
+  kInode_t *procIno_;
   struct llhead inodeLru_;
   struct llhead deviceList_;
   struct llhead userList_;
@@ -116,6 +118,7 @@ struct kSys {
 
   size_t memMax_;
   int pageMax_;
+  int pidAutoInc_;
 
   struct kCpu _cpu[8];
 };

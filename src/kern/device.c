@@ -52,7 +52,7 @@ static void display_inode(kInode_t* ino, int depth)
   kInode_t* dir;
 
   const char ftype[] = {
-    'a', '-', 'd', '3', 'b', 'f', 'g', 'h', 'v', 'j', };
+    'a', '-', 'd', '3', 'b', 'c', 'p', '7', '8', '9', };
   const char* frights[] = {
     "---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx", "???", };
 
@@ -170,7 +170,7 @@ void initialize_vfs()
   time_t now = time(NULL);
   // char buf[2048];
 
-  kprintf ("Initializing virtual file system...\n");
+  // kprintf ("Initializing virtual file system...\n");
 
   root = KALLOC(kInode_t);
   root->stat_.mode_ = S_IFDIR | 0775;
@@ -191,7 +191,8 @@ void initialize_vfs()
 
   kSYS.devIno_ = create_inode ("dev", root, S_IFDIR | 0775, 0);
   kSYS.mntIno_ = create_inode ("mnt", root, S_IFDIR | 0775, 0);
-
+  kSYS.procIno_ = create_inode ("proc", root, S_IFDIR | 0775, 0);
+  
   init_driver();
   mount_alls ();
 }

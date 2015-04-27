@@ -143,7 +143,7 @@ void kdump (void *ptr, int lg)
 
 void ksymbols_load (kInode_t* ino)
 {
-  int i;
+  int i = 0;
   int j;
   int state = 0;
   int lg = ino->stat_.length_;
@@ -154,7 +154,6 @@ void ksymbols_load (kInode_t* ino)
   char *sym = kalloc (512);
   char *add = kalloc (20);
 
-  return;
   area = area_map_ino(kSYS.mspace_, ino, 0, ino->stat_.length_, 0);
   tmp = (char *)area->address_;
 
@@ -162,9 +161,17 @@ void ksymbols_load (kInode_t* ino)
 
     j = 0;
     while (tmp[i + j] != '\n' && (i + j) < lg) {
+      if (j >= 512 || tmp[i + j] < 0) {
+        state = -1;
+        break;
+      }
+
       str[j] = tmp[i + j];
       ++j;
     }
+
+    if (state < 0)
+      break;
 
     str[++j] = '\0';
     i += j;
@@ -177,18 +184,22 @@ void ksymbols_load (kInode_t* ino)
       else if (strncmp (str, ".bss", 4) == 0)     state = SC_BSS;
 
     } else {
-      if (str[1] != ' ')                          continue;
       strncpy (add, &str[16], 18);
       strcpy (sym, &str[50]);
       sym[strlen(sym)-1] = '\0';
       add[19] = '\0';
       ptr = strtoull (add, NULL, 0);
 
-      ksymreg (ptr, sym);
+      if (str[1] != ' ')  {
+        ksymreg (ptr, "__unamed__");
+      } else {
+        ksymreg (ptr, sym);
+      }
+
     }
   }
 
-  kprintf("Symbol loaded\n");
+  // kprintf("Symbol loaded\n");
 
   kfree (str);
   kfree (sym);
