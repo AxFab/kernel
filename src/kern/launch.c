@@ -3,7 +3,6 @@
 
 
 void ksymbols_load (kInode_t* ino);
-void ktty(kInode_t* ino);
 
 
 static const char *masterPaths[] = {
@@ -85,6 +84,8 @@ void kernel_start ()
 
   kprintf ("CPU %d is ready\n", kCpuNo);
   cpu_start_scheduler();
+
+  // BMP_sync (fb);
 }
 
 

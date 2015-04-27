@@ -31,8 +31,6 @@ static jmp_buf cpuJmp;
 
 void sleep(int);
 
-uint8_t inb (uint16_t port) {}
-
 void x86_IRQ_handler(int no, void (*handler)())
 {
 }

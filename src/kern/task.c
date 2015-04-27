@@ -227,12 +227,23 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
 kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, const char*cmd)
 {
   kProcess_t *process;
+  // kInode_t* stdin;
+  // kInode_t* stdout;
+  // kInode_t* stderr;
+  kInode_t* procdir;
   char bufPid[12];
   int pid = ++kSYS.pidAutoInc_;
 
   assert(ino != NULL);
   assert(parent != NULL);
   assert(cmd != NULL);
+
+  snprintf(bufPid, 12, "%d", pid);
+  procdir = create_inode (bufPid, kSYS.procIno_, S_IFDIR | 0400, 0);
+  ((void)procdir);
+  // stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  // stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  // stderr = stdout;
 
   process = alloc_process(ino->assembly_, pid);
   if (process == NULL)

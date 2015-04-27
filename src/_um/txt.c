@@ -1,36 +1,19 @@
 #include <smkos/kernel.h>
-#include <smkos/kapi.h>
-
-#include <stdlib.h>
+#include <smkos/kstruct/user.h>
 #include <stdio.h>
 
-
-
-uint8_t inb (uint16_t port) {
-  return -1;
-}
-void outb (uint16_t port, uint8_t value) {}
-
 /* ----------------------------------------------------------------------- */
-void alloc_init()
+void kwrite_tty(const char *m)
 {
-}
-
-/* ----------------------------------------------------------------------- */
-void *malloc_ (size_t size)
-{
-  return malloc(size);
+  printf ("%s", m);
 }
 
 
 /* ----------------------------------------------------------------------- */
-void free_ (void *addr)
+void event_tty(int type, int value)
 {
-  free(addr);
 }
+
 
 /* ----------------------------------------------------------------------- */
-void VGA_Info()
-{
-}
-
+/* ----------------------------------------------------------------------- */

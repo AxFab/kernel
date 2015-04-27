@@ -61,6 +61,7 @@ struct kUser
 struct kSubSystem {
   void (*event)(int type, int value);
   void (*write)(const char *m);
+  kTerm_t* term_;
 };
 
 

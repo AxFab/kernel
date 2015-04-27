@@ -1,8 +1,8 @@
 #include <smkos/kernel.h>
+#include <smkos/kstruct/user.h>
 #include <stdarg.h>
 
-void kwrite(const char *m);
-
+extern kSubSystem_t *sysLogTty;
 
 /* ----------------------------------------------------------------------- */
 void kpanic(const char *msg, ...)
@@ -12,7 +12,7 @@ void kpanic(const char *msg, ...)
   va_start(ap, msg);
   vsnprintf(buf, 256, msg, ap);
   va_end(ap);
-  kwrite(buf);
+  sysLogTty->write(buf);
   kstacktrace(12);
   exit_();
 }
@@ -27,7 +27,7 @@ void kprintf(const char *msg, ...)
   va_start(ap, msg);
   vsnprintf(buf, 256, msg, ap);
   va_end(ap);
-  kwrite(buf);
+  sysLogTty->write(buf);
   kunlock(&sysLogLock);
 }
 

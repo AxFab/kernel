@@ -60,13 +60,17 @@ int VGA_map (kInode_t *ino, size_t offset, page_t *phys)
 int VGA_mount (kInode_t *dev, const char *name)
 {
   time_t now = time(NULL);
-  struct SVGA_Device *device = kalloc(sizeof(struct SVGA_Device));
-  device->ioBase_ = SVGA_IO_CRTC_ADDRESS;
-
+  struct SVGA_Device *device;
   SMK_stat_t stat;
+
+  // device = kalloc(sizeof(struct SVGA_Device));
+  // device->ioBase_ = SVGA_IO_CRTC_ADDRESS;
+
 
   if (dev != NULL)
     return ENODEV;
+
+  memset(&stat, 0, sizeof(stat));
 
   if (FB0.address_ != 0) {
     stat.major_ = VGA_No;

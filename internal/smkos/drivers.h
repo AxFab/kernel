@@ -7,6 +7,7 @@
 #define ATA_No 41
 #define HDD_No 42
 #define VGA_No 23
+#define BMP_No 24
 #define KDB_No 38
 
 
@@ -19,6 +20,7 @@ void FATFS(kDriver_t *driver);
 void ATA(kDriver_t *driver);
 void VGA(kDriver_t *driver);
 void HDD(kDriver_t *driver);
+void BMP(kDriver_t *driver);
 /* --- Char drivers ------------------------------------------------------ */
 void KDB(kDriver_t *driver);
 
@@ -36,7 +38,7 @@ static inline void init_driver()
   register_driver(KDB);
 #elif defined(_FS) && defined(_FS_UM) /* _um */
   register_driver(HDD);
-  // register_driver(BMP);
+  register_driver(BMP);
   register_driver(KDB);
 #endif
 }

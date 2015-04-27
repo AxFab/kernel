@@ -63,6 +63,8 @@ typedef struct kPage kPage_t;
 typedef struct kPipe kPipe_t;
 typedef struct kResx kResx_t;
 typedef struct kSubSystem kSubSystem_t;
+typedef struct kLine kLine_t;
+typedef struct kTerm kTerm_t;
 
 /* FUNCTIONS ============================================================= */
 /** Display a message on system logs. */

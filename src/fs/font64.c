@@ -1,65 +1,8 @@
 #include <smkos/kernel.h>
-
-// If set, indicate that what we write on output is in fact user input.
-#define TTY_ON_INPUT  (1 << 0)
-// If set, indicate that we have content into input buffer.
-#define TTY_NEW_INPUT (1 << 1)
-// Ask to recho the line the next time the program read.
-#define TTY_READ_ECHO (1 << 2)
-
-#define TTY_KEY_CTRL (1 << 4)
-#define TTY_KEY_ALT (1 << 5)
-#define TTY_KEY_SHIFT (1 << 6)
-
-
-
-#define TERM_OUT_BUFFER 8192
-#define TERM_IN_BUFFER 4096
-
-
-
-typedef struct kLine kLine_t;
-typedef struct kTerm kTerm_t;
-
-struct kLine {
-  uint32_t txColor_;
-  uint32_t bgColor_;
-  int offset_;
-  int flags_;
-  kLine_t *prev_;
-  kLine_t *next_;
-};
-
-struct kTerm {
-  uint32_t txColor_;
-  uint32_t bgColor_;
-
-  kLine_t *first_;
-  kLine_t *top_;
-  kLine_t *last_;
-
-  int width_;
-  int height_;
-  int line_;
-  void *pixels_;
-
-  int row_;
-  int flags_;
-  int max_row_;
-  int max_col_;
-
-  char *out_buf_;
-  ssize_t out_size_;
-  ssize_t out_pen_;
-
-  char *in_buf_;
-  ssize_t in_size_;
-  ssize_t in_write_pen_;
-  ssize_t in_pen_;
-
-  int (*paint)(kTerm_t *term, kLine_t *style, int row);
-  void (*clear)(kTerm_t *term);
-};
+#include <smkos/arch.h>
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
+#include <smkos/kstruct/term.h>
 
 
 
@@ -255,33 +198,11 @@ static void font64_draw (kTerm_t *term, int ch, kLine_t *style, int pen, int wid
   * @param[in] fb     Frame buffer of the terminal
   * @return           The value is the offset of the end of line if marked
   */
-int font64_paint(kTerm_t *term, kLine_t *style, int row)
+void font64_paint (kTerm_t *term, kLine_t *style, int ch, int row, int col)
 {
-  int ch;
-  int col = 0;
-  const char *str = &term->out_buf_[style->offset_];
+  int pen = FONT64_PEN(term, row, col);
+  font64_draw (term, ch, style, pen, term->width_);
 
-  while (*str) {
-    str = font64_getc (term, str, &ch, style);
-
-
-    if (ch == '\n') {
-      return str - term->out_buf_;
-    }
-
-    int pen = FONT64_PEN(term, row, col);
-    font64_draw (term, ch, style, pen, term->width_);
-
-    col++;
-
-    if (col >= term->line_ / fontW) // @todo colMax_
-      return str - term->out_buf_;
-
-    if (style->offset_ + col >= term->out_pen_)
-      return 0;
-  }
-
-  return 0;
 }
 
 
@@ -300,152 +221,4 @@ void font64_clean(kTerm_t *term)
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-static void term_redraw(kTerm_t *term)
-{
-  int i;
-  int pen;
-  term->clear(term);
-  kLine_t *start = term->top_;
-
-  for (i = 1; i <= term->max_row_; ++i) {
-    kLine_t line = *start;
-    pen = term->paint(term, &line, i);
-
-    if (pen == 0)
-      break;
-
-    start = start->next_;
-  }
-}
-
-// ---------------------------------------------------------------------------
-static void term_scroll (kTerm_t *term, int count)
-{
-  if (count > 0) {
-    while (count != 0) {
-      if (term->top_->next_ == NULL)
-        break;
-
-      term->top_ = term->top_->next_;
-      count--;
-      term->row_--;
-    }
-
-  } else {
-    while (count != 0) {
-      if (term->top_->prev_ == NULL)
-        break;
-
-      term->top_ = term->top_->prev_;
-      count++;
-      term->row_++;
-    }
-  }
-
-  term_redraw (term);
-}
-
-
-
-
-int term_write (kTerm_t *term) {
-
-  int pen;
-  for (;;) {
-
-    if (term->row_ > term->max_row_) {
-      term_scroll (term, term->row_ - term->max_row_);
-    }
-
-    pen = term->paint(term, term->last_, term->row_);
-
-    if ((term->flags_ & (TTY_NEW_INPUT | TTY_ON_INPUT)) == TTY_NEW_INPUT)
-      term->flags_ |= TTY_READ_ECHO;
-
-    if (pen == 0)
-      break;
-
-    kLine_t *newLine =  KALLOC(kLine_t);
-    newLine->offset_ = pen;
-    newLine->txColor_ = term->last_->txColor_;
-    newLine->bgColor_ = term->last_->bgColor_;
-    newLine->flags_ = term->last_->flags_;
-    term->last_->next_ = newLine;
-    newLine->prev_ = term->last_;
-    term->last_ = newLine;
-
-    // @todo delete from first until offset > pen + term->maxCol_;
-
-    term->row_++;
-  }
-}
-
-
-void term_frame(kTerm_t *term,
-                void *pixels,
-                int width,
-                int height,
-                int line,
-                int (*paint)(kTerm_t *, kLine_t *, int),
-                void (*clear)(kTerm_t *))
-{
-  assert (term != NULL);
-  term->pixels_ = pixels;
-  term->width_ = width;
-  term->height_ = height;
-  term->line_ = line;
-  term->paint = paint;
-  term->clear = clear;
-
-  int fontW = 6;
-  int fontH = 9;
-
-  term->max_row_ = (height - 1) / (fontH + 1);
-  term->max_col_ = (width - 2) / fontW;
-}
-
-
-
-// ---------------------------------------------------------------------------
-void term_close (kTerm_t *term)
-{
-  while (term->first_) {
-    kLine_t *l = term->first_->next_;
-    kfree (term->first_);
-    term->first_ = l;
-  }
-
-  kfree(term->out_buf_);
-  kfree(term->in_buf_);
-  kfree(term);
-}
-
-
-// // ---------------------------------------------------------------------------
-// kInode_t *term_create (void *pixels, int width, int height, int line)
-// {
-//   char no[10];
-//   static int auto_incr = 0;
-
-
-//   kTerm_t *term = KALLOC(kTerm_t);
-//   term->txColor_ = 0xffa6a6a6; // 0xff5c5c5c;
-//   term->bgColor_ = 0xff323232;
-//   term->out_size_ = TERM_OUT_BUFFER;
-//   term->out_buf_ = kalloc(term->out_size_, 0);
-//   term->in_size_ = TERM_IN_BUFFER;
-//   term->in_buf_ = kalloc(term->in_size_, 0);
-//   term->row_ = 1;
-//   term->first_ = KALLOC(kLine_t);
-//   term->first_->txColor_ = 0xffa6a6a6;
-//   term->first_->bgColor_ = 0xff323232;
-//   term->last_ = term->first_;
-//   term->top_ = term->first_;
-//   ino->term_ = term;
-
-//   term_frame (ino->term_, pixels, width, height, line, font64_paint, font64_clean);
-//   return ino;
-// }
 

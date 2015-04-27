@@ -31,8 +31,8 @@ CRT0 = $(OBJS_DIR)/crt0.o
 UM_SRC =  $(wildcard src/kern/*.c) \
 					$(wildcard src/scall/*.c) \
 					$(wildcard src/_um/*.c) \
-					src/fs/iso.c src/fs/gpt.c \
-					src/fs/tmpfs.c src/fs/hdd.c src/fs/kdb.c \
+					src/fs/iso.c src/fs/gpt.c src/fs/hdd.c \
+					src/fs/tmpfs.c src/fs/bmp.c src/fs/kdb.c \
 					src/fs/font64.c
 
 KRN_SRC = $(wildcard src/kern/*.c) \
