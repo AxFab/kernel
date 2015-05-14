@@ -48,6 +48,7 @@ kDevice_t *devKeyBoard = NULL;
 /* ----------------------------------------------------------------------- */
 void KDB_irq ()
 {
+  int ccode;
   unsigned char rg;
 
   do {
@@ -56,7 +57,7 @@ void KDB_irq ()
 
   rg = inb(0x60); // - 1;
 
-  int ccode = key_layout_us[rg & 0x7F][0];
+  ccode = key_layout_us[rg & 0x7F][0];
   fs_event(devKeyBoard->ino_, rg > 0x80 ? EV_KEYUP : EV_KEYDW, ccode);
 }
 

@@ -45,7 +45,7 @@ static int page_rights(int flags)
 {
   int rights = 0;
 
-  // @todo rights &= process->CAPACITIES & user->CAPACITIES!!
+  /// @todo rights &= process->CAPACITIES & user->CAPACITIES!!
   if (flags & VMA_WRITE)
     rights |= VMA_WRITE;
 
@@ -105,7 +105,7 @@ static int page_inode (kMemArea_t *area, size_t address)
     kunlock (&area->ino_->lock_);
   }
 
-  // TODO Should use copy on write
+  /// @todo Should use copy on write
   return __seterrno(err);
 }
 
@@ -135,7 +135,7 @@ int page_fault (size_t address, int cause)
       return sched_signal(SIGSEV, address);
 
   } else if (userspace) {
-    // @todo Assert with stronger check
+    /// @todo Assert with stronger check
     return sched_signal(SIGSEV, address);
   }
 

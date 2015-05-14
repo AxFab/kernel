@@ -50,7 +50,7 @@ static void ascii_cmd(const char **m)
 /* ----------------------------------------------------------------------- */
 static void show_cursor_vga_text (int row, int col) 
 {
-  // @todo -- Nothing to do here !!
+  /// @todo -- This has nothing to do here !!
   uint16_t pos = row * 80 + col;
   outb(0x3d4, 0x0f);
   outb(0x3d5, (uint8_t)pos);

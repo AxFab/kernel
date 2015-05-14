@@ -85,7 +85,21 @@ void kernel_start ()
   kprintf ("CPU %d is ready\n", kCpuNo);
   cpu_start_scheduler();
 
-  // BMP_sync (fb);
+}
+
+
+/* ----------------------------------------------------------------------- */
+/** @brief Clean all unused item. 
+  *
+  * This is mostly for memory checks and debuging tools.  
+  * The sweep can also be used to refresh kernel data and flush all cache.
+  * Implementation can not guarantee a full cleaning.
+  */
+void kernel_sweep()
+{
+  kInode_t* fb = search_inode ("/dev/Fb0", NULL, 0);
+  scavenge_area(kSYS.mspace_);
+  BMP_sync (fb);
 }
 
 

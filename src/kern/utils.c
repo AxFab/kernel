@@ -45,7 +45,7 @@ void kfree (void *addr)
 
 
 /* ----------------------------------------------------------------------- */
-#ifndef strdup
+#ifndef __AX_STR_EX
 char *strdup (const char *str)
 {
   char *ptr;
@@ -62,11 +62,10 @@ char *strdup (const char *str)
   ptr [lg] = '\0';
   return ptr;
 }
-#endif
 
 
 /* ----------------------------------------------------------------------- */
-#ifndef strcmpi
+
 /* Compare two null-terminated char strings */
 int strcmpi (const char* str1, const char* str2)
 {
@@ -77,11 +76,10 @@ int strcmpi (const char* str1, const char* str2)
 
   return tolower(*str1) - tolower(*str2);
 }
-#endif
 
 
 /* ----------------------------------------------------------------------- */
-#ifndef time
+
 time_t time(time_t* ptime) 
 {
   time_t now = 0;
@@ -90,11 +88,9 @@ time_t time(time_t* ptime)
     *ptime = now;
   return now;
 }
-#endif
 
 
 /* ----------------------------------------------------------------------- */
-#ifndef clock
 clock_t clock() 
 {
   clock_t ticks = 0;

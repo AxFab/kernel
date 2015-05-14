@@ -29,7 +29,7 @@
 #define S_IFCHR     0x50000
 #define S_IFIFO     0x60000
 #define S_IFSOCK    0x70000
-#define S_IFVOL     0x80000
+//#define S_IFTTY     0x80000
 #define S_IFMT      0xf0000
 
 #define S_ISBLK(m)    (((m) & S_IFMT) == S_IFBLK)
@@ -39,7 +39,7 @@
 #define S_ISREG(m)    (((m) & S_IFMT) == S_IFREG)
 #define S_ISLNK(m)    (((m) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(m)   (((m) & S_IFMT) == S_IFSOCK)
-#define S_ISVOL(m)    (((m) & S_IFMT) == S_IFVOL)
+//#define S_ISTTY(m)    (((m) & S_IFMT) == S_IFTTY)
 
 
 #define S_TYPEISMQ(buf)  (S_ISFIFO(buf->st_mode) && 1)  ///< Test for a message queue

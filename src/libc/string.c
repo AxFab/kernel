@@ -154,7 +154,7 @@ static const char *strerror_p ( int err )
 
   switch ( grp ) {
   case 0:
-    // TODO ERANGE, try with sizeof !
+    /// @todo ERANGE, try with sizeof !
     return errMsgs[err];
 
   default:
@@ -503,7 +503,8 @@ char *strrchr (const char *string, int ch)
 
 
 // ---------------------------------------------------------------------------
-// Split string into tokens - reentrent (TODO suppress goto and that is not the best way)
+// Split string into tokens - reentrent 
+/// @todo suppress goto and that is not the best way
 char *strtok_r ( register char *s, register const char *delim, char **lasts )
 {
   int skip_leading_delim = 1;

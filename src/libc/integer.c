@@ -41,7 +41,7 @@ uintmax_t _strtox(const char *str, char **endptr, int base, char *sign)
   }
 
   if (*str < '0' || (*str | LOWER) >= _utoa_digits[base]) {
-    // TODO errno !?
+    /// @todo errno !?
     return 0;
   }
 

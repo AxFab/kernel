@@ -29,11 +29,12 @@ typedef int(*kScHandler)(size_t p1, size_t p2, size_t p3, size_t p4, size_t p5);
 
 
 static kScHandler system_delegate[128] = 
-{
-  SYS_CALL_ENTRY (SYS_REBOOT, NULL),
+{ 0
+  /*SYS_CALL_ENTRY (SYS_REBOOT, NULL),
   SYS_CALL_ENTRY (SYS_EXIT, sys_exit),
   SYS_CALL_ENTRY (SYS_PAUSE, NULL),
   SYS_CALL_ENTRY (SYS_WRITE, sys_write),
+  SYS_CALL_ENTRY (SYS_READ, sys_read),*/
 };
 
 

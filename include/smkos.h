@@ -16,9 +16,9 @@ struct sStartInfo {
   int             output_;
   int             input_;
   int             error_;
-  int             workingDir_;  ///
-  int             flags_;       ///
-  int             mainWindow_;  /// Give a window/tty handler for the program
+  int             workingDir_;
+  int             flags_;
+  int             mainWindow_;  /**< Give a window/tty handler for the program */
 };
 
 int exec (const char *path, sStartInfo_t *param);
@@ -26,8 +26,14 @@ int execv_s(const char *path, const char *args);
 
 
 int sleep(int);
+
+/** Open a file and return a file descriptor for resource access */
 int open(const char *file, int flags, ...);
+
+/** Close a resource using its file descriptor */
 int close(int fd);
+
+
 ssize_t write(int fd, const void *buf, size_t count);
 ssize_t read(int fd, void *buf, size_t count);
 int printf (const char*, ...);

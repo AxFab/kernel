@@ -162,13 +162,16 @@ static inline void kernel_state(enum kState state)
   kCPU.lastClock_ = now;
 }
 
+#ifndef __AX_STR_EX
 char* strdup(const char*);
 int strcmpi (const char* str1, const char* str2);
+int vsnprintf(char *str, size_t lg, const char *format, va_list ap);
+#endif
+
 unsigned long long strtoull(const char*, char**, int);
 #define exit_() do { cpu_halt(); for(;;); } while(0);
-int snprintf(char *, size_t, const char *, ...);
-int vsnprintf(char *str, size_t lg, const char *format, va_list ap);
 
+int snprintf(char *, size_t, const char *, ...);
 void kstacktrace(size_t MaxFrames);
 void kdump(void*, int);
 

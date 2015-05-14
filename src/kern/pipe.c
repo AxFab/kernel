@@ -20,7 +20,6 @@ kPipe_t * fs_create_pipe(kInode_t *ino)
   }
 
   pipe = KALLOC (kPipe_t);
-
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
 
   if (ino->stat_.length_ == 0)
@@ -44,20 +43,20 @@ int fs_pipe_read(kInode_t *ino, void* buf, size_t lg)
   size_t cap = 0;
   void* address;
   kPipe_t *pipe = ino->pipe_;
-
+  
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
 
   /* Loop inside the buffer */
   if (!pipe)
     pipe = fs_create_pipe (ino);
 
-  // TODO Mutex on pipes
+  /// @todo Mutex on pipes
   while (lg > 0) {
     if (pipe->rpen_ >= pipe->size_)
       pipe->rpen_ = 0;
 
     /* Get Address */
-    address = (void*)(pipe->mmap_->address_ + pipe->wpen_);
+    address = (void*)(pipe->mmap_->address_ + pipe->rpen_);
 
     /* Capacity ahead */
     cap = pipe->size_ - pipe->rpen_;
@@ -87,14 +86,14 @@ size_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg, int flags)
   size_t cap = 0;
   void* address;
   kPipe_t *pipe = ino->pipe_;
-
+  
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
 
   /* Loop inside the buffer */
   if (!pipe)
     pipe = fs_create_pipe (ino);
 
-  // TODO Mutex on pipes
+  /// @todo <Fabien B.> Mutex on pipes
   if (flags) {
     if (pipe->size_ - pipe->avail_ < lg)
       return 0;

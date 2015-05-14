@@ -62,6 +62,8 @@ struct kSubSystem {
   void (*event)(int type, int value);
   void (*write)(const char *m);
   kTerm_t* term_;
+  kInode_t* out_;
+  kInode_t* in_;
 };
 
 

@@ -80,7 +80,7 @@ int mmu_init ()
     krnTbl[i] = (i * PAGE_SIZE) | MMU_ACCESS_WR;
   }
 
-  // @todo remove screen at 0x4
+  /// @todo remove screen at 0x4
   // uint32_t *scrDir = (uint32_t *)0x4000;
   // krnDir[1] = (uint32_t)scrDir | MMU_ACCESS_WR;
   // memset (scrDir, 0, PAGE_SIZE);

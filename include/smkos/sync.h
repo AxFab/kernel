@@ -1,11 +1,13 @@
 #pragma once
 #include <smkos/spinlock.h>
 
+/** @brief Common structure that hold information about a mutex. */
 struct mutex {
   atomic_t key_;
   struct spinlock lock_;
 };
 
+/** @brief Common structure that hold information about a semaphore. */
 struct semaphore {
   atomic_t value_;
   // int flags_;

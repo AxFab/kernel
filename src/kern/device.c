@@ -33,6 +33,10 @@
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Dummy search of a dirver by its major number 
+  * @retval NULL The driver can't be found
+  * @retval kDriver the driver that correspond to this item.
+  */
 static kDriver_t *search_driver(int major)
 {
   kDriver_t *driver;
@@ -46,6 +50,11 @@ static kDriver_t *search_driver(int major)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Print an inode and all descendants to kernel loging system 
+  * @param ino The inode that represent the root of the tree to display
+  * @param depth Depth of the tree representation. This functions should 
+  * always be called with a depth of zero.
+  */
 static void display_inode(kInode_t* ino, int depth)
 {
   int i, j;
@@ -101,6 +110,14 @@ static void display_inode(kInode_t* ino, int depth)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Grab a lock on the file system driver of an inode.
+  * @param ino The inode used ot get the lock.
+  * @retval ZERO No error occurs and the mutex have been acquired.
+  * @note This method must be used only if the inode is locked and the 
+  * current cpu doesn't have a single other spinlock acquired.
+  * The function doesn't have any assertion to avoid deadlock on driver 
+  * mutex yet.
+  */
 int open_fs(kInode_t* ino)
 {
   assert (kislocked(&ino->lock_));
@@ -113,6 +130,10 @@ int open_fs(kInode_t* ino)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Release the mutex after a call to a driver routines
+  * @param ino The inode used ot get the lock.
+  * @retval ZERO No error occurs and the mutex have been corectrly released.
+  */
 int close_fs(kInode_t* ino)
 {
   // assert (mtx_grabed(&ino->dev_->mutex_));
@@ -124,6 +145,7 @@ int close_fs(kInode_t* ino)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Print all register inodes to kernel loging system */
 void display_inodes()
 {
   // kprintf(" ACCESS   | x | OWN | DEV  | BLOK | NAME \n");
@@ -134,15 +156,23 @@ void display_inodes()
 /* ----------------------------------------------------------------------- */
 int mount_device(const char* name, kDevice_t* dev, kDriver_t* fs)
 {
+  int err;
   kDriver_t *driver;
+
   klock(&dev->ino_->lock_);
   if (open_fs(dev->ino_))
     return __geterrno();
-  ll_for_each(&kSYS.driverPool_, driver, kDriver_t, allNd_) {
-    if (driver->mount (dev->ino_, name) == 0) {
-      close_fs(dev->ino_);
-      return 0;
+  if (fs == NULL) {
+    ll_for_each(&kSYS.driverPool_, driver, kDriver_t, allNd_) {
+      if (driver->mount (dev->ino_, name) == 0) {
+        close_fs(dev->ino_);
+        return 0;
+      }
     }
+  } else {
+    err = fs->mount (dev->ino_, name) == 0;
+    close_fs(dev->ino_);
+    return __seterrno(err);
   }
 
   close_fs(dev->ino_);
@@ -151,6 +181,9 @@ int mount_device(const char* name, kDevice_t* dev, kDriver_t* fs)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Find all unused devices and ty to mount them against any available
+  * driver.
+  */
 void mount_alls ()
 {
   kDevice_t* dev;
@@ -162,7 +195,7 @@ void mount_alls ()
   }
 }
 
-// int ATAPI_Read (void *dr, uint32_t lba,  uint8_t sects, uint8_t *buf);
+
 /* ----------------------------------------------------------------------- */
 void initialize_vfs()
 {
@@ -238,7 +271,7 @@ kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *sta
   kunlock (&ino->lock_);
 
   // if (!kSYS.sysIno_ && S_ISDIR(stat->mode_) && !strcmpi("sdC", underlying->name_)) {
-  // @todo create_link()
+  /// @todo create_link()
   // }
 
   return dev;
@@ -249,7 +282,7 @@ kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *sta
 int fs_block_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
 {
   int err;
-  // TODO should be asynchrone
+  /// @todo should be asynchrone
   klock (&fp->lock_);
   err = open_fs (fp);
   if (err)

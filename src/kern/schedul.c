@@ -134,7 +134,7 @@ void sched_stop (kScheduler_t *sched, kThread_t *thread, int state)
     sched_remove (sched, thread);
     atomic_dec (&thread->process_->runningTask_);
 
-    // @todo And all signal have been sended...
+    /// @todo And all signal have been sended...
     if (thread->process_->runningTask_ == 0) {
       destroy_process (thread->process_);
       return;

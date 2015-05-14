@@ -88,6 +88,9 @@
 #    error Microsoft Visual C++ use an unrecognized architecture
 #  endif
 
+#  undef __THROW
+#  define __THROW
+//#  define restrict __restrict
 #  define PACK(decl) __pragma( pack(push, 1) ) decl __pragma( pack(pop) )
 
 

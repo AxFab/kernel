@@ -100,19 +100,30 @@ extern kDevice_t *devKeyBoard;
 #define EV_KEYUP 10
 #define EV_KEYDW 11
 
+#include <smkos/sysapi.h>
+
+void kernel_ready();
+void kernel_start();
+void kernel_sweep();
+struct kSys kSYS;
+
+int pes = 0;
 int main_jmp_loop()
 {
+  int ret;
+  char* buf; 
   int idx = setjmp(cpuJmp);
 
   switch (idx) {
   case 0:
     kernel_state (KST_KERNSP);
-    sched_next(kSYS.scheduler_);
     break;
 
-  case 1:
-    if (evt > 1)
+  case 1: // Cpu Halted -- Trigger I/O -- Call kernel swip -- return 0
+    if (evt > 1) {
+      kernel_sweep();
       return 0;
+    }
 
     ++evt;
     fs_event(devKeyBoard->ino_, EV_KEYDW, 0x20);
@@ -127,28 +138,50 @@ int main_jmp_loop()
     // break;
 
   case 5:
-    // We are inside a program, choose SYSCALL
     assert (kCPU.state_ == KST_USERSP);
     assert (kCPU.current_ != NULL);
-    sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
 
-    if (kCPU.current_)
-      process_exit(kCPU.current_->process_, 0);
-
-    sched_next(kSYS.scheduler_);
+    switch (pes++) {
+    case 0:
+      ret = sys_write(1, "Hello world!\n", 13, 0);
+      break;
+    case 1:
+      fs_event(devKeyBoard->ino_, EV_KEYDW, 'F');
+      fs_event(devKeyBoard->ino_, EV_KEYUP, 'F');
+      fs_event(devKeyBoard->ino_, EV_KEYDW, 'a');
+      fs_event(devKeyBoard->ino_, EV_KEYUP, 'a');
+      fs_event(devKeyBoard->ino_, EV_KEYDW, 'b');
+      fs_event(devKeyBoard->ino_, EV_KEYUP, 'b');
+      fs_event(devKeyBoard->ino_, EV_KEYDW, '\n');
+      fs_event(devKeyBoard->ino_, EV_KEYUP, '\n');
+      break;
+    case 2:
+      ret = sys_write(1, "Login :: ", 9, -1);
+      break;
+    case 3:
+      buf = (char*)malloc(128);
+      ret = sys_read(0, buf, 128, -1);
+      buf[ret] = '\0';
+      printf("Read: '%s'\n", buf);
+      free(buf);
+      break;
+    case 4:
+      ret = sys_write(1, "\x1b[31mFailed\n", 12, -1);
+      break;
+    case 5:
+      ret = sys_exit(0, 0);
+      break;
+    }
     break;
 
   default:
     return 0;
   }
 
+  sched_next(kSYS.scheduler_);
   return -1;
 }
 
-
-void kernel_ready();
-void kernel_start();
-struct kSys kSYS;
 
 
 void cpu_sched_ticks()
@@ -172,9 +205,9 @@ int main ()
   kprintf("\n");
 
   // assert (1); // kalloc is available, memory is virtual, screen is OK, timer is set
-  // @todo Set kalloc !
-  // @todo Map the main screen
-  // @todo Create first terminal
+  /// @todo Set kalloc !
+  /// @todo Map the main screen
+  /// @todo Create first terminal
 
   return main_jmp_loop();
 }

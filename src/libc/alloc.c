@@ -42,7 +42,8 @@ struct SMK_HeapChunk {
   };
 };
 
-
+/** @brief Structure that hold information about a single heap arena
+  */
 struct SMK_HeapArea {
   struct SMK_HeapChunk *start;
   struct SMK_HeapChunk *free_list;
@@ -56,8 +57,11 @@ struct SMK_HeapArea {
   struct llnode node_;
 };
 
-
+/** @brief Global list of all defined heap arenas */
 struct llhead gHeapArea;
+
+/** @brief Global item used for the first heap arena which can't be allocated 
+  */
 struct SMK_HeapArea gArea;
 
 
@@ -68,7 +72,13 @@ struct SMK_HeapArea gArea;
 
 
 /* ----------------------------------------------------------------------- */
-/** Append a memory block on the list of free blocks. */
+/** @brief Append a memory block on the list of free blocks. 
+  * @param heap Structure that define the heap arena.
+  * @param chunk Pointer on the chunk to add on the free list.
+  *
+  * The method is a bit time consuming since we keep the block in order of 
+  * size. The performance is sensible to heap fragmentation.
+  */
 static void alloc_add_to_free (struct SMK_HeapArea *heap, struct SMK_HeapChunk *chunk)
 {
   struct SMK_HeapChunk *curs = heap->free_list;
@@ -111,7 +121,10 @@ static void alloc_add_to_free (struct SMK_HeapArea *heap, struct SMK_HeapChunk *
 
 
 /* ----------------------------------------------------------------------- */
-/** Remove a memory block of the list of free blocks. */
+/** @brief Remove a memory block of the list of free blocks. 
+  * @param heap Structure that define the heap arena.
+  * @param chunk Pointer on the chunk to remove from the free list.
+  */
 static void alloc_rem_of_free (struct SMK_HeapArea *heap, struct SMK_HeapChunk *chunk)
 {
   if ( chunk->next_chunk ) {
@@ -129,16 +142,16 @@ static void alloc_rem_of_free (struct SMK_HeapArea *heap, struct SMK_HeapChunk *
   chunk->is_used |= ALLOC_ISUSED;
 }
 
+
 /* ----------------------------------------------------------------------- */
-/**
- * @brief retrace the heap to detect memory corruption
- * @return zero if the heap is not corrupted, non zero is errors have been
- * detected.
- *
- * Browse the list of block on address order check consistency and count
- * the number of blocks. Compare that to the free list and check list
- * consistency.
- */
+/** @brief retrace the heap to detect memory corruption
+  * @retval ZERO if the heap is not corrupted
+  * @retval >0 The number of check that failed.
+  *
+  * Browse the list of block on address order check consistency and count
+  * the number of blocks. Compare that to the free list and check list
+  * consistency.
+  */
 int memcorrupt_r (struct SMK_HeapArea *heap)
 {
   int err = 0;
@@ -216,7 +229,7 @@ int memcorrupt_r (struct SMK_HeapArea *heap)
 }
 
 /* ----------------------------------------------------------------------- */
-/** Initialize a heap segment structure info. */
+/** @brief Initialize a heap segment structure info. */
 void meminit_r(struct SMK_HeapArea *heap, void *base, size_t length)
 {
   heap->flags |= ALLOC_PARANOID;
@@ -237,27 +250,26 @@ void meminit_r(struct SMK_HeapArea *heap, void *base, size_t length)
 
 
 /* ----------------------------------------------------------------------- */
-/**
- * @brief allocate dynamic memory
- * @return The malloc() and calloc() functions return a pointer to the
- * allocated memory that is suitably aligned for any kind of variable. On
- * error, these functions return NULL. NULL may also be returned by a
- * successful call to malloc() with a size of zero, or by a successful call to
- * calloc() with nmemb or size equal to zero.
- *
- * The malloc() function allocates size bytes and returns a pointer to the
- * allocated memory. The memory is not initialized. If size is 0, then
- * malloc() returns either NULL, or a unique pointer value that can later be
- * successfully passed to free().
- *
- * @see malloc, free, calloc, realloc
- * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
- * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
- * @note By default, the kernel follows an optimistic memory allocation
- * strategy. This means that when malloc() returns non-NULL there is no
- * guarantee that the memory really is available. In case it turns out that
- * the system is out of memory, one or more processes will be killed.
- */
+/** @brief Allocate dynamic memory
+  * @return The malloc() and calloc() functions return a pointer to the
+  * allocated memory that is suitably aligned for any kind of variable. On
+  * error, these functions return NULL. NULL may also be returned by a
+  * successful call to malloc() with a size of zero, or by a successful call to
+  * calloc() with nmemb or size equal to zero.
+  *
+  * The malloc() function allocates size bytes and returns a pointer to the
+  * allocated memory. The memory is not initialized. If size is 0, then
+  * malloc() returns either NULL, or a unique pointer value that can later be
+  * successfully passed to free().
+  *
+  * @see malloc, free, calloc, realloc
+  * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
+  * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
+  * @note By default, the kernel follows an optimistic memory allocation
+  * strategy. This means that when malloc() returns non-NULL there is no
+  * guarantee that the memory really is available. In case it turns out that
+  * the system is out of memory, one or more processes will be killed.
+  */
 void *malloc_r(struct SMK_HeapArea *heap, size_t size)
 {
   struct SMK_HeapChunk *chunk = heap->free_list;
@@ -360,19 +372,18 @@ void *malloc_r(struct SMK_HeapArea *heap, size_t size)
 
 
 /* ----------------------------------------------------------------------- */
-/**
- * @brief free dynamic memory
- * @return The free() function returns no value.
- *
- * The free() function frees the memory space pointed to by ptr, which must
- * have been returned by a previous call to malloc(), calloc() or realloc().
- * Otherwise, or if free(ptr) has already been called before, undefined
- * behavior occurs. If ptr is NULL, no operation is performed.
- *
- * @see malloc, free, calloc, realloc
- * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
- * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
- */
+/** @brief Free dynamic memory
+  * @return The free() function returns no value.
+  *
+  * The free() function frees the memory space pointed to by ptr, which must
+  * have been returned by a previous call to malloc(), calloc() or realloc().
+  * Otherwise, or if free(ptr) has already been called before, undefined
+  * behavior occurs. If ptr is NULL, no operation is performed.
+  *
+  * @see malloc, free, calloc, realloc
+  * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
+  * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
+  */
 void free_r(struct SMK_HeapArea *heap, void *ptr)
 {
   struct SMK_HeapChunk *chunk = alloc_chunk(ptr);
@@ -455,31 +466,31 @@ void free_r(struct SMK_HeapArea *heap, void *ptr)
   _UNLOCK(heap);
 }
 
-/**
- * @brief allocate aligned memory
- * @return aligned_alloc(), memalign(), valloc(), and pvalloc() return a
- * pointer to the allocated memory, or NULL if the request fails.
- *
- * The obsolete function memalign() allocates size bytes and returns a pointer
- * to the allocated memory. The memory address will be a multiple of alignment,
- * which must be a power of two.
- *
- * @throw EINVAL - The alignment argument was not a power of two, or was not a
- * multiple of sizeof(void *).
- * @throw ENOMEM - There was insufficient memory to fulfill the allocation
- * request.
- * @see posix_memalign, aligned_alloc, memalign, valloc, pvalloc
- * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
- * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
- */
 #if 0
+/* ----------------------------------------------------------------------- */
+/** @brief Allocate aligned memory
+  * @return aligned_alloc(), memalign(), valloc(), and pvalloc() return a
+  * pointer to the allocated memory, or NULL if the request fails.
+  *
+  * The obsolete function memalign() allocates size bytes and returns a pointer
+  * to the allocated memory. The memory address will be a multiple of alignment,
+  * which must be a power of two.
+  *
+  * @throw EINVAL - The alignment argument was not a power of two, or was not a
+  * multiple of sizeof(void *).
+  * @throw ENOMEM - There was insufficient memory to fulfill the allocation
+  * request.
+  * @see posix_memalign, aligned_alloc, memalign, valloc, pvalloc
+  * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
+  * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
+ */
 void *memalign_r(struct SMK_HeapArea *heap, size_t alignment, size_t size)
 {
   xHeapChunk_t *chunk;
   int *ptr, *aptr;
 
   if (!bpw2(alignment)) {
-    // TODO errno = EINVAL
+    /// @todo errno = EINVAL
     return NULL;
   }
 
@@ -506,6 +517,26 @@ void *memalign_r(struct SMK_HeapArea *heap, size_t alignment, size_t size)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Allocate dynamic memory
+  * @return The malloc() and calloc() functions return a pointer to the
+  * allocated memory that is suitably aligned for any kind of variable. On
+  * error, these functions return NULL. NULL may also be returned by a
+  * successful call to malloc() with a size of zero, or by a successful call to
+  * calloc() with nmemb or size equal to zero.
+  *
+  * The malloc() function allocates size bytes and returns a pointer to the
+  * allocated memory. The memory is not initialized. If size is 0, then
+  * malloc() returns either NULL, or a unique pointer value that can later be
+  * successfully passed to free().
+  *
+  * @see malloc, free, calloc, realloc
+  * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
+  * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
+  * @note By default, the kernel follows an optimistic memory allocation
+  * strategy. This means that when malloc() returns non-NULL there is no
+  * guarantee that the memory really is available. In case it turns out that
+  * the system is out of memory, one or more processes will be killed.
+  */
 void *malloc_(size_t length)
 {
   void *ptr;
@@ -522,6 +553,18 @@ void *malloc_(size_t length)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Free dynamic memory
+  * @return The free() function returns no value.
+  *
+  * The free() function frees the memory space pointed to by ptr, which must
+  * have been returned by a previous call to malloc(), calloc() or realloc().
+  * Otherwise, or if free(ptr) has already been called before, undefined
+  * behavior occurs. If ptr is NULL, no operation is performed.
+  *
+  * @see malloc, free, calloc, realloc
+  * @see brk, mmap, alloca, malloc_get_state, malloc_info, malloc_trim,
+  * malloc_usable_size, mallopt, mcheck, mtrace, posix_memalign
+  */
 void free_(void *ptr)
 {
   struct SMK_HeapArea *area;
@@ -535,6 +578,7 @@ void free_(void *ptr)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Definition of a new heap arena */
 void alloc_init(size_t base, size_t length)
 {
   struct SMK_HeapArea *area = &gArea;

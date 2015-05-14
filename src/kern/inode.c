@@ -32,9 +32,9 @@
 
 
 /* ----------------------------------------------------------------------- */
-/** Search an inode on a directory.
-  * @param[in]    name        The name of the file to search
-  * @param[in]    dir         The directory to search
+/** @brief Search an inode on a directory.
+  * @param name   [in] The name of the file to search
+  * @param dir    [in] The directory to search
   * This function will browse the child of a directory and will request the
   * file system if needed.
   * @retval      EIO             An I/O error occurred.
@@ -86,9 +86,10 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
 
 
 /* ----------------------------------------------------------------------- */
-/** Search an inode on the filetree.
-  * @param[in]    path        The file descriptor
-  * @param[in]    dir         The initial node where to start the search.
+/** @brief Search an inode on the filetree.
+  * @param path   [in] The file descriptor
+  * @param dir    [in] The initial node where to start the search.
+  * @param flags  [in] Flag to use to manipulate the search (cf. AT_SEARCH).
   * This function will split each directory of the path and look for it. The
   * search start a dir. If dir is NULL the routine will request the current
   * directory. In any case if the path start by '/'. The directory will be
@@ -115,11 +116,11 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
 
   // Find the initial directory.
   if (strrchr (path, ':')) {
-    // @todo read volume
+    /// @todo read volume
   } else if (path[0] == '/' || path[0] == '\\')
     dir = kSYS.rootIno_;
   else if (dir == NULL)
-    dir = kSYS.rootIno_; // @todo replace by PWD
+    dir = kSYS.rootIno_; /// @todo replace by PWD
 
   strncpy (uri, path, uriLg);
   klock (&dir->lock_);
@@ -142,35 +143,41 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
     }
 
     // Check if we are on a directory.
-    if (!S_ISDIR (dir->stat_.mode_) && !S_ISVOL (dir->stat_.mode_)) {
+    if (!S_ISDIR (dir->stat_.mode_)) {
       kunlock (&dir->lock_);
       kfree(uri);
       return __seterrnoN(ENOTDIR, kInode_t);
     }
 
     // Handle special names
-    if (strcmp(".", name) == 0) {
-      continue;
+    if (name[0] == '.') {
+      if (name[1] == '\0') 
+        continue;
 
-    } else if (strcmp("..", name) == 0) {
-      kunlock (&dir->lock_);
-      dir = dir->parent_;
-      klock (&dir->lock_);
+      if (name[1] == '.') {
+        if (name[1] == '\0') {
+          kunlock (&dir->lock_);
+          dir = dir->parent_;
+          klock (&dir->lock_);
+          continue;
+        } 
 
-    } else if (flags & AT_THREE_DOT && strcmp("...", name) == 0) {
-      do {
-        kunlock (&dir->lock_);
-        dir = dir->parent_;
-        klock (&dir->lock_);
-      } while (dir->parent_ != NULL && !S_ISVOL(dir->stat_.mode_));
-
-    } else {
-      // Search child node
-      dir = search_child (name, dir);
-      if (dir == NULL) {
-        kfree(uri);
-        return NULL;
+        if ((flags & AT_THREE_DOT) && name[2] == '.' && name[3] == '\0') {
+          kunlock (&dir->lock_);
+          do {
+            dir = dir->parent_;
+          } while (dir->parent_ != NULL/* && !S_ISVOL(dir->stat_.mode_)*/);
+          klock (&dir->lock_);
+          continue;
+        }
       }
+    }
+
+    // Search child node
+    dir = search_child (name, dir);
+    if (dir == NULL) {
+      kfree(uri);
+      return NULL;
     }
   }
 
@@ -182,7 +189,7 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
 
 
 /* ----------------------------------------------------------------------- */
-/** Attach an inode to its parent. */
+/** @brief Attach an inode to its parent. */
 static int attach_inode (kInode_t *ino, kInode_t *dir, const char *name)
 {
   int k;
@@ -230,7 +237,7 @@ static int attach_inode (kInode_t *ino, kInode_t *dir, const char *name)
 
 
 /* ----------------------------------------------------------------------- */
-/** Try to add a new inode on the VFS tree. */
+/** @brief Try to add a new inode on the VFS tree. */
 kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, bool unlock)
 {
   kInode_t *ino;
@@ -268,7 +275,7 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
 
 
 /* ----------------------------------------------------------------------- */
-/** Release an inode form the inode cache. */
+/** @brief Release an inode form the inode cache. */
 static int unregister_inode (kInode_t *ino)
 {
   assert (kislocked (&ino->parent_->lock_));
@@ -276,7 +283,7 @@ static int unregister_inode (kInode_t *ino)
   assert (ino->child_ == NULL);
   assert (ino->readers_ == 0);
 
-  // @todo ino->lock_.flags |= LK_DELETED;
+  /// @todo ino->lock_.flags |= LK_DELETED;
   if (ino->prev_ != NULL) {
     klock(&ino->prev_->lock_);
     ino->prev_->next_ = ino->next_;
@@ -295,10 +302,10 @@ static int unregister_inode (kInode_t *ino)
   kunlock (&ino->parent_->lock_);
   ll_remove(&kSYS.inodeLru_, &ino->lruNd_);
 
-  // @todo Free all buckets and stream objects...
-  // @todo Push to garbadge candidate
-  // @todo Free name
-  // @todo Free page cache first
+  /// @todo Free all buckets and stream objects...
+  /// @todo Push to garbadge candidate
+  /// @todo Free name
+  /// @todo Free page cache first
   // if (ino->pagesCache_ != NULL) {
   //  kprintf ("We need to clean pages\n");
   // }
@@ -311,7 +318,7 @@ static int unregister_inode (kInode_t *ino)
 
 
 /* ----------------------------------------------------------------------- */
-/** Request the file system for the creation of a new inode. */
+/** @brief Request the file system for the creation of a new inode. */
 kInode_t *create_inode(const char* name, kInode_t* dir, int mode, size_t lg)
 {
   int err;
@@ -338,7 +345,7 @@ kInode_t *create_inode(const char* name, kInode_t* dir, int mode, size_t lg)
 
 
 /* ----------------------------------------------------------------------- */
-/** Call the inode scavanger which will try to free cached data. */
+/** @brief Call the inode scavanger which will try to free cached data. */
 int scavenge_inodes(int nodes)
 {
   while (nodes-- > 0) {
@@ -351,7 +358,7 @@ int scavenge_inodes(int nodes)
       klock (&ino->parent_->lock_);
       klock (&ino->lock_);
 
-      // @todo -- check that we are not closing a mouting point
+      /// @todo -- check that we are not closing a mouting point
       if (ino->readers_ == 0 && ino->child_ == NULL) {
         int err = unregister_inode(ino);
 
@@ -374,13 +381,13 @@ int scavenge_inodes(int nodes)
 
 
 /* ----------------------------------------------------------------------- */
-/** Function to called to grab an inodes */
+/** @brief Function to called to grab an inodes */
 int inode_open (kInode_t *ino)
 {
   if (!ino)
     return __seterrno (EINVAL);
 
-  // @todo be sure that the file is available
+  /// @todo be sure that the file is available
   klock (&ino->lock_);
   ++ino->readers_;
   ll_remove_if(&kSYS.inodeLru_, &ino->lruNd_);
@@ -390,13 +397,13 @@ int inode_open (kInode_t *ino)
 
 
 /* ----------------------------------------------------------------------- */
-/** Function to release an inodes */
+/** @brief Function to release an inodes */
 int inode_close (kInode_t *ino)
 {
   if (!ino)
     return __seterrno (EINVAL);
 
-  // @todo if zero, push pression on scavenger
+  /// @todo if zero, push pression on scavenger
   klock (&ino->lock_);
 
   if (--ino->readers_ <= 0) {
@@ -410,7 +417,7 @@ int inode_close (kInode_t *ino)
 
 
 /* ----------------------------------------------------------------------- */
-/** Give the inode a symbolic link is refering to. */
+/** @brief Give the inode a symbolic link is refering to. */
 kInode_t *follow_symlink(kInode_t *ino, int *links)
 {
   if (links != NULL)

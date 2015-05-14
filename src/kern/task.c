@@ -27,6 +27,16 @@
 #include <smkos/kstruct/user.h>
 
 /* ----------------------------------------------------------------------- */
+/** @brief Instanciate a new thread object.
+  * @param process The parent process that need a new thread.
+  * @return A new thread object.
+  *
+  * A thread object is linked to a process for all it's living time. However
+  * thread object can be reused once it's initial task terminated. For this 
+  * reason a thread must store all resources it's supposed to reused.
+  * The process keep the ownership of the thread pointer and thus handle 
+  * insertion and suppression from the scheduler.
+  */
 static kThread_t *alloc_thread(kProcess_t *process)
 {
   int stackFlags = VMA_STACK | VMA_READ | VMA_WRITE;
@@ -50,7 +60,7 @@ static kThread_t *alloc_thread(kProcess_t *process)
 
 
 /* ----------------------------------------------------------------------- */
-/**  */
+/** */
 static void reset_thread (kThread_t *thread, size_t entry, size_t param)
 {
   assert (thread->state_ == SCHED_ZOMBIE);
@@ -70,6 +80,10 @@ static void reset_thread (kThread_t *thread, size_t entry, size_t param)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Instanciate a new session.
+  * @todo Session creation should be handle on user module.
+  * @todo I should defined the exact scope/usage of a session.
+  */
 static kSession_t *alloc_session(kUser_t *user, kInode_t *dir)
 {
   kSession_t *session;
@@ -84,6 +98,16 @@ static kSession_t *alloc_session(kUser_t *user, kInode_t *dir)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Instanciate a new process.
+  * @param assembly The assembly used on this process
+  * @param The pid to used
+  * @todo This method should create needed inodes that will be accessible 
+  * from the structure. An handle the pid selection.
+  * 
+  * The process object is self-managing as it must handle all of it's 
+  * resources and clean itself when required. Processes are not cached or
+  * reusable.
+  */
 static kProcess_t *alloc_process(kAssembly_t* assembly, int pid)
 {
   kThread_t *thread;
@@ -106,7 +130,12 @@ static kProcess_t *alloc_process(kAssembly_t* assembly, int pid)
 
 
 /* ----------------------------------------------------------------------- */
-static void destroy_thread(kThread_t *thread)
+/** @brief Destroy a thread object.
+  *
+  * This is only a part of the destroy_process processedre and must stay
+  * static.
+  */
+static inline void destroy_thread(kThread_t *thread)
 {
   assert(thread->state_ == SCHED_ZOMBIE);
   klock(&thread->process_->mspace_.lock_);
@@ -118,10 +147,41 @@ static void destroy_thread(kThread_t *thread)
 
 
 /* ----------------------------------------------------------------------- */
+/** @brief Destroy a session object. */
 static void destroy_session(kSession_t *session)
 {
   inode_close(session->workingDir_);
   kfree(session);
+}
+
+
+/* ----------------------------------------------------------------------- */
+/** @brief Routines that handle destruction of a process and of all its 
+  * resources.
+  */
+void destroy_process (kProcess_t *process)
+{
+  kThread_t *task;
+  kThread_t *pick;
+
+  assert(kislocked(&process->lock_));
+  /// @todo free process, threads, resx, session, events, ...
+  
+  task = ll_first(&process->threads_, kThread_t, taskNd_);
+  while (task) {
+    pick = task;
+    task = ll_next(task, kThread_t, taskNd_);
+    destroy_thread (pick);
+  }
+
+  ll_remove(&kSYS.processes_, &process->allNd_);
+  if (atomic_add(&process->session_->usage_, -1) <= 0)
+    destroy_session(process->session_);
+  
+  atomic_dec(&process->assembly_->usage_);
+  inode_close(process->assembly_->ino_);
+  kunlock(&process->lock_);
+  kfree(process);
 }
 
 
@@ -152,32 +212,6 @@ kThread_t *create_thread(kProcess_t *process, size_t entry, size_t param)
 
 
 /* ----------------------------------------------------------------------- */
-void destroy_process (kProcess_t *process)
-{
-  kThread_t *task;
-  kThread_t *pick;
-
-  assert(kislocked(&process->lock_));
-  // @todo free process, threads, resx, session, events, ...
-  
-  task = ll_first(&process->threads_, kThread_t, taskNd_);
-  while (task) {
-    pick = task;
-    task = ll_next(task, kThread_t, taskNd_);
-    destroy_thread (pick);
-  }
-
-  ll_remove(&kSYS.processes_, &process->allNd_);
-  if (atomic_add(&process->session_->usage_, -1) <= 0)
-    destroy_session(process->session_);
-  
-  atomic_dec(&process->assembly_->usage_);
-  inode_close(process->assembly_->ino_);
-  kunlock(&process->lock_);
-  kfree(process);
-}
-
-/* ----------------------------------------------------------------------- */
 kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, const char*cmd)
 {
   kProcess_t *process;
@@ -195,7 +229,8 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
 
   snprintf(bufPid, 12, "%d", pid);
   procdir = create_inode (bufPid, kSYS.procIno_, S_IFDIR | 0400, 0);
-  stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  stdin = search_inode(".Tty0", kSYS.procIno_, 0);
+  // stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
   stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
   stderr = stdout;
 
@@ -339,7 +374,7 @@ kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags)
   resx->ino_ = ino;
   resx->type_ = ino->stat_.mode_ & S_IFMT;
   resx->oflags_ = oflags;
-  // @todo check capacity (access rights)
+  /// @todo check capacity (access rights)
   resx->fdNd_.value_ = process->fdCount_++;
   bb_insert (&process->resxTree_, &resx->fdNd_);
   return resx;

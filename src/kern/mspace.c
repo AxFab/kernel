@@ -185,7 +185,7 @@ kMemArea_t* area_get(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t lengt
 /** Find the area holding an address */
 kMemArea_t *area_find(kMemSpace_t* sp, size_t address)
 {
-  // @todo DEBUG !
+  /// @todo DEBUG !
   kMemArea_t *area;
   kMemArea_t *origin;
   int maxLoop = MAX_LOOP;
@@ -300,7 +300,7 @@ kMemArea_t *area_map_at (kMemSpace_t* sp, size_t address, size_t length, int fla
 /* ----------------------------------------------------------------------- */
 int area_attach(kMemArea_t* area, kInode_t* ino, size_t offset)
 {
-  //@todo think about link by bucket and add a dir to filter...
+  ///@todo think about link by bucket and add a dir to filter...
   if ((area->flags_ & (VMA_ASSEMBLY | VMA_FILE)) == 0)
     return __seterrno(EINVAL);
 
@@ -374,7 +374,7 @@ kMemArea_t* area_map_ino(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t l
     kpanic ("inode loading failed\n");
   }
 
-  // TODO what if we are currently reading the device !
+  /// @todo what if we are currently reading the device !
   return area;
 }
 
@@ -450,7 +450,7 @@ void scavenge_area(kMemSpace_t* sp)
     if (origin->ino_ != NULL && origin->usage_ == 0) {
       inode_close(origin->ino_);
       origin->ino_ = NULL;
-      // @todo REMOVE FROM MSPACE
+      /// @todo REMOVE FROM MSPACE
     }
 
     origin = origin->next_;

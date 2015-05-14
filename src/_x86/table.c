@@ -154,8 +154,8 @@ void cpu_init_table ()
   // TSS - Task State Segment
   i386_TssAddress->debug_flag = 0x00;
   i386_TssAddress->io_map = 0x00;
-  i386_TssAddress->esp0 = (0x7000 - 4); // TODO Kernel Stack !
-  i386_TssAddress->ss0 = 0x18;  // TODO Kernel stack segment
+  i386_TssAddress->esp0 = (0x7000 - 4); /// @todo Kernel Stack !
+  i386_TssAddress->ss0 = 0x18;  /// @todo Kernel stack segment
 
   // IDT - Interupt Descriptor Table
   for (i = 0; i < 256; ++i)

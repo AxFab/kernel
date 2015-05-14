@@ -1,6 +1,7 @@
 #include <smkos/kfs.h>
 #include <smkos/compiler.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 PACK(struct BMP_Header {
   uint16_t sign_;
@@ -43,12 +44,13 @@ int BMP_write (kInode_t *ino, void *bucket, size_t length, size_t lba)
 
 void BMP_sync (kInode_t *ino)
 {
+  struct BMP_Header head;
+  FILE* fp;
   int i;
   if (!bmp_ptr)
     return;
 
-  struct BMP_Header head;
-  FILE* fp = fopen("vga.bmp", "w");
+  fp = fopen("vga.bmp", "w");
 
   memset (&head, 0, sizeof(head));
   head.sign_ = 0x4d42;

@@ -66,7 +66,7 @@ void cpu_run_task(kThread_t *thread)
   // kprintf ("  PgDir :: %x\n", thread->process_->pageDir_);
   // kprintf ("  Entry :: %x\n", thread->paramEntry_);
   // kprintf ("  Param :: %x\n", thread->paramValue_);
-  // @todo - Change TSS, CR3*, Entry*, Params*
+  /// @todo - Change TSS, CR3*, Entry*, Params*
   //         * Only if needed
 
   // for (;;);

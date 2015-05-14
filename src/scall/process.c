@@ -33,7 +33,7 @@ int sys_exit(int errcode, int pid)
   if (pid != 0)
     return ENOSYS;
 
-  // todo assert (kCPU.state_ == KST_USERSP);
+  /// @todo assert (kCPU.state_ == KST_USERSP);
   assert (kCPU.current_ != NULL);
 
   sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
@@ -42,8 +42,6 @@ int sys_exit(int errcode, int pid)
   sched_next(kSYS.scheduler_);
   return EAGAIN;
 }
-
-
 
 int sys_write(int fd, void* data, size_t lg, size_t off) 
 {
@@ -82,6 +80,46 @@ int sys_write(int fd, void* data, size_t lg, size_t off)
   }
 }
 
+int sys_read(int fd, void* data, size_t lg, size_t off) 
+{
+  int ret = 0;
+  kResx_t* resx;
+
+  if (lg > FBUFFER_MAX) {
+    __seterrno(ENOSYS);
+    return -1;
+  }
+
+  resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
+  if (resx == NULL)
+    return -1;
+  
+  switch (resx->type_) {
+    case S_IFBLK:
+    case S_IFREG:
+      // return fs_block_write();
+      return -1;
+
+    case S_IFCHR:
+    case S_IFIFO:
+      ret = fs_pipe_read (resx->ino_, data, lg);
+      if (ret == 0) {
+        return -1;
+      }
+      return ret;
+
+    case S_IFDIR:
+      __seterrno(EISDIR);
+      return -1;
+
+    default:
+      assert(resx->type_ == 0);
+      __seterrno(EBADF);
+      return -1;
+  }
+
+
+}
 
 int sys_mmap(int fd, size_t address, size_t length, int flags)
 {

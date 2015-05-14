@@ -22,7 +22,7 @@
 #pragma once
 
 #include <smkos/scall.h>
-
+#include <smkos/types.h>
 
 int sys_exit(int errcode, int pid);
 int sys_exec();
@@ -31,5 +31,4 @@ int sys_stop();
 
 ssize_t sys_write(int fd, void *buf, size_t lg, size_t off);
 ssize_t sys_read(int fd, void *buf, size_t lg, size_t off);
-
 

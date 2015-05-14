@@ -123,6 +123,7 @@ static inline void pop_arg(union SMK_FmtArg *arg, int type, va_list *ap)
 }
 
 #define _I(x) [(x)-'A']
+
 static const char state[]_I('z' + 1) = {
   {
     // BARE

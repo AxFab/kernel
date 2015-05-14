@@ -43,7 +43,7 @@ uint64_t ttyFont [] = {
   0x0104f24924f000, 0x0820f24924f000, 0x0000104124f000, 0x0000f20f04f000, // 70-23 - p
   0x00007041043041, 0x0000f249249000, 0x0000428a451000, 0x0001f555555000, // 74-27 - t
   0x00009246249000, 0x0f20f249249000, 0x0000f04210f000, 0x18104103104118, // 78-2b - x
-  0x04104104104104, 0x03104118104103, 0x00000000352000, 0x00000000000000, // 7c-2f
+  0x04104104104104, 0x03104118104103, 0x00000000352000, 0x00000000000088, // 7c-2f
 };
 
 const int fontW = 6;
@@ -71,10 +71,10 @@ uint32_t consoleBgColor[] = {
 // ===========================================================================
 
 // ---------------------------------------------------------------------------
-/** Read a text command '\e[xxa'
-  */
+/** @brief Read an ANSI escape code. */
 static const char *font64_cmd(kTerm_t *term, const char *str, kLine_t *style)
 {
+  uint32_t temp;
   for (;;) {
 
     if (*str == '0') {
@@ -103,7 +103,7 @@ static const char *font64_cmd(kTerm_t *term, const char *str, kLine_t *style)
 
     } else if (*str == '7') {
       str++;
-      uint32_t temp = style->txColor_;
+      temp = style->txColor_;
       style->txColor_ = style->bgColor_;
       style->bgColor_ = temp;
 
@@ -131,6 +131,7 @@ static const char *font64_cmd(kTerm_t *term, const char *str, kLine_t *style)
   return str;
 }
 
+#define _ESC 0x1B
 // ---------------------------------------------------------------------------
 /** Read the next character of the line
   * @bug, what if a command is at the end of the buffer (no '\n')
@@ -143,12 +144,12 @@ static const char *font64_getc(kTerm_t *term, const char *str, int *ch, kLine_t 
     } else if (*str < 0x20 && *str != '\n' && *str != '\t') {
       if (str[0] == '\r' && str[1] == '\n') {
         str++;
-      } else if (str[0] == '\e' && str[1] == '[') {
+      } else if (str[0] == _ESC && str[1] == '[') {
         str += 2;
         str = font64_cmd(term, str, style);
         continue;
       } else {
-        // @todo handle UTF-8 characters
+        /// @todo handle UTF-8 characters
         str++;
         continue;
       }
@@ -195,7 +196,6 @@ static void font64_draw (kTerm_t *term, int ch, kLine_t *style, int pen, int wid
 
 // ---------------------------------------------------------------------------
 /** Paint a text line on the frame buffer used by this terminal
-  * @param[in] fb     Frame buffer of the terminal
   * @return           The value is the offset of the end of line if marked
   */
 void font64_paint (kTerm_t *term, kLine_t *style, int ch, int row, int col)
