@@ -40,6 +40,7 @@
 
 // #include <smkos/_spec.h>
 
+#include <smkos/types.h>
 #include <smkos/assert.h>
 #include <smkos/atomic.h>
 #include <smkos/llist.h>
@@ -65,6 +66,8 @@ typedef struct kResx kResx_t;
 typedef struct kSubSystem kSubSystem_t;
 typedef struct kLine kLine_t;
 typedef struct kTerm kTerm_t;
+typedef struct kWait kWait_t;
+typedef enum kWaitReason kWaitReason_e;
 
 /* FUNCTIONS ============================================================= */
 /** Display a message on system logs. */
@@ -166,10 +169,12 @@ static inline void kernel_state(enum kState state)
 char* strdup(const char*);
 int strcmpi (const char* str1, const char* str2);
 int vsnprintf(char *str, size_t lg, const char *format, va_list ap);
+#else 
+#define strdup _strdup
+#define strcmpi _strcmpi
 #endif
 
 unsigned long long strtoull(const char*, char**, int);
-#define exit_() do { cpu_halt(); for(;;); } while(0);
 
 int snprintf(char *, size_t, const char *, ...);
 void kstacktrace(size_t MaxFrames);

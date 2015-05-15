@@ -29,8 +29,6 @@
 #include <smkos/kstruct/user.h>
 #include <smkos/file.h>
 
-char* strtok_r(char* , const char*, char **);
-
 static char* parseStr (char **rent)
 {
   char * str = strtok_r(NULL, " (,;)=", rent);
@@ -65,9 +63,17 @@ static int parseInt (char **rent)
   return strtol(str, NULL, 10);
 }
 
+
+void log_sys(const char* sbuf)
+{
+  printf ("  %2d] %s\n", kCPU.current_->threadId_, sbuf);
+}
+
+
 /* ----------------------------------------------------------------------- */
 void sys_write_do (char* str, char **rent)
 {
+  char sbuf[128];
   int fd = parseInt(rent);
   char *buf = parseStr(rent);
   int lg = parseInt(rent);
@@ -75,16 +81,15 @@ void sys_write_do (char* str, char **rent)
   int res = parseInt(rent);
   int ret = sys_write(fd, buf, lg, sk);
   assert (ret == res);
+  sys_write_save(sbuf, 128, fd, buf, lg, sk, ret);
+  log_sys(sbuf);
 }
 
-void sys_write_save (char* snBuf, int snLg, int fd, const char* buf, int lg, int off, ssize_t bytes)
-{
-  // snprintf (snBuf, snLg, "sys_write (%d:%s, %x:\"%s\", %d, %d) = %d", fd, NULL, buf, buf, lg, off, bytes);
-}
 
 /* ----------------------------------------------------------------------- */
 void sys_read_do (char* str, char **rent)
 {
+  char sbuf[128];
   int fd = parseInt(rent);
   char *buf = parseStr(rent);
   int lg = parseInt(rent);
@@ -95,6 +100,8 @@ void sys_read_do (char* str, char **rent)
   assert (ret == res);
   if (buf && ret > 0)
     assert(!memcmp(buf, tmp, ret));
+  sys_read_save(sbuf, 128, fd, tmp, lg, sk, ret);
+  log_sys(sbuf);
   kfree(tmp);
 }
 
@@ -102,6 +109,7 @@ void sys_read_do (char* str, char **rent)
 /* ----------------------------------------------------------------------- */
 void sys_exec_do (char* str, char **rent)
 {
+  char sbuf[128];
   int ret, res;
   struct SMK_StartInfo si;
   char* exe = parseStr(rent);
@@ -116,15 +124,20 @@ void sys_exec_do (char* str, char **rent)
   res = parseInt(rent);
   ret = sys_exec(exe, &si);
   assert (ret == res);
+  sys_exec_save(sbuf, 128, exe, &si, ret);
+  log_sys(sbuf);
 }
 
 
 /* ----------------------------------------------------------------------- */
 void sys_exit_do (char* str, char **rent)
 {
+  char sbuf[128];
   int status = parseInt(rent);
   int pid = parseInt(rent);
-  int ret = sys_exit(status, pid);
+  sys_exit_save(sbuf, 128, status, pid);
+  log_sys(sbuf);
+  sys_exit(status, pid);
   assert(0);
 }
 

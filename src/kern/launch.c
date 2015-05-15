@@ -99,6 +99,10 @@ void kernel_sweep()
 {
   kInode_t* fb = search_inode ("/dev/Fb0", NULL, 0);
   scavenge_area(kSYS.mspace_);
+  
+  //display_inodes();
+  //kprintf("\n");
+
   BMP_sync (fb);
 }
 

@@ -27,7 +27,8 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
-static jmp_buf cpuJmp;
+static int main_count = -1;
+static jmp_buf cpuJmp[16];
 
 void sleep(int);
 
@@ -50,7 +51,7 @@ void cpu_halt()
 {
   kernel_state (KST_IDLE);
   sleep(1);
-  longjmp(cpuJmp, 1);
+  longjmp(cpuJmp[main_count], 1);
 }
 
 
@@ -73,7 +74,7 @@ void cpu_run_task(kThread_t *thread)
   kCPU.current_->state_ = SCHED_EXEC;
   kunlock (&thread->process_->lock_);
   kernel_state(KST_USERSP);
-  longjmp(cpuJmp, 5);
+  longjmp(cpuJmp[main_count], 5);
 }
 
 
@@ -148,35 +149,29 @@ void callSys ()
     iVal = parseChar(&rent);
     fs_event(devKeyBoard->ino_, EV_KEYDW, iVal);
     fs_event(devKeyBoard->ino_, EV_KEYUP,iVal);
+    printf("  ..] KEY %x (%c)\n", iVal, iVal);
     free(buf);
-    longjmp(cpuJmp, 5);
+    longjmp(cpuJmp[main_count], 5);
+
+  } else if (!memcmp(part, "WAKEUP", 6)) {
+    longjmp(cpuJmp[main_count--], 2);
   }
 
   free(buf);
   sched_next(kSYS.scheduler_);
 }
 
-
-int pes = 0;
 int main_jmp_loop()
 {
-  int ret;
-  char* buf; 
   int idx;
-  
-  progFp[0] = fopen("../SD/T1.sta", "r");
-  progFp[1] = fopen("../SD/T2.sta", "r");
-  progFp[2] = fopen("../SD/T3.sta", "r");
-
-  idx = setjmp(cpuJmp);
+  ++main_count;
+  idx = setjmp(cpuJmp[main_count]);
 
   assert (*__lockcounter() == 0);
 
-  if (kCPU.current_)
-    ret = kCPU.current_->process_->pid_;
   switch (idx) {
   case 0:
-    // Begin -- Should be IRQ Clock
+    // Begin or WaitFor -- Should be IRQ Clock
     kernel_state (KST_KERNSP);
     sched_next(kSYS.scheduler_);
     break;
@@ -189,6 +184,14 @@ int main_jmp_loop()
     // sched_next(kSYS.scheduler_);
     // break;
 
+  case 2: // Wake Up -- Blocked Thread are stacking up here !!
+    return 0;
+
+  case 3: // Wait
+    sched_stop(kSYS.scheduler_, kCPU.current_, SCHED_BLOCKED);
+    sched_next(kSYS.scheduler_);
+    break;
+
   case 5:
     assert (kCPU.state_ == KST_USERSP);
     assert (kCPU.current_ != NULL);
@@ -199,8 +202,6 @@ int main_jmp_loop()
   return -1;
 }
 
-
-
 void cpu_sched_ticks()
 {
   sched_next(kSYS.scheduler_);
@@ -210,21 +211,28 @@ void cpu_start_scheduler()
 {
 }
 
+void cpu_wait()
+{
+  printf ("  %2d] is waiting...\n", kCPU.current_->threadId_);
+  sched_stop(kSYS.scheduler_, kCPU.current_, SCHED_BLOCKED);
+  main_jmp_loop();
+}
+
 /* ----------------------------------------------------------------------- */
 /* At this point we leave CRTK. */
 int main ()
 {
   // Start threads for CPUs at { kernel_ready(); main_jmp_loop(); }
+  // @todo assert -- kalloc is available, memory is virtual, screen is OK, timer is set
   kernel_start();
 
   // DEBUG ONLY
   display_inodes();
   kprintf("\n");
-
-  // assert (1); // kalloc is available, memory is virtual, screen is OK, timer is set
-  /// @todo Set kalloc !
-  /// @todo Map the main screen
-  /// @todo Create first terminal
+  
+  progFp[0] = fopen("../SD/T1.sta", "r");
+  progFp[1] = fopen("../SD/T2.sta", "r");
+  progFp[2] = fopen("../SD/T3.sta", "r");
 
   return main_jmp_loop();
 }

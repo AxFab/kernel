@@ -72,13 +72,10 @@ static void reset_thread (kThread_t *thread, size_t entry, size_t param)
   thread->paramEntry_ = entry;
   thread->paramValue_ = param;
   atomic_inc(&thread->process_->runningTask_);
-  thread->state_ = SCHED_READY;
-  // sched_wakeup (thread);
   sched_insert (kSYS.scheduler_, thread);
 
   /* thread->execOnCpu_ = -1;
   thread->niceValue_ = 5; */
-  // sched_insert (thread);
 }
 
 
@@ -279,7 +276,7 @@ kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_S
 
   snprintf(bufPid, 12, "%d", pid);
   procdir = create_inode (bufPid, kSYS.procIno_, S_IFDIR | 0400, 0);
-  ((void)procdir);
+  // @todo Store procdir;
   
   resx = process_get_resx (kCPU.current_->process_, 0, CAP_READ);
   if (resx != NULL)

@@ -61,7 +61,7 @@ kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *sta
 int fs_block_read(kInode_t *fp, void* buffer, size_t length, size_t offset);
 kPipe_t * fs_create_pipe(kInode_t *ino);
 int fs_pipe_read(kInode_t *ino, void* buf, size_t lg);
-size_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg, int flags);
+size_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg);
 int fs_event(kInode_t *ino, int type, int value);
 
 
@@ -150,6 +150,8 @@ void create_subsys(kInode_t* kbd, kInode_t* screen);
 void open_subsys(kInode_t* input, kInode_t* output);
 
 
+
 /* ----------------------------------------------------------------------- */
+void wait_for(struct mutex * mutex, kWaitReason_e reason, struct llhead* list);
 void kstacktrace(size_t MaxFrames);
 

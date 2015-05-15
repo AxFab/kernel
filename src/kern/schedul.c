@@ -63,6 +63,8 @@ void sched_insert(kScheduler_t *sched, kThread_t *task)
 {
   klock(&sched->lock_);
 
+  assert (task->state_ < SCHED_READY);
+  task->state_ = SCHED_READY;
   if (sched->anchor_ == NULL) {
     task->schNext_ = task;
     sched->anchor_ = task;
@@ -86,7 +88,7 @@ void sched_remove(kScheduler_t *sched, kThread_t *thread)
   kThread_t *pick;
   klock(&sched->lock_);
 
-  assert (thread->state_ == SCHED_ZOMBIE);
+  assert (thread->state_ < SCHED_READY);
   // assert (task->event_ == NULL);
 
   if (kCPU.current_ == thread)
@@ -149,21 +151,27 @@ void sched_stop (kScheduler_t *sched, kThread_t *thread, int state)
       return;
     }
 
-  } else if (state == SCHED_READY)
+  } else if (state == SCHED_READY) {
     semaphore_release(&sched->taskSem_, 1);
+  } else if (state == SCHED_BLOCKED) {
+    sched_remove (sched, thread);
+  }
 
-  klock (&thread->process_->lock_);
+  kunlock (&thread->process_->lock_);
 }
 
 /* ----------------------------------------------------------------------- */
 void sched_next(kScheduler_t *sched)
 {
   if (kCPU.current_ != NULL) {
-    assert(kCPU.current_->state_ == SCHED_EXEC);
-    cpu_save_task (kCPU.current_);
-    semaphore_release (&sched->taskSem_, 1);
-    kCPU.current_->state_ = SCHED_READY;
-    kCPU.current_ = kCPU.current_->schNext_;
+    assert(kCPU.current_->state_ >= SCHED_READY && kCPU.current_->state_ != SCHED_ABORT);
+    // @todo stay linked to an external task might be risky
+    if (kCPU.current_->state_ >= SCHED_EXEC) {
+      // cpu_save_task (kCPU.current_);
+      semaphore_release (&sched->taskSem_, 1);
+      kCPU.current_->state_ = SCHED_READY;
+      kCPU.current_ = kCPU.current_->schNext_;
+    }
 
   } else {
     kCPU.current_ = sched->anchor_;

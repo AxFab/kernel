@@ -103,11 +103,16 @@ struct kPipe
   size_t wpen_; /**< Offset of the producer(write) cursor */
   size_t size_; /**< Total size of the buffer */
   size_t avail_; /**< Byte available to reading */
-  struct spinlock lock_;
+  // struct spinlock lock_;
+  struct mutex mutex_;
   kMemArea_t* mmap_;
+  int flags_;
+  struct llhead waiting_;
 };
 
-
+#define FP_WRITE_FULL (1 << 3) /**< Ensure that write is full, usefulll for event structure or queue */
+#define FP_BLOCK    (1 << 4)
+#define FP_BY_LINE  (1 << 5)
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

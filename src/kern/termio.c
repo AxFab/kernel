@@ -153,7 +153,7 @@ void term_readcmd(kTerm_t *term, kLine_t *style, const char** str)
   (*str)++;
   i=0;
   do {
-    val[i++] = strtoull(*str, (char**)str, 10);
+    val[i++] = (int)strtoull(*str, (char**)str, 10);
 
   } while(i < 5 && **str == ';');
 
@@ -191,7 +191,7 @@ int term_paint (kTerm_t *term, kLine_t *style, int row)
     if (col >= term->colMax_) /// @todo colMax_
       return str - base; // We return the place of the new line
 
-    if (style->offset_ + col >= term->pipe_->wpen_)
+    if (style->offset_ + col >= (int)term->pipe_->wpen_)
       return 0;
   }
 
@@ -300,7 +300,7 @@ void term_write (kTerm_t *term)
 void kwrite_pipe (const char *m) 
 {
   int lg = strlen (m);
-  fs_pipe_write (sysLogTty->term_->ino_, m, lg, 0);
+  fs_pipe_write (sysLogTty->term_->ino_, m, lg);
   term_write(sysLogTty->term_);
 }
 
@@ -318,7 +318,7 @@ void event_pipe(int type, int value)
     if (value == _BKSP) {
       //fs_pipe_unget(1);
     } else if (value < 0x80)
-      fs_pipe_write(ino, &value, 1, 0);
+      fs_pipe_write(ino, &value, 1);
     break;
 
     default:

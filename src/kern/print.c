@@ -3,6 +3,7 @@
 #include <stdarg.h>
 
 extern kSubSystem_t *sysLogTty;
+// int vsnprintf(char* buf, int lg, const char* fmt, va_list ap);
 
 /* ----------------------------------------------------------------------- */
 void kpanic(const char *msg, ...)
@@ -14,7 +15,7 @@ void kpanic(const char *msg, ...)
   va_end(ap);
   sysLogTty->write(buf);
   kstacktrace(12);
-  exit_();
+  cpu_halt();
 }
 
 /* ----------------------------------------------------------------------- */

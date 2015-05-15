@@ -96,5 +96,24 @@ struct kResx
   struct bbnode fdNd_;
 };
 
+
+/* ----------------------------------------------------------------------- */
+enum kWaitReason {
+  WT_PIPE_READ = 1,
+  WT_PIPE_WRITE = 2,
+  WT_HANDLED = 0x80000,
+};
+
+struct kWait
+{
+  struct mutex * mutex_;
+  kWaitReason_e reason_;
+  // size_t param_;
+  kThread_t *thread_;
+  struct llnode lnd_;
+  struct llhead *list_;
+};
+
+
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

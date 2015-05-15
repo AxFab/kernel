@@ -54,7 +54,7 @@ int sys_exec(const char *exec, struct SMK_StartInfo *info)
     return -1;
   }
 
-  if (load_assembly(ino) == NULL){
+  if (load_assembly(ino) == NULL) {
     __seterrno(ENOEXEC);
     return -1;
   }
@@ -89,7 +89,7 @@ int sys_write(int fd, void* data, size_t lg, size_t off)
 
     case S_IFCHR:
     case S_IFIFO:
-      return fs_pipe_write (resx->ino_, data, lg, 0);
+      return fs_pipe_write (resx->ino_, data, lg);
 
     case S_IFDIR:
       __seterrno(EISDIR);

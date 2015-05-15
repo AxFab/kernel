@@ -31,7 +31,7 @@
 typedef struct kSymbol kSymbol_t;
 struct kSymbol {
   const char *name_;
-  uintptr_t   address_;
+  size_t     address_;
   kSymbol_t  *next_;
 };
 
@@ -39,7 +39,7 @@ kSymbol_t *first;
 kSymbol_t *last;
 
 // ----------------------------------------------------------------------------
-void ksymreg (uintptr_t ptr, const char *sym)
+void ksymreg (size_t ptr, const char *sym)
 {
 
   if (first == NULL) {
@@ -147,7 +147,7 @@ void ksymbols_load (kInode_t* ino)
   int j;
   int state = 0;
   int lg = ino->stat_.length_;
-  uintptr_t ptr;
+  size_t ptr;
   kMemArea_t* area;
   char *tmp;
   char *str = kalloc (512);
@@ -188,7 +188,7 @@ void ksymbols_load (kInode_t* ino)
       strcpy (sym, &str[50]);
       sym[strlen(sym)-1] = '\0';
       add[19] = '\0';
-      ptr = strtoull (add, NULL, 0);
+      ptr = (size_t)strtoull (add, NULL, 0);
 
       if (str[1] != ' ')  {
         ksymreg (ptr, "__unamed__");
