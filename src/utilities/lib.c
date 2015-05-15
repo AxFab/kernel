@@ -33,7 +33,7 @@ int sleep (int seconds)
 
 int execv_s(const char *path, const char *args)
 {
-  sStartInfo_t param = {args, NULL, 0, 0, 0, 0, 0, 0};
+  sStartInfo_t param = {args, NULL, -1, -1, -1, -1, 0, -1};
   return exec (path, &param);
 }
 

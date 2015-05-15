@@ -27,6 +27,7 @@
 #include <smkos/kstruct/map.h>
 #include <smkos/kstruct/task.h>
 #include <smkos/kstruct/user.h>
+#include <smkos/file.h>
 
 int sys_exit(int errcode, int pid)
 {
@@ -41,6 +42,27 @@ int sys_exit(int errcode, int pid)
     process_exit(kCPU.current_->process_, 0);
   sched_next(kSYS.scheduler_);
   return EAGAIN;
+}
+
+int sys_exec(const char *exec, struct SMK_StartInfo *info)
+{
+  kProcess_t* process;
+  kInode_t* pwd = kCPU.current_->process_->session_->workingDir_;
+  kInode_t* ino = search_inode(exec, pwd, 0);
+  if (ino == NULL) {
+    __seterrno(ENOENT);
+    return -1;
+  }
+
+  if (load_assembly(ino) == NULL){
+    __seterrno(ENOEXEC);
+    return -1;
+  }
+
+   process = create_child_process(ino, kCPU.current_->process_, info);
+   if (!process)
+     return -1;
+   return process->pid_;
 }
 
 int sys_write(int fd, void* data, size_t lg, size_t off) 

@@ -25,7 +25,7 @@
 #include <smkos/types.h>
 
 int sys_exit(int errcode, int pid);
-int sys_exec();
+int sys_exec(const char *exec, struct SMK_StartInfo *info);
 int sys_start();
 int sys_stop();
 

@@ -31,8 +31,8 @@ struct SMK_File {
   char   *wpos_;
   char   *wend_;
 
-  int (*write_) (FILE *restrict fp, const char *restrict buf, size_t length);
-  int (*read_) (FILE *restrict fp, char *restrict buf, size_t length);
+  int (*write_) (FILE * fp, const char * buf, size_t length);
+  int (*read_) (FILE * fp, char * buf, size_t length);
 };
 
 
@@ -49,6 +49,18 @@ struct SMK_FmtSpec {
   int precis_;
   int field_;
 };
+
+struct SMK_StartInfo {
+  const char     *cmd_;
+  const char     *username_;
+  int             output_;
+  int             input_;
+  int             error_;
+  int             workingDir_;
+  int             flags_;
+  int             mainWindow_;  /**< Give a window/tty handler for the program */
+};
+
 
 uintmax_t _strtox(const char *str, char **endptr, int base, char *sign);
 char *_utoa (uintmax_t value, char *str, int base, const char *digits);

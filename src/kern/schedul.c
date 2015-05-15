@@ -83,6 +83,7 @@ void sched_insert(kScheduler_t *sched, kThread_t *task)
 /* ----------------------------------------------------------------------- */
 void sched_remove(kScheduler_t *sched, kThread_t *thread)
 {
+  kThread_t *pick;
   klock(&sched->lock_);
 
   assert (thread->state_ == SCHED_ZOMBIE);
@@ -94,11 +95,18 @@ void sched_remove(kScheduler_t *sched, kThread_t *thread)
   if (sched->anchor_ == thread) {
     if (thread->schNext_ == thread)
       sched->anchor_ = NULL;
-    else
-      sched->anchor_ = thread->schNext_;
+    else {
+      pick = sched->anchor_;
+
+      while (pick->schNext_ != thread)
+        pick = pick->schNext_;
+
+      pick->schNext_ = thread->schNext_;
+      sched->anchor_ = pick;
+    }
 
   } else {
-    kThread_t *pick = sched->anchor_;
+    pick = sched->anchor_;
 
     while (pick->schNext_ != thread)
       pick = pick->schNext_;
@@ -136,6 +144,7 @@ void sched_stop (kScheduler_t *sched, kThread_t *thread, int state)
 
     /// @todo And all signal have been sended...
     if (thread->process_->runningTask_ == 0) {
+      kCPU.current_ = NULL;
       destroy_process (thread->process_);
       return;
     }

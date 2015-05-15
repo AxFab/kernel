@@ -25,7 +25,9 @@
 #include <smkos/kstruct/map.h>
 #include <smkos/kstruct/task.h>
 #include <smkos/kstruct/user.h>
+#include <smkos/file.h>
 
+static int autoIncrThread = 0;
 /* ----------------------------------------------------------------------- */
 /** @brief Instanciate a new thread object.
   * @param process The parent process that need a new thread.
@@ -64,7 +66,8 @@ static kThread_t *alloc_thread(kProcess_t *process)
 static void reset_thread (kThread_t *thread, size_t entry, size_t param)
 {
   assert (thread->state_ == SCHED_ZOMBIE);
-
+  
+  thread->threadId_ = ++autoIncrThread;
   thread->start_ = time(NULL);
   thread->paramEntry_ = entry;
   thread->paramValue_ = param;
@@ -259,26 +262,42 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
 
 
 /* ----------------------------------------------------------------------- */
-kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, const char*cmd)
+kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_StartInfo *info)
 {
+  kResx_t* resx;
   kProcess_t *process;
-  // kInode_t* stdin;
-  // kInode_t* stdout;
-  // kInode_t* stderr;
+  kInode_t* stdin;
+  kInode_t* stdout;
+  kInode_t* stderr;
   kInode_t* procdir;
   char bufPid[12];
   int pid = ++kSYS.pidAutoInc_;
 
   assert(ino != NULL);
   assert(parent != NULL);
-  assert(cmd != NULL);
+  assert(info != NULL);
 
   snprintf(bufPid, 12, "%d", pid);
   procdir = create_inode (bufPid, kSYS.procIno_, S_IFDIR | 0400, 0);
   ((void)procdir);
-  // stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
-  // stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
-  // stderr = stdout;
+  
+  resx = process_get_resx (kCPU.current_->process_, 0, CAP_READ);
+  if (resx != NULL)
+    stdin = resx->ino_;
+  else
+    stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  
+  resx = process_get_resx (kCPU.current_->process_, 1, CAP_WRITE);
+  if (resx != NULL)
+    stdout = resx->ino_;
+  else
+    stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  
+  resx = process_get_resx (kCPU.current_->process_, 2, CAP_READ);
+  if (resx != NULL)
+    stderr = resx->ino_;
+  else
+    stderr = stdout;
 
   process = alloc_process(ino->assembly_, pid);
   if (process == NULL)
@@ -293,6 +312,10 @@ kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, const char*c
     destroy_process (process);
     return NULL;
   }
+  
+  process_set_resx(process, stdin, 0); // O_RDLY | 
+  process_set_resx(process, stdout, 0); // O_WRLY | 
+  process_set_resx(process, stderr, 0); // O_WRLY | O_DIRECT
 
   kunlock (&process->lock_);
   return process;
@@ -333,6 +356,8 @@ void process_exit(kProcess_t *process, int status)
   klock(&process->lock_);
   process->exitStatus_ = status;
   ll_for_each (&process->threads_, task, kThread_t, taskNd_) {
+    if (task->state_ == SCHED_ZOMBIE)
+      continue;
     assert(kCPU.current_ != task);
     thread_abort (task);
   }

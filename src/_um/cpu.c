@@ -101,37 +101,89 @@ extern kDevice_t *devKeyBoard;
 #define EV_KEYDW 11
 
 #include <smkos/sysapi.h>
+#include <stdio.h>
 
 void kernel_ready();
 void kernel_start();
 void kernel_sweep();
 struct kSys kSYS;
 
+FILE* progFp[15];
+
+int parseChar (char **rent);
+char* strtok_r(char* , const char*, char **);
+
+void sys_write_do (char* str, char **rent);
+void sys_read_do (char* str, char **rent);
+void sys_exec_do (char* str, char **rent);
+void sys_exit_do (char* str, char **rent);
+
+void callSys ()
+{
+  int iVal;
+  char* buf;
+  char *part;
+  char *rent;
+  
+  buf = (char*)malloc(128);
+  assert (kCPU.current_ != NULL);
+  part = fgets(buf, 128, progFp[kCPU.current_->threadId_ - 1]);
+  assert (part != NULL);
+
+  part = strtok_r(buf, " (,;)=", &rent);
+
+  if (!memcmp(part, "sys_write", 9)) {
+    sys_write_do(buf, &rent);
+
+  } else if (!memcmp(part, "sys_read", 8)) {
+    sys_read_do(buf, &rent);
+
+  } else if (!memcmp(part, "sys_exec", 8)) {
+    sys_exec_do(buf, &rent);
+
+  } else if (!memcmp(part, "sys_exit", 8)) {
+    sys_exit_do(buf, &rent);
+
+  } else if (!memcmp(part, "KEY_PRESS", 9)) {
+    iVal = parseChar(&rent);
+    fs_event(devKeyBoard->ino_, EV_KEYDW, iVal);
+    fs_event(devKeyBoard->ino_, EV_KEYUP,iVal);
+    free(buf);
+    longjmp(cpuJmp, 5);
+  }
+
+  free(buf);
+  sched_next(kSYS.scheduler_);
+}
+
+
 int pes = 0;
 int main_jmp_loop()
 {
   int ret;
   char* buf; 
-  int idx = setjmp(cpuJmp);
+  int idx;
+  
+  progFp[0] = fopen("../SD/T1.sta", "r");
+  progFp[1] = fopen("../SD/T2.sta", "r");
+  progFp[2] = fopen("../SD/T3.sta", "r");
 
+  idx = setjmp(cpuJmp);
+
+  assert (*__lockcounter() == 0);
+
+  if (kCPU.current_)
+    ret = kCPU.current_->process_->pid_;
   switch (idx) {
   case 0:
+    // Begin -- Should be IRQ Clock
     kernel_state (KST_KERNSP);
+    sched_next(kSYS.scheduler_);
     break;
 
   case 1: // Cpu Halted -- Trigger I/O -- Call kernel swip -- return 0
-    if (evt > 1) {
-      kernel_sweep();
-      return 0;
-    }
-
-    ++evt;
-    fs_event(devKeyBoard->ino_, EV_KEYDW, 0x20);
-    fs_event(devKeyBoard->ino_, EV_KEYUP, 0x20);
-    fs_event(devKeyBoard->ino_, EV_KEYDW, 0x20);
-    fs_event(devKeyBoard->ino_, EV_KEYUP, 0x20);
-    break;
-
+    kernel_sweep();
+    return 0;
     // Do we have event to send !!
     // kernel_state (KST_KERNSP);
     // sched_next(kSYS.scheduler_);
@@ -140,45 +192,10 @@ int main_jmp_loop()
   case 5:
     assert (kCPU.state_ == KST_USERSP);
     assert (kCPU.current_ != NULL);
-
-    switch (pes++) {
-    case 0:
-      ret = sys_write(1, "Hello world!\n", 13, 0);
-      break;
-    case 1:
-      fs_event(devKeyBoard->ino_, EV_KEYDW, 'F');
-      fs_event(devKeyBoard->ino_, EV_KEYUP, 'F');
-      fs_event(devKeyBoard->ino_, EV_KEYDW, 'a');
-      fs_event(devKeyBoard->ino_, EV_KEYUP, 'a');
-      fs_event(devKeyBoard->ino_, EV_KEYDW, 'b');
-      fs_event(devKeyBoard->ino_, EV_KEYUP, 'b');
-      fs_event(devKeyBoard->ino_, EV_KEYDW, '\n');
-      fs_event(devKeyBoard->ino_, EV_KEYUP, '\n');
-      break;
-    case 2:
-      ret = sys_write(1, "Login :: ", 9, -1);
-      break;
-    case 3:
-      buf = (char*)malloc(128);
-      ret = sys_read(0, buf, 128, -1);
-      buf[ret] = '\0';
-      printf("Read: '%s'\n", buf);
-      free(buf);
-      break;
-    case 4:
-      ret = sys_write(1, "\x1b[31mFailed\n", 12, -1);
-      break;
-    case 5:
-      ret = sys_exit(0, 0);
-      break;
-    }
+    callSys ();
     break;
-
-  default:
-    return 0;
   }
 
-  sched_next(kSYS.scheduler_);
   return -1;
 }
 

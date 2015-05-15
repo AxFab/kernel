@@ -25,6 +25,7 @@
 #include <smkos/arch.h>
 #include <smkos/stat.h>
 
+typedef struct SMK_StartInfo SMK_StartInfo_t;
 
 /* === ASSEMBLY ========================================================== */
 /** @brief Destroy an assembly. */
@@ -130,8 +131,8 @@ void sched_next(kScheduler_t *sched);
 /* === TASKS ============================================================= */
 kThread_t *create_thread(kProcess_t *process, size_t entry, size_t param);
 void destroy_process (kProcess_t *process);
-kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, const char*cmd);
-kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, const char*cmd);
+kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, const char *cmd);
+kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, SMK_StartInfo_t *info);
 void thread_abort (kThread_t* thread);
 void process_exit(kProcess_t *process, int status);
 kResx_t *process_get_resx(kProcess_t *process, int fd, int access);

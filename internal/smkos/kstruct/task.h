@@ -47,6 +47,7 @@ struct kScheduler {
 
 /* ----------------------------------------------------------------------- */
 struct kThread {
+  int threadId_;
   kProcess_t *process_;
   kThread_t *schNext_;
   struct llnode taskNd_;

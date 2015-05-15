@@ -306,6 +306,7 @@ void kwrite_pipe (const char *m)
 
 #define EV_KEYUP 10 // Already in 3, think about header
 #define EV_KEYDW 11
+#define _BKSP 8
 
 void event_pipe(int type, int value)
 {
@@ -314,7 +315,9 @@ void event_pipe(int type, int value)
   switch (type)
   {
   case EV_KEYDW:
-    if (value >= 0x20 && value < 0x80)
+    if (value == _BKSP) {
+      //fs_pipe_unget(1);
+    } else if (value < 0x80)
       fs_pipe_write(ino, &value, 1, 0);
     break;
 

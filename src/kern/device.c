@@ -235,8 +235,7 @@ void initialize_vfs()
 kDriver_t *register_driver(void (*init)(kDriver_t *))
 {
   kDriver_t *driver;
-  if (init == NULL)
-    return NULL;
+  assert(init != NULL);
   driver = KALLOC(kDriver_t);
   init(driver);
   ll_push_back(&kSYS.driverPool_, &driver->allNd_);

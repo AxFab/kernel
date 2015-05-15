@@ -2,7 +2,6 @@
 #include <smkos/kapi.h>
 
 #include <stdlib.h>
-#include <stdio.h>
 
 
 
