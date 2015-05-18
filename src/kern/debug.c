@@ -155,6 +155,7 @@ void ksymbols_load (kInode_t* ino)
   char *add = kalloc (20);
 
   area = area_map_ino(kSYS.mspace_, ino, 0, ino->stat_.length_, 0);
+  area->at_ = __AT__;
   tmp = (char *)area->address_;
 
   while (i < lg) {

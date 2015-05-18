@@ -24,17 +24,15 @@
 #include <smkos/kstruct/fs.h>
 #include <smkos/kstruct/task.h>
 
-
 void wait_for(struct mutex * mutex, kWaitReason_e reason, struct llhead* list)
 {
-  kPipe_t *pipe;
   kWait_t* wait = KALLOC(kWait_t);
   wait->mutex_ = mutex;
   wait->reason_ = reason;
   wait->list_ = list;
   wait->thread_ = kCPU.current_;
   ll_append(list, &wait->lnd_);
-  
+
   mtx_unlock(mutex);
   cpu_wait();
   mtx_lock(mutex);

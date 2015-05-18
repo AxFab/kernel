@@ -151,7 +151,7 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
 
     // Handle special names
     if (name[0] == '.') {
-      if (name[1] == '\0') 
+      if (name[1] == '\0')
         continue;
 
       if (name[1] == '.') {
@@ -160,7 +160,7 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
           dir = dir->parent_;
           klock (&dir->lock_);
           continue;
-        } 
+        }
 
         if ((flags & AT_THREE_DOT) && name[2] == '.' && name[3] == '\0') {
           kunlock (&dir->lock_);
@@ -266,7 +266,11 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
     return NULL;
   }
 
-  ll_push_front(&kSYS.inodeLru_, &ino->lruNd_);
+  // Mounted point can't be pushed on LRU.
+  if (ino->stat_.major_ == ino->parent_->stat_.major_ &&
+      ino->stat_.minor_ == ino->parent_->stat_.minor_)
+    ll_push_front(&kSYS.inodeLru_, &ino->lruNd_);
+
   kunlock (&dir->lock_);
   if (unlock)
     kunlock (&ino->lock_);
@@ -275,11 +279,13 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Release an inode form the inode cache. */
+/** @brief Release an inode from the inode cache. */
 static int unregister_inode (kInode_t *ino)
 {
+  assert (ino->parent_);
   assert (kislocked (&ino->parent_->lock_));
   assert (kislocked (&ino->lock_));
+  assert (ino->dev_ == ino->parent_->dev_);
   assert (ino->child_ == NULL);
   assert (ino->readers_ == 0);
 
@@ -348,11 +354,22 @@ kInode_t *create_inode(const char* name, kInode_t* dir, int mode, size_t lg)
 /** @brief Call the inode scavanger which will try to free cached data. */
 int scavenge_inodes(int nodes)
 {
+  int err;
+  int deleted;
+  kInode_t *ino;
+  kInode_t *iter;
+
   while (nodes-- > 0) {
 
-    kInode_t *ino;
+    iter = ll_first(&kSYS.inodeLru_, kInode_t, lruNd_);
+    if (iter == NULL)
+      return __seterrno (EINVAL);
 
-    ll_for_each(&kSYS.inodeLru_, ino, kInode_t, lruNd_) {
+    deleted = 0;
+    while (iter)
+    {
+      ino = iter;
+      iter = ll_next(iter, kInode_t, lruNd_);
 
       assert (ino->parent_ != NULL);
       klock (&ino->parent_->lock_);
@@ -360,20 +377,21 @@ int scavenge_inodes(int nodes)
 
       /// @todo -- check that we are not closing a mouting point
       if (ino->readers_ == 0 && ino->child_ == NULL) {
-        int err = unregister_inode(ino);
-
+        if (S_ISFIFO(ino->stat_.mode_) && ino->pipe_)
+          fs_pipe_destroy(ino);
+        else if (ino->assembly_ != NULL)
+          destroy_assembly(ino->assembly_);
+        err = unregister_inode(ino);
         if (err)
           return err;
-
-        break;
+        deleted++;
+      } else {
+        kunlock (&ino->lock_);
+        kunlock (&ino->parent_->lock_);
       }
-
-      kunlock (&ino->lock_);
-      kunlock (&ino->parent_->lock_);
     }
-
-    if (ino == NULL)
-      return __seterrno (EINVAL);
+    if (deleted == 0)
+      return __seterrno (0);
   }
 
   return __seterrno (0);
@@ -384,10 +402,8 @@ int scavenge_inodes(int nodes)
 /** @brief Function to called to grab an inodes */
 int inode_open (kInode_t *ino)
 {
-  if (!ino)
-    return __seterrno (EINVAL);
-
   /// @todo be sure that the file is available
+  assert(ino != NULL);
   klock (&ino->lock_);
   ++ino->readers_;
   ll_remove_if(&kSYS.inodeLru_, &ino->lruNd_);
@@ -400,15 +416,16 @@ int inode_open (kInode_t *ino)
 /** @brief Function to release an inodes */
 int inode_close (kInode_t *ino)
 {
-  if (!ino)
-    return __seterrno (EINVAL);
-
   /// @todo if zero, push pression on scavenger
+  assert(ino != NULL);
   klock (&ino->lock_);
+  assert (ino->readers_ > 0);
 
   if (--ino->readers_ <= 0) {
     ll_remove_if(&kSYS.inodeLru_, &ino->lruNd_);
-    ll_push_front(&kSYS.inodeLru_, &ino->lruNd_);
+    // Mounted point can't be pushed on LRU.
+    if (ino->dev_ == ino->parent_->dev_)
+      ll_push_front(&kSYS.inodeLru_, &ino->lruNd_);
   }
 
   kunlock (&ino->lock_);

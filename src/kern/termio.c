@@ -21,7 +21,7 @@ void font64_clean(kTerm_t *term);
 
 
 kSubSystem_t vgaText = {
-  event_tty, 
+  event_tty,
   kwrite_tty,
   0, 0, 0
 
@@ -58,7 +58,7 @@ int term_create (kSubSystem_t *subsys, kInode_t* frame)
   int fontH = 9;
   int nol = auto_incr++;
   kTerm_t *term;
-  
+
   snprintf(no, 10, "Tty%d", nol);
   ino = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, PAGE_SIZE);
   assert (ino != NULL);
@@ -78,10 +78,13 @@ int term_create (kSubSystem_t *subsys, kInode_t* frame)
   term->first_->bgColor_ = 0xff323232;
   term->last_ = term->first_;
   term->top_ = term->first_;
+  inode_open(ino);
   term->ino_ = ino;
 
   area = area_map_ino(kSYS.mspace_, frame, 0, frame->stat_.length_, 0);
+  area->at_ = __AT__;
   term->pixels_ = (void*)area->address_;
+  term->pxArea_ = area;
 
   term->width_ = frame->stat_.block_ / 4;
   term->height_ = frame->stat_.length_ / frame->stat_.block_;
@@ -95,10 +98,10 @@ int term_create (kSubSystem_t *subsys, kInode_t* frame)
 
   term->max_row_ = (term->height_ - 1) / (fontH + 1);
   term->max_col_ = (term->width_ - 2) / fontW;
-  
+
   ino->subsys_ = subsys;
   inon->subsys_ = subsys;
-  
+
   subsys->term_ = term;
   subsys->out_ = ino;
   subsys->in_ = inon;
@@ -115,7 +118,7 @@ int term_readchar (kTerm_t *term, kLine_t *style, const char** str)
   if (**str < 0) {
     /// @todo support UTF-8
     kpanic ("Term is only ASCII\n");
-  } else if (**str >= 0x20 && **str < 0x80) {
+  } else if (**str >= 0x20) {
     return *(*str)++;
   } else if (**str == _ESC || **str == _EOL) {
     return *(*str)++;
@@ -134,7 +137,10 @@ extern uint32_t consoleBgColor[];
 /* ----------------------------------------------------------------------- */
 void term_changecolor(kTerm_t *term, kLine_t *style, int cmd)
 {
-  if (cmd < 30) {
+  if (cmd == 0) {
+    style->txColor_ = term->txColor_;
+    style->bgColor_ = term->bgColor_;
+  }else if (cmd < 30) {
   } else if (cmd < 40) {
     style->txColor_ = consoleColor[cmd - 30];
   } else {
@@ -163,13 +169,13 @@ void term_readcmd(kTerm_t *term, kLine_t *style, const char** str)
       term_changecolor(term, style, val[--i]);
     break;
   }
-  
+
   (*str)++;
 }
 
 
 /* ----------------------------------------------------------------------- */
-int term_paint (kTerm_t *term, kLine_t *style, int row) 
+int term_paint (kTerm_t *term, kLine_t *style, int row)
 {
   int ch;
   int col = 0;
@@ -254,13 +260,15 @@ void term_close (kTerm_t *term)
     term->first_ = l;
   }
 
+  area_unmap(kSYS.mspace_, term->pxArea_);
+  inode_close(term->ino_);
   kfree(term);
 }
 
 
 
 /* ----------------------------------------------------------------------- */
-void term_write (kTerm_t *term) 
+void term_write (kTerm_t *term)
 {
   kLine_t *newLine;
   int pen; // Where start the next line
@@ -297,7 +305,7 @@ void term_write (kTerm_t *term)
 
 
 /* ----------------------------------------------------------------------- */
-void kwrite_pipe (const char *m) 
+void kwrite_pipe (const char *m)
 {
   int lg = strlen (m);
   fs_pipe_write (sysLogTty->term_->ino_, m, lg);
@@ -311,7 +319,7 @@ void kwrite_pipe (const char *m)
 void event_pipe(int type, int value)
 {
   kInode_t* ino = sysLogTty->in_;
-  kTerm_t* term = sysLogTty->term_;
+  // kTerm_t* term = sysLogTty->term_;
   switch (type)
   {
   case EV_KEYDW:
@@ -349,7 +357,12 @@ void open_subsys(kInode_t* input, kInode_t* output)
   sysOut = output;
 }
 
+void clean_subsys()
+{
+  if (sysLogTty->term_)
+    term_close (sysLogTty->term_);
 
+}
 
 
 

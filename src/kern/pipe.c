@@ -39,18 +39,27 @@ kPipe_t * fs_create_pipe(kInode_t *ino)
 
 /* ----------------------------------------------------------------------- */
 /**  */
+void fs_pipe_destroy(kInode_t *ino)
+{
+  assert (kislocked(&ino->lock_));
+  area_unmap(kSYS.mspace_, ino->pipe_->mmap_);
+  kfree(ino->pipe_);
+}
+
+/* ----------------------------------------------------------------------- */
+/**  */
 static size_t fs_pipe_newline(kPipe_t *pipe)
 {
   size_t i, cap;
   size_t max = pipe->size_ - pipe->rpen_;
   char* address = (char*)(pipe->mmap_->address_ + pipe->rpen_);
-  
+
   cap = MIN(max, pipe->avail_);
   for (i = 0; i < cap; ++i) {
     if (address[i] == '\n')
       return i + 1;
   }
-  
+
   if (max > pipe->avail_)
     return 0;
 
@@ -72,7 +81,7 @@ int fs_pipe_read(kInode_t *ino, void* buf, size_t lg)
   size_t cap = 0;
   void* address;
   kPipe_t *pipe = ino->pipe_;
-  
+
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
 
   /* Loop inside the buffer */
@@ -110,7 +119,7 @@ int fs_pipe_read(kInode_t *ino, void* buf, size_t lg)
     bytes += cap;
     buf = ((char *)buf) + cap;
   }
-  
+
   mtx_unlock(&pipe->mutex_);
   return bytes;
 }
@@ -174,7 +183,7 @@ size_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg)
     bytes += cap;
     buf = ((char *)buf) + cap;
   }
-  
+
   // IF BLOCKED !
   if (haveNl) {
     iter = ll_first(&pipe->waiting_, kWait_t, lnd_);

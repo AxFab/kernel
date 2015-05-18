@@ -51,7 +51,7 @@ int sched_signal (int raise, size_t data)
   if (kCPU.current_ == NULL) {
     kpanic ("Kernel trigger an exception ; signal: %d. at %d", raise, data);
   } else {
-    
+
   }
   return 0;
 }

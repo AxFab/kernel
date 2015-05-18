@@ -28,7 +28,7 @@ void *kalloc (size_t size)
     // __seterrno(ENOMEM);
     kpanic ("The kernel run out of memory\n");
   }
-  
+
   // kSYS.objMemory_ += size;
   memset(addr, 0, size);
   return addr;
@@ -80,10 +80,10 @@ int strcmpi (const char* str1, const char* str2)
 
 /* ----------------------------------------------------------------------- */
 
-time_t time(time_t* ptime) 
+time_t time(time_t* ptime)
 {
   time_t now = 0;
-  
+
   if (ptime)
     *ptime = now;
   return now;
@@ -91,7 +91,7 @@ time_t time(time_t* ptime)
 
 
 /* ----------------------------------------------------------------------- */
-clock_t clock() 
+clock_t clock()
 {
   clock_t ticks = 0;
   return ticks;
@@ -102,9 +102,9 @@ clock_t clock()
 
 /* ----------------------------------------------------------------------- */
 
-void __assert_do (int as, const char *ex, const char *at) 
+void __assert_do (int as, const char *ex, const char *at)
 {
-  if (!as) 
+  if (!as)
     kpanic("Assertion: %s at %s.\n", ex, at);
 }
 

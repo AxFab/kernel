@@ -126,6 +126,7 @@ int ISO_mount (kInode_t *dev, const char *name)
   while (inDesc) {
 
     area = area_map_ino(kSYS.mspace_, dev, sec * 2048, 2048, 0);
+    area->at_ = __AT__;
     address = (uint8_t *)area->address_ + (sec * 2048 - area->offset_);
     addressInt = (uint32_t *)address;
     // kdump (address, 64);
@@ -269,6 +270,7 @@ int ISO_lookup (const char *name, kInode_t *dir, SMK_stat_t *stat)
   // kprintf ("iso9660] Read sector %d on %s \n", sec, dir->name_);
 
   area = area_map_ino(kSYS.mspace_, dir->dev_->underlyingDev_->dev_->ino_, sec * 2048, 2048, 0);
+  area->at_ = __AT__;
   address = (uint8_t *)area->address_ + (sec * 2048 - area->offset_);
 
   //if (KLOG_FS) kprintf ("iso9660] Done\n");

@@ -503,7 +503,7 @@ char *strrchr (const char *string, int ch)
 
 
 // ---------------------------------------------------------------------------
-// Split string into tokens - reentrent 
+// Split string into tokens - reentrent
 /// @todo suppress goto and that is not the best way
 char *strtok_r ( register char *s, register const char *delim, char **lasts )
 {

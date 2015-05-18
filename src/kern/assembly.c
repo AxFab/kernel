@@ -68,12 +68,17 @@ static kAssembly_t* elf_open (kInode_t* ino)
     return ino->assembly_;
 
   area = area_map_ino(kSYS.mspace_, ino, 0, PAGE_SIZE, 0);
+  area->at_ = __AT__;
   head = (struct ELF_header*)area->address_;
-  if (head == NULL)
+  if (head == NULL) {
+    area_unmap(kSYS.mspace_, area);
     return NULL;
+  }
 
-  if (memcmp(ELFident, head, 16) != 0 || head->type_ != ET_EXEC)
+  if (memcmp(ELFident, head, 16) != 0 || head->type_ != ET_EXEC) {
+    area_unmap(kSYS.mspace_, area);
     return __seterrnoN(ENOEXEC, kAssembly_t);
+  }
 
   assembly = KALLOC(kAssembly_t);
   assembly->entryPoint_ = (size_t)head->entry_;
@@ -88,11 +93,13 @@ static kAssembly_t* elf_open (kInode_t* ino)
   if (assembly->sections_.count_ == 0) {
     // kprintf ("elf] File doesn't have any loadable section\n");
     destroy_assembly (assembly);
+    area_unmap(kSYS.mspace_, area);
     return __seterrnoN (ENOEXEC, kAssembly_t);
   }
 
   ino->assembly_ = assembly;
   assembly->ino_ = ino;
+  area_unmap(kSYS.mspace_, area);
   return assembly;
 }
 
@@ -112,9 +119,6 @@ void destroy_assembly (kAssembly_t *image)
     section = ll_pop_back(&image->sections_, kSection_t, node_);
     kfree (pick);
   }
-
-  if (image->ino_)
-    inode_close (image->ino_);
 
   kfree(image);
 }

@@ -23,11 +23,12 @@
 
 #include <stdio.h>
 
+FILE *fpa, *fpc;
+
 /* ----------------------------------------------------------------------- */
 int HDD_mount (kInode_t *dev, const char *name)
 {
   time_t now = time(NULL);
-  FILE *fpa, *fpc;
   SMK_stat_t stat;
 
   if (dev)
@@ -86,6 +87,16 @@ int HDD_write(kInode_t *fp, const void *buffer, size_t length, size_t offset)
   return 0;
 }
 
+/* ----------------------------------------------------------------------- */
+int HDD_dispose ()
+{
+  // @todo Should be removed on unmount !!
+  if (fpa != NULL)
+    fclose(fpa);
+
+  if (fpc != NULL)
+    fclose(fpc);
+}
 
 /* ----------------------------------------------------------------------- */
 void HDD(kDriver_t *driver)
@@ -93,6 +104,7 @@ void HDD(kDriver_t *driver)
   driver->major_ = HDD_No;
   driver->name_ = strdup("hdd");
   driver->mount = HDD_mount;
+  driver->dispose = HDD_dispose;
   driver->read = HDD_read;
   driver->write = HDD_write;
 }

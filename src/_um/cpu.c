@@ -125,8 +125,8 @@ void callSys ()
   char* buf;
   char *part;
   char *rent;
-  
-  buf = (char*)malloc(128);
+
+  buf = (char*)kalloc(128);
   assert (kCPU.current_ != NULL);
   part = fgets(buf, 128, progFp[kCPU.current_->threadId_ - 1]);
   assert (part != NULL);
@@ -150,14 +150,15 @@ void callSys ()
     fs_event(devKeyBoard->ino_, EV_KEYDW, iVal);
     fs_event(devKeyBoard->ino_, EV_KEYUP,iVal);
     printf("  ..] KEY %x (%c)\n", iVal, iVal);
-    free(buf);
+    kfree(buf);
     longjmp(cpuJmp[main_count], 5);
 
   } else if (!memcmp(part, "WAKEUP", 6)) {
+    kfree(buf);
     longjmp(cpuJmp[main_count--], 2);
   }
 
-  free(buf);
+  kfree(buf);
   sched_next(kSYS.scheduler_);
 }
 
@@ -222,6 +223,7 @@ void cpu_wait()
 /* At this point we leave CRTK. */
 int main ()
 {
+  int ret;
   // Start threads for CPUs at { kernel_ready(); main_jmp_loop(); }
   // @todo assert -- kalloc is available, memory is virtual, screen is OK, timer is set
   kernel_start();
@@ -229,12 +231,18 @@ int main ()
   // DEBUG ONLY
   display_inodes();
   kprintf("\n");
-  
+
   progFp[0] = fopen("../SD/T1.sta", "r");
   progFp[1] = fopen("../SD/T2.sta", "r");
   progFp[2] = fopen("../SD/T3.sta", "r");
 
-  return main_jmp_loop();
+  ret = main_jmp_loop();
+
+  fclose(progFp[0]);
+  fclose(progFp[1]);
+  fclose(progFp[2]);
+
+  return ret;
 }
 
 

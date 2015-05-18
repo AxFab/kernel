@@ -29,6 +29,14 @@
 #include <smkos/kstruct/user.h>
 #include <smkos/file.h>
 
+
+void sys_write_save (char* snBuf, int snLg, int fd, const char* buf, int lg, int off, ssize_t bytes);
+void sys_read_save (char* snBuf, int snLg, int fd, char* buf, int lg, int off, ssize_t bytes);
+void sys_exec_save(char* snBuf, int snLg, const char* exe, SMK_StartInfo_t *si, int ret);
+void sys_exit_save(char* snBuf, int snLg, int status, int ret);
+
+
+
 static char* parseStr (char **rent)
 {
   char * str = strtok_r(NULL, " (,;)=", rent);
@@ -53,7 +61,7 @@ static char* parseStr (char **rent)
     case 'n': return '\n';
     }
   }
-    
+
   return 0;
 }
 
@@ -95,7 +103,7 @@ void sys_read_do (char* str, char **rent)
   int lg = parseInt(rent);
   int sk = parseInt(rent);
   int res = parseInt(rent);
-  char *tmp = (char*)kalloc(lg); 
+  char *tmp = (char*)kalloc(lg);
   int ret = sys_read(fd, tmp, lg, sk);
   assert (ret == res);
   if (buf && ret > 0)
@@ -137,6 +145,7 @@ void sys_exit_do (char* str, char **rent)
   int pid = parseInt(rent);
   sys_exit_save(sbuf, 128, status, pid);
   log_sys(sbuf);
+  kfree(str);
   sys_exit(status, pid);
   assert(0);
 }

@@ -5,7 +5,7 @@
 #include <smkos/file.h>
 
 
-/* All of those methods are bind over vfscanf 
+/* All of those methods are bind over vfscanf
  * which is implemented in another file.
  */
 int vfscanf(FILE *restrict f, const char *restrict format, va_list ap);

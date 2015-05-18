@@ -116,7 +116,7 @@ struct kSys {
 
   kMemSpace_t *mspace_;
   kScheduler_t *scheduler_;
-  
+
   atomic_t pageAvailable_;
   atomic_t pageUsed_;
   size_t objMemory_;
@@ -169,7 +169,7 @@ static inline void kernel_state(enum kState state)
 char* strdup(const char*);
 int strcmpi (const char* str1, const char* str2);
 int vsnprintf(char *str, size_t lg, const char *format, va_list ap);
-#else 
+#else
 #define strdup _strdup
 #define strcmpi _strcmpi
 #endif

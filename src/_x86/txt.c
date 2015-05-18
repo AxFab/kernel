@@ -22,9 +22,9 @@ static void ascii_cmd(const char **m)
     while (**m != 'm')
       (*m)++;
     // values[idx] = _strtox(m, &mL, 10, &sign);
-    // if (**m == *mL) 
+    // if (**m == *mL)
     //   return;
-    
+
     // *m = mL;
     return;
     /*
@@ -48,7 +48,7 @@ static void ascii_cmd(const char **m)
 }
 
 /* ----------------------------------------------------------------------- */
-static void show_cursor_vga_text (int row, int col) 
+static void show_cursor_vga_text (int row, int col)
 {
   /// @todo -- This has nothing to do here !!
   uint16_t pos = row * 80 + col;
@@ -62,10 +62,10 @@ static void show_cursor_vga_text (int row, int col)
 /* ----------------------------------------------------------------------- */
 void kwrite_tty(const char *m)
 {
-  
+
   for (; *m; ++m) {
     if (*m < 0x20) {
-      if (*m == '\n') 
+      if (*m == '\n')
         txtOutIdx += 80 - (txtOutIdx % 80);
       else if (*m == '\t')
         txtOutIdx += 4 - (txtOutIdx % 4);

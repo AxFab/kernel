@@ -75,6 +75,7 @@ struct kMemArea {
   kMemArea_t *prev_;
   kMemArea_t *next_;
   struct bbnode bbNode_;
+  const char* at_;
 };
 
 

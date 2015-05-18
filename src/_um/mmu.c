@@ -51,7 +51,7 @@ page_t mmu_newpage()
 /* ----------------------------------------------------------------------- */
 void mmu_load_env()
 {
-  void* ptr = malloc(8 * _Mb_);
+  void* ptr = valloc_(8 * _Mb_);
   // alloc_init((size_t)malloc(2 * _Mb_), 2 * _Mb_);
   kSYS.mspace_ = KALLOC(kMemSpace_t);
   kSYS.scheduler_ = KALLOC(kScheduler_t);
@@ -59,15 +59,28 @@ void mmu_load_env()
   area_init(kSYS.mspace_, (size_t)ptr, 8 * _Mb_);
 }
 
+/* ----------------------------------------------------------------------- */
+void mmu_leave_env()
+{
+  // @todo Assert mspace and scheduler are empty
+  vfree(kSYS.mspace_->base_);
+  kfree(kSYS.mspace_);
+  kfree(kSYS.scheduler_);
+}
+
 
 /* ----------------------------------------------------------------------- */
 void mmu_map_userspace(kMemSpace_t *sp)
 {
-  void* ptr = malloc(8 * _Mb_);
+  void* ptr = valloc_(8 * _Mb_);
   memset (ptr, 0, 8 * _Mb_);
   area_init(sp, (size_t)ptr, 8 * _Mb_);
 }
 
+void mmu_destroy_userspace(kMemSpace_t *sp)
+{
+  vfree(sp->base_);
+}
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

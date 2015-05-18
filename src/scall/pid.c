@@ -59,88 +59,11 @@ int sys_exec(const char *exec, struct SMK_StartInfo *info)
     return -1;
   }
 
-   process = create_child_process(ino, kCPU.current_->process_, info);
-   if (!process)
-     return -1;
-   return process->pid_;
-}
-
-int sys_write(int fd, void* data, size_t lg, size_t off) 
-{
-  kResx_t* resx;
-
-  if (lg > FBUFFER_MAX) {
-    __seterrno(ENOSYS);
+  inode_open(ino);
+  process = create_child_process(ino, kCPU.current_->process_, info);
+  if (!process)
     return -1;
-  }
-
-  resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
-  if (resx == NULL)
-    return -1;
-
-  if (fd == 1)
-    kprintf (data);
-
-  switch (resx->type_) {
-    case S_IFBLK:
-    case S_IFREG:
-      // return fs_block_write();
-      return -1;
-
-    case S_IFCHR:
-    case S_IFIFO:
-      return fs_pipe_write (resx->ino_, data, lg);
-
-    case S_IFDIR:
-      __seterrno(EISDIR);
-      return -1;
-
-    default:
-      assert(resx->type_ == 0);
-      __seterrno(EBADF);
-      return -1;
-  }
-}
-
-int sys_read(int fd, void* data, size_t lg, size_t off) 
-{
-  int ret = 0;
-  kResx_t* resx;
-
-  if (lg > FBUFFER_MAX) {
-    __seterrno(ENOSYS);
-    return -1;
-  }
-
-  resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
-  if (resx == NULL)
-    return -1;
-  
-  switch (resx->type_) {
-    case S_IFBLK:
-    case S_IFREG:
-      // return fs_block_write();
-      return -1;
-
-    case S_IFCHR:
-    case S_IFIFO:
-      ret = fs_pipe_read (resx->ino_, data, lg);
-      if (ret == 0) {
-        return -1;
-      }
-      return ret;
-
-    case S_IFDIR:
-      __seterrno(EISDIR);
-      return -1;
-
-    default:
-      assert(resx->type_ == 0);
-      __seterrno(EBADF);
-      return -1;
-  }
-
-
+  return process->pid_;
 }
 
 int sys_mmap(int fd, size_t address, size_t length, int flags)
@@ -157,4 +80,5 @@ int sys_mmap(int fd, size_t address, size_t length, int flags)
   // Map on kProcess
   return ENOSYS;
 }
+
 

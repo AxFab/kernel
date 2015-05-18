@@ -33,11 +33,11 @@
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Dummy search of a dirver by its major number 
+/** @brief Dummy search of a dirver by its major number
   * @retval NULL The driver can't be found
   * @retval kDriver the driver that correspond to this item.
   */
-static kDriver_t *search_driver(int major)
+kDriver_t *search_driver(int major)
 {
   kDriver_t *driver;
   ll_for_each(&kSYS.driverPool_, driver, kDriver_t, allNd_) {
@@ -50,9 +50,9 @@ static kDriver_t *search_driver(int major)
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Print an inode and all descendants to kernel loging system 
+/** @brief Print an inode and all descendants to kernel loging system
   * @param ino The inode that represent the root of the tree to display
-  * @param depth Depth of the tree representation. This functions should 
+  * @param depth Depth of the tree representation. This functions should
   * always be called with a depth of zero.
   */
 static void display_inode(kInode_t* ino, int depth)
@@ -113,9 +113,9 @@ static void display_inode(kInode_t* ino, int depth)
 /** @brief Grab a lock on the file system driver of an inode.
   * @param ino The inode used ot get the lock.
   * @retval ZERO No error occurs and the mutex have been acquired.
-  * @note This method must be used only if the inode is locked and the 
+  * @note This method must be used only if the inode is locked and the
   * current cpu doesn't have a single other spinlock acquired.
-  * The function doesn't have any assertion to avoid deadlock on driver 
+  * The function doesn't have any assertion to avoid deadlock on driver
   * mutex yet.
   */
 int open_fs(kInode_t* ino)
@@ -225,15 +225,27 @@ void initialize_vfs()
   kSYS.devIno_ = create_inode ("dev", root, S_IFDIR | 0775, 0);
   kSYS.mntIno_ = create_inode ("mnt", root, S_IFDIR | 0775, 0);
   kSYS.procIno_ = create_inode ("proc", root, S_IFDIR | 0775, 0);
-  
-  init_driver();
+
+  init_drivers();
   mount_alls ();
+}
+
+
+/* ----------------------------------------------------------------------- */
+void sweep_vfs()
+{
+  scavenge_inodes(8000);
+  dispose_drivers();
+  unregister_driver(search_driver(0)); // TMPFS
+  kfree(kSYS.rootIno_->dev_);
+  kfree(kSYS.rootIno_);
 }
 
 
 /* ----------------------------------------------------------------------- */
 kDriver_t *register_driver(void (*init)(kDriver_t *))
 {
+  // @todo check unused
   kDriver_t *driver;
   assert(init != NULL);
   driver = KALLOC(kDriver_t);
@@ -241,6 +253,20 @@ kDriver_t *register_driver(void (*init)(kDriver_t *))
   ll_push_back(&kSYS.driverPool_, &driver->allNd_);
   driver->mount(NULL, NULL);
   return driver;
+}
+
+/* ----------------------------------------------------------------------- */
+int unregister_driver(kDriver_t *driver)
+{
+  // @todo first check that no inodes use this driver
+  assert(driver != NULL);
+  if (driver->dispose)
+    driver->dispose();
+  ll_remove(&kSYS.driverPool_, &driver->allNd_);
+  if (driver->name_)
+    kfree((void*)driver->name_);
+  kfree(driver);
+  return __seterrno(0);
 }
 
 
@@ -255,6 +281,8 @@ kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *sta
   if (S_ISDIR(stat->mode_))
     dir = kSYS.mntIno_;
 
+  assert (stat->major_ != dir->stat_.major_ || stat->minor_ != dir->stat_.minor_);
+
   if (!kSYS.sysIno_ && S_ISDIR(stat->mode_) && !strcmpi("sdC", underlying->name_)) {
     ino = register_inode("usr", kSYS.rootIno_, stat, false);
     kSYS.sysIno_ = ino;
@@ -262,6 +290,8 @@ kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *sta
     ino = register_inode(name, dir, stat, false);
   dev = KALLOC(kDevice_t);
   ino->dev_ = dev;
+  if (underlying)
+    inode_open(underlying);
   dev->underlyingDev_ = underlying;
   dev->ino_ = ino;
   dev->fs_ = driver;
@@ -288,17 +318,6 @@ int fs_block_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
     return err;
   err = fp->dev_->fs_->read(fp, buffer, length, offset);
   close_fs (fp);
-  return err;
-}
-
-/* ----------------------------------------------------------------------- */
-int RAID0_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
-{
-  int i, err;
-  size_t j;
-  kInode_t** inodes = NULL;
-  for (i = 0, j = 0; j < length; ++i, j += 512)
-    err = fs_block_read(inodes[i], &((char*)buffer)[j], 512, ALIGN_DW((offset + j) / 2, 512));
   return err;
 }
 

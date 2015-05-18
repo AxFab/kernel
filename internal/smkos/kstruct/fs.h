@@ -44,6 +44,7 @@ struct kDriver {
   atomic_t usage_;
 
   int (*mount)(kInode_t* dev, const char *name);
+  int (*dispose)();
 
   int (*map)(kInode_t *fp, size_t offset, page_t *page);
   int (*sync)(kInode_t *fp, size_t offset, page_t page);
@@ -97,7 +98,7 @@ struct kInode {
 
 /* ----------------------------------------------------------------------- */
 /** */
-struct kPipe 
+struct kPipe
 {
   size_t rpen_; /**< Offset of the consumer(read) cursor */
   size_t wpen_; /**< Offset of the producer(write) cursor */

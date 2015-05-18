@@ -47,6 +47,7 @@ int GPT_mount (kInode_t *dev, const char *name)
     return ENODEV;
 
   area = area_map_ino(kSYS.mspace_, dev, 0, 512, 0);
+  area->at_ = __AT__;
   address = (unsigned char *)area->address_;
 
   if (address[510] != 0x55 || address[511] != 0xAA) {

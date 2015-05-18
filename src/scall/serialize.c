@@ -36,7 +36,7 @@ void sys_write_save (char* snBuf, int snLg, int fd, const char* buf, int lg, int
   kResx_t *resx = process_get_resx (kCPU.current_->process_, fd, 0);
   if (resx != NULL)
     ino = resx->ino_->name_;
-  snprintf (snBuf, snLg, "sys_write (%d:%s, %x:\"%s\", %d, %d) = %d", fd, ino, buf, buf, lg, off, bytes);
+  snprintf (snBuf, snLg, "sys_write (%d:%s, %p:\"%s\", %d, %d) = %d", fd, ino, buf, buf, lg, off, bytes);
 }
 
 void sys_read_save (char* snBuf, int snLg, int fd, char* buf, int lg, int off, ssize_t bytes)
@@ -46,7 +46,7 @@ void sys_read_save (char* snBuf, int snLg, int fd, char* buf, int lg, int off, s
   if (resx != NULL)
     ino = resx->ino_->name_;
   buf[bytes] = '\0';
-  snprintf (snBuf, snLg, "sys_read (%d:%s, %x:\"%s\", %d, %d) = %d", fd, ino, buf, buf, lg, off, bytes);
+  snprintf (snBuf, snLg, "sys_read (%d:%s, %p:\"%s\", %d, %d) = %d", fd, ino, buf, buf, lg, off, bytes);
 }
 
 
@@ -57,24 +57,24 @@ void  sys_exec_save(char* snBuf, int snLg, const char* exe, SMK_StartInfo_t *si,
   const char* ino1 = NULL;
   const char* ino2 = NULL;
   const char* ino3 = NULL;
-  
+
   resx = process_get_resx (kCPU.current_->process_, si->input_, 0);
   if (resx != NULL)
     ino0 = resx->ino_->name_;
-  
+
   resx = process_get_resx (kCPU.current_->process_, si->output_, 0);
   if (resx != NULL)
     ino1 = resx->ino_->name_;
-  
+
   resx = process_get_resx (kCPU.current_->process_, si->error_, 0);
   if (resx != NULL)
     ino2 = resx->ino_->name_;
-  
+
   resx = process_get_resx (kCPU.current_->process_, si->workingDir_, 0);
   if (resx != NULL)
     ino3 = resx->ino_->name_;
 
-  snprintf (snBuf, snLg, "sys_exec (%x:\"%s\", {\"%s\", \"%s\", %d:%s, %d:%s, %d:%s, %d:%s, %x, %d}) = %d", exe, exe, 
+  snprintf (snBuf, snLg, "sys_exec (%p:\"%s\", {\"%s\", \"%s\", %d:%s, %d:%s, %d:%s, %d:%s, %x, %d}) = %d", exe, exe,
     si->cmd_, si->username_, si->input_, ino0, si->output_, ino1, si->error_, ino2, si->workingDir_, ino3,
     si->flags_, si->mainWindow_, ret);
 }

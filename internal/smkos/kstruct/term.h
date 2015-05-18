@@ -42,6 +42,7 @@ struct kTerm {
   int height_;
   int line_;
   void *pixels_;
+  kMemArea_t* pxArea_;
 
   int row_;
   int flags_;

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+
 PACK(struct BMP_Header {
   uint16_t sign_;
   uint32_t size_;
@@ -22,6 +24,7 @@ PACK(struct BMP_Header {
 });
 
 uint32_t* bmp_ptr = NULL;
+
 // int BMP_map (kInode_t *ino, size_t offset, page_t *phys)
 // {
 //   return 0;
@@ -50,7 +53,7 @@ void BMP_sync (kInode_t *ino)
   if (!bmp_ptr)
     return;
 
-  fp = fopen("vga.bmp", "w");
+  fp = fopen("../SD/vga.bmp", "w");
 
   memset (&head, 0, sizeof(head));
   head.sign_ = 0x4d42;
@@ -91,10 +94,10 @@ int BMP_mount (kInode_t *dev, const char *name)
   stat.length_ = 800 * 600 * 4;
   stat.block_ = 800 * 4;
 
-  create_device("Fb0", NULL, &stat, malloc(stat.length_));
-
+  create_device("Fb0", NULL, &stat, NULL);
   return 0;
 }
+
 
 /* ----------------------------------------------------------------------- */
 void BMP(kDriver_t *driver)

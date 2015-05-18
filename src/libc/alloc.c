@@ -60,7 +60,7 @@ struct SMK_HeapArea {
 /** @brief Global list of all defined heap arenas */
 struct llhead gHeapArea;
 
-/** @brief Global item used for the first heap arena which can't be allocated 
+/** @brief Global item used for the first heap arena which can't be allocated
   */
 struct SMK_HeapArea gArea;
 
@@ -72,11 +72,11 @@ struct SMK_HeapArea gArea;
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Append a memory block on the list of free blocks. 
+/** @brief Append a memory block on the list of free blocks.
   * @param heap Structure that define the heap arena.
   * @param chunk Pointer on the chunk to add on the free list.
   *
-  * The method is a bit time consuming since we keep the block in order of 
+  * The method is a bit time consuming since we keep the block in order of
   * size. The performance is sensible to heap fragmentation.
   */
 static void alloc_add_to_free (struct SMK_HeapArea *heap, struct SMK_HeapChunk *chunk)
@@ -121,7 +121,7 @@ static void alloc_add_to_free (struct SMK_HeapArea *heap, struct SMK_HeapChunk *
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Remove a memory block of the list of free blocks. 
+/** @brief Remove a memory block of the list of free blocks.
   * @param heap Structure that define the heap arena.
   * @param chunk Pointer on the chunk to remove from the free list.
   */

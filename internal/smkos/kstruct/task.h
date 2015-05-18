@@ -78,7 +78,7 @@ struct kProcess {
   int runningTask_;
   page_t pageDir_;
   int exitStatus_;
-  
+
   int pagePrivate_;
   int pageShared_;
 
@@ -88,7 +88,7 @@ struct kProcess {
 
 
 /* ----------------------------------------------------------------------- */
-struct kResx 
+struct kResx
 {
   int oflags_;
   int type_;

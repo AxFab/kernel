@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <smkos/file.h>
 
-/* All of those methods are bind over vfprintf 
+/* All of those methods are bind over vfprintf
  * which is implemented in another file.
  */
 int vfprintf (FILE *fp, const char *str, va_list ap);

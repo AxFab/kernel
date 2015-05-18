@@ -1,5 +1,6 @@
 #include <smkos/kapi.h>
 #include <smkos/kstruct/user.h>
+#include <smkos/drivers.h>
 
 
 void ksymbols_load (kInode_t* ino);
@@ -34,7 +35,7 @@ void kernel_start ()
   kInode_t *kb;
   kInode_t *fb;
   struct tm dateTime;
-  
+
   /* Initialize kernel environment */
   kernel_state (KST_KERNSP);
   kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ " from git:" _GITH_ " on " _OSNAME_ ".\n");
@@ -53,7 +54,7 @@ void kernel_start ()
   ino = search_inode ("boot/kImage.map", kSYS.sysIno_, 0);
   if (ino)
    ksymbols_load(ino);
-  
+
   /* Create basic users */
   user = create_user("system", CAP_SYSTEM);
   if (!user)
@@ -74,7 +75,7 @@ void kernel_start ()
   create_subsys(kb, fb);
 
   // display_inodes();
-  
+
   if (!masterPaths[idx])
     kpanic("Unable to find startup program 'MASTER'\n");
 
@@ -89,21 +90,24 @@ void kernel_start ()
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Clean all unused item. 
+/** @brief Clean all unused item.
   *
-  * This is mostly for memory checks and debuging tools.  
+  * This is mostly for memory checks and debuging tools.
   * The sweep can also be used to refresh kernel data and flush all cache.
   * Implementation can not guarantee a full cleaning.
   */
 void kernel_sweep()
 {
   kInode_t* fb = search_inode ("/dev/Fb0", NULL, 0);
+  kprintf ("\x1b[31mEnding...\x1b[0m\n");
   scavenge_area(kSYS.mspace_);
-  
-  //display_inodes();
-  //kprintf("\n");
-
-  BMP_sync (fb);
+  scavenge_inodes(8000);
+  display_inodes();
+  kprintf("\n");
+  clean_subsys();
+  BMP_sync(fb);
+  sweep_vfs();
+  mmu_leave_env();
 }
 
 

@@ -1,6 +1,7 @@
 #pragma once
+#include <smkos/kapi.h>
 
-/* Those are major driver number - they're used only inside a driver but we 
+/* Those are major driver number - they're used only inside a driver but we
  * keep them here for listing */
 #define ISO_No 12
 #define GPT_No 35
@@ -26,20 +27,35 @@ void KDB(kDriver_t *driver);
 
 
 /* --- Register all drivers ---------------------------------------------- */
-static inline void init_driver() 
+static inline void init_drivers()
 {
   register_driver(GPT);
   register_driver(ISO9660);
   /* register_driver(FATFS); */
+  register_driver(KDB);
 
 #if !defined(_FS) || defined(_FS_x86) /* _x86 */
   register_driver(ATA);
   register_driver(VGA);
-  register_driver(KDB);
 #elif defined(_FS) && defined(_FS_UM) /* _um */
   register_driver(HDD);
   register_driver(BMP);
-  register_driver(KDB);
+#endif
+}
+
+
+static inline void dispose_drivers()
+{
+  unregister_driver(search_driver(GPT_No));
+  unregister_driver(search_driver(ISO_No));
+  unregister_driver(search_driver(KDB_No));
+
+#if !defined(_FS) || defined(_FS_x86) /* _x86 */
+  unregister_driver(search_driver(ATA_No));
+  unregister_driver(search_driver(VGA_No));
+#elif defined(_FS) && defined(_FS_UM) /* _um */
+  unregister_driver(search_driver(HDD_No));
+  unregister_driver(search_driver(BMP_No));
 #endif
 }
 

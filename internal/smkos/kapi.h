@@ -39,11 +39,11 @@ kAssembly_t *load_assembly (kInode_t *ino);
 struct tm cpu_get_clock();
 /** @brief Put the current CPU in halted state */
 void cpu_halt();
+void cpu_wait();
 void cpu_save_task(kThread_t *thread);
 void cpu_run_task(kThread_t *thread);
 void cpu_start_scheduler();
 void initialize_smp();
-
 
 /* === DEVICE ============================================================ */
 /** @brief Grab a lock on the file system driver of an inode. */
@@ -56,6 +56,8 @@ void mount_alls ();
 void initialize_vfs();
 kDriver_t *register_driver(void (*init)(kDriver_t *));
 kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *stat, void* info);
+kDriver_t *search_driver(int major);
+int unregister_driver(kDriver_t *driver);
 
 
 int fs_block_read(kInode_t *fp, void* buffer, size_t length, size_t offset);
@@ -98,14 +100,16 @@ void area_unmap(kMemSpace_t* sp, kMemArea_t* area);
 int area_init(kMemSpace_t* sp, size_t base, size_t length);
 int area_assembly (kMemSpace_t *sp, kAssembly_t* assembly);
 void scavenge_area(kMemSpace_t* sp);
-
+int area_destroy(kMemSpace_t* sp);
 
 /* === MMU =============================================================== */
 page_t mmu_newdir();
 int mmu_resolve (size_t address, page_t page, int access, bool zero);
 page_t mmu_newpage();
 void mmu_load_env();
+void mmu_leave_env();
 void mmu_map_userspace(kMemSpace_t *sp);
+void mmu_destroy_userspace(kMemSpace_t *sp);
 
 void mmu_prolog ();
 /** @brief Function to inform paging module that some RAM can be used by the system. */
@@ -148,7 +152,7 @@ void destroy_user (kUser_t *user);
 /* === SUBSYS ============================================================ */
 void create_subsys(kInode_t* kbd, kInode_t* screen);
 void open_subsys(kInode_t* input, kInode_t* output);
-
+void clean_subsys();
 
 
 /* ----------------------------------------------------------------------- */

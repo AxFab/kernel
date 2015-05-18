@@ -128,7 +128,7 @@ int page_fault (size_t address, int cause)
   if (address < mspace->base_ || address >= mspace->limit_) {
     if (kCPU.current_ != NULL)
       mspace = &kCPU.current_->process_->mspace_;
-    else 
+    else
       kpanic("Kernel try to access a task when idle.\n");
 
     if (address < mspace->base_ || address >= mspace->limit_)
@@ -141,7 +141,7 @@ int page_fault (size_t address, int cause)
 
   assert(kCPU.lockCounter_ == 0);
   assert(mspace != NULL);
-  
+
   area = area_find(mspace, address);
   if (area == NULL)
     return sched_signal(SIGSEV, address);
@@ -151,7 +151,7 @@ int page_fault (size_t address, int cause)
 
   if (area->flags_ & VMA_FIFO) {
     /* Pipe can only be mounted on kernel space */
-    assert (mspace == kSYS.mspace_); 
+    assert (mspace == kSYS.mspace_);
     return mmu_resolve(address, 0, VMA_READ | VMA_WRITE | VMA_KERNEL, true);
   }
 

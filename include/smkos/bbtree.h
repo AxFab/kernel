@@ -45,7 +45,6 @@ static inline void *item_(void *p, size_t off)
 #define bb_search(t,v,s,m)    (s*)itemof(bb_search_((t)->root_,(v),RECURS_LMT),s,m)
 #define bb_search_le(t,v,s,m) (s*)itemof(bb_search_le_((t)->root_,(v),RECURS_LMT),s,m)
 
-
 /* ----------------------------------------------------------------------- */
 /** BBTree (self-balancing binary tree) node */
 struct bbnode {
@@ -126,6 +125,63 @@ static inline struct bbnode *bb_insert_(struct bbnode *root, struct bbnode *node
 
   root = bb_skew(root);
   root = bb_split(root);
+  return root;
+}
+
+
+/* ----------------------------------------------------------------------- */
+static inline struct bbnode *bb_remove_(struct bbtree *tree, struct bbnode *root, struct bbnode *node, int limit)
+{
+  int lvl = 0;
+
+  if (--limit < 0) RECURS_ERR();
+
+  if (root == NULL)
+    return NULL;
+
+  /* Search down the tree and set pointers last and deleted */
+  tree->last_ = root;
+
+  if (node->value_ < root->value_) {
+    root->left_ = bb_remove_ (tree, root->left_, node, limit - 1);
+  } else { /* if (node->value_ > root->value_) { */
+    tree->deleted_ = root;
+    root->right_ = bb_remove_(tree, root->right_, node, limit - 1);
+  }
+
+  /* At the bottom of the tree we remove the element (if it is present) */
+  if (tree->last_ == root && tree->deleted_ != NULL && node == tree->deleted_) {
+    tree->deleted_->value_ = root->value_;
+    tree->deleted_ = NULL;
+    root = root->right_;
+    /* dispose (last); */
+
+  } else {
+    /* On the way back, we rebalance */
+
+    if (node->left_)
+      lvl = MIN (lvl, node->left_->level_);
+
+    if (node->right_)
+      lvl = MIN (lvl, node->right_->level_);
+
+    if (lvl < root->level_ - 1) {
+      root->level_ = root->level_ - 1;
+
+      if (root->right_ != NULL && root->right_->level_ > root->level_)
+        root->right_->level_ = root->level_;
+
+      root = bb_skew(root);
+      root->right_ = bb_skew(root->right_);
+
+      if (root->right_ != NULL)
+        root->right_->right_ = bb_skew(root->right_->right_);
+
+      root = bb_split(root);
+      root->right_ = bb_split(root->right_);
+    }
+  }
+
   return root;
 }
 
@@ -239,6 +295,12 @@ static inline void bb_insert (struct bbtree *tree, struct bbnode *node)
   tree->root_ = bb_insert_(tree->root_, node, RECURS_LMT);
 }
 
+
+/* ----------------------------------------------------------------------- */
+static inline void bb_remove (struct bbtree *tree, struct bbnode *node)
+{
+  tree->root_ = bb_remove_(tree, tree->root_, node, RECURS_LMT);
+}
 
 /* ----------------------------------------------------------------------- */
 static inline void bb_delete (struct bbtree *tree, struct bbnode *node)

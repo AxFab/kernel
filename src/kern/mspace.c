@@ -315,7 +315,7 @@ int area_attach(kMemArea_t* area, kInode_t* ino, size_t offset)
 
 
 /* ----------------------------------------------------------------------- */
-int area_grow (kMemSpace_t* sp, kMemArea_t *area, size_t extra_size)
+/*int area_grow (kMemSpace_t* sp, kMemArea_t *area, size_t extra_size)
 {
   extra_size = ALIGN_UP(extra_size, PAGE_SIZE);
 
@@ -349,7 +349,7 @@ int area_grow (kMemSpace_t* sp, kMemArea_t *area, size_t extra_size)
   }
 
   return __seterrno (EPERM);
-}
+}*/
 
 
 /* ----------------------------------------------------------------------- */
@@ -414,6 +414,7 @@ static kMemArea_t *area_map_section (kMemSpace_t *sp, kSection_t *section, kInod
   if (area == NULL)
     return NULL;
 
+  // @todo atomic_inc (&area->usage_); -- used for FILE several fd map the same
   if (area_attach (area, ino, section->offset_)) {
     // area_unmap_area (mspace, area);
     return NULL;
@@ -459,6 +460,35 @@ void scavenge_area(kMemSpace_t* sp)
   kunlock(&sp->lock_);
 }
 
+
+/* ----------------------------------------------------------------------- */
+int area_destroy(kMemSpace_t* sp)
+{
+  kMemArea_t *origin;
+  kMemArea_t *sweep;
+  int maxLoop = MAX_LOOP;
+
+  klock(&sp->lock_);
+  origin = sp->first_;
+  while (origin && --maxLoop) {
+
+    if (origin->ino_ != NULL /*&& origin->usage_ == 0*/) {
+      inode_close(origin->ino_);
+      origin->ino_ = NULL;
+    }
+
+    // @todo Released pages
+    sweep = origin;
+    origin = origin->next_;
+    kfree (sweep);
+  }
+
+  // assert (sp->phyPages_ == 0);
+  mmu_destroy_userspace(sp);
+  kunlock(&sp->lock_);
+  memset(sp, 0, sizeof(*sp));
+  return 0;
+}
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

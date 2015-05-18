@@ -18,7 +18,7 @@ static int grub_memory (uint32_t *mmap)
     base = (int64_t)mmap[1] | (int64_t)mmap[2] << 32;
     length = (int64_t)mmap[3] | (int64_t)mmap[4] << 32;
 
-    if (mmap[5] == 1) 
+    if (mmap[5] == 1)
       mmu_ram(base, length);
   }
 

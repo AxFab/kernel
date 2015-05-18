@@ -34,9 +34,9 @@ static int autoIncrThread = 0;
   * @return A new thread object.
   *
   * A thread object is linked to a process for all it's living time. However
-  * thread object can be reused once it's initial task terminated. For this 
+  * thread object can be reused once it's initial task terminated. For this
   * reason a thread must store all resources it's supposed to reused.
-  * The process keep the ownership of the thread pointer and thus handle 
+  * The process keep the ownership of the thread pointer and thus handle
   * insertion and suppression from the scheduler.
   */
 static kThread_t *alloc_thread(kProcess_t *process)
@@ -66,7 +66,7 @@ static kThread_t *alloc_thread(kProcess_t *process)
 static void reset_thread (kThread_t *thread, size_t entry, size_t param)
 {
   assert (thread->state_ == SCHED_ZOMBIE);
-  
+
   thread->threadId_ = ++autoIncrThread;
   thread->start_ = time(NULL);
   thread->paramEntry_ = entry;
@@ -101,10 +101,10 @@ static kSession_t *alloc_session(kUser_t *user, kInode_t *dir)
 /** @brief Instanciate a new process.
   * @param assembly The assembly used on this process
   * @param The pid to used
-  * @todo This method should create needed inodes that will be accessible 
+  * @todo This method should create needed inodes that will be accessible
   * from the structure. An handle the pid selection.
-  * 
-  * The process object is self-managing as it must handle all of it's 
+  *
+  * The process object is self-managing as it must handle all of it's
   * resources and clean itself when required. Processes are not cached or
   * reusable.
   */
@@ -115,7 +115,7 @@ static kProcess_t *alloc_process(kAssembly_t* assembly, int pid)
   process->pid_ = pid;
   // process->commandLine_ = strdup(cmd);
   process->start_ = time(NULL);
-  inode_open(assembly->ino_);
+  // inode_open(assembly->ino_);
   process->assembly_ = assembly;
   atomic_inc(&assembly->usage_);
   mmu_map_userspace(&process->mspace_);
@@ -156,7 +156,7 @@ static void destroy_session(kSession_t *session)
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Routines that handle destruction of a process and of all its 
+/** @brief Routines that handle destruction of a process and of all its
   * resources.
   */
 void destroy_process (kProcess_t *process)
@@ -166,7 +166,7 @@ void destroy_process (kProcess_t *process)
 
   assert(kislocked(&process->lock_));
   /// @todo free process, threads, resx, session, events, ...
-  
+
   task = ll_first(&process->threads_, kThread_t, taskNd_);
   while (task) {
     pick = task;
@@ -174,12 +174,15 @@ void destroy_process (kProcess_t *process)
     destroy_thread (pick);
   }
 
+  process_clean_resx(process);
+
   ll_remove(&kSYS.processes_, &process->allNd_);
-  if (atomic_add(&process->session_->usage_, -1) <= 0)
+  if (atomic_add(&process->session_->usage_, -1)  <= 1)
     destroy_session(process->session_);
-  
+
   atomic_dec(&process->assembly_->usage_);
   inode_close(process->assembly_->ino_);
+  area_destroy(&process->mspace_);
   kunlock(&process->lock_);
   kfree(process);
 }
@@ -246,14 +249,14 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
     return NULL;
   }
 
-  process_set_resx(process, stdin, 0); // O_RDLY | 
-  process_set_resx(process, stdout, 0); // O_WRLY | 
+  process_set_resx(process, stdin, 0); // O_RDLY |
+  process_set_resx(process, stdout, 0); // O_WRLY |
   process_set_resx(process, stderr, 0); // O_WRLY | O_DIRECT
 
   open_subsys(/*subsys, */stdin, stdout);
 
   kunlock (&process->lock_);
-  
+
   return process;
 }
 
@@ -277,19 +280,19 @@ kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_S
   snprintf(bufPid, 12, "%d", pid);
   procdir = create_inode (bufPid, kSYS.procIno_, S_IFDIR | 0400, 0);
   // @todo Store procdir;
-  
+
   resx = process_get_resx (kCPU.current_->process_, 0, CAP_READ);
   if (resx != NULL)
     stdin = resx->ino_;
   else
     stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
-  
+
   resx = process_get_resx (kCPU.current_->process_, 1, CAP_WRITE);
   if (resx != NULL)
     stdout = resx->ino_;
   else
     stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
-  
+
   resx = process_get_resx (kCPU.current_->process_, 2, CAP_READ);
   if (resx != NULL)
     stderr = resx->ino_;
@@ -309,9 +312,9 @@ kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_S
     destroy_process (process);
     return NULL;
   }
-  
-  process_set_resx(process, stdin, 0); // O_RDLY | 
-  process_set_resx(process, stdout, 0); // O_WRLY | 
+
+  process_set_resx(process, stdin, 0); // O_RDLY |
+  process_set_resx(process, stdout, 0); // O_WRLY |
   process_set_resx(process, stderr, 0); // O_WRLY | O_DIRECT
 
   kunlock (&process->lock_);
@@ -387,20 +390,74 @@ kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags)
 {
   kResx_t* resx;
 
-  assert (kislocked(&process->lock_));
+  assert(kislocked(&process->lock_));
   if (process->fdCount_ > MAX_FD_PER_PROCESS)
     return NULL;
-  
+
 
   resx = KALLOC(kResx_t);
   resx->ino_ = ino;
   resx->type_ = ino->stat_.mode_ & S_IFMT;
   resx->oflags_ = oflags;
+  inode_open(ino);
   /// @todo check capacity (access rights)
   resx->fdNd_.value_ = process->fdCount_++;
-  bb_insert (&process->resxTree_, &resx->fdNd_);
+  bb_insert(&process->resxTree_, &resx->fdNd_);
   return resx;
 }
+
+/* ----------------------------------------------------------------------- */
+int process_clean_resx(kProcess_t *process)
+{
+  int i;
+  kResx_t* resx;
+  assert(kislocked(&process->lock_));
+
+  // for (;;) {
+  //   resx = bb_best(&process->resxTree_, kResx_t, fdNd_);
+  //   if (resx == NULL)
+  //     return 0;
+
+  //   // @todo Fix -- bb_delete(&process->resxTree_, &resx->fdNd_);
+  //   inode_close(resx->ino_);
+  //   kfree(resx);
+  // }
+  for (i = 0; i < process->fdCount_; ++i) {
+
+    resx = bb_search (&process->resxTree_, i, kResx_t, fdNd_);
+    if (resx == NULL) {
+      kunlock(&process->lock_);
+      return EBADF;
+    }
+
+    assert((int)resx->fdNd_.value_ == i);
+    // @todo Fix -- bb_delete(&process->resxTree_, &resx->fdNd_);
+    inode_close(resx->ino_);
+    // kfree(resx);
+  }
+}
+
+
+/* ----------------------------------------------------------------------- */
+int process_close_resx(kProcess_t *process, int fd)
+{
+  kResx_t* resx;
+  klock(&process->lock_);
+  resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
+  if (resx == NULL) {
+    kunlock(&process->lock_);
+    return EBADF;
+  }
+
+  assert((int)resx->fdNd_.value_ == fd);
+  // @todo Fix -- bb_delete(&process->resxTree_, &resx->fdNd_);
+  inode_close(resx->ino_);
+  // kfree(resx);
+
+  kunlock(&process->lock_);
+  return 0;
+}
+
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
