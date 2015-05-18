@@ -119,6 +119,8 @@ int fs_pipe_read(kInode_t *ino, void* buf, size_t lg)
     pipe->avail_ -= cap;
     bytes += cap;
     buf = ((char *)buf) + cap;
+    if (pipe->flags_ & FP_BY_LINE && ((char *)buf)[-1] == '\n')
+      break;
   }
 
   mtx_unlock(&pipe->mutex_);

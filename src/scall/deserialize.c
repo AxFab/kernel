@@ -68,7 +68,7 @@ static char* parseStr (char **rent)
 static int parseInt (char **rent)
 {
   char * str = strtok_r(NULL, " (,;)=", rent);
-  return strtol(str, NULL, 10);
+  return strtol(str, NULL, 0);
 }
 
 
@@ -150,6 +150,39 @@ void sys_exit_do (char* str, char **rent)
   assert(0);
 }
 
+
+/* ----------------------------------------------------------------------- */
+void sys_start_do (char* str, char **rent)
+{
+  char sbuf[128];
+  char *name = parseStr(rent);
+  size_t entry = (size_t)parseInt(rent);
+  size_t param = (size_t)parseInt(rent);
+  int res = parseInt(rent);
+  int ret = sys_start(name, entry, param);
+  assert (ret == res);
+  sys_start_save(sbuf, 128, name, entry, param, ret);
+  log_sys(sbuf);
+}
+
+/* ----------------------------------------------------------------------- */
+void sys_stop_do (char* str, char **rent)
+{
+}
+
+/* ----------------------------------------------------------------------- */
+void sys_wait_do (char* str, char **rent)
+{
+  char sbuf[128];
+  int reason = (size_t)parseInt(rent);
+  int param = (size_t)parseInt(rent);
+  int timeout = (size_t)parseInt(rent);
+  int res = parseInt(rent);
+  int ret = sys_wait(reason, param, timeout);
+  assert (ret == res);
+  sys_wait_save(sbuf, 128, reason, param, timeout, ret);
+  log_sys(sbuf);
+}
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

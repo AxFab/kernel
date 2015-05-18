@@ -129,7 +129,7 @@ int sched_signal (int raise, size_t data);
 void sched_insert(kScheduler_t *sched, kThread_t *task);
 void sched_remove(kScheduler_t *sched, kThread_t *thread);
 /** @brief Change the status of the current executing task and save the current registers */
-void sched_stop (kScheduler_t *sched, kThread_t *thread, int state);
+int sched_stop (kScheduler_t *sched, kThread_t *thread, int state);
 void sched_next(kScheduler_t *sched);
 
 
@@ -138,7 +138,7 @@ kThread_t *create_thread(kProcess_t *process, size_t entry, size_t param);
 void destroy_process (kProcess_t *process);
 kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, const char *cmd);
 kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, SMK_StartInfo_t *info);
-void thread_abort (kThread_t* thread);
+int thread_abort (kThread_t* thread);
 void process_exit(kProcess_t *process, int status);
 kResx_t *process_get_resx(kProcess_t *process, int fd, int access);
 kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags);

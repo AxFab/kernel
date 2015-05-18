@@ -85,3 +85,16 @@ void sys_exit_save(char* snBuf, int snLg, int status, int ret)
   snprintf (snBuf, snLg, "sys_exit (%d, %d)", status, ret);
 }
 
+
+/* ----------------------------------------------------------------------- */
+void sys_start_save (char* snBuf, int snLg, const char*name, size_t entry, size_t param, int ret)
+{
+  snprintf (snBuf, snLg, "sys_start (%p:\"%s\", %x, %u) = %d", name, name, entry, param, ret);
+}
+
+/* ----------------------------------------------------------------------- */
+void sys_wait_save (char* snBuf, int snLg, int reason, int param, int timeout, int ret)
+{
+  snprintf (snBuf, snLg, "sys_wait (%x, %d, %d:<%dsec>) = %d", reason, param, timeout, timeout/1000000, ret);
+}
+

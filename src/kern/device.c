@@ -300,12 +300,15 @@ void sweep_vfs()
   dispose_drivers();
   scavenge_inodes(8000);
 
-  assert (kSYS.rootIno_->child_ == NULL);
-  atomic_dec(&kSYS.rootIno_->dev_->fs_->usage_);
-  atomic_dec(&kSYS.rootIno_->dev_->usage_);
-  kfree(kSYS.rootIno_->dev_);
-  kfree(kSYS.rootIno_);
-  unregister_driver(search_driver(0)); // TMPFS
+  if (kSYS.rootIno_->child_ == NULL) {
+    atomic_dec(&kSYS.rootIno_->dev_->fs_->usage_);
+    atomic_dec(&kSYS.rootIno_->dev_->usage_);
+    kfree(kSYS.rootIno_->dev_);
+    kfree(kSYS.rootIno_);
+    unregister_driver(search_driver(0)); // TMPFS
+  } else {
+    kprintf("/!\\ Inodes are leaking...\n");
+  }
 }
 
 

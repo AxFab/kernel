@@ -31,15 +31,18 @@
 
 int sys_exit(int errcode, int pid)
 {
+  int err;
+  kProcess_t *process = kCPU.current_->process_;
+
   if (pid != 0)
     return ENOSYS;
 
   /// @todo assert (kCPU.state_ == KST_USERSP);
   assert (kCPU.current_ != NULL);
 
-  sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
-  if (kCPU.current_)
-    process_exit(kCPU.current_->process_, 0);
+  err = sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
+  if (err == 0)
+    process_exit(process, 0);
   sched_next(kSYS.scheduler_);
   return EAGAIN;
 }
@@ -65,6 +68,25 @@ int sys_exec(const char *exec, struct SMK_StartInfo *info)
     return -1;
   return process->pid_;
 }
+
+
+/* ----------------------------------------------------------------------- */
+int sys_start (const char*name, size_t entry, size_t param)
+{
+  kThread_t *thread = create_thread(kCPU.current_->process_, entry, param);
+  // rename_thread(thread, name);
+  return thread != NULL ? 0 : __geterrno();
+}
+
+
+/* ----------------------------------------------------------------------- */
+int sys_wait (int reason, int param, int timeout)
+{
+  if (reason == 0)
+    cpu_wait();
+  return -1;
+}
+
 
 int sys_mmap(int fd, size_t address, size_t length, int flags)
 {

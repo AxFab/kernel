@@ -122,7 +122,7 @@ void sched_remove(kScheduler_t *sched, kThread_t *thread)
 
 /* ----------------------------------------------------------------------- */
 /** Change the status of the current executing task and save the current registers */
-void sched_stop (kScheduler_t *sched, kThread_t *thread, int state)
+int sched_stop (kScheduler_t *sched, kThread_t *thread, int state)
 {
   klock (&thread->process_->lock_);
   assert(thread == kCPU.current_);
@@ -148,7 +148,7 @@ void sched_stop (kScheduler_t *sched, kThread_t *thread, int state)
     if (thread->process_->runningTask_ == 0) {
       kCPU.current_ = NULL;
       destroy_process (thread->process_);
-      return;
+      return -1;
     }
 
   } else if (state == SCHED_READY) {
@@ -158,6 +158,7 @@ void sched_stop (kScheduler_t *sched, kThread_t *thread, int state)
   }
 
   kunlock (&thread->process_->lock_);
+  return 0;
 }
 
 /* ----------------------------------------------------------------------- */

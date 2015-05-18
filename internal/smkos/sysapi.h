@@ -26,7 +26,7 @@
 
 int sys_exit(int errcode, int pid);
 int sys_exec(const char *exec, struct SMK_StartInfo *info);
-int sys_start();
+int sys_start(const char*name, size_t entry, size_t param);
 int sys_stop();
 
 ssize_t sys_write(int fd, void *buf, size_t lg, size_t off);

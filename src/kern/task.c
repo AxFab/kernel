@@ -196,10 +196,6 @@ kThread_t *create_thread(kProcess_t *process, size_t entry, size_t param)
   assert (process != NULL);
   // assert (kCPU.current_ != NULL && process == kCPU.current_->process_);
 
-  // __seterrno(0);
-  // if (process->flags_ & TK_REMOVED)
-  //   return __seterrnoN(ENOSYS, kThread_t);
-
   klock (&process->lock_);
   ll_for_each (&process->threads_, thread, kThread_t, taskNd_) {
     if (thread->state_ == SCHED_ZOMBIE)
@@ -303,7 +299,8 @@ kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_S
   if (process == NULL)
     return NULL;
 
-  ll_push_back(&parent->children_, &process->siblingNd_);
+  // assert (parent != NULL);
+  // ll_push_back(&parent->children_, &process->siblingNd_);
   process->session_ = parent->session_;
   atomic_inc(&process->session_->usage_);
 
@@ -323,7 +320,7 @@ kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_S
 
 
 /* ----------------------------------------------------------------------- */
-void thread_abort (kThread_t* thread)
+int thread_abort (kThread_t* thread)
 {
   assert(kislocked(&thread->process_->lock_));
   assert(thread != kCPU.current_);
@@ -334,17 +331,21 @@ void thread_abort (kThread_t* thread)
   } else if (thread->state_ != SCHED_ZOMBIE) {
     if (thread->state_ == SCHED_BLOCKED) {
       // async_cancel_event(task);
+    } else {
+      sched_remove (kSYS.scheduler_, thread);
     }
 
-    sched_remove (kSYS.scheduler_, thread);
     thread->state_ = SCHED_ZOMBIE;
     atomic_dec (&thread->process_->runningTask_);
 
     // @todo And all signal have been sended...
     if (thread->process_->runningTask_ == 0) {
       destroy_process (thread->process_);
+      return -1;
     }
   }
+
+  return 0;
 }
 
 
@@ -359,7 +360,8 @@ void process_exit(kProcess_t *process, int status)
     if (task->state_ == SCHED_ZOMBIE)
       continue;
     assert(kCPU.current_ != task);
-    thread_abort (task);
+    if (thread_abort (task))
+      return;
   }
 
   kunlock(&process->lock_);

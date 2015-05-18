@@ -24,10 +24,7 @@ void *kalloc (size_t size)
 {
   void *addr = malloc_(size);
 
-  if (addr == 0) {
-    // __seterrno(ENOMEM);
-    kpanic ("The kernel run out of memory\n");
-  }
+  assert_msg(addr != NULL, "The kernel run out of memory.");
 
   // kSYS.objMemory_ += size;
   memset(addr, 0, size);
@@ -101,12 +98,12 @@ clock_t clock()
 
 
 /* ----------------------------------------------------------------------- */
-
 void __assert_do (int as, const char *ex, const char *at)
 {
   if (!as)
     kpanic("Assertion: %s at %s.\n", ex, at);
 }
+
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

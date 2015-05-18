@@ -382,14 +382,9 @@ kMemArea_t* area_map_ino(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t l
 /* ----------------------------------------------------------------------- */
 void area_unmap(kMemSpace_t* sp, kMemArea_t* area)
 {
-  int ret;
-  //klock(&sp->lock_);
-  ret = atomic_add(&area->usage_, -1);
-  if (ret == 0)
-    kpanic("Usage lower than supposed");
-  // if (area->usage_ == 0)
-  //  area->ino_ = NULL;
-  // kunlock(&sp->lock_);
+  int usage;
+  usage = atomic_add(&area->usage_, -1);
+  assert (usage > 0);
 }
 
 

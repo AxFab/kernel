@@ -58,8 +58,7 @@ void kernel_start ()
 
   /* Create basic users */
   user = create_user("system", CAP_SYSTEM);
-  if (!user)
-    kpanic("Unable to create system user.\n");
+  assert_msg(user, "Unable to create system user.");
 
   /* Load master program */
   idx = 0;
@@ -75,14 +74,11 @@ void kernel_start ()
   fb = search_inode ("/dev/Fb0", NULL, 0);
   create_subsys(kb, fb);
 
-  // display_inodes();
-
   if (!masterPaths[idx])
     kpanic("Unable to find startup program 'MASTER'\n");
 
   create_logon_process(ino, user, kSYS.sysIno_, masterPaths[idx]);
   scavenge_area(kSYS.mspace_);
-
 
   kprintf ("CPU %d is ready\n", kCpuNo);
   cpu_start_scheduler();
@@ -100,7 +96,6 @@ void kernel_start ()
 void kernel_sweep()
 {
   kInode_t* fb = search_inode ("/dev/Fb0", NULL, 0);
-  area_display(kSYS.mspace_);
   kprintf ("\x1b[31mEnding...\x1b[0m\n");
   clean_subsys();
   BMP_sync(fb);
@@ -108,7 +103,8 @@ void kernel_sweep()
   scavenge_area(kSYS.mspace_);
   // display_inodes();
   // area_display(kSYS.mspace_);
-  assert (kSYS.mspace_->vrtPages_ == 0);
+  if (kSYS.mspace_->vrtPages_ != 0)
+    kprintf("/!\\ Kernel pages are leaking...\n");
   sweep_vfs();
   destroy_all_users();
   mmu_leave_env();

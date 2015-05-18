@@ -67,6 +67,8 @@ void kwrite_tty(const char *m)
     if (*m < 0x20) {
       if (*m == '\n')
         txtOutIdx += 80 - (txtOutIdx % 80);
+      else if (*m == '\r')
+        txtOutIdx -= (txtOutIdx % 80);
       else if (*m == '\t')
         txtOutIdx += 4 - (txtOutIdx % 4);
       else if (*m == '\e' && m[1] == '[') {
