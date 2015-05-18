@@ -269,6 +269,7 @@ void cpu_wait()
 int main (int argc, char **argv)
 {
   int idx = 0;
+  int th;
   int ret;
   char tmp[120];
   //const char* dir = "base";
@@ -290,7 +291,7 @@ int main (int argc, char **argv)
 
 
   while (progFp[idx++][0]) {
-    int th = 0;
+    th = 0;
     do {
       snprintf(tmp, 120, SD_DIR "/%s/Proc%d-Th%d.strace", dir, idx, th + 1);
       progFp[idx][th++] = fopen(tmp, "r");
@@ -300,8 +301,12 @@ int main (int argc, char **argv)
   ret = main_jmp_loop();
 
   --idx;
-  while (--idx)
-    fclose(progFp[idx][0]);
+  while (--idx) {
+    th = 0;
+    while (progFp[idx][th]) {
+      fclose(progFp[idx][th++]);
+    }
+  }
 
   return ret;
 }
