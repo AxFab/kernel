@@ -49,6 +49,13 @@ page_t mmu_newpage()
 }
 
 /* ----------------------------------------------------------------------- */
+void mmu_releasepage(page_t page)
+{
+  atomic_inc(&kSYS.pageAvailable_);
+  atomic_dec(&kSYS.pageUsed_);
+}
+
+/* ----------------------------------------------------------------------- */
 void mmu_load_env()
 {
   void* ptr = valloc_(8 * _Mb_);
@@ -63,7 +70,7 @@ void mmu_load_env()
 void mmu_leave_env()
 {
   // @todo Assert mspace and scheduler are empty
-  vfree(kSYS.mspace_->base_);
+  vfree((void*)kSYS.mspace_->base_);
   kfree(kSYS.mspace_);
   kfree(kSYS.scheduler_);
 }
@@ -79,7 +86,7 @@ void mmu_map_userspace(kMemSpace_t *sp)
 
 void mmu_destroy_userspace(kMemSpace_t *sp)
 {
-  vfree(sp->base_);
+  vfree((void*)sp->base_);
 }
 
 /* ----------------------------------------------------------------------- */

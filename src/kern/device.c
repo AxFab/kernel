@@ -179,6 +179,39 @@ int mount_device(const char* name, kDevice_t* dev, kDriver_t* fs)
   return __seterrno(ENOSYS);
 }
 
+/* ----------------------------------------------------------------------- */
+int unmount_device(kDevice_t* dev)
+{
+  int err;
+  assert (kCPU.lockCounter_ == 1);
+  assert (kislocked(&dev->ino_->lock_));
+  if (open_fs(dev->ino_))
+    return __geterrno();
+
+  if (dev->fs_->unmount) {
+    err = dev->fs_->unmount(dev->ino_, dev->data_);
+    if (err) {
+      close_fs(dev->ino_);
+      return __seterrno(err);
+    }
+  }
+
+  close_fs(dev->ino_);
+  klock (&dev->ino_->parent_->lock_);
+  klock (&dev->ino_->lock_);
+
+  unregister_inode(dev->ino_);
+  atomic_dec(&dev->fs_->usage_);
+  if (dev->underlyingDev_) {
+    atomic_dec(&dev->underlyingDev_->dev_->usage_);
+    inode_close(dev->underlyingDev_);
+  }
+
+  ll_remove(&kSYS.deviceList_, &dev->allNd_);
+  kfree(dev);
+  assert (kCPU.lockCounter_ == 0);
+  return __seterrno(0);
+}
 
 /* ----------------------------------------------------------------------- */
 /** @brief Find all unused devices and ty to mount them against any available
@@ -192,6 +225,34 @@ void mount_alls ()
 
       mount_device(NULL, dev, NULL);
     }
+  }
+}
+
+
+/* ----------------------------------------------------------------------- */
+/** @brief Find all devices and unmount all unused one.
+  */
+void unmount_alls ()
+{
+  int deleted;
+  kDevice_t* dev;
+  kDevice_t* iter;
+
+  for (;;) {
+    deleted = 0;
+    iter = ll_first(&kSYS.deviceList_, kDevice_t, allNd_);
+    while (iter) {
+      dev = iter;
+      iter = ll_next(dev, kDevice_t, allNd_);
+      klock(&dev->ino_->lock_);
+      if (dev->usage_ == 0 && dev->ino_->readers_ == 0) {
+        unmount_device(dev);
+        ++deleted;
+      } else
+        kunlock(&dev->ino_->lock_);
+    }
+    if (deleted == 0)
+      return;
   }
 }
 
@@ -235,10 +296,16 @@ void initialize_vfs()
 void sweep_vfs()
 {
   scavenge_inodes(8000);
+  unmount_alls();
   dispose_drivers();
-  unregister_driver(search_driver(0)); // TMPFS
+  scavenge_inodes(8000);
+
+  assert (kSYS.rootIno_->child_ == NULL);
+  atomic_dec(&kSYS.rootIno_->dev_->fs_->usage_);
+  atomic_dec(&kSYS.rootIno_->dev_->usage_);
   kfree(kSYS.rootIno_->dev_);
   kfree(kSYS.rootIno_);
+  unregister_driver(search_driver(0)); // TMPFS
 }
 
 
@@ -260,6 +327,8 @@ int unregister_driver(kDriver_t *driver)
 {
   // @todo first check that no inodes use this driver
   assert(driver != NULL);
+  if (driver->usage_ != 0)
+    return __seterrno(EBUSY);
   if (driver->dispose)
     driver->dispose();
   ll_remove(&kSYS.driverPool_, &driver->allNd_);
@@ -290,11 +359,14 @@ kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *sta
     ino = register_inode(name, dir, stat, false);
   dev = KALLOC(kDevice_t);
   ino->dev_ = dev;
-  if (underlying)
+  if (underlying) {
     inode_open(underlying);
+    atomic_inc(&underlying->dev_->usage_);
+  }
   dev->underlyingDev_ = underlying;
   dev->ino_ = ino;
   dev->fs_ = driver;
+  atomic_inc(&driver->usage_);
   dev->data_ = info;
   ll_push_back (&kSYS.deviceList_, &dev->allNd_);
   kunlock (&ino->lock_);

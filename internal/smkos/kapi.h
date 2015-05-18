@@ -106,6 +106,7 @@ int area_destroy(kMemSpace_t* sp);
 page_t mmu_newdir();
 int mmu_resolve (size_t address, page_t page, int access, bool zero);
 page_t mmu_newpage();
+void mmu_releasepage(page_t page);
 void mmu_load_env();
 void mmu_leave_env();
 void mmu_map_userspace(kMemSpace_t *sp);
@@ -147,6 +148,7 @@ kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags);
 kUser_t *search_user (const char *name, const char *domain);
 kUser_t *create_user(const char* username, int capacity);
 void destroy_user (kUser_t *user);
+void destroy_all_users ();
 
 
 /* === SUBSYS ============================================================ */

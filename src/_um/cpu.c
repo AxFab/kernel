@@ -232,9 +232,9 @@ int main ()
   display_inodes();
   kprintf("\n");
 
-  progFp[0] = fopen("../SD/T1.sta", "r");
-  progFp[1] = fopen("../SD/T2.sta", "r");
-  progFp[2] = fopen("../SD/T3.sta", "r");
+  progFp[0] = fopen(SD_DIR "/T1.sta", "r");
+  progFp[1] = fopen(SD_DIR "/T2.sta", "r");
+  progFp[2] = fopen(SD_DIR "/T3.sta", "r");
 
   ret = main_jmp_loop();
 

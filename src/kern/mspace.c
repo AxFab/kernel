@@ -259,6 +259,7 @@ kMemArea_t* area_map(kMemSpace_t* sp, size_t length, int flags)
   sp->vrtPages_ += length / PAGE_SIZE;
   narea->bbNode_.value_ = (long)narea->address_;
   bb_insert (&sp->bbTree_, &narea->bbNode_);
+  atomic_inc (&narea->usage_);
   return narea;
 }
 
@@ -365,11 +366,10 @@ kMemArea_t* area_map_ino(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t l
       sched_signal(ENOMEM, length);
     if (area_attach(area, ino, offset))
       kpanic("Try to map a file which is unavailable.\n");
-  }
+  } else
+    atomic_inc(&area->usage_);
 
-  atomic_inc (&area->usage_);
   kunlock(&sp->lock_);
-
   if (page_fault(area->address_, PF_KERN)) {
     kpanic ("inode loading failed\n");
   }
@@ -382,7 +382,14 @@ kMemArea_t* area_map_ino(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t l
 /* ----------------------------------------------------------------------- */
 void area_unmap(kMemSpace_t* sp, kMemArea_t* area)
 {
-  atomic_dec (&area->usage_);
+  int ret;
+  //klock(&sp->lock_);
+  ret = atomic_add(&area->usage_, -1);
+  if (ret == 0)
+    kpanic("Usage lower than supposed");
+  // if (area->usage_ == 0)
+  //  area->ino_ = NULL;
+  // kunlock(&sp->lock_);
 }
 
 
@@ -437,10 +444,35 @@ int area_assembly (kMemSpace_t *sp, kAssembly_t* assembly)
   return __seterrno(0);
 }
 
+static inline void area_remove (kMemSpace_t* sp, kMemArea_t *area, bool freepage)
+{
+  if (sp->first_ == area) {
+    sp->first_ = area->next_;
+    if (area->next_)
+      area->next_->prev_ = NULL;
+  } else {
+    if (area->next_)
+      area->next_->prev_ = area->prev_;
+    if (area->prev_)
+      area->prev_->next_ = area->next_;
+  }
+
+  if (area == sp->last_)
+    sp->last_ = area->prev_;
+
+  if (freepage) {
+    // @todo
+  }
+
+  sp->vrtPages_ -= (area->limit_ - area->address_) / PAGE_SIZE;
+  bb_remove(&sp->bbTree_, &area->bbNode_);
+  kfree (area);
+}
 
 /* ----------------------------------------------------------------------- */
 void scavenge_area(kMemSpace_t* sp)
 {
+  kMemArea_t *sweep;
   kMemArea_t *origin;
   int maxLoop = MAX_LOOP;
 
@@ -448,13 +480,20 @@ void scavenge_area(kMemSpace_t* sp)
   origin = sp->first_;
   while (origin && --maxLoop) {
 
-    if (origin->ino_ != NULL && origin->usage_ == 0) {
-      inode_close(origin->ino_);
-      origin->ino_ = NULL;
-      /// @todo REMOVE FROM MSPACE
-    }
-
+    sweep = origin;
     origin = origin->next_;
+
+    if (sweep->usage_ == 0) {
+      if (sweep->ino_ != NULL) {
+        inode_close(sweep->ino_);
+        sweep->ino_ = NULL;
+      } else if (sweep->flags_ & VMA_FIFO) {
+      } else {
+        assert(0); // Undefined map type..
+      }
+
+      area_remove(sp, sweep, false);
+    }
   }
 
   kunlock(&sp->lock_);
@@ -472,15 +511,16 @@ int area_destroy(kMemSpace_t* sp)
   origin = sp->first_;
   while (origin && --maxLoop) {
 
-    if (origin->ino_ != NULL /*&& origin->usage_ == 0*/) {
-      inode_close(origin->ino_);
-      origin->ino_ = NULL;
+    sweep = origin;
+    origin = origin->next_;
+
+    if (sweep->ino_ != NULL /*&& origin->usage_ == 0*/) {
+      inode_close(sweep->ino_);
+      sweep->ino_ = NULL;
     }
 
     // @todo Released pages
-    sweep = origin;
-    origin = origin->next_;
-    kfree (sweep);
+    area_remove(sp, sweep, false);
   }
 
   // assert (sp->phyPages_ == 0);
@@ -488,6 +528,44 @@ int area_destroy(kMemSpace_t* sp)
   kunlock(&sp->lock_);
   memset(sp, 0, sizeof(*sp));
   return 0;
+}
+
+
+
+/* ----------------------------------------------------------------------- */
+void area_display(kMemSpace_t* sp)
+{
+  const char* rights[] = {
+    "----", "---x", "--w-",  "--wx",
+    "-r--", "-r-x", "-rw-",  "-rwx",
+    "S---", "S--x", "S-w-",  "S-wx",
+    "Sr--", "Sr-x", "Srw-",  "Srwx"
+  };
+  int i = 0;
+  size_t length;
+
+  kMemArea_t *area;
+
+  kprintf ("\nMMap debug display ----- %d <%s> ",
+           sp->vrtPages_, kpsize(sp->vrtPages_ * PAGE_SIZE));
+
+  kprintf (": %d <%s> \n",
+           sp->phyPages_, kpsize(sp->phyPages_ * PAGE_SIZE));
+
+  for (area = sp->first_; area; area = area->next_) {
+
+    length = area->limit_ - area->address_;
+    if (area->ino_)
+      kprintf ("%2d] [0x%16x - 0x%16x] %s - <%s>  %s :0x%x\n", ++i,
+               (uint32_t)area->address_, (uint32_t)area->limit_, rights[area->flags_ & 0xf],
+               kpsize(length),  (*(char**)area->ino_), (size_t)area->offset_);
+
+    else
+      kprintf ("%2d] [0x%16x - 0x%16x] %s - <%s>  %s\n", ++i,
+               (uint32_t)area->address_, (uint32_t)area->limit_, rights[area->flags_ & 0xf],
+               kpsize(length),
+               (area->flags_ & VMA_STACK ? "[stack]" : (area->flags_ & VMA_HEAP ? "[heap]" : "---")));
+  }
 }
 
 /* ----------------------------------------------------------------------- */

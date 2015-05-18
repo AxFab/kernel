@@ -32,13 +32,6 @@
 #define AD_KERNEL 0
 
 
-struct kPage
-{
-  page_t phys_;
-  size_t offset_;
-  struct bbnode treeNd_;
-};
-
 
 /* ----------------------------------------------------------------------- */
 static int page_rights(int flags)

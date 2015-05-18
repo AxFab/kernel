@@ -28,6 +28,7 @@ kPipe_t * fs_create_pipe(kInode_t *ino)
   pipe->size_ = ALIGN_UP(ino->stat_.length_, PAGE_SIZE);
   klock(&kSYS.mspace_->lock_);
   pipe->mmap_ = area_map(kSYS.mspace_, pipe->size_, vmaRg);
+  pipe->mmap_->at_ = __AT__;
   pipe->flags_ = FP_BLOCK | FP_BY_LINE;
   kunlock(&kSYS.mspace_->lock_);
   ino->pipe_ = pipe;

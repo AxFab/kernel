@@ -42,7 +42,7 @@ int HDD_mount (kInode_t *dev, const char *name)
   stat.major_ = HDD_No;
   stat.mode_ =  S_IFBLK | 0770;
 
-  fpa = fopen("../SD/hdd.img", "r+");
+  fpa = fopen(SD_DIR "/hdd.img", "r+");
 
   if (fpa) {
     fseek(fpa, 64 * _Mb_ - 1, SEEK_SET);
@@ -55,7 +55,7 @@ int HDD_mount (kInode_t *dev, const char *name)
     create_device("sda", dev, &stat, fpa);
   }
 
-  fpc = fopen("../SD/OsCore.iso", "r");
+  fpc = fopen(SD_DIR "/OsCore.iso", "r");
 
   if (fpc) {
     fseek(fpc, 0, SEEK_END);
@@ -65,6 +65,14 @@ int HDD_mount (kInode_t *dev, const char *name)
     create_device("sdc", dev, &stat,  fpc);
   }
 
+  return 0;
+}
+
+/* ----------------------------------------------------------------------- */
+int HDD_unmount (kInode_t *dev, void* data)
+{
+  FILE *fio = (FILE *)data;
+  fclose(fio);
   return 0;
 }
 
@@ -87,16 +95,6 @@ int HDD_write(kInode_t *fp, const void *buffer, size_t length, size_t offset)
   return 0;
 }
 
-/* ----------------------------------------------------------------------- */
-int HDD_dispose ()
-{
-  // @todo Should be removed on unmount !!
-  if (fpa != NULL)
-    fclose(fpa);
-
-  if (fpc != NULL)
-    fclose(fpc);
-}
 
 /* ----------------------------------------------------------------------- */
 void HDD(kDriver_t *driver)
@@ -104,7 +102,7 @@ void HDD(kDriver_t *driver)
   driver->major_ = HDD_No;
   driver->name_ = strdup("hdd");
   driver->mount = HDD_mount;
-  driver->dispose = HDD_dispose;
+  driver->unmount = HDD_unmount;
   driver->read = HDD_read;
   driver->write = HDD_write;
 }

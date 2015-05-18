@@ -69,7 +69,12 @@ struct bbtree {
 
 
 /* ----------------------------------------------------------------------- */
-/** Swap the pointers of horizontal left links. */
+/** Swap the pointers of horizontal left links.
+  *         |             |
+  *    L <- T             L -> T
+  *   / \    \     =>    /    / \
+  *  A   B    R         A    B   R
+  */
 static inline struct bbnode *bb_skew(struct bbnode *node) {
   struct bbnode *temp;
 
@@ -88,7 +93,13 @@ static inline struct bbnode *bb_skew(struct bbnode *node) {
 /* ----------------------------------------------------------------------- */
 /** If we have two horizontal right links.
   * Take the middle node, elevate it, and return it.
- */
+  *    |                      |
+  *    T -> R -> X            R
+  *   /    /         =>      / \
+  *  A    B                 T   X
+  *                        / \
+  *                       A   B
+  */
 static inline struct bbnode *bb_split(struct bbnode *node) {
   struct bbnode *temp;
 
@@ -130,59 +141,64 @@ static inline struct bbnode *bb_insert_(struct bbnode *root, struct bbnode *node
 
 
 /* ----------------------------------------------------------------------- */
-static inline struct bbnode *bb_remove_(struct bbtree *tree, struct bbnode *root, struct bbnode *node, int limit)
+static inline  struct bbnode *bb_decrease_lvl(struct bbnode *node)
 {
   int lvl = 0;
 
+  if (node->left_)
+    lvl = MIN (lvl, node->left_->level_);
+
+  if (node->right_)
+    lvl = MIN (lvl, node->right_->level_);
+
+  ++lvl;
+  if (lvl < node->level_) {
+    node->level_ = lvl;
+    if (node->right_ && lvl < node->right_->level_)
+      node->right_->level_ = lvl;
+  }
+
+  return node;
+}
+
+static inline struct bbnode *bb_remove_(struct bbtree *tree, struct bbnode *node, size_t rmVal, int limit)
+{
+  struct bbnode *rplc = NULL;
+
   if (--limit < 0) RECURS_ERR();
 
-  if (root == NULL)
+  if (node == NULL)
     return NULL;
 
-  /* Search down the tree and set pointers last and deleted */
-  tree->last_ = root;
-
-  if (node->value_ < root->value_) {
-    root->left_ = bb_remove_ (tree, root->left_, node, limit - 1);
-  } else { /* if (node->value_ > root->value_) { */
-    tree->deleted_ = root;
-    root->right_ = bb_remove_(tree, root->right_, node, limit - 1);
-  }
-
-  /* At the bottom of the tree we remove the element (if it is present) */
-  if (tree->last_ == root && tree->deleted_ != NULL && node == tree->deleted_) {
-    tree->deleted_->value_ = root->value_;
-    tree->deleted_ = NULL;
-    root = root->right_;
-    /* dispose (last); */
-
+  if (rmVal < node->value_) {
+    node->left_ = bb_remove_ (tree, node->left_, rmVal, limit - 1);
+  } else if (rmVal < node->value_) {
+    node->right_ = bb_remove_(tree, node->right_, rmVal, limit - 1);
   } else {
-    /* On the way back, we rebalance */
-
-    if (node->left_)
-      lvl = MIN (lvl, node->left_->level_);
-
-    if (node->right_)
-      lvl = MIN (lvl, node->right_->level_);
-
-    if (lvl < root->level_ - 1) {
-      root->level_ = root->level_ - 1;
-
-      if (root->right_ != NULL && root->right_->level_ > root->level_)
-        root->right_->level_ = root->level_;
-
-      root = bb_skew(root);
-      root->right_ = bb_skew(root->right_);
-
-      if (root->right_ != NULL)
-        root->right_->right_ = bb_skew(root->right_->right_);
-
-      root = bb_split(root);
-      root->right_ = bb_split(root->right_);
+    /* If we're a leaf, easy, otherwise reduce to leaf case. */
+    if (node->left_ == NULL && node->right_ == NULL) {
+      return NULL;
+    } else if (node->left_ == NULL) {
+      rplc = node->right_; // Successor !?
+      rplc->right_ = bb_remove_ (tree, node->right_->right_, rplc->value_, limit - 1);
+    } else {
+      rplc = node->left_; // Predecessor
+      rplc->left_ = bb_remove_ (tree, node->left_->left_, rplc->value_, limit - 1);
     }
+
+    node = rplc;
   }
 
-  return root;
+  /* Rebalance the tree. Decrease the level of all nodes in this level if
+  necessary, and then skew and split all nodes in the new level. */
+  node = bb_decrease_lvl (node);
+  node = bb_skew (node);
+  node->right_ = bb_skew(node->right_);
+  if (node->right_ != NULL)
+    node->right_->right_ = bb_skew(node->right_->right_);
+  node = bb_split(node);
+  node->right_ = bb_split(node->right_);
+  return node;
 }
 
 
@@ -293,20 +309,22 @@ static inline struct bbnode *bb_best_ (struct bbnode *node) {
 static inline void bb_insert (struct bbtree *tree, struct bbnode *node)
 {
   tree->root_ = bb_insert_(tree->root_, node, RECURS_LMT);
+  tree->count_++;
 }
 
 
 /* ----------------------------------------------------------------------- */
 static inline void bb_remove (struct bbtree *tree, struct bbnode *node)
 {
-  tree->root_ = bb_remove_(tree, tree->root_, node, RECURS_LMT);
+  tree->root_ = bb_remove_(tree, tree->root_, node->value_, RECURS_LMT);
+  tree->count_--;
 }
 
 /* ----------------------------------------------------------------------- */
-static inline void bb_delete (struct bbtree *tree, struct bbnode *node)
-{
-  tree->root_ = bb_delete_(tree, tree->root_, node, RECURS_LMT);
-}
+//static inline void bb_delete (struct bbtree *tree, struct bbnode *node)
+//{
+//  tree->root_ = bb_delete_(tree, tree->root_, node, RECURS_LMT);
+//}
 
 
 /* ----------------------------------------------------------------------- */

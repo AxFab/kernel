@@ -53,7 +53,7 @@ void BMP_sync (kInode_t *ino)
   if (!bmp_ptr)
     return;
 
-  fp = fopen("../SD/vga.bmp", "w");
+  fp = fopen(SD_DIR "/vga.bmp", "w");
 
   memset (&head, 0, sizeof(head));
   head.sign_ = 0x4d42;

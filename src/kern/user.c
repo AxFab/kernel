@@ -55,10 +55,23 @@ kUser_t *create_user(const char* username, int capacity)
 void destroy_user (kUser_t *user)
 {
   assert (user->processCount_ == 0);
+  ll_remove(&kSYS.userList_, &user->allNd_);
   kfree((char *)user->name_);
   kfree(user);
 }
 
+/* ----------------------------------------------------------------------- */
+void destroy_all_users ()
+{
+  kUser_t *user;
+  kUser_t *iter = ll_first(&kSYS.userList_, kUser_t, allNd_);
+
+  while (iter) {
+    user = iter;
+    iter = ll_next(iter, kUser_t, allNd_);
+    destroy_user(user);
+  }
+}
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

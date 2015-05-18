@@ -339,10 +339,13 @@ void create_subsys(kInode_t* kbd, kInode_t* screen)
   if (screen != NULL) {
     term_create(&frameTty, screen);
     sysLogTty = &frameTty;
+  } else {
+    sysLogTty = &vgaText;
   }
 
-  if (kbd != NULL)
+  if (kbd != NULL) {
     kbd->subsys_ = sysLogTty;
+  }
 }
 
 
@@ -361,7 +364,7 @@ void clean_subsys()
 {
   if (sysLogTty->term_)
     term_close (sysLogTty->term_);
-
+   sysLogTty = &vgaText;
 }
 
 

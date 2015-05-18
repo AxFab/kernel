@@ -280,12 +280,14 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
 
 /* ----------------------------------------------------------------------- */
 /** @brief Release an inode from the inode cache. */
-static int unregister_inode (kInode_t *ino)
+int unregister_inode (kInode_t *ino)
 {
+  kPage_t *page;
+
   assert (ino->parent_);
   assert (kislocked (&ino->parent_->lock_));
   assert (kislocked (&ino->lock_));
-  assert (ino->dev_ == ino->parent_->dev_);
+  // assert (ino->dev_ == ino->parent_->dev_);
   assert (ino->child_ == NULL);
   assert (ino->readers_ == 0);
 
@@ -304,9 +306,22 @@ static int unregister_inode (kInode_t *ino)
     kunlock(&ino->next_->lock_);
   }
 
+  if (ino->dev_ == ino->parent_->dev_)
+    ll_remove(&kSYS.inodeLru_, &ino->lruNd_);
+
+  /* Free all pages */
+  for (;;) {
+    page = bb_best(&ino->pageTree_, kPage_t, treeNd_);
+    if (!page)
+      break;
+    mmu_releasepage(page->phys_);
+    bb_remove(&ino->pageTree_, &page->treeNd_);
+    kfree(page);
+  }
+
+
   kunlock (&ino->lock_);
   kunlock (&ino->parent_->lock_);
-  ll_remove(&kSYS.inodeLru_, &ino->lruNd_);
 
   /// @todo Free all buckets and stream objects...
   /// @todo Push to garbadge candidate

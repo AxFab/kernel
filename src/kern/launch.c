@@ -1,5 +1,6 @@
 #include <smkos/kapi.h>
 #include <smkos/kstruct/user.h>
+#include <smkos/kstruct/map.h>
 #include <smkos/drivers.h>
 
 
@@ -99,14 +100,17 @@ void kernel_start ()
 void kernel_sweep()
 {
   kInode_t* fb = search_inode ("/dev/Fb0", NULL, 0);
+  area_display(kSYS.mspace_);
   kprintf ("\x1b[31mEnding...\x1b[0m\n");
-  scavenge_area(kSYS.mspace_);
-  scavenge_inodes(8000);
-  display_inodes();
-  kprintf("\n");
   clean_subsys();
   BMP_sync(fb);
+  scavenge_inodes(8000);
+  scavenge_area(kSYS.mspace_);
+  // display_inodes();
+  // area_display(kSYS.mspace_);
+  assert (kSYS.mspace_->vrtPages_ == 0);
   sweep_vfs();
+  destroy_all_users();
   mmu_leave_env();
 }
 

@@ -409,31 +409,17 @@ kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags)
 /* ----------------------------------------------------------------------- */
 int process_clean_resx(kProcess_t *process)
 {
-  int i;
   kResx_t* resx;
   assert(kislocked(&process->lock_));
 
-  // for (;;) {
-  //   resx = bb_best(&process->resxTree_, kResx_t, fdNd_);
-  //   if (resx == NULL)
-  //     return 0;
+  for (;;) {
+    resx = bb_best(&process->resxTree_, kResx_t, fdNd_);
+    if (resx == NULL)
+      return 0;
 
-  //   // @todo Fix -- bb_delete(&process->resxTree_, &resx->fdNd_);
-  //   inode_close(resx->ino_);
-  //   kfree(resx);
-  // }
-  for (i = 0; i < process->fdCount_; ++i) {
-
-    resx = bb_search (&process->resxTree_, i, kResx_t, fdNd_);
-    if (resx == NULL) {
-      kunlock(&process->lock_);
-      return EBADF;
-    }
-
-    assert((int)resx->fdNd_.value_ == i);
-    // @todo Fix -- bb_delete(&process->resxTree_, &resx->fdNd_);
+    bb_remove(&process->resxTree_, &resx->fdNd_);
     inode_close(resx->ino_);
-    // kfree(resx);
+    kfree(resx);
   }
 }
 
@@ -450,9 +436,9 @@ int process_close_resx(kProcess_t *process, int fd)
   }
 
   assert((int)resx->fdNd_.value_ == fd);
-  // @todo Fix -- bb_delete(&process->resxTree_, &resx->fdNd_);
+  bb_remove(&process->resxTree_, &resx->fdNd_);
   inode_close(resx->ino_);
-  // kfree(resx);
+  kfree(resx);
 
   kunlock(&process->lock_);
   return 0;

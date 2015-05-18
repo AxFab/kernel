@@ -210,6 +210,12 @@ int ISO_mount (kInode_t *dev, const char *name)
   return 0;
 }
 
+/* ----------------------------------------------------------------------- */
+int ISO_unmount (kInode_t *dev, void* info)
+{
+  kfree(info);
+  return 0;
+}
 
 /* ----------------------------------------------------------------------- */
 // int ISO_readdir (const _pFileNode fn) {
@@ -317,6 +323,7 @@ void ISO9660(kDriver_t *driver)
   driver->major_ = ISO_No;
   driver->name_ = strdup("iso9660");
   driver->mount = ISO_mount;
+  driver->unmount = ISO_unmount;
   driver->lookup = ISO_lookup;
   driver->read = ISO_read;
   // driver->readdir = ISO_readdir;

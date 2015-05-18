@@ -44,6 +44,7 @@ struct kDriver {
   atomic_t usage_;
 
   int (*mount)(kInode_t* dev, const char *name);
+  int (*unmount)(kInode_t* dev, void* info);
   int (*dispose)();
 
   int (*map)(kInode_t *fp, size_t offset, page_t *page);
@@ -110,6 +111,16 @@ struct kPipe
   int flags_;
   struct llhead waiting_;
 };
+
+
+struct kPage
+{
+  page_t phys_;
+  size_t offset_;
+  struct bbnode treeNd_;
+};
+
+
 
 #define FP_WRITE_FULL (1 << 3) /**< Ensure that write is full, usefulll for event structure or queue */
 #define FP_BLOCK    (1 << 4)
