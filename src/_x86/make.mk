@@ -22,7 +22,7 @@ OsCore.iso: $(krn_img)
 # Extract utilities package on iso !
 	$(Q) "    ISO "$@
 	$(V) grub-mkrescue -o $@ iso 2>/dev/null >/dev/null
-	@ rm -rf iso
+	@ -rm -rf iso
 
 
 endif

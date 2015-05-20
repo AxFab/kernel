@@ -1,156 +1,196 @@
-# Makefile for SmokeOS kernel
-# ----------------------------------------------------
+# Makefile
+# ---------------------------------------------------------------------------
 
-include scripts/global_settings.mk
+# Settings user
+ARCH ?= x86
+bld_dir ?= .
 
-all: cdrom $(BOOT_DIR)/kImage
+CC = gcc
+LD =  ld
+V = 
 
+CFLAGS = -Wall -Wextra -Wno-unused-parameter
+LFLAGS = 
+INC =
+SRCS =  
 
-clean:
-	$(V) rm -rf $(OBJS_DIR)
-	$(V) rm -rf $(patsubst %/iso,%,$(wildcard */iso))
+# Settings scripted
+src_dir = $(shell dirname $(firstword $(MAKEFILE_LIST)))
 
-
-destroy: clean
-	$(V) rm -rf $(BIN_DIR)
-	$(V) rm -rf $(LIB_DIR)
-	$(V) rm -rf $(BOOT_DIR)
-	$(V) rm -rf $(TEST_DIR)
-
-distclean: destroy
-	$(V) rm -rf *.iso
-
-include scripts/kernel_rules.mk
-include scripts/common_rules.mk
-
-
-# ----------------------------------------------------
-CRTK = $(OBJS_DIR)/crtk.o
-CRT0 = $(OBJS_DIR)/crt0.o
-
-UM_SRC =  $(wildcard src/kern/*.c) \
-					$(wildcard src/scall/*.c) \
-					$(wildcard src/_um/*.c) \
-					src/fs/iso.c src/fs/gpt.c src/fs/hdd.c \
-					src/fs/tmpfs.c src/fs/bmp.c src/fs/kdb.c
-
-KRN_SRC = $(wildcard src/kern/*.c) \
-					$(wildcard src/libc/*.c) \
-					$(wildcard src/scall/*.c) \
-					$(wildcard src/_x86/*.c) \
-					src/fs/ata.c src/fs/iso.c src/fs/gpt.c \
-					src/fs/tmpfs.c src/fs/svga.c src/fs/kdb.c
-
-include scripts/global_commands.mk
-
-# ----------------------------------------------------
-cdrom: $(BUILD_DIR)/OsCore.iso
-
-crtk: $(CRTK)
-crt0: $(CRT0)
+arch_src = $(src_dir)/src/_$(ARCH)
+deps_ax = $(src_dir)/3rdparty/axlibc
+bin_dir = $(bld_dir)
+lib_dir = $(bld_dir)/lib
+obj_dir = $(bld_dir)/obj
+krn_img = $(bld_dir)/kImage
 
 
-
-
-ifeq ($(MIN),)
-$(BOOT_DIR)/kImage: $(CRTK) $(call objs,kernel,$(KRN_SRC))
-
-# $(BOOT_DIR)/kImage: $(CRTK) \
-# 		$(call objs,kernel,$(KR2_SRC))
-#		$(AXLIBC)/lib/libAxRaw.a
-# $(BOOT_DIR)/kImage: $(CRTK) \
-# 		$(call objs,kernel,$(KRN_SRC)) \
-# 		$(call objs,kernel,$(ARC_SRC)) \
-# 		$(AXLIBC)/lib/libAxRaw.a
+ifneq ($(ARCH),um)
+# CFLAGS += -nostdinc -isystem $(deps_ax)/include
+LFLAGS += -nostdlib
 else
-$(BOOT_DIR)/kImage: $(CRTK) \
-		$(call objs,kernel,$(MIN_SRC)) \
-		$(call objs,kernel,$(ARC_SRC)) \
-		$(AXLIBC)/lib/libAxRaw.a
+CFLAGS += -ggdb3 --coverage -fprofile-arcs -ftest-coverage
+CFLAGS += -D_FS -D_FS_UM
+LFLAGS += --coverage
 endif
 
 
-LIBC_SRC = src/utilities/lib.c src/libc/string.c  \
-		src/libc/printf.c src/libc/vfprintf.c \
-		src/libc/ctype.c src/libc/integer.c \
-		src/libc/int64.c
+# ---------------------------------------------------------------------------
+# Additional info
+linuxname := $(shell uname -sr)
+git_hash := $(shell git -C $(src_dir) log -n1 --pretty='%h')$(shell if [ -n "$(git status --short -uno)"]; then echo '+'; fi)
+date := $(shell date '+%d %b %Y')
+vtag := $(shell cat $(src_dir)/.build)
 
-$(BIN_DIR)/master.xe: $(call objs,smokeos,src/utilities/master.c $(LIBC_SRC))
-$(BIN_DIR)/deamon.xe: $(call objs,smokeos,src/utilities/deamon.c $(LIBC_SRC))
-$(BIN_DIR)/hello.xe: $(call objs,smokeos,src/utilities/hello.c $(LIBC_SRC))
-$(BIN_DIR)/sname.xe: $(call objs,smokeos,src/utilities/sname.c $(LIBC_SRC))
-$(BIN_DIR)/init.xe: $(call objs,smokeos,src/utilities/init.c $(LIBC_SRC))
-$(BIN_DIR)/kt_itimer.xe: $(call objs,smokeos,src/utilities/kt_itimer.c $(LIBC_SRC))
+CFLAGS += -D_DATE_=\"'$(date)'\" -D_OSNAME_=\"'$(linuxname)'\" 
+CFLAGS += -D_GITH_=\"'$(git_hash)'\" -D_VTAG_=\"'$(vtag)'\"
 
-PROGS  = $(BIN_DIR)/master.xe
-PROGS += $(BIN_DIR)/deamon.xe
-PROGS += $(BIN_DIR)/hello.xe
-PROGS += $(BIN_DIR)/sname.xe
-PROGS += $(BIN_DIR)/init.xe
-PROGS += $(BIN_DIR)/kt_itimer.xe
+INC += -I $(src_dir)/include -I $(src_dir)/include/_$(ARCH)
+INC += -I $(src_dir)/internal -I $(src_dir)/internal/_$(ARCH)
+ 
+# ---------------------------------------------------------------------------
+# Generic definitions
+define objs
+	$(patsubst $(src_dir)/src/%.c,$(obj_dir)/%.o,    \
+	$(patsubst $(src_dir)/src/%.cpp,$(obj_dir)/%.o,  \
+	$(patsubst $(src_dir)/src/%.asm,$(obj_dir)/%.o,  \
+	$(1)                                             \
+	)))
+endef
 
+ifeq ($(VERBOSE),)
+V = @
+else
+V = 
+endif
 
-$(BUILD_DIR)/OsCore.iso: $(BOOT_DIR)/grub/grub.cfg \
-	$(BOOT_DIR)/kImage $(BOOT_DIR)/kImage.map \
-	$(PROGS)
+ifeq ($(QUIET),)
+Q = @ echo
+else
+Q = @ true
+endif
 
-# $(BOOT_DIR)/kImage.map \
+ifeq ($(shell [ -d $(obj_dir) ] || echo N ),N)
+NODEPS=1
+endif
+ifeq ($(MAKECMDGOALS),help)
+NODEPS = 1
+endif
+ifeq ($(MAKECMDGOALS),clean)
+NODEPS = 1
+endif
+ifeq ($(MAKECMDGOALS),destroy)
+NODEPS = 1
+endif
 
-kernSim:$(BIN_DIR)/kernSim
+# ---------------------------------------------------------------------------
+# Source code
+SRCS += $(wildcard $(src_dir)/src/kern/*.c)
+SRCS += $(wildcard $(src_dir)/src/_$(ARCH)/*.c)
+SLIB += $(lib_dir)/libkfs.a
 
-$(BIN_DIR)/kernSim: $(call objs,debug,$(KRN_SRC)) $(call objs,debug,$(CHK_SRC))
-
-
-um:$(TEST_DIR)/um
-
-$(TEST_DIR)/um: $(call objs,testing,$(UM_SRC))
-
-
-# =======================================================
-#      Code coverage HTML
-# =======================================================
-
-SED_LCOV  = -e '/SF:\/usr.*/,/end_of_record/d'
-SED_LCOV += -e '/SF:.*\/src\/tests\/.*/,/end_of_record/d'
-
-# -----------------------------	--------------------------
-# Create coverage HTML report
-%.lcov: $(TEST_DIR)/%
-	@ find -name *.gcda | xargs -r rm
-	@ CK_FORK=no $<
-	@ lcov -c --directory . -b . -o $@
-	@ sed $(SED_LCOV) -i $@
-
-cov_%: %.lcov
-	@ genhtml -o $@ $<
-
-
-# =======================================================
-#      Code quality reports
-# =======================================================
-
-# -------------------------------------------------------
-# Static report - depend of sources
-report_cppcheck_%.xml: src/%
-	@ cppcheck -v --enable=all --xml-version=2 -Iinclude $(wildcard $</*) 2> $@
-
-report_rats_%.xml: src/%
-	@ rats -w 3 --xml $(wildcard $</*) > $@
+ifneq ($(ARCH),um)
+SRCS += $(wildcard $(src_dir)/src/libc/*.c)
+# SLIB += $(lib_dir)/libaxb.a
+endif
 
 
-# -------------------------------------------------------
-# Dynamic report - depend of tests
-report_check_%.xml: $(TEST_DIR)/%
-	@ $< -xml
+# ---------------------------------------------------------------------------
+all: $(krn_img)
+	@ strip $<
+	@ ls -lh $<
+	@ size $<
 
-report_gcov_%.xml: $(TEST_DIR)/%
-	@ find -name *.gcda | xargs -r rm
-	@ CK_FORK=no $<
-	@ gcovr -x -r . > $@
+include $(arch_src)/make.mk
+include $(src_dir)/src/fs/make.mk
 
-report_valgrind_%.xml: $(TEST_DIR)/%
-	@ CK_FORK=no valgrind --xml=yes --xml-file=$@  $<
+$(krn_img): $(call objs,$(SRCS)) $(SLIB) $(KDEPS)
+	@ mkdir -p $(dir $@)
+	$(Q) "    LD  "$@
+ifneq ($(ARCH),um)
+	$(V) $(LD) -T $(arch_src)/kernel.ld $(LFLAGS) -o $@ $(call objs,$(SRCS)) $(SLIB)
+else
+	$(V) $(CC) $(LFLAGS) -o $@ $^
+endif
+
+$(obj_dir)/%.o: $(src_dir)/src/%.c
+	@ mkdir -p $(dir $@)
+	$(Q) "    CC  "$<
+	$(V) $(CC) -c $(INC_krn) $(INC) $(CFLAGS) -o $@ $<
+
+$(obj_dir)/%.d: $(src_dir)/src/%.c
+	@ mkdir -p $(dir $@)
+	$(Q) "    DP  "$<
+	$(V) $(CC) -MM $(INC_krn) $(INC) $(CFLAGS) -o $@ $<
+ifneq ($(DPMAX),)
+	@ cp $@ $@.tmp
+	@ sh -c "cat $@.tmp | fmt -1 | sed -e 's/.*://' -e 's/\\\\$$//' -e 's/^\s*//' | grep -v '^\s*$$' | sed 's/$$/:/'" >> $@
+	@ rm $@.tmp
+endif
+
+# ===========================================================================
+#    Static Libraries
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# libaxb.a - external
+$(lib_dir)/libaxb.a:
+	$(Q) "    >>  "$@
+	@ cd $(deps_ax) && $(MAKE) $@
+	$(Q) "    <<  "$@
 
 
-# -------------------------------------------------------
-# -------------------------------------------------------
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+$(lib_dir)/lib%.a:
+	@ mkdir -p $(dir $@)
+	$(Q) "    AR  "$@
+	$(V) ar src $@ $^
+
+clean:
+	@ rm -rf $(obj_dir)
+	@ rm -rf $(lib_dir)
+
+destroy: clean
+	@ rm $(krn_img)
+
+sources:
+	@ echo $(SRCS) | tr ' ' '\n'
+
+help:
+	@ echo " "
+	@ echo "        Makefile for the kernel"
+	@ echo "USAGE:"
+	@ echo "  make [target] [options]"
+	@ echo " "
+	@ echo " The target can be the path of a special delivery or one of "
+	@ echo " the commands: "
+	@ echo "   all:        build the kernel image"
+	@ echo "   clean:      remove temporary file (objs & libs)"
+	@ echo "   destroy:    remove all generated files."
+	@ echo "   sources:    print a list of kernel sources files."
+	@ echo "   help:       print this help."
+	@ echo " Some other targets might be defined for one architecture:"
+	@ echo "   _um: coverage (code coverage - you need testing repository)."
+	@ echo "   _x86: cdrom, create a bootable ISO image."
+	@ echo " "
+	@ echo "OPTIONS:"
+	@ echo "    QUIT=1      Remove extra logs."
+	@ echo "    VERBOSE=1   Print main commands."
+	@ echo "    NODEPS=1    Don't compute source dependencies."
+	@ echo "                Note this option may activates by-itself."
+	@ echo "    ARCH=?      Change the architecture. I recommand changing "
+	@ echo "                also the build directory or cleaning (default:x86)."
+	@ echo "    bld_dir=?   Change the directory to put generated file (default:.)."
+	@ echo " "
+
+
+
+# ===========================================================================
+
+ifeq ($(NODEPS),)
+-include $(patsubst %.o,%.d,$(call objs,$(SRCS)))
+endif
+
+# ===========================================================================
+# ===========================================================================
