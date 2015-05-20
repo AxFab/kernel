@@ -20,6 +20,7 @@
  *      Intel x86 CPU wrapper implementation.
  */
 #include <smkos/kernel.h>
+#include <smkos/kapi.h>
 #include <smkos/kstruct/task.h>
 
 // #include <smkos/core.h>
@@ -38,6 +39,18 @@ void cpu_halt()
   cpu_halt_(MMU_PREALLOC_STK, 0x1004);
 }
 
+void cpu_wait()
+{
+  sched_stop(kSYS.scheduler_, kCPU.current_, SCHED_BLOCKED);
+  sched_next(kSYS.scheduler_);
+  assert(0);
+  /* @todo -- this is not CPU releated. */
+}
+
+void log_sys(const char *sbuf)
+{
+  kprintf ("  %2d.%02d] %s\n", kCPU.current_->process_->pid_, (kCPU.current_->paramEntry_ >> 24), sbuf);
+}
 
 /* ----------------------------------------------------------------------- */
 void cpu_save_task(kThread_t *thread)

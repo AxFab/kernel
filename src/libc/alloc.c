@@ -233,7 +233,7 @@ int memcorrupt_r (struct SMK_HeapArea *heap)
 void meminit_r(struct SMK_HeapArea *heap, void *base, size_t length)
 {
   heap->flags |= ALLOC_PARANOID;
-  heap->start = ( struct SMK_HeapChunk * ) ALIGN ( (uintptr_t)base, ALLOC_MIN_CHUNK );
+  heap->start = ( struct SMK_HeapChunk *) ALIGN ( (uintptr_t)base, ALLOC_MIN_CHUNK );
   heap->begin_ = (size_t)base;
   heap->end_ = (size_t)base + length;
   heap->free_list = NULL;
@@ -324,7 +324,7 @@ void *malloc_r(struct SMK_HeapArea *heap, size_t size)
 
       if (chunk->chunk_size >= size + ALLOC_MIN_CHUNK ) {
         // If the size is enough for a new block
-        split = ( struct SMK_HeapChunk * ) ((( size_t ) chunk ) + size);
+        split = ( struct SMK_HeapChunk *) ((( size_t ) chunk ) + size);
         split->chunk_size = chunk->chunk_size - size;
         split->prev_size = size;
         next =  (struct SMK_HeapChunk *)((size_t)split + (size_t)split->chunk_size);

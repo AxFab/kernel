@@ -56,12 +56,12 @@ static void elf_read_section (kAssembly_t *assembly, kInode_t *ino, struct ELF_p
 /** Read an ELF image file and create the corresponding assembly.
   * @todo think about loading extra information
   */
-static kAssembly_t* elf_open (kInode_t* ino)
+static kAssembly_t *elf_open (kInode_t *ino)
 {
   int i;
   struct ELF_header *head;
   struct ELF_phEntry *phe;
-  kMemArea_t* area;
+  kMemArea_t *area;
   kAssembly_t *assembly;
 
   if (ino->assembly_)
@@ -69,7 +69,8 @@ static kAssembly_t* elf_open (kInode_t* ino)
 
   area = area_map_ino(kSYS.mspace_, ino, 0, PAGE_SIZE, 0);
   area->at_ = __AT__;
-  head = (struct ELF_header*)area->address_;
+  head = (struct ELF_header *)area->address_;
+
   if (head == NULL) {
     area_unmap(kSYS.mspace_, area);
     return NULL;

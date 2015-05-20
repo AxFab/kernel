@@ -141,14 +141,14 @@ void kdump (void *ptr, int lg)
 #define SC_DATA   2
 #define SC_BSS    3
 
-void ksymbols_load (kInode_t* ino)
+void ksymbols_load (kInode_t *ino)
 {
   int i = 0;
   int j;
   int state = 0;
   int lg = ino->stat_.length_;
   size_t ptr;
-  kMemArea_t* area;
+  kMemArea_t *area;
   char *tmp;
   char *str = kalloc (512);
   char *sym = kalloc (512);
@@ -161,6 +161,7 @@ void ksymbols_load (kInode_t* ino)
   while (i < lg) {
 
     j = 0;
+
     while (tmp[i + j] != '\n' && (i + j) < lg) {
       if (j >= 512 || tmp[i + j] < 0) {
         state = -1;
@@ -187,7 +188,7 @@ void ksymbols_load (kInode_t* ino)
     } else {
       strncpy (add, &str[16], 18);
       strcpy (sym, &str[50]);
-      sym[strlen(sym)-1] = '\0';
+      sym[strlen(sym) - 1] = '\0';
       add[19] = '\0';
       ptr = (size_t)strtoull (add, NULL, 0);
 

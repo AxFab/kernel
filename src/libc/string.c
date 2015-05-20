@@ -269,8 +269,8 @@ int bclearbytes (uint8_t *table, int offset, int length)
 /** Copy block of memory */
 void *memcpy ( void *dest, const void *src, size_t length )
 {
-  register uint8_t *ptr1 = ( uint8_t * ) dest;
-  register const uint8_t *ptr2 = ( const uint8_t * ) src;
+  register uint8_t *ptr1 = ( uint8_t *) dest;
+  register const uint8_t *ptr2 = ( const uint8_t *) src;
 
   while (length--) {
     *ptr1++ = *ptr2++;
@@ -283,8 +283,8 @@ void *memcpy ( void *dest, const void *src, size_t length )
 /** Copy source buffer to destination buffer */
 void *memmove ( void *dest, const void *src, size_t length )
 {
-  register uint8_t *ptr1 = ( uint8_t * ) dest;
-  register const uint8_t *ptr2 = ( const uint8_t * ) src;
+  register uint8_t *ptr1 = ( uint8_t *) dest;
+  register const uint8_t *ptr2 = ( const uint8_t *) src;
 
   if ( ptr1 >= ptr2 || ptr1 >= ptr2 + length ) {
     while (length--) {
@@ -306,8 +306,8 @@ void *memmove ( void *dest, const void *src, size_t length )
 /** Compare two blocks of memory */
 int memcmp ( const void *dest, const void *src, size_t length )
 {
-  register const uint8_t *ptr1 = ( const uint8_t * ) dest;
-  register const uint8_t *ptr2 = ( const uint8_t * ) src;
+  register const uint8_t *ptr1 = ( const uint8_t *) dest;
+  register const uint8_t *ptr2 = ( const uint8_t *) src;
 
   while ( --length && *ptr1 == *ptr2 ) {
     ++ptr1;
@@ -321,21 +321,21 @@ int memcmp ( const void *dest, const void *src, size_t length )
 /** Search a character into a block of memory */
 void *memchr ( const void *ptr, int chr, size_t length )
 {
-  register const uint8_t *ptr0 = ( const uint8_t * ) ptr;
+  register const uint8_t *ptr0 = ( const uint8_t *) ptr;
 
   while ( length > 0 && ( *ptr0 != ( uint8_t ) chr ) ) {
     ++ptr0;
     --length;
   }
 
-  return ( void * ) ( length ? ptr0 : 0 );
+  return ( void *) ( length ? ptr0 : 0 );
 }
 
 /* ----------------------------------------------------------------------- */
 /** Set all byte of a block of memory to the same value */
 void *memset ( void *ptr, int val, size_t length )
 {
-  register uint8_t *org = ( uint8_t * ) ptr;
+  register uint8_t *org = ( uint8_t *) ptr;
 
   while (length--) {
     *org++ = ( uint8_t ) val;
@@ -399,8 +399,8 @@ size_t strnlen ( const char *str, size_t length )
 // Copy a null-terminated char string
 char *strcpy ( char *dest, const char *src )
 {
-  register char *ptr1 = ( char * ) dest;
-  register const char *ptr2 = ( const char * ) src;
+  register char *ptr1 = ( char *) dest;
+  register const char *ptr2 = ( const char *) src;
 
   while ( ( *ptr1++ = *ptr2++ ) );
 
@@ -410,8 +410,8 @@ char *strcpy ( char *dest, const char *src )
 // Copy a char string
 char *strncpy ( char *dest, const char *src, size_t length )
 {
-  register char *ptr1 = ( char * ) dest;
-  register const char *ptr2 = ( const char * ) src;
+  register char *ptr1 = ( char *) dest;
+  register const char *ptr2 = ( const char *) src;
 
   while ( length-- > 0 && ( *ptr1++ = *ptr2++ ) );
 
@@ -421,8 +421,8 @@ char *strncpy ( char *dest, const char *src, size_t length )
 // Concat two null-terminated char strings
 char *strcat ( char *dest, const char *src )
 {
-  register char *ptr1 = ( char * ) dest;
-  register const char *ptr2 = ( const char * ) src;
+  register char *ptr1 = ( char *) dest;
+  register const char *ptr2 = ( const char *) src;
 
   while ( *ptr1 ) {
     ++ptr1;
@@ -436,8 +436,8 @@ char *strcat ( char *dest, const char *src )
 // Concat two null-terminated char strings
 char *strncat ( char *dest, const char *src, size_t length )
 {
-  register char *ptr1 = ( char * ) dest;
-  register const char *ptr2 = ( const char * ) src;
+  register char *ptr1 = ( char *) dest;
+  register const char *ptr2 = ( const char *) src;
 
   while ( *ptr1 ) {
     ++ptr1;
@@ -522,7 +522,7 @@ char *strtok_r ( register char *s, register const char *delim, char **lasts )
 cont:
   c = *s++;
 
-  for ( spanp = ( char * ) delim; ( sc = *spanp++ ) != 0; ) {
+  for ( spanp = ( char *) delim; ( sc = *spanp++ ) != 0; ) {
     if ( c == sc ) {
       if ( skip_leading_delim ) {
         goto cont;
@@ -547,7 +547,7 @@ cont:
    */
   for ( ;; ) {
     c = *s++;
-    spanp = ( char * ) delim;
+    spanp = ( char *) delim;
 
     do {
       if ( ( sc = *spanp++ ) == c ) {

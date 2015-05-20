@@ -40,23 +40,22 @@ kSubSystem_t frameTty = {
 
 
 kSubSystem_t *sysLogTty = &vgaText;
-kInode_t* sysOut = NULL;
+kInode_t *sysOut = NULL;
 
 
 /* ----------------------------------------------------------------------- */
 
 
 /* ----------------------------------------------------------------------- */
-int term_create (kSubSystem_t *subsys, kInode_t* frame)
+int term_create (kSubSystem_t *subsys, kInode_t *frame)
 {
-  kInode_t* ino;
-  kInode_t* inon;
+  kInode_t *ino;
+  kInode_t *inon;
   kMemArea_t *area;
   char no[10];
-  static int auto_incr = 0;
   int fontW = 6;
   int fontH = 9;
-  int nol = auto_incr++;
+  int nol = kSYS.ttyAutoInc_++;
   kTerm_t *term;
 
   snprintf(no, 10, "Tty%d", nol);
@@ -83,7 +82,7 @@ int term_create (kSubSystem_t *subsys, kInode_t* frame)
 
   area = area_map_ino(kSYS.mspace_, frame, 0, frame->stat_.length_, 0);
   area->at_ = __AT__;
-  term->pixels_ = (void*)area->address_;
+  term->pixels_ = (void *)area->address_;
   term->pxArea_ = area;
 
   term->width_ = frame->stat_.block_ / 4;
@@ -111,9 +110,23 @@ int term_create (kSubSystem_t *subsys, kInode_t* frame)
   return __seterrno(0);
 }
 
+void term_create_tty (kSubSystem_t *subsys)
+{
+  kInode_t *inon;
+  char no[10];
+  static int auto_incr = 0;
+  int nol = auto_incr++;
+
+  snprintf(no, 10, ".Tty%d", nol);
+  inon = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, PAGE_SIZE);
+  assert (inon != NULL);
+
+  inon->subsys_ = subsys;
+  subsys->in_ = inon;
+}
 
 /* ----------------------------------------------------------------------- */
-int term_readchar (kTerm_t *term, kLine_t *style, const char** str)
+int term_readchar (kTerm_t *term, kLine_t *style, const char **str)
 {
   if (**str < 0) {
     /// @todo support UTF-8
@@ -122,10 +135,10 @@ int term_readchar (kTerm_t *term, kLine_t *style, const char** str)
     return *(*str)++;
   } else if (**str == _ESC || **str == _EOL) {
     return *(*str)++;
-  } else {
-    (*str)++;
-    return 0x7f;
   }
+
+  (*str)++;
+  return 0x7f;
 }
 
 
@@ -140,7 +153,7 @@ void term_changecolor(kTerm_t *term, kLine_t *style, int cmd)
   if (cmd == 0) {
     style->txColor_ = term->txColor_;
     style->bgColor_ = term->bgColor_;
-  }else if (cmd < 30) {
+  } else if (cmd < 30) {
   } else if (cmd < 40) {
     style->txColor_ = consoleColor[cmd - 30];
   } else {
@@ -149,24 +162,27 @@ void term_changecolor(kTerm_t *term, kLine_t *style, int cmd)
 
 
 /* ----------------------------------------------------------------------- */
-void term_readcmd(kTerm_t *term, kLine_t *style, const char** str)
+void term_readcmd(kTerm_t *term, kLine_t *style, const char **str)
 {
   int i;
   int val[5];
+
   if (**str != '[')
     return;
 
   (*str)++;
-  i=0;
-  do {
-    val[i++] = (int)strtoull(*str, (char**)str, 10);
+  i = 0;
 
-  } while(i < 5 && **str == ';');
+  do {
+    val[i++] = (int)strtoull(*str, (char **)str, 10);
+
+  } while (i < 5 && **str == ';');
 
   switch (**str) {
   case 'm':
-    while (i>0)
+    while (i > 0)
       term_changecolor(term, style, val[--i]);
+
     break;
   }
 
@@ -179,12 +195,13 @@ int term_paint (kTerm_t *term, kLine_t *style, int row)
 {
   int ch;
   int col = 0;
-  const char* base = (char*)term->pipe_->mmap_->address_;
+  const char *base = (char *)term->pipe_->mmap_->address_;
   const char *str = &base[style->offset_]; // String is the offset of the string
 
 
   while (*str) {
     ch = term_readchar(term, style, &str);
+
     if (ch == _EOL) {
       return str - base;
     } else if (ch == _ESC) {
@@ -272,6 +289,7 @@ void term_write (kTerm_t *term)
 {
   kLine_t *newLine;
   int pen; // Where start the next line
+
   for (;;) {
 
     if (term->row_ > term->max_row_) {
@@ -318,28 +336,30 @@ void kwrite_pipe (const char *m)
 
 void event_pipe(int type, int value)
 {
-  kInode_t* ino = sysLogTty->in_;
+  kInode_t *ino = sysLogTty->in_;
+
   // kTerm_t* term = sysLogTty->term_;
-  switch (type)
-  {
+  switch (type) {
   case EV_KEYDW:
     if (value == _BKSP) {
       //fs_pipe_unget(1);
     } else if (value < 0x80)
       fs_pipe_write(ino, &value, 1);
+
     break;
 
-    default:
-      break;
+  default:
+    break;
   }
 }
 
-void create_subsys(kInode_t* kbd, kInode_t* screen)
+void create_subsys(kInode_t *kbd, kInode_t *screen)
 {
   if (screen != NULL) {
     term_create(&frameTty, screen);
     sysLogTty = &frameTty;
   } else {
+    term_create_tty(&vgaText);
     sysLogTty = &vgaText;
   }
 
@@ -349,7 +369,7 @@ void create_subsys(kInode_t* kbd, kInode_t* screen)
 }
 
 
-void open_subsys(kInode_t* input, kInode_t* output)
+void open_subsys(kInode_t *input, kInode_t *output)
 {
   assert(S_ISFIFO(input->stat_.mode_) || S_ISCHR(input->stat_.mode_));
   assert(S_ISFIFO(output->stat_.mode_) || S_ISCHR(output->stat_.mode_));
@@ -360,13 +380,21 @@ void open_subsys(kInode_t* input, kInode_t* output)
   sysOut = output;
 }
 
+int BMP_sync(kInode_t *);
+
 void clean_subsys()
 {
+#ifdef _FS_UM
+  kInode_t *fb = search_inode ("/dev/Fb0", NULL, 0);
+  BMP_sync(fb);
+#endif
+
   if (sysLogTty->term_)
     term_close (sysLogTty->term_);
-   sysLogTty = &vgaText;
-}
 
+  sysLogTty = &vgaText;
+  sysOut = NULL;
+}
 
 
 /* ----------------------------------------------------------------------- */

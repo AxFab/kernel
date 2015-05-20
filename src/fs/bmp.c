@@ -23,7 +23,7 @@ PACK(struct BMP_Header {
   uint32_t colorImpor_;
 });
 
-uint32_t* bmp_ptr = NULL;
+uint32_t *bmp_ptr = NULL;
 
 // int BMP_map (kInode_t *ino, size_t offset, page_t *phys)
 // {
@@ -33,7 +33,8 @@ uint32_t* bmp_ptr = NULL;
 int BMP_read (kInode_t *ino, void *bucket, size_t length, size_t lba)
 {
   if (lba == 0)
-    bmp_ptr = (uint32_t*)bucket;
+    bmp_ptr = (uint32_t *)bucket;
+
   // memcpy (bucket, &((char*)ino->dev->data_)[lba], length);
   return 0;
 }
@@ -48,8 +49,9 @@ int BMP_write (kInode_t *ino, void *bucket, size_t length, size_t lba)
 void BMP_sync (kInode_t *ino)
 {
   struct BMP_Header head;
-  FILE* fp;
+  FILE *fp;
   int i;
+
   if (!bmp_ptr)
     return;
 
@@ -70,8 +72,10 @@ void BMP_sync (kInode_t *ino)
   head.vertResol_ = 96;
 
   fwrite (&head, 1, sizeof(head), fp);
+
   for (i = 599; i >= 0; --i)
-    fwrite (&bmp_ptr[i*800], 4, 800, fp);
+    fwrite (&bmp_ptr[i * 800], 4, 800, fp);
+
   fclose(fp);
 }
 

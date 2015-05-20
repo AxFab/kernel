@@ -34,36 +34,41 @@ int sys_open(const char *path, int dirFd, int flags, int mode)
 {
   // int err;
   kInode_t *ino = NULL;
-  kResx_t* resx;
+  kResx_t *resx;
 
   // if (err = sys_check_pathname(path))
   //   return err;
 
   if (dirFd > 0) {
     resx = process_get_resx (kCPU.current_->process_, dirFd, 0);
+
     if (resx == NULL)
       return EBADF;
+
     ino = resx->ino_;
   }
 
   ino = search_inode (path, ino, flags);
+
   if (ino == NULL) {
     __seterrno(ENOSYS);
     return -1;
   }
 
+  klock (&kCPU.current_->process_->lock_);
   resx = process_set_resx(kCPU.current_->process_, ino, 0); // O_RDLY or O_WRLY
+  kunlock (&kCPU.current_->process_->lock_);
   return resx->fdNd_.value_;
 }
 
 int sys_close(int fd)
 {
-  return process_close_resx(kCPU.current_->process_, fd, 0);
+  return process_close_resx(kCPU.current_->process_, fd);
 }
 
-int sys_write(int fd, void* data, size_t lg, size_t off)
+int sys_write(int fd, const void *data, size_t lg, off_t off)
 {
-  kResx_t* resx;
+  kResx_t *resx;
 
   if (lg > FBUFFER_MAX) {
     __seterrno(ENOSYS);
@@ -71,6 +76,7 @@ int sys_write(int fd, void* data, size_t lg, size_t off)
   }
 
   resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
+
   if (resx == NULL)
     return -1;
 
@@ -78,30 +84,30 @@ int sys_write(int fd, void* data, size_t lg, size_t off)
     kprintf (data);
 
   switch (resx->type_) {
-    case S_IFBLK:
-    case S_IFREG:
-      // return fs_block_write();
-      return -1;
+  case S_IFBLK:
+  case S_IFREG:
+    // return fs_block_write();
+    return -1;
 
-    case S_IFCHR:
-    case S_IFIFO:
-      return fs_pipe_write (resx->ino_, data, lg);
+  case S_IFCHR:
+  case S_IFIFO:
+    return fs_pipe_write (resx->ino_, data, lg);
 
-    case S_IFDIR:
-      __seterrno(EISDIR);
-      return -1;
+  case S_IFDIR:
+    __seterrno(EISDIR);
+    return -1;
 
-    default:
-      assert(resx->type_ == 0);
-      __seterrno(EBADF);
-      return -1;
+  default:
+    assert(resx->type_ == 0);
+    __seterrno(EBADF);
+    return -1;
   }
 }
 
-int sys_read(int fd, void* data, size_t lg, size_t off)
+ssize_t sys_read(int fd, void *data, size_t lg, off_t off)
 {
-  int ret = 0;
-  kResx_t* resx;
+  ssize_t ret = 0;
+  kResx_t *resx;
 
   if (lg > FBUFFER_MAX) {
     __seterrno(ENOSYS);
@@ -109,31 +115,41 @@ int sys_read(int fd, void* data, size_t lg, size_t off)
   }
 
   resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
+
   if (resx == NULL)
     return -1;
 
   switch (resx->type_) {
-    case S_IFBLK:
-    case S_IFREG:
-      // return fs_block_write();
-      return -1;
+  case S_IFBLK:
+  case S_IFREG:
+    if (off >= 0)
+      resx->seek_ = off;
 
-    case S_IFCHR:
-    case S_IFIFO:
-      ret = fs_pipe_read (resx->ino_, data, lg);
-      if (ret == 0) {
-        return -1;
-      }
-      return ret;
+    ret = fs_reg_read(resx->ino_, data, lg, resx->seek_);
 
-    case S_IFDIR:
-      __seterrno(EISDIR);
-      return -1;
+    if (ret > 0)
+      resx->seek_ += ret;
 
-    default:
-      assert(resx->type_ == 0);
-      __seterrno(EBADF);
+    return ret;
+
+  case S_IFCHR:
+  case S_IFIFO:
+    ret = fs_pipe_read (resx->ino_, data, lg);
+
+    if (ret == 0) {
       return -1;
+    }
+
+    return ret;
+
+  case S_IFDIR:
+    __seterrno(EISDIR);
+    return -1;
+
+  default:
+    assert(resx->type_ == 0);
+    __seterrno(EBADF);
+    return -1;
   }
 }
 
@@ -142,19 +158,22 @@ int sys_access (const char *path, int dirFd, int mode, int flags)
 {
   // int err;
   kInode_t *ino = NULL;
-  kResx_t* resx;
+  kResx_t *resx;
 
   // if (err = sys_check_pathname(path))
   //   return err;
 
   if (dirFd > 0) {
     resx = process_get_resx (kCPU.current_->process_, dirFd, 0);
+
     if (resx == NULL)
       return EBADF;
+
     ino = resx->ino_;
   }
 
   ino = search_inode (path, ino, flags);
+
   if (ino == NULL)
     return __geterrno();
 

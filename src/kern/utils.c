@@ -52,6 +52,7 @@ char *strdup (const char *str)
     return __seterrnoN(EINVAL, char);
 
   ptr = (char *)kalloc(lg + 1);
+
   if (!ptr)
     return NULL;
 
@@ -64,11 +65,11 @@ char *strdup (const char *str)
 /* ----------------------------------------------------------------------- */
 
 /* Compare two null-terminated char strings */
-int strcmpi (const char* str1, const char* str2)
+int strcmpi (const char *str1, const char *str2)
 {
   while ( *str1 && ( tolower(*str1) == tolower(*str2) ) ) {
-      ++str1;
-      ++str2;
+    ++str1;
+    ++str2;
   }
 
   return tolower(*str1) - tolower(*str2);
@@ -77,12 +78,13 @@ int strcmpi (const char* str1, const char* str2)
 
 /* ----------------------------------------------------------------------- */
 
-time_t time(time_t* ptime)
+time_t time(time_t *ptime)
 {
   time_t now = 0;
 
   if (ptime)
     *ptime = now;
+
   return now;
 }
 

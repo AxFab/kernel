@@ -17,28 +17,24 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      API of system call routines.
+ *      Driver for RAID0.
  */
-#pragma once
-
-#include <smkos/scall.h>
-#include <smkos/types.h>
-
-#define SCALL(r,n,...)    r n (__VA_ARGS__); \
-                          void n ## _do  (char*, char **); \
-                          void n ## _save  (char*, int, __VA_ARGS__, r)
+#include <smkos/kfs.h>
 
 
-SCALL(int, sys_reboot, int, int);
-SCALL(int, sys_exit, int errcode, int pid);
-SCALL(int, sys_exec, const char *exec, struct SMK_StartInfo *info);
+/* ----------------------------------------------------------------------- */
+int RAID0_read(kInode_t *fp, void *buffer, size_t length, size_t offset)
+{
+  int i, err;
+  size_t j;
+  kInode_t **inodes = NULL;
 
-SCALL(int, sys_start, const char*name, size_t entry, size_t param);
-SCALL(int, sys_stop, int);
-SCALL(int, sys_wait, int reason, int param, int timeout);
+  for (i = 0, j = 0; j < length; ++i, j += 512)
+    err = fs_block_read(inodes[i], &((char *)buffer)[j], 512, ALIGN_DW((offset + j) / 2, 512));
 
-SCALL(int, sys_open, const char *path, int dirFd, int flags, int mode);
-SCALL(int, sys_close, int fd);
-SCALL(ssize_t, sys_write, int fd, const void *buf, size_t lg, off_t off);
-SCALL(ssize_t, sys_read, int fd, void *buf, size_t lg, off_t off);
+  return err;
+}
 
+
+/* ----------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------- */

@@ -36,7 +36,7 @@ static kMemArea_t *area_map_begin_ (kMemSpace_t *sp, kMemArea_t *area)
   length = (size_t)(area->limit_ - area->address_);
 
   while (--maxLoop) {
-    if (origin->address_ - base >= length) {
+    if (origin->address_ >= length + base) {
       // INSERT BEFORE ORIGIN
       vma = KALLOC(kMemArea_t);
       memcpy (vma, area, sizeof(kMemArea_t));
@@ -82,7 +82,7 @@ static kMemArea_t *area_map_begin_ (kMemSpace_t *sp, kMemArea_t *area)
 
 
 /* ----------------------------------------------------------------------- */
-static kMemArea_t* area_first(kMemSpace_t* sp, kMemArea_t* area)
+static kMemArea_t *area_first(kMemSpace_t *sp, kMemArea_t *area)
 {
   kMemArea_t *vma;
 
@@ -160,16 +160,18 @@ static kMemArea_t *area_map_at_ (kMemSpace_t *sp, kMemArea_t *area)
 
 
 /* ----------------------------------------------------------------------- */
-kMemArea_t* area_get(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t length)
+kMemArea_t *area_get(kMemSpace_t *sp, kInode_t *ino, size_t offset, size_t length)
 {
   size_t max;
   kMemArea_t *origin = sp->first_;
   int maxLoop = MAX_LOOP;
+  assert (kislocked(&sp->lock_));
 
   while (origin && --maxLoop) {
-    if (origin->ino_ == ino && origin->offset_ <= offset) {
+    if (origin->ino_ == ino && origin->offset_ <= offset/* && origin->usage_ > 0*/) {
 
       max = origin->limit_ - origin->address_ + origin->offset_;
+
       if (offset + length < max)
         return origin;
     }
@@ -183,7 +185,7 @@ kMemArea_t* area_get(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t lengt
 
 /* ----------------------------------------------------------------------- */
 /** Find the area holding an address */
-kMemArea_t *area_find(kMemSpace_t* sp, size_t address)
+kMemArea_t *area_find(kMemSpace_t *sp, size_t address)
 {
   /// @todo DEBUG !
   kMemArea_t *area;
@@ -192,6 +194,7 @@ kMemArea_t *area_find(kMemSpace_t* sp, size_t address)
 
   klock(&sp->lock_);
   origin = sp->first_;
+
   while (origin && --maxLoop) {
     if (origin->limit_ > address) {
 
@@ -206,6 +209,7 @@ kMemArea_t *area_find(kMemSpace_t* sp, size_t address)
   }
 
   area = bb_search_le(&sp->bbTree_, address, kMemArea_t, bbNode_);
+
   if (area == NULL || area->limit_ < address)
     assert (origin == NULL);
   else
@@ -218,7 +222,7 @@ kMemArea_t *area_find(kMemSpace_t* sp, size_t address)
 
 /* ----------------------------------------------------------------------- */
 /** Will allocate a new segment on the address space */
-kMemArea_t* area_map(kMemSpace_t* sp, size_t length, int flags)
+kMemArea_t *area_map(kMemSpace_t *sp, size_t length, int flags)
 {
   kMemArea_t area = {0};
   kMemArea_t *narea;
@@ -227,6 +231,7 @@ kMemArea_t* area_map(kMemSpace_t* sp, size_t length, int flags)
   length = ALIGN_UP(length, PAGE_SIZE);
   area.flags_ = flags;
   area.limit_ = length;
+
   if (length == 0 || !POW2(flags & VMA_TYPE)) {
     __seterrno(EINVAL);
     return NULL;
@@ -246,6 +251,7 @@ kMemArea_t* area_map(kMemSpace_t* sp, size_t length, int flags)
     case VMA_STACK:
       narea = area_map_begin_(sp, &area);
       break;
+
     default:
       assert (0);
     }
@@ -258,6 +264,10 @@ kMemArea_t* area_map(kMemSpace_t* sp, size_t length, int flags)
   narea->flags_ = flags;
   sp->vrtPages_ += length / PAGE_SIZE;
   narea->bbNode_.value_ = (long)narea->address_;
+
+  // area_display(sp);
+  // if (bb_search(&sp->bbTree_, narea->bbNode_.value_, kMemArea_t, bbNode_))
+  //   kprintf("Map doublon\n");
   bb_insert (&sp->bbTree_, &narea->bbNode_);
   atomic_inc (&narea->usage_);
   return narea;
@@ -266,7 +276,7 @@ kMemArea_t* area_map(kMemSpace_t* sp, size_t length, int flags)
 
 /* ----------------------------------------------------------------------- */
 /** Will allocate a new segment at a fixed address on the address space */
-kMemArea_t *area_map_at (kMemSpace_t* sp, size_t address, size_t length, int flags)
+kMemArea_t *area_map_at (kMemSpace_t *sp, size_t address, size_t length, int flags)
 {
   kMemArea_t *narea;
   kMemArea_t area = {0};
@@ -293,13 +303,16 @@ kMemArea_t *area_map_at (kMemSpace_t* sp, size_t address, size_t length, int fla
   narea->flags_ = flags;
   sp->vrtPages_ += length / PAGE_SIZE;
   narea->bbNode_.value_ = (long)narea->address_;
+  // area_display(sp);
+  // if (bb_search(&sp->bbTree_, narea->bbNode_.value_, kMemArea_t, bbNode_))
+  //  kprintf("Map doublon\n");
   bb_insert (&sp->bbTree_, &narea->bbNode_);
   return narea;
 }
 
 
 /* ----------------------------------------------------------------------- */
-int area_attach(kMemArea_t* area, kInode_t* ino, size_t offset)
+int area_attach(kMemArea_t *area, kInode_t *ino, size_t offset)
 {
   ///@todo think about link by bucket and add a dir to filter...
   if ((area->flags_ & (VMA_ASSEMBLY | VMA_FILE)) == 0)
@@ -354,24 +367,35 @@ int area_attach(kMemArea_t* area, kInode_t* ino, size_t offset)
 
 
 /* ----------------------------------------------------------------------- */
-kMemArea_t* area_map_ino(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t length, int flags)
+kMemArea_t *area_map_ino(kMemSpace_t *sp, kInode_t *ino, size_t offset, size_t length, int flags)
 {
+  size_t pa;
   kMemArea_t *area;
   klock(&sp->lock_);
   offset = ALIGN_DW(offset, PAGE_SIZE);
   area = area_get(sp, ino, offset, length);
+
   if (!area) {
     area = area_map(sp, length, VMA_FILE | flags);
+
     if (area == NULL)
       sched_signal(ENOMEM, length);
+
     if (area_attach(area, ino, offset))
       kpanic("Try to map a file which is unavailable.\n");
-  } else
+  } else {
     atomic_inc(&area->usage_);
+    kunlock(&sp->lock_);
+    return area;
+  }
 
   kunlock(&sp->lock_);
-  if (page_fault(area->address_, PF_KERN)) {
-    kpanic ("inode loading failed\n");
+
+  for (pa = area->address_; pa < area->limit_; pa += PAGE_SIZE) {
+    // @todo We simulate the page fault here to fill the data
+    if (page_fault(pa, PF_KERN)) {
+      kpanic ("inode loading failed\n");
+    }
   }
 
   /// @todo what if we are currently reading the device !
@@ -380,7 +404,7 @@ kMemArea_t* area_map_ino(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t l
 
 
 /* ----------------------------------------------------------------------- */
-void area_unmap(kMemSpace_t* sp, kMemArea_t* area)
+void area_unmap(kMemSpace_t *sp, kMemArea_t *area)
 {
   int usage;
   usage = atomic_add(&area->usage_, -1);
@@ -390,7 +414,7 @@ void area_unmap(kMemSpace_t* sp, kMemArea_t* area)
 
 /* ----------------------------------------------------------------------- */
 /** Initialize a new address space structure with a first user-stack */
-int area_init(kMemSpace_t* sp, size_t base, size_t length)
+int area_init(kMemSpace_t *sp, size_t base, size_t length)
 {
   memset(sp, 0, sizeof(kMemSpace_t));
   sp->base_ = base;
@@ -406,13 +430,14 @@ int area_init(kMemSpace_t* sp, size_t base, size_t length)
 /** Will map an assembly on the address space */
 static kMemArea_t *area_map_section (kMemSpace_t *sp, kSection_t *section, kInode_t *ino)
 {
-  kMemArea_t * area;
+  kMemArea_t *area;
   int flags = (section->flags_ & (VMA_ACCESS | VMA_ASSEMBLY)) | VMA_FILE;
 
   if ((flags & VMA_WRITE) == 0)
     flags |= VMA_SHARED;
 
   area = area_map_at (sp, section->address_, section->length_, flags);
+
   if (area == NULL)
     return NULL;
 
@@ -427,7 +452,7 @@ static kMemArea_t *area_map_section (kMemSpace_t *sp, kSection_t *section, kInod
 
 
 /* ----------------------------------------------------------------------- */
-int area_assembly (kMemSpace_t *sp, kAssembly_t* assembly)
+int area_assembly (kMemSpace_t *sp, kAssembly_t *assembly)
 {
   kSection_t *section;
   klock (&sp->lock_);
@@ -439,15 +464,17 @@ int area_assembly (kMemSpace_t *sp, kAssembly_t* assembly)
   return __seterrno(0);
 }
 
-static inline void area_remove (kMemSpace_t* sp, kMemArea_t *area, bool freepage)
+static inline void area_remove (kMemSpace_t *sp, kMemArea_t *area, bool freepage)
 {
   if (sp->first_ == area) {
     sp->first_ = area->next_;
+
     if (area->next_)
       area->next_->prev_ = NULL;
   } else {
     if (area->next_)
       area->next_->prev_ = area->prev_;
+
     if (area->prev_)
       area->prev_->next_ = area->next_;
   }
@@ -465,14 +492,16 @@ static inline void area_remove (kMemSpace_t* sp, kMemArea_t *area, bool freepage
 }
 
 /* ----------------------------------------------------------------------- */
-void scavenge_area(kMemSpace_t* sp)
+void scavenge_area(kMemSpace_t *sp)
 {
+  size_t pa;
   kMemArea_t *sweep;
   kMemArea_t *origin;
   int maxLoop = MAX_LOOP;
 
   klock(&sp->lock_);
   origin = sp->first_;
+
   while (origin && --maxLoop) {
 
     sweep = origin;
@@ -482,6 +511,9 @@ void scavenge_area(kMemSpace_t* sp)
       if (sweep->ino_ != NULL) {
         inode_close(sweep->ino_);
         sweep->ino_ = NULL;
+
+        for (pa = sweep->address_; pa < sweep->limit_; pa += PAGE_SIZE)
+          mmu_clean_page(pa);
       } else if (sweep->flags_ & VMA_FIFO) {
       } else {
         assert(0); // Undefined map type..
@@ -496,7 +528,7 @@ void scavenge_area(kMemSpace_t* sp)
 
 
 /* ----------------------------------------------------------------------- */
-int area_destroy(kMemSpace_t* sp)
+int area_destroy(kMemSpace_t *sp)
 {
   kMemArea_t *origin;
   kMemArea_t *sweep;
@@ -504,6 +536,7 @@ int area_destroy(kMemSpace_t* sp)
 
   klock(&sp->lock_);
   origin = sp->first_;
+
   while (origin && --maxLoop) {
 
     sweep = origin;
@@ -528,9 +561,9 @@ int area_destroy(kMemSpace_t* sp)
 
 
 /* ----------------------------------------------------------------------- */
-void area_display(kMemSpace_t* sp)
+void area_display(kMemSpace_t *sp)
 {
-  const char* rights[] = {
+  const char *rights[] = {
     "----", "---x", "--w-",  "--wx",
     "-r--", "-r-x", "-rw-",  "-rwx",
     "S---", "S--x", "S-w-",  "S-wx",
@@ -549,11 +582,24 @@ void area_display(kMemSpace_t* sp)
 
   for (area = sp->first_; area; area = area->next_) {
 
+    if ((area->prev_ && area->prev_->next_ != area) || (area->next_ && area->next_->prev_ != area)) {
+      kprintf ("Memory mapping contains errors\n");
+    }
+
+    if (area->limit_ - area->address_ > area->limit_) {
+      kprintf ("Memory area errors\n");
+    }
+
+    if ((area->prev_ && area->prev_->limit_ > area->address_) || (area->next_ && area->next_->address_ < area->limit_)) {
+      kprintf ("Memory area overlaps or unsorted\n");
+    }
+
     length = area->limit_ - area->address_;
+
     if (area->ino_)
       kprintf ("%2d] [0x%16x - 0x%16x] %s - <%s>  %s :0x%x\n", ++i,
                (uint32_t)area->address_, (uint32_t)area->limit_, rights[area->flags_ & 0xf],
-               kpsize(length),  (*(char**)area->ino_), (size_t)area->offset_);
+               kpsize(length),  (*(char **)area->ino_), (size_t)area->offset_);
 
     else
       kprintf ("%2d] [0x%16x - 0x%16x] %s - <%s>  %s\n", ++i,

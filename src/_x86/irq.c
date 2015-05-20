@@ -2,7 +2,7 @@
 #include <smkos/arch.h>
 #include <smkos/kstruct/map.h>
 #include <smkos/kstruct/task.h>
-// #include <smkos/core.h>
+
 
 /* ----------------------------------------------------------------------- */
 /** Hardware Exception:
@@ -63,7 +63,7 @@ void sys_irq (int no, size_t *params)
     kpanic ("IRQ no %d !?\n", no);
 
   if (x86_irq_hanlder[no] == NULL) {
-    // kprintf ("IRQ no %d: ignored\n", no);
+    /* kprintf ("IRQ no %d: ignored\n", no); */
     return;
   }
 

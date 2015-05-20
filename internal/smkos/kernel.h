@@ -38,7 +38,6 @@
 #include <time.h>
 #include <sys/types.h>
 
-// #include <smkos/_spec.h>
 
 #include <smkos/types.h>
 #include <smkos/assert.h>
@@ -79,7 +78,6 @@ void* kalloc(size_t size);
 /** Free an object previously allocated on kernel heap */
 void kfree(void* ptr);
 
-// void* kmap_ino(kInode_t* ino, size_t offset, size_t length);
 const char *kpsize (uintmax_t number);
 
 /* GLOBAL STRUCT ========================================================= */
@@ -124,6 +122,7 @@ struct kSys {
   size_t memMax_;
   int pageMax_;
   int pidAutoInc_;
+  int ttyAutoInc_;
 
   struct kCpu _cpu[8];
 };

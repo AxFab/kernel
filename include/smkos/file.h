@@ -31,8 +31,8 @@ struct SMK_File {
   char   *wpos_;
   char   *wend_;
 
-  int (*write_) (FILE * fp, const char * buf, size_t length);
-  int (*read_) (FILE * fp, char * buf, size_t length);
+  int (*write_) (FILE *fp, const char *buf, size_t length);
+  int (*read_) (FILE *fp, char *buf, size_t length);
 };
 
 

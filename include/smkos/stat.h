@@ -29,7 +29,7 @@
 #define S_IFCHR     0x50000
 #define S_IFIFO     0x60000
 #define S_IFSOCK    0x70000
-//#define S_IFTTY     0x80000
+/*#define S_IFTTY     0x80000*/
 #define S_IFMT      0xf0000
 
 #define S_ISBLK(m)    (((m) & S_IFMT) == S_IFBLK)
@@ -39,12 +39,12 @@
 #define S_ISREG(m)    (((m) & S_IFMT) == S_IFREG)
 #define S_ISLNK(m)    (((m) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(m)   (((m) & S_IFMT) == S_IFSOCK)
-//#define S_ISTTY(m)    (((m) & S_IFMT) == S_IFTTY)
+/*#define S_ISTTY(m)    (((m) & S_IFMT) == S_IFTTY)*/
 
 
-#define S_TYPEISMQ(buf)  (S_ISFIFO(buf->st_mode) && 1)  ///< Test for a message queue
-#define S_TYPEISSEM(buf) (S_ISFIFO(buf->st_mode) && 1)  ///< Test for a semaphore
-#define S_TYPEISSHM(buf) (S_ISFIFO(buf->st_mode) && 1)  ///< Test for a shared memory object
+#define S_TYPEISMQ(buf)  (S_ISFIFO(buf->st_mode) && 1)  /**< Test for a message queue */
+#define S_TYPEISSEM(buf) (S_ISFIFO(buf->st_mode) && 1)  /**< Test for a semaphore */
+#define S_TYPEISSHM(buf) (S_ISFIFO(buf->st_mode) && 1)  /**< Test for a shared memory object */
 
 typedef struct SMK_stat SMK_stat_t;
 
@@ -63,7 +63,7 @@ struct SMK_stat {
   int       major_;
   int       minor_;
   long      uid_;     /**< User ID */
-  // long      gid_;  /**< Group ID */
+  /* long      gid_;  / **< Group ID */
   size_t    length_;  /**< Length of the file */
   size_t    lba_;     /**< Linear base address */
   time_t    atime_;   /**< Hour of last access */

@@ -69,7 +69,7 @@ int HDD_mount (kInode_t *dev, const char *name)
 }
 
 /* ----------------------------------------------------------------------- */
-int HDD_unmount (kInode_t *dev, void* data)
+int HDD_unmount (kInode_t *dev, void *data)
 {
   FILE *fio = (FILE *)data;
   fclose(fio);

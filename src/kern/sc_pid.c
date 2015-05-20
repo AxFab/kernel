@@ -41,17 +41,20 @@ int sys_exit(int errcode, int pid)
   assert (kCPU.current_ != NULL);
 
   err = sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
+
   if (err == 0)
     process_exit(process, 0);
+
   sched_next(kSYS.scheduler_);
   return EAGAIN;
 }
 
 int sys_exec(const char *exec, struct SMK_StartInfo *info)
 {
-  kProcess_t* process;
-  kInode_t* pwd = kCPU.current_->process_->session_->workingDir_;
-  kInode_t* ino = search_inode(exec, pwd, 0);
+  kProcess_t *process;
+  kInode_t *pwd = kCPU.current_->process_->session_->workingDir_;
+  kInode_t *ino = search_inode(exec, pwd, 0);
+
   if (ino == NULL) {
     __seterrno(ENOENT);
     return -1;
@@ -64,14 +67,16 @@ int sys_exec(const char *exec, struct SMK_StartInfo *info)
 
   inode_open(ino);
   process = create_child_process(ino, kCPU.current_->process_, info);
+
   if (!process)
     return -1;
+
   return process->pid_;
 }
 
 
 /* ----------------------------------------------------------------------- */
-int sys_start (const char*name, size_t entry, size_t param)
+int sys_start (const char *name, size_t entry, size_t param)
 {
   kThread_t *thread = create_thread(kCPU.current_->process_, entry, param);
   // rename_thread(thread, name);
@@ -80,19 +85,31 @@ int sys_start (const char*name, size_t entry, size_t param)
 
 
 /* ----------------------------------------------------------------------- */
+int sys_stop (int param)
+{
+  __unused(param);
+  sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
+  sched_next(kSYS.scheduler_);
+  return EAGAIN;
+}
+
+
+/* ----------------------------------------------------------------------- */
 int sys_wait (int reason, int param, int timeout)
 {
   if (reason == 0)
     cpu_wait();
+
   return -1;
 }
 
 
 int sys_mmap(int fd, size_t address, size_t length, int flags)
 {
-  kResx_t* resx;
+  kResx_t *resx;
 
   resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
+
   if (resx == NULL) {
     __seterrno(EBADF);
     return -1;

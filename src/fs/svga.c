@@ -60,7 +60,7 @@ int VGA_map (kInode_t *ino, size_t offset, page_t *phys)
 int VGA_mount (kInode_t *dev, const char *name)
 {
   time_t now = time(NULL);
-  struct SVGA_Device *device;
+  // struct SVGA_Device *device;
   SMK_stat_t stat;
 
   // device = kalloc(sizeof(struct SVGA_Device));

@@ -41,7 +41,7 @@ kDriver_t *search_driver(int major)
 {
   kDriver_t *driver;
   ll_for_each(&kSYS.driverPool_, driver, kDriver_t, allNd_) {
-    if( driver->major_ == major)
+    if ( driver->major_ == major)
       return driver;
   }
 
@@ -55,15 +55,17 @@ kDriver_t *search_driver(int major)
   * @param depth Depth of the tree representation. This functions should
   * always be called with a depth of zero.
   */
-static void display_inode(kInode_t* ino, int depth)
+static void display_inode(kInode_t *ino, int depth)
 {
   int i, j;
-  kInode_t* dir;
+  kInode_t *dir;
 
   const char ftype[] = {
-    'a', '-', 'd', '3', 'b', 'c', 'p', '7', '8', '9', };
-  const char* frights[] = {
-    "---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx", "???", };
+    'a', '-', 'd', '3', 'b', 'c', 'p', '7', '8', '9',
+  };
+  const char *frights[] = {
+    "---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx", "???",
+  };
 
   while (ino) {
 
@@ -80,11 +82,13 @@ static void display_inode(kInode_t* ino, int depth)
             ino->stat_.block_,
             kpsize(ino->stat_.length_));
 
-    for (i = 0; i < depth-1; ++i) {
+    for (i = 0; i < depth - 1; ++i) {
       j = i;
       dir = ino;
-      while (j++ < depth-1)
+
+      while (j++ < depth - 1)
         dir = dir->parent_;
+
       if (dir->next_)
         kprintf("    |");
       else
@@ -102,7 +106,7 @@ static void display_inode(kInode_t* ino, int depth)
     kprintf(" %s\n", ino->name_);
 
     if (ino->child_)
-      display_inode(ino->child_, depth+1);
+      display_inode(ino->child_, depth + 1);
 
     ino = ino->next_;
   }
@@ -118,7 +122,7 @@ static void display_inode(kInode_t* ino, int depth)
   * The function doesn't have any assertion to avoid deadlock on driver
   * mutex yet.
   */
-int open_fs(kInode_t* ino)
+int open_fs(kInode_t *ino)
 {
   assert (kislocked(&ino->lock_));
   assert (kCPU.lockCounter_ == 1);
@@ -134,7 +138,7 @@ int open_fs(kInode_t* ino)
   * @param ino The inode used ot get the lock.
   * @retval ZERO No error occurs and the mutex have been corectrly released.
   */
-int close_fs(kInode_t* ino)
+int close_fs(kInode_t *ino)
 {
   // assert (mtx_grabed(&ino->dev_->mutex_));
   assert (kCPU.lockCounter_ == 0);
@@ -154,14 +158,16 @@ void display_inodes()
 
 
 /* ----------------------------------------------------------------------- */
-int mount_device(const char* name, kDevice_t* dev, kDriver_t* fs)
+int mount_device(const char *name, kDevice_t *dev, kDriver_t *fs)
 {
   int err;
   kDriver_t *driver;
 
   klock(&dev->ino_->lock_);
+
   if (open_fs(dev->ino_))
     return __geterrno();
+
   if (fs == NULL) {
     ll_for_each(&kSYS.driverPool_, driver, kDriver_t, allNd_) {
       if (driver->mount (dev->ino_, name) == 0) {
@@ -180,16 +186,18 @@ int mount_device(const char* name, kDevice_t* dev, kDriver_t* fs)
 }
 
 /* ----------------------------------------------------------------------- */
-int unmount_device(kDevice_t* dev)
+int unmount_device(kDevice_t *dev)
 {
   int err;
   assert (kCPU.lockCounter_ == 1);
   assert (kislocked(&dev->ino_->lock_));
+
   if (open_fs(dev->ino_))
     return __geterrno();
 
   if (dev->fs_->unmount) {
     err = dev->fs_->unmount(dev->ino_, dev->data_);
+
     if (err) {
       close_fs(dev->ino_);
       return __seterrno(err);
@@ -202,6 +210,7 @@ int unmount_device(kDevice_t* dev)
 
   unregister_inode(dev->ino_);
   atomic_dec(&dev->fs_->usage_);
+
   if (dev->underlyingDev_) {
     atomic_dec(&dev->underlyingDev_->dev_->usage_);
     inode_close(dev->underlyingDev_);
@@ -219,7 +228,7 @@ int unmount_device(kDevice_t* dev)
   */
 void mount_alls ()
 {
-  kDevice_t* dev;
+  kDevice_t *dev;
   ll_for_each (&kSYS.deviceList_, dev, kDevice_t, allNd_) {
     if (dev->usage_ == 0) {
 
@@ -235,22 +244,25 @@ void mount_alls ()
 void unmount_alls ()
 {
   int deleted;
-  kDevice_t* dev;
-  kDevice_t* iter;
+  kDevice_t *dev;
+  kDevice_t *iter;
 
   for (;;) {
     deleted = 0;
     iter = ll_first(&kSYS.deviceList_, kDevice_t, allNd_);
+
     while (iter) {
       dev = iter;
       iter = ll_next(dev, kDevice_t, allNd_);
       klock(&dev->ino_->lock_);
+
       if (dev->usage_ == 0 && dev->ino_->readers_ == 0) {
         unmount_device(dev);
         ++deleted;
       } else
         kunlock(&dev->ino_->lock_);
     }
+
     if (deleted == 0)
       return;
   }
@@ -289,6 +301,7 @@ void initialize_vfs()
 
   init_drivers();
   mount_alls ();
+  // display_inodes();
 }
 
 
@@ -308,6 +321,7 @@ void sweep_vfs()
     unregister_driver(search_driver(0)); // TMPFS
   } else {
     kprintf("/!\\ Inodes are leaking...\n");
+    display_inodes();
   }
 }
 
@@ -330,24 +344,29 @@ int unregister_driver(kDriver_t *driver)
 {
   // @todo first check that no inodes use this driver
   assert(driver != NULL);
+
   if (driver->usage_ != 0)
     return __seterrno(EBUSY);
+
   if (driver->dispose)
     driver->dispose();
+
   ll_remove(&kSYS.driverPool_, &driver->allNd_);
+
   if (driver->name_)
-    kfree((void*)driver->name_);
+    kfree((void *)driver->name_);
+
   kfree(driver);
   return __seterrno(0);
 }
 
 
 /* ----------------------------------------------------------------------- */
-kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *stat, void* info)
+kDevice_t *create_device(const char *name, kInode_t *underlying, SMK_stat_t *stat, void *info)
 {
-  kDevice_t* dev;
-  kInode_t * ino;
-  kInode_t * dir = kSYS.devIno_;
+  kDevice_t *dev;
+  kInode_t *ino;
+  kInode_t *dir = kSYS.devIno_;
   kDriver_t *driver = search_driver(stat->major_);
 
   if (S_ISDIR(stat->mode_))
@@ -360,12 +379,15 @@ kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *sta
     kSYS.sysIno_ = ino;
   } else
     ino = register_inode(name, dir, stat, false);
+
   dev = KALLOC(kDevice_t);
   ino->dev_ = dev;
+
   if (underlying) {
     inode_open(underlying);
     atomic_inc(&underlying->dev_->usage_);
   }
+
   dev->underlyingDev_ = underlying;
   dev->ino_ = ino;
   dev->fs_ = driver;
@@ -379,21 +401,6 @@ kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *sta
   // }
 
   return dev;
-}
-
-
-/* ----------------------------------------------------------------------- */
-int fs_block_read(kInode_t *fp, void* buffer, size_t length, size_t offset)
-{
-  int err;
-  /// @todo should be asynchrone
-  klock (&fp->lock_);
-  err = open_fs (fp);
-  if (err)
-    return err;
-  err = fp->dev_->fs_->read(fp, buffer, length, offset);
-  close_fs (fp);
-  return err;
 }
 
 

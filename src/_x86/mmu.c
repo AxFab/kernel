@@ -53,6 +53,28 @@ page_t mmu_newpage()
 }
 
 
+
+/* ----------------------------------------------------------------------- */
+/** Mark a single physique page, returned by mmu_newpage, as available again */
+void mmu_releasepage(page_t page)
+{
+  static uint8_t *bitmap = (uint8_t *)PG_BITMAP_ADD;
+  int i = (page / PAGE_SIZE) / 8;
+  int j = (page / PAGE_SIZE) % 8;
+
+  if (i >= PG_BITMAP_LG || (bitmap[i] & (1 << j)) == 0)
+    kpanic ("Release page with wrong args\n");
+
+  bitmap[i] = bitmap[i] & (~(1 << j));
+}
+
+
+/* ----------------------------------------------------------------------- */
+/** Remove the page from the context, eventualy memzero it first */
+void mmu_clean_page(size_t address)
+{
+}
+
 /* ----------------------------------------------------------------------- */
 int mmu_resolve (size_t address, page_t page, int access, bool zero)
 {
@@ -94,21 +116,6 @@ int mmu_resolve (size_t address, page_t page, int access, bool zero)
 
 
 /* ----------------------------------------------------------------------- */
-/** Mark a single physique page, returned by mmu_newpage, as available again */
-void mmu_release(page_t page)
-{
-  static uint8_t *bitmap = (uint8_t *)PG_BITMAP_ADD;
-  int i = (page / PAGE_SIZE) / 8;
-  int j = (page / PAGE_SIZE) % 8;
-
-  if (i >= PG_BITMAP_LG || (bitmap[i] & (1 << j)) == 0)
-    kpanic ("Release page with wrong args\n");
-
-  bitmap[i] = bitmap[i] & (~(1 << j));
-}
-
-
-/* ----------------------------------------------------------------------- */
 page_t mmu_newdir()
 {
   int idx = (MMU_USERSP_LIMIT >> 22) & 0x3ff;
@@ -142,10 +149,25 @@ page_t mmu_newdir()
 /* ----------------------------------------------------------------------- */
 void mmu_load_env()
 {
+  memset ((void *)_Mb_, 0, _Mb_);
   alloc_init(_Mb_, _Mb_);
   kSYS.mspace_ = KALLOC(kMemSpace_t);
   kSYS.scheduler_ = KALLOC(kScheduler_t);
   area_init (kSYS.mspace_, (size_t)MMU_KHEAP_BASE, MMU_KHEAP_LIMIT - MMU_KHEAP_BASE);
+}
+
+/* ----------------------------------------------------------------------- */
+void mmu_leave_env()
+{
+  // alloc_reset()
+  kfree(kSYS.mspace_);
+  kfree(kSYS.scheduler_);
+}
+
+
+void mmu_destroy_userspace(kMemSpace_t *sp)
+{
+  __unused(sp);
 }
 
 

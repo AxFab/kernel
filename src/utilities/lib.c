@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <smkos.h>
 
-int vsnprintf(char*, int lg, const char *msg, va_list ap);
+int vsnprintf(char *, int lg, const char *msg, va_list ap);
 
 
 void _puts (const char *str)

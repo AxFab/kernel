@@ -25,24 +25,24 @@
 
 
 /* ----------------------------------------------------------------------- */
-#define VMA_WRITE         0x002 ///< Pages can be written to
-#define VMA_EXEC          0x001 ///< Pages can be executed
-#define VMA_READ          0x004 ///< Pages can be read from
+#define VMA_WRITE         0x002 /**< Pages can be written to */
+#define VMA_EXEC          0x001 /**< Pages can be executed */
+#define VMA_READ          0x004 /**< Pages can be read from */
 
 #define VMA_KERNEL       0x10000
 
-#define VMA_SHARED        0x008 ///< Page are shared
-#define VMA_MAYREAD       0x010 ///< The VMA_READ flag can be set
-#define VMA_MAYWRITE      0x020 ///< The VMA_WRITE flag can be set
-#define VMA_MAYEXEC       0x040 ///< The VMA_EXEC flag can be set
-#define VMA_MAYSHARED     0x080 ///< The VMA_SHARED flag can be set
-#define VMA_GROWSDOWN     0x100 ///< The area can grow downward
-#define VMA_GROWSUP       0x200 ///< The area can grow upward
+#define VMA_SHARED        0x008 /**< Page are shared */
+#define VMA_MAYREAD       0x010 /**< The VMA_READ fSlag can be set */
+#define VMA_MAYWRITE      0x020 /**< The VMA_WRITE flag can be set */
+#define VMA_MAYEXEC       0x040 /**< The VMA_EXEC flag can be set */
+#define VMA_MAYSHARED     0x080 /**< The VMA_SHARED flag can be set */
+#define VMA_GROWSDOWN     0x100 /**< The area can grow downward */
+#define VMA_GROWSUP       0x200 /**< The area can grow upward */
 
-#define VMA_SHM           0x400 ///< The area is used for shared memory
-#define VMA_FILE          0x800 ///< The area map an executable file
-#define VMA_HEAP          0x1000 ///< The area map a process heap
-#define VMA_STACK         0x2000 ///< The area map a thread stack
+#define VMA_SHM           0x400 /**< The area is used for shared memory */
+#define VMA_FILE          0x800 /**< The area map an executable file */
+#define VMA_HEAP          0x1000 /**< The area map a process heap */
+#define VMA_STACK         0x2000 /**< The area map a thread stack */
 #define VMA_FIFO          0x4000
 
 #define VMA_CODE          0x10000

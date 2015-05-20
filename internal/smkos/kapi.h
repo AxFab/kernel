@@ -54,6 +54,7 @@ void display_inodes();
 int mount_device(const char* name, kDevice_t* dev, kDriver_t* fs);
 void mount_alls ();
 void initialize_vfs();
+void sweep_vfs();
 kDriver_t *register_driver(void (*init)(kDriver_t *));
 kDevice_t *create_device(const char* name, kInode_t* underlying, SMK_stat_t *stat, void* info);
 kDriver_t *search_driver(int major);
@@ -62,10 +63,11 @@ int unregister_driver(kDriver_t *driver);
 
 int fs_block_read(kInode_t *fp, void* buffer, size_t length, size_t offset);
 kPipe_t * fs_create_pipe(kInode_t *ino);
-int fs_pipe_read(kInode_t *ino, void* buf, size_t lg);
-size_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg);
+ssize_t fs_pipe_read(kInode_t *ino, void* buf, size_t lg);
+ssize_t fs_pipe_write(kInode_t *ino, const void* buf, size_t lg);
 int fs_event(kInode_t *ino, int type, int value);
-
+void fs_pipe_destroy(kInode_t *ino);
+ssize_t fs_reg_read(kInode_t *ino, void* buf, size_t lg, ssize_t offset);
 
 /* === INODES ============================================================ */
 /** @brief Search an inode on the filetree. */
@@ -82,7 +84,7 @@ int inode_open (kInode_t *ino);
 int inode_close (kInode_t *ino);
 /** @brief Give the inode a symbolic link is refering to. */
 kInode_t *follow_symlink(kInode_t *ino, int *links);
-
+int unregister_inode (kInode_t *ino);
 
 /* === MEMORY AREA ======================================================= */
 kMemArea_t* area_get(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t length);
@@ -101,10 +103,13 @@ int area_init(kMemSpace_t* sp, size_t base, size_t length);
 int area_assembly (kMemSpace_t *sp, kAssembly_t* assembly);
 void scavenge_area(kMemSpace_t* sp);
 int area_destroy(kMemSpace_t* sp);
+void area_display(kMemSpace_t* sp);
+
 
 /* === MMU =============================================================== */
 page_t mmu_newdir();
 int mmu_resolve (size_t address, page_t page, int access, bool zero);
+void mmu_clean_page(size_t address);
 page_t mmu_newpage();
 void mmu_releasepage(page_t page);
 void mmu_load_env();
@@ -142,7 +147,8 @@ int thread_abort (kThread_t* thread);
 void process_exit(kProcess_t *process, int status);
 kResx_t *process_get_resx(kProcess_t *process, int fd, int access);
 kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags);
-
+int process_clean_resx(kProcess_t *process);
+int process_close_resx(kProcess_t *process, int fd);
 
 /* === USERS ============================================================= */
 kUser_t *search_user (const char *name, const char *domain);

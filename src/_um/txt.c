@@ -12,6 +12,8 @@ void kwrite_tty(const char *m)
 /* ----------------------------------------------------------------------- */
 void event_tty(int type, int value)
 {
+  __unused(type);
+  __unused(value);
 }
 
 

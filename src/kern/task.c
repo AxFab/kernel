@@ -27,7 +27,6 @@
 #include <smkos/kstruct/user.h>
 #include <smkos/file.h>
 
-static int autoIncrThread = 0;
 /* ----------------------------------------------------------------------- */
 /** @brief Instanciate a new thread object.
   * @param process The parent process that need a new thread.
@@ -67,7 +66,6 @@ static void reset_thread (kThread_t *thread, size_t entry, size_t param)
 {
   assert (thread->state_ == SCHED_ZOMBIE);
 
-  thread->threadId_ = ++autoIncrThread;
   thread->start_ = time(NULL);
   thread->paramEntry_ = entry;
   thread->paramValue_ = param;
@@ -87,6 +85,7 @@ static void reset_thread (kThread_t *thread, size_t entry, size_t param)
 static kSession_t *alloc_session(kUser_t *user, kInode_t *dir)
 {
   kSession_t *session;
+
   if (inode_open(dir))
     return NULL;
 
@@ -108,7 +107,7 @@ static kSession_t *alloc_session(kUser_t *user, kInode_t *dir)
   * resources and clean itself when required. Processes are not cached or
   * reusable.
   */
-static kProcess_t *alloc_process(kAssembly_t* assembly, int pid)
+static kProcess_t *alloc_process(kAssembly_t *assembly, int pid)
 {
   kThread_t *thread;
   kProcess_t *process = KALLOC (kProcess_t);
@@ -168,6 +167,7 @@ void destroy_process (kProcess_t *process)
   /// @todo free process, threads, resx, session, events, ...
 
   task = ll_first(&process->threads_, kThread_t, taskNd_);
+
   while (task) {
     pick = task;
     task = ll_next(task, kThread_t, taskNd_);
@@ -177,6 +177,7 @@ void destroy_process (kProcess_t *process)
   process_clean_resx(process);
 
   ll_remove(&kSYS.processes_, &process->allNd_);
+
   if (atomic_add(&process->session_->usage_, -1)  <= 1)
     destroy_session(process->session_);
 
@@ -204,6 +205,7 @@ kThread_t *create_thread(kProcess_t *process, size_t entry, size_t param)
 
   if (thread == NULL)
     thread = alloc_thread (process);
+
   reset_thread (thread, entry, param);
   kunlock (&process->lock_);
   return thread;
@@ -211,13 +213,13 @@ kThread_t *create_thread(kProcess_t *process, size_t entry, size_t param)
 
 
 /* ----------------------------------------------------------------------- */
-kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, const char*cmd)
+kProcess_t *create_logon_process(kInode_t *ino, kUser_t *user, kInode_t *dir, const char *cmd)
 {
   kProcess_t *process;
-  kInode_t* stdin;
-  kInode_t* stdout;
-  kInode_t* stderr;
-  kInode_t* procdir;
+  kInode_t *stdin;
+  kInode_t *stdout;
+  kInode_t *stderr;
+  kInode_t *procdir;
   char bufPid[12];
   int pid = ++kSYS.pidAutoInc_;
 
@@ -234,6 +236,7 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
   stderr = stdout;
 
   process = alloc_process(ino->assembly_, pid);
+
   if (process == NULL)
     return NULL;
 
@@ -258,14 +261,14 @@ kProcess_t *create_logon_process(kInode_t* ino, kUser_t* user, kInode_t* dir, co
 
 
 /* ----------------------------------------------------------------------- */
-kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_StartInfo *info)
+kProcess_t *create_child_process(kInode_t *ino, kProcess_t *parent, struct SMK_StartInfo *info)
 {
-  kResx_t* resx;
+  kResx_t *resx;
   kProcess_t *process;
-  kInode_t* stdin;
-  kInode_t* stdout;
-  kInode_t* stderr;
-  kInode_t* procdir;
+  kInode_t *stdin;
+  kInode_t *stdout;
+  kInode_t *stderr;
+  kInode_t *procdir;
   char bufPid[12];
   int pid = ++kSYS.pidAutoInc_;
 
@@ -278,24 +281,28 @@ kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_S
   // @todo Store procdir;
 
   resx = process_get_resx (kCPU.current_->process_, 0, CAP_READ);
+
   if (resx != NULL)
     stdin = resx->ino_;
   else
     stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
 
   resx = process_get_resx (kCPU.current_->process_, 1, CAP_WRITE);
+
   if (resx != NULL)
     stdout = resx->ino_;
   else
     stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
 
   resx = process_get_resx (kCPU.current_->process_, 2, CAP_READ);
+
   if (resx != NULL)
     stderr = resx->ino_;
   else
     stderr = stdout;
 
   process = alloc_process(ino->assembly_, pid);
+
   if (process == NULL)
     return NULL;
 
@@ -320,7 +327,7 @@ kProcess_t *create_child_process(kInode_t* ino, kProcess_t* parent, struct SMK_S
 
 
 /* ----------------------------------------------------------------------- */
-int thread_abort (kThread_t* thread)
+int thread_abort (kThread_t *thread)
 {
   assert(kislocked(&thread->process_->lock_));
   assert(thread != kCPU.current_);
@@ -331,7 +338,10 @@ int thread_abort (kThread_t* thread)
   } else if (thread->state_ != SCHED_ZOMBIE) {
     if (thread->state_ == SCHED_BLOCKED) {
       // async_cancel_event(task);
-    } else {
+    } else if (thread->state_ == SCHED_READY) {
+      // Should try to lock on it (like execute this one)
+      // If yes, stop it, if failed abort !
+      // @todo we have to lock the thread before another cpu take it
       sched_remove (kSYS.scheduler_, thread);
     }
 
@@ -359,7 +369,10 @@ void process_exit(kProcess_t *process, int status)
   ll_for_each (&process->threads_, task, kThread_t, taskNd_) {
     if (task->state_ == SCHED_ZOMBIE)
       continue;
-    assert(kCPU.current_ != task);
+
+    if (kCPU.current_ == task)
+      kCPU.current_ = NULL;
+
     if (thread_abort (task))
       return;
   }
@@ -371,9 +384,10 @@ void process_exit(kProcess_t *process, int status)
 /* ----------------------------------------------------------------------- */
 kResx_t *process_get_resx(kProcess_t *process, int fd, int access)
 {
-  kResx_t* resx;
+  kResx_t *resx;
   klock(&process->lock_);
   resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
+
   if (resx == NULL) {
     kunlock(&process->lock_);
     return __seterrnoN(EBADF, kResx_t);
@@ -388,11 +402,12 @@ kResx_t *process_get_resx(kProcess_t *process, int fd, int access)
 
 
 /* ----------------------------------------------------------------------- */
-kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags)
+kResx_t *process_set_resx(kProcess_t *process, kInode_t *ino, int oflags)
 {
-  kResx_t* resx;
+  kResx_t *resx;
 
   assert(kislocked(&process->lock_));
+
   if (process->fdCount_ > MAX_FD_PER_PROCESS)
     return NULL;
 
@@ -411,11 +426,12 @@ kResx_t *process_set_resx(kProcess_t *process, kInode_t* ino, int oflags)
 /* ----------------------------------------------------------------------- */
 int process_clean_resx(kProcess_t *process)
 {
-  kResx_t* resx;
+  kResx_t *resx;
   assert(kislocked(&process->lock_));
 
   for (;;) {
     resx = bb_best(&process->resxTree_, kResx_t, fdNd_);
+
     if (resx == NULL)
       return 0;
 
@@ -429,9 +445,10 @@ int process_clean_resx(kProcess_t *process)
 /* ----------------------------------------------------------------------- */
 int process_close_resx(kProcess_t *process, int fd)
 {
-  kResx_t* resx;
+  kResx_t *resx;
   klock(&process->lock_);
   resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
+
   if (resx == NULL) {
     kunlock(&process->lock_);
     return EBADF;

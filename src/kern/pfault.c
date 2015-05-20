@@ -64,25 +64,30 @@ static int page_inode (kMemArea_t *area, size_t address)
   // Search the page on cache.
   klock (&area->ino_->lock_);
   page = bb_search(&area->ino_->pageTree_, offset, kPage_t, treeNd_);
+
   if (page == NULL) {
     if (open_fs(area->ino_))
       return __geterrno();
+
     if (area->ino_->dev_->fs_->map) {
       err = area->ino_->dev_->fs_->map(area->ino_, offset, &phys);
+
       if (!err)
         err = mmu_resolve(address, phys, rights, false);
 
     } else if (area->ino_->dev_->fs_->read) {
       phys = mmu_newpage();
       err = mmu_resolve(address, phys, rights, false);
+
       if (!err)
-        err = area->ino_->dev_->fs_->read(area->ino_, (void*)address, PAGE_SIZE, offset);
+        err = area->ino_->dev_->fs_->read(area->ino_, (void *)address, PAGE_SIZE, offset);
 
     } else {
       err = EIO;
     }
 
     close_fs (area->ino_);
+
     if (err)
       return __seterrno(err);
 
@@ -106,6 +111,7 @@ static int page_inode (kMemArea_t *area, size_t address)
 /* ----------------------------------------------------------------------- */
 int page_fault (size_t address, int cause)
 {
+  int mtype;
   kMemSpace_t *mspace = kSYS.mspace_;
   kMemArea_t *area = NULL;
   bool userspace = cause & PF_USER;
@@ -121,46 +127,43 @@ int page_fault (size_t address, int cause)
   if (address < mspace->base_ || address >= mspace->limit_) {
     if (kCPU.current_ != NULL)
       mspace = &kCPU.current_->process_->mspace_;
-    else
-      kpanic("Kernel try to access a task when idle.\n");
 
     if (address < mspace->base_ || address >= mspace->limit_)
       return sched_signal(SIGSEV, address);
-
-  } else if (userspace) {
-    /// @todo Assert with stronger check
-    return sched_signal(SIGSEV, address);
   }
 
   assert(kCPU.lockCounter_ == 0);
   assert(mspace != NULL);
-
   area = area_find(mspace, address);
-  if (area == NULL)
+  mtype = area->flags_ & VMA_TYPE;
+  assert (POW2(mtype));
+
+  if (area == NULL || userspace)
     return sched_signal(SIGSEV, address);
 
-  if (area->flags_ & VMA_STACK)
+  switch (mtype) {
+  case VMA_HEAP:
+  case VMA_STACK:
+    assert (mspace != kSYS.mspace_); /* Never on kernel */
     return mmu_resolve(address, 0, VMA_READ | VMA_WRITE, true);
 
-  if (area->flags_ & VMA_FIFO) {
-    /* Pipe can only be mounted on kernel space */
-    assert (mspace == kSYS.mspace_);
+  case VMA_FIFO:
+    assert (mspace == kSYS.mspace_); /* Pipe can only be mounted on kernel space */
     return mmu_resolve(address, 0, VMA_READ | VMA_WRITE | VMA_KERNEL, true);
-  }
 
-  if (area->flags_ & VMA_FILE) {
+  case VMA_FILE:
     assert (area->ino_ != NULL);
     return page_inode(area, ALIGN_DW((size_t)address, PAGE_SIZE));
+
+  case VMA_SHM:
+    assert (((area->flags_ & VMA_KERNEL) != 0) == (mspace == kSYS.mspace_));
+    return mmu_resolve(address, 0, area->flags_ & VMA_MMU, true);
+
+  default:
+    kpanic("Error on page fault handler\n");
+    return ENOSYS;
   }
-
-    kprintf("PF] %x (%d)  { %x }\n", address, cause, area->flags_);
-    kstacktrace(8);
-    for(;;);
-
-  assert (POW2(area->flags_ & (VMA_STACK | VMA_SHM)));
-  return mmu_resolve(address, 0, area->flags_ & VMA_MMU, true);
 }
-
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

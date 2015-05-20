@@ -64,58 +64,75 @@ static inline void pop_arg(union SMK_FmtArg *arg, int type, va_list *ap)
   case PTR:
     arg->p = va_arg(*ap, void *);
     break;
+
   case INT:
     arg->s = va_arg(*ap, int);
     break;
+
   case UINT:
     arg->i = va_arg(*ap, unsigned int);
     break;
 #ifndef LONG_IS_INT
+
   case LONG:
     arg->s = va_arg(*ap, long);
     break;
+
   case ULONG:
     arg->i = va_arg(*ap, unsigned long);
     break;
 #endif
+
   case ULLONG:
     arg->i = va_arg(*ap, unsigned long long);
     break;
+
   case SHORT:
     arg->s = (short)va_arg(*ap, int);
     break;
+
   case USHORT:
     arg->i = (unsigned short)va_arg(*ap, int);
     break;
+
   case CHAR:
     arg->s = (signed char)va_arg(*ap, int);
     break;
+
   case UCHAR:
     arg->i = (unsigned char)va_arg(*ap, int);
     break;
 #ifdef ODD_TYPES
+
   case LLONG:
     arg->s = va_arg(*ap, long long);
     break;
+
   case SIZET:
     arg->i = va_arg(*ap, size_t);
     break;
+
   case IMAX:
     arg->s = va_arg(*ap, intmax_t);
     break;
+
   case UMAX:
     arg->i = va_arg(*ap, uintmax_t);
     break;
+
   case PDIFF:
     arg->i = va_arg(*ap, ptrdiff_t);
     break;
+
   case UIPTR:
     arg->i = (uintptr_t)va_arg(*ap, void *);
     break;
 #endif
+
   case DBL:
     arg->f = va_arg(*ap, double);
     break;
+
   case LDBL:
     arg->f = va_arg(*ap, long double);
     break;
@@ -283,6 +300,7 @@ int vfprintf (FILE *fp, const char *str, va_list ap)
 
     case 'p':
       sb.flag_ = ALT_FORM | ZERO_PAD;
+
     case 'x':
     case 'X':
 

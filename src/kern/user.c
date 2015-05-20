@@ -37,9 +37,10 @@ kUser_t *search_user (const char *name, const char *domain)
 
 
 /* ----------------------------------------------------------------------- */
-kUser_t *create_user(const char* username, int capacity)
+kUser_t *create_user(const char *username, int capacity)
 {
   kUser_t *user = search_user(username, NULL);
+
   if (user != NULL)
     return __seterrnoN(EEXIST, kUser_t);
 

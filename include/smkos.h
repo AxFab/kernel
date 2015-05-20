@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <smkos/scall.h>
 
-// ===========================================================================
+/* ======================================================================= */
 
 
 typedef struct sStartInfo sStartInfo_t;
@@ -36,7 +36,7 @@ int close(int fd);
 
 ssize_t write(int fd, const void *buf, size_t count);
 ssize_t read(int fd, void *buf, size_t count);
-int printf (const char*, ...);
+int printf (const char *, ...);
 
 #define ASCII_RESET   "\e[0m"
 #define ASCII_U_WHITE "\e[53,38m"

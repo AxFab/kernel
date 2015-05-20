@@ -24,9 +24,9 @@
 #include <smkos/kstruct/fs.h>
 #include <smkos/kstruct/task.h>
 
-void wait_for(struct mutex * mutex, kWaitReason_e reason, struct llhead* list)
+void wait_for(struct mutex *mutex, kWaitReason_e reason, struct llhead *list)
 {
-  kWait_t* wait = KALLOC(kWait_t);
+  kWait_t *wait = KALLOC(kWait_t);
   wait->mutex_ = mutex;
   wait->reason_ = reason;
   wait->list_ = list;

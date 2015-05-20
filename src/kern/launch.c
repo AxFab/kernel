@@ -4,7 +4,7 @@
 #include <smkos/drivers.h>
 
 
-void ksymbols_load (kInode_t* ino);
+void ksymbols_load (kInode_t *ino);
 
 
 static const char *masterPaths[] = {
@@ -31,13 +31,15 @@ void kernel_ready ()
 void kernel_start ()
 {
   int idx;
-  kUser_t* user;
+  kUser_t *user;
   kInode_t *ino;
   kInode_t *kb;
   kInode_t *fb;
   struct tm dateTime;
 
   /* Initialize kernel environment */
+  memset (&kSYS, 0, sizeof (kSYS));
+  memset (&kCPU, 0, sizeof (kCPU));
   kernel_state (KST_KERNSP);
   kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ " from git:" _GITH_ " on " _OSNAME_ ".\n");
   mmu_load_env();
@@ -53,8 +55,9 @@ void kernel_start ()
 
   /* Search kernel helper files */
   ino = search_inode ("boot/kImage.map", kSYS.sysIno_, 0);
+
   if (ino)
-   ksymbols_load(ino);
+    ksymbols_load(ino);
 
   /* Create basic users */
   user = create_user("system", CAP_SYSTEM);
@@ -62,10 +65,13 @@ void kernel_start ()
 
   /* Load master program */
   idx = 0;
+
   while (masterPaths[idx]) {
     ino = search_inode (masterPaths[idx], kSYS.sysIno_, 0);
+
     if (ino && NULL != load_assembly(ino))
       break;
+
     ++idx;
   }
 
@@ -95,16 +101,16 @@ void kernel_start ()
   */
 void kernel_sweep()
 {
-  kInode_t* fb = search_inode ("/dev/Fb0", NULL, 0);
   kprintf ("\x1b[31mEnding...\x1b[0m\n");
   clean_subsys();
-  BMP_sync(fb);
   scavenge_inodes(8000);
   scavenge_area(kSYS.mspace_);
-  // display_inodes();
-  // area_display(kSYS.mspace_);
-  if (kSYS.mspace_->vrtPages_ != 0)
+
+  if (kSYS.mspace_->vrtPages_ != 0) {
     kprintf("/!\\ Kernel pages are leaking...\n");
+    area_display(kSYS.mspace_);
+  }
+
   sweep_vfs();
   destroy_all_users();
   mmu_leave_env();

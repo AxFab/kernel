@@ -47,7 +47,6 @@ struct kScheduler {
 
 /* ----------------------------------------------------------------------- */
 struct kThread {
-  int threadId_;
   kProcess_t *process_;
   kThread_t *schNext_;
   struct llnode taskNd_;
@@ -92,6 +91,7 @@ struct kResx
 {
   int oflags_;
   int type_;
+  ssize_t seek_;
   kInode_t *ino_;
   struct bbnode fdNd_;
 };
@@ -108,7 +108,6 @@ struct kWait
 {
   struct mutex * mutex_;
   kWaitReason_e reason_;
-  // size_t param_;
   kThread_t *thread_;
   struct llnode lnd_;
   struct llhead *list_;

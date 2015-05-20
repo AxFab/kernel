@@ -151,6 +151,7 @@ int ISO_mount (kInode_t *dev, const char *name)
       volume->sectorCount = firstDesc->volSpaceSizeLE;
       volume->lbaroot = firstDesc->rootDir.locExtendLE;
       volume->lgthroot = firstDesc->rootDir.dataLengthLE;
+
       // kprintf ("ROOT { %x - %x }\n", firstDesc->rootDir.locExtendLE, firstDesc->rootDir.dataLengthLE);
       // kprintf ("VOLUME NAME '%s'\n", firstDesc->volname);
 
@@ -211,7 +212,7 @@ int ISO_mount (kInode_t *dev, const char *name)
 }
 
 /* ----------------------------------------------------------------------- */
-int ISO_unmount (kInode_t *dev, void* info)
+int ISO_unmount (kInode_t *dev, void *info)
 {
   kfree(info);
   return 0;

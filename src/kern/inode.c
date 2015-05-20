@@ -22,6 +22,8 @@
 #include <smkos/kapi.h>
 #include <smkos/klimits.h>
 #include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/task.h>
+#include <smkos/kstruct/user.h>
 
 /* INODES
   * The inode module manage files entry.
@@ -77,6 +79,7 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
 
   err = dir->dev_->fs_->lookup(name, dir, &stat);
   close_fs(dir);
+
   if (err != 0)
     return NULL;
 
@@ -119,8 +122,12 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
     /// @todo read volume
   } else if (path[0] == '/' || path[0] == '\\')
     dir = kSYS.rootIno_;
-  else if (dir == NULL)
-    dir = kSYS.rootIno_; /// @todo replace by PWD
+  else if (dir == NULL) {
+    if (kCPU.current_ != NULL)
+      dir = kCPU.current_->process_->session_->workingDir_;
+    else
+      dir = kSYS.rootIno_;
+  }
 
   strncpy (uri, path, uriLg);
   klock (&dir->lock_);
@@ -164,9 +171,11 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
 
         if ((flags & AT_THREE_DOT) && name[2] == '.' && name[3] == '\0') {
           kunlock (&dir->lock_);
+
           do {
             dir = dir->parent_;
           } while (dir->parent_ != NULL/* && !S_ISVOL(dir->stat_.mode_)*/);
+
           klock (&dir->lock_);
           continue;
         }
@@ -175,6 +184,7 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
 
     // Search child node
     dir = search_child (name, dir);
+
     if (dir == NULL) {
       kfree(uri);
       return NULL;
@@ -219,6 +229,7 @@ static int attach_inode (kInode_t *ino, kInode_t *dir, const char *name)
     }
 
     k = strcmp(cursor->next_->name_, name);
+
     if (k < 0 && cursor->next_ != NULL) {
       cursor = cursor->next_;
       continue;
@@ -247,6 +258,7 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
 
   klock(&dir->lock_);
   ino = KALLOC(kInode_t);
+
   if (ino == NULL)
     return NULL;
 
@@ -260,8 +272,10 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
 
   if (attach_inode(ino, dir, name)) {
     kunlock (&dir->lock_);
+
     if (unlock)
       kunlock (&ino->lock_);
+
     kfree(ino);
     return NULL;
   }
@@ -272,8 +286,10 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
     ll_push_front(&kSYS.inodeLru_, &ino->lruNd_);
 
   kunlock (&dir->lock_);
+
   if (unlock)
     kunlock (&ino->lock_);
+
   return ino;
 }
 
@@ -312,8 +328,10 @@ int unregister_inode (kInode_t *ino)
   /* Free all pages */
   for (;;) {
     page = bb_best(&ino->pageTree_, kPage_t, treeNd_);
+
     if (!page)
       break;
+
     mmu_releasepage(page->phys_);
     bb_remove(&ino->pageTree_, &page->treeNd_);
     kfree(page);
@@ -340,7 +358,7 @@ int unregister_inode (kInode_t *ino)
 
 /* ----------------------------------------------------------------------- */
 /** @brief Request the file system for the creation of a new inode. */
-kInode_t *create_inode(const char* name, kInode_t* dir, int mode, size_t lg)
+kInode_t *create_inode(const char *name, kInode_t *dir, int mode, size_t lg)
 {
   int err;
   SMK_stat_t stat;
@@ -352,6 +370,7 @@ kInode_t *create_inode(const char* name, kInode_t* dir, int mode, size_t lg)
     return __seterrnoN(ENAMETOOLONG, kInode_t);
 
   klock(&dir->lock_);
+
   if (open_fs(dir))
     return NULL;
 
@@ -377,12 +396,13 @@ int scavenge_inodes(int nodes)
   while (nodes-- > 0) {
 
     iter = ll_first(&kSYS.inodeLru_, kInode_t, lruNd_);
+
     if (iter == NULL)
       return __seterrno (EINVAL);
 
     deleted = 0;
-    while (iter)
-    {
+
+    while (iter) {
       ino = iter;
       iter = ll_next(iter, kInode_t, lruNd_);
 
@@ -396,15 +416,19 @@ int scavenge_inodes(int nodes)
           fs_pipe_destroy(ino);
         else if (ino->assembly_ != NULL)
           destroy_assembly(ino->assembly_);
+
         err = unregister_inode(ino);
+
         if (err)
           return err;
+
         deleted++;
       } else {
         kunlock (&ino->lock_);
         kunlock (&ino->parent_->lock_);
       }
     }
+
     if (deleted == 0)
       return __seterrno (0);
   }
@@ -438,6 +462,7 @@ int inode_close (kInode_t *ino)
 
   if (--ino->readers_ <= 0) {
     ll_remove_if(&kSYS.inodeLru_, &ino->lruNd_);
+
     // Mounted point can't be pushed on LRU.
     if (ino->dev_ == ino->parent_->dev_)
       ll_push_front(&kSYS.inodeLru_, &ino->lruNd_);

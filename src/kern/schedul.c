@@ -53,6 +53,7 @@ int sched_signal (int raise, size_t data)
   } else {
 
   }
+
   return 0;
 }
 
@@ -65,6 +66,7 @@ void sched_insert(kScheduler_t *sched, kThread_t *task)
 
   assert (task->state_ < SCHED_READY);
   task->state_ = SCHED_READY;
+
   if (sched->anchor_ == NULL) {
     task->schNext_ = task;
     sched->anchor_ = task;
@@ -87,6 +89,13 @@ void sched_remove(kScheduler_t *sched, kThread_t *thread)
 {
   kThread_t *pick;
   klock(&sched->lock_);
+
+  if (thread->state_ == SCHED_READY) {
+    if (!semaphore_tryaquire(&sched->taskSem_, 1))
+      kpanic("Thread have been stolen");
+
+    thread->state_ = SCHED_ZOMBIE;
+  }
 
   assert (thread->state_ < SCHED_READY);
   // assert (task->event_ == NULL);
@@ -127,7 +136,7 @@ int sched_stop (kScheduler_t *sched, kThread_t *thread, int state)
   klock (&thread->process_->lock_);
   assert(thread == kCPU.current_);
   assert(thread->state_ == SCHED_EXEC ||
-          (thread->state_ == SCHED_ABORT && state == SCHED_ZOMBIE));
+         (thread->state_ == SCHED_ABORT && state == SCHED_ZOMBIE));
   assert (state != SCHED_EXEC && state != SCHED_ABORT);
 
   if (state != SCHED_ZOMBIE)
@@ -166,6 +175,7 @@ void sched_next(kScheduler_t *sched)
 {
   if (kCPU.current_ != NULL) {
     assert(kCPU.current_->state_ >= SCHED_READY && kCPU.current_->state_ != SCHED_ABORT);
+
     // @todo stay linked to an external task might be risky
     if (kCPU.current_->state_ >= SCHED_EXEC) {
       // cpu_save_task (kCPU.current_);
@@ -181,6 +191,8 @@ void sched_next(kScheduler_t *sched)
   if (semaphore_tryaquire(&sched->taskSem_, 1)) {
     if (kCPU.current_ != NULL)
       cpu_run_task(kCPU.current_);
+
+    kpanic("Error on scheduler\n");
   } else {
     cpu_halt();
   }

@@ -10,7 +10,7 @@ struct mutex {
 /** @brief Common structure that hold information about a semaphore. */
 struct semaphore {
   atomic_t value_;
-  // int flags_;
+  /* int flags_;*/
   struct spinlock lock_;
 };
 
@@ -21,8 +21,8 @@ static inline int mtx_lock(struct mutex *mtx)
   if (mtx->key_ == 0 && atomic_xchg(&mtx->key_, 1) == 0)
     return __seterrno(0);
 
-  // klock(mtx->lock_);
-  // Register as waiting
+  /* klock(mtx->lock_);*/
+  /* Register as waiting */
   return __seterrno(EAGAIN);
 }
 

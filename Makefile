@@ -32,16 +32,14 @@ UM_SRC =  $(wildcard src/kern/*.c) \
 					$(wildcard src/scall/*.c) \
 					$(wildcard src/_um/*.c) \
 					src/fs/iso.c src/fs/gpt.c src/fs/hdd.c \
-					src/fs/tmpfs.c src/fs/bmp.c src/fs/kdb.c \
-					src/fs/font64.c
+					src/fs/tmpfs.c src/fs/bmp.c src/fs/kdb.c
 
 KRN_SRC = $(wildcard src/kern/*.c) \
 					$(wildcard src/libc/*.c) \
 					$(wildcard src/scall/*.c) \
 					$(wildcard src/_x86/*.c) \
 					src/fs/ata.c src/fs/iso.c src/fs/gpt.c \
-					src/fs/tmpfs.c src/fs/svga.c src/fs/kdb.c \
-					src/fs/font64.c
+					src/fs/tmpfs.c src/fs/svga.c src/fs/kdb.c
 
 include scripts/global_commands.mk
 
@@ -55,10 +53,10 @@ crt0: $(CRT0)
 
 
 ifeq ($(MIN),)
-$(BOOT_DIR)/kImage: $(CRTK) $(call objs,kernel,$(KRN_SRC)) 
+$(BOOT_DIR)/kImage: $(CRTK) $(call objs,kernel,$(KRN_SRC))
 
 # $(BOOT_DIR)/kImage: $(CRTK) \
-# 		$(call objs,kernel,$(KR2_SRC)) 
+# 		$(call objs,kernel,$(KR2_SRC))
 #		$(AXLIBC)/lib/libAxRaw.a
 # $(BOOT_DIR)/kImage: $(CRTK) \
 # 		$(call objs,kernel,$(KRN_SRC)) \

@@ -8,7 +8,7 @@ endif
 ifeq ($(VERBOSE),)
 V = @
 else
-V = 
+V =
 endif
 
 ARCH ?= i386
@@ -66,7 +66,7 @@ INC += -I $(ORIGIN_DIR)/internal -I $(ORIGIN_DIR)/internal/_x86
 INC += -I $(AXLIBC)/include/ -I $(AXLIBC)/internal/
 
 
-DEF  = -D_DATE_=\"'$(date)'\" -D_OSNAME_=\"'$(linuxname)'\" 
+DEF  = -D_DATE_=\"'$(date)'\" -D_OSNAME_=\"'$(linuxname)'\"
 DEF += -D_GITH_=\"'$(git_hash)'\" -D_VTAG_=\"'$(vtag)'\"
 
 
@@ -86,7 +86,7 @@ ASTYLE += --indent-col1-comments
 
 # *** Flags ***
 CFLAGS = -Wall -Wextra -Wno-unused-parameter
-LFLAGS = 
+LFLAGS =
 
 
 C_FLAGS_DEBUG = $(CFLAGS) -ggdb3
@@ -94,14 +94,14 @@ CXX_FLAGS_DEBUG = $(CFLAGS) -ggdb3
 INC_DEBUG = $(INC)
 DEF_DEBUG = $(DEF) -D__EX -D__x86_64__
 L_FLAGS_DEBUG = $(LFLAGS)
-LIB_DEBUG = 
+LIB_DEBUG =
 
 C_FLAGS_RELEASE = $(CFLAGS) -O3
 CXX_FLAGS_RELEASE = $(CFLAGS) -O3
-INC_RELEASE = 
+INC_RELEASE =
 DEF_RELEASE = $(DEF)
 L_FLAGS_RELEASE = $(LFLAGS)
-LIB_RELEASE = 
+LIB_RELEASE =
 
 C_FLAGS_TESTING = $(CFLAGS) -ggdb3 --coverage -fprofile-arcs -ftest-coverage
 CXX_FLAGS_TESTING = $(CFLAGS) -ggdb3 --coverage -fprofile-arcs -ftest-coverage
@@ -116,7 +116,7 @@ C_FLAGS_KERNEL = $(CFLAGS) -nostdinc -g -ggdb3
 CXX_FLAGS_KERNEL = $(CFLAGS) -nostdinc -g -ggdb3
 INC_KERNEL = $(INC)
 DEF_KERNEL = $(DEF) -D__EX -D__KERNEL -D__x86_64__
-S_FLAGS_KERNEL = 
+S_FLAGS_KERNEL =
 
 C_FLAGS_SMOKEOS = $(CFLAGS) -nostdinc
 CXX_FLAGS_SMOKEOS = $(CFLAGS) -nostdinc
@@ -125,7 +125,7 @@ DEF_SMOKEOS = $(DEF) -D__EX -D__KERNEL -D__x86_64__
 
 L_FLAGS_KERNEL = $(LFLAGS)
 L_FLAGS_SMOKEOS = $(LFLAGS)
-LIB_SMOKEOS = 
+LIB_SMOKEOS =
 
 
 
