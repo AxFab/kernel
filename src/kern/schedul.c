@@ -46,15 +46,23 @@
 
 /* ----------------------------------------------------------------------- */
 /** Thread a signal */
-int sched_signal (int raise, size_t data)
+int sched_signal (int raise, size_t data, const char *at)
 {
-  if (kCPU.current_ == NULL) {
-    kpanic ("Kernel trigger an exception ; signal: %d. at %d", raise, data);
-  } else {
+  int err;
+  kProcess_t *process;
 
+  if (kCPU.current_ == NULL) {
+    kpanic ("Kernel trigger an exception ; signal: %d (%x) at %s.", raise, data, at);
+  } else {
+    process = kCPU.current_->process_;
+    kprintf ("Process failed: %d (%x) at %s.", raise, data, at);
+    err = sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
+    if (err == 0)
+      process_exit(process, 0);
+    sched_next(kSYS.scheduler_);
   }
 
-  return 0;
+  return EAGAIN;
 }
 
 

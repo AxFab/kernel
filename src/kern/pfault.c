@@ -129,8 +129,9 @@ int page_fault (size_t address, int cause)
       mspace = &kCPU.current_->process_->mspace_;
 
     if (address < mspace->base_ || address >= mspace->limit_)
-      return sched_signal(SIGSEV, address);
-  }
+      return sched_signal(SIGSEV, address, __AT__);
+  } else if (userspace)
+    return sched_signal(SIGSEV, address, __AT__);
 
   assert(kCPU.lockCounter_ == 0);
   assert(mspace != NULL);
@@ -138,8 +139,8 @@ int page_fault (size_t address, int cause)
   mtype = area->flags_ & VMA_TYPE;
   assert (POW2(mtype));
 
-  if (area == NULL || userspace)
-    return sched_signal(SIGSEV, address);
+  if (area == NULL)
+    return sched_signal(SIGSEV, address, __AT__);
 
   switch (mtype) {
   case VMA_HEAP:

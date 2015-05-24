@@ -379,7 +379,7 @@ kMemArea_t *area_map_ino(kMemSpace_t *sp, kInode_t *ino, size_t offset, size_t l
     area = area_map(sp, length, VMA_FILE | flags);
 
     if (area == NULL)
-      sched_signal(ENOMEM, length);
+      sched_signal(ENOMEM, length, __AT__);
 
     if (area_attach(area, ino, offset))
       kpanic("Try to map a file which is unavailable.\n");

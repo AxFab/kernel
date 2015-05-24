@@ -104,20 +104,31 @@ int sys_wait (int reason, int param, int timeout)
 }
 
 
-int sys_mmap(int fd, size_t address, size_t length, int flags)
+size_t sys_mmap(int fd, size_t address, size_t length, size_t offset, int flags)
 {
   kResx_t *resx;
-
-  resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
-
-  if (resx == NULL) {
-    __seterrno(EBADF);
-    return -1;
-  }
+  kMemArea_t *area = NULL;
+  kMemSpace_t *sp = &kCPU.current_->process_->mspace_;
 
   // Check MMAP Rights
-  // Map on kProcess
-  return ENOSYS;
+  // kprintf ("Request mmap with %d, %x, %x, %x, %x\n", fd, address, length, offset, flags);
+
+  if (fd >= 0) {
+    resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
+    if (resx == NULL) {
+      __seterrno(EBADF);
+      return 0;
+    }
+    __seterrno(ENOSYS);
+    return 0;
+  } else {
+    klock(&sp->lock_);
+    area = area_map(sp, length, flags);
+    kunlock(&sp->lock_);
+  }
+
+  // area_display(sp);
+  return (area == NULL) ? 0 :  area->address_;
 }
 
 

@@ -129,7 +129,7 @@ int page_fault (size_t address, int cause);
 
 /* === SCHEDULER ========================================================= */
 /** @brief Thread a signal */
-int sched_signal (int raise, size_t data);
+int sched_signal (int raise, size_t data, const char *at);
 /** @brief Insert a new thread on the scheduler */
 void sched_insert(kScheduler_t *sched, kThread_t *task);
 void sched_remove(kScheduler_t *sched, kThread_t *thread);

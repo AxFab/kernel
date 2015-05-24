@@ -78,7 +78,7 @@ int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5);
 void sys_call(size_t *params)
 {
   kCPU.current_->stackPtr_ = (size_t)params;
-  int err = system_call(params[11], params[10], params[9], params[8], params[7], params[6]);
+  int err = system_call(params[11], params[10], params[9], params[8], params[5], params[4]);
   params[11] = err;
   params[9] = __geterrno();
 }

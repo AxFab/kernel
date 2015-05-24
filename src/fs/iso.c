@@ -291,8 +291,12 @@ int ISO_lookup (const char *name, kInode_t *dir, SMK_stat_t *stat)
     memcpy (filename, entry->fileId, entry->lengthFileId);
     filename[(int)entry->lengthFileId] = '\0';
 
-    if (filename[entry->lengthFileId - 2 ] == ';')
-      filename[entry->lengthFileId - 2] = '\0';
+    if (filename[entry->lengthFileId - 2 ] == ';') {
+      if (filename[entry->lengthFileId - 3] = '.')
+        filename[entry->lengthFileId - 3] = '\0';
+      else
+        filename[entry->lengthFileId - 2] = '\0';
+    }
 
     // kprintf ("iso9660] See entry: '%s' \n", filename);
 

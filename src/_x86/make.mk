@@ -12,16 +12,15 @@ $(obj_dir)/crtk.o: $(src_dir)/src/_x86/crt/crtk.asm
 
 # CD-rom
 cdrom: OsCore.iso
-	@ ls -lh $<
+	@ -ls -lh $<
 
 OsCore.iso: $(krn_img)
 	@ mkdir -p iso/bin iso/boot/grub
 	@ cp $(krn_img) iso/boot/kImage
 	@ cp $(src_dir)/src/_x86/grub.cfg iso/boot/grub/grub.cfg
-#	@ cp ?? bin/master
 # Extract utilities package on iso !
 	$(Q) "    ISO "$@
-	$(V) grub-mkrescue -o $@ iso 2>/dev/null >/dev/null
+	$(V) grub-mkrescue -o $@ iso >/dev/null
 	@ -rm -rf iso
 
 

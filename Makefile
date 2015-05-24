@@ -4,15 +4,16 @@
 # Settings user
 ARCH ?= x86
 bld_dir ?= .
+prefix =
 
 CC = gcc
 LD =  ld
-V = 
+V =
 
-CFLAGS = -Wall -Wextra -Wno-unused-parameter
-LFLAGS = 
+CFLAGS = -Wall -Wextra -Wno-unused-parameter -ggdb3
+LFLAGS =
 INC =
-SRCS =  
+SRCS =
 
 # Settings scripted
 src_dir = $(shell dirname $(firstword $(MAKEFILE_LIST)))
@@ -22,10 +23,11 @@ deps_ax = $(src_dir)/3rdparty/axlibc
 bin_dir = $(bld_dir)
 lib_dir = $(bld_dir)/lib
 obj_dir = $(bld_dir)/obj
-krn_img = $(bld_dir)/kImage
+krn_img = $(bld_dir)/$(prefix)/kImage
 
 
 ifneq ($(ARCH),um)
+CFLAGS += -ggdb3
 # CFLAGS += -nostdinc -isystem $(deps_ax)/include
 LFLAGS += -nostdlib
 else
@@ -38,16 +40,16 @@ endif
 # ---------------------------------------------------------------------------
 # Additional info
 linuxname := $(shell uname -sr)
-git_hash := $(shell git -C $(src_dir) log -n1 --pretty='%h')$(shell if [ -n "$(git status --short -uno)"]; then echo '+'; fi)
+git_hash := $(shell git --git-dir=$(src_dir) log -n1 --pretty='%h')$(shell if [ -n "$(git status --short -uno)"]; then echo '+'; fi)
 date := $(shell date '+%d %b %Y')
 vtag := $(shell cat $(src_dir)/.build)
 
-CFLAGS += -D_DATE_=\"'$(date)'\" -D_OSNAME_=\"'$(linuxname)'\" 
+CFLAGS += -D_DATE_=\"'$(date)'\" -D_OSNAME_=\"'$(linuxname)'\"
 CFLAGS += -D_GITH_=\"'$(git_hash)'\" -D_VTAG_=\"'$(vtag)'\"
 
 INC += -I $(src_dir)/include -I $(src_dir)/include/_$(ARCH)
 INC += -I $(src_dir)/internal -I $(src_dir)/internal/_$(ARCH)
- 
+
 # ---------------------------------------------------------------------------
 # Generic definitions
 define objs
@@ -61,7 +63,7 @@ endef
 ifeq ($(VERBOSE),)
 V = @
 else
-V = 
+V =
 endif
 
 ifeq ($(QUIET),)
@@ -97,7 +99,7 @@ endif
 
 # ---------------------------------------------------------------------------
 all: $(krn_img)
-	@ strip $<
+#	@ strip $<
 	@ ls -lh $<
 	@ size $<
 
@@ -116,12 +118,12 @@ endif
 $(obj_dir)/%.o: $(src_dir)/src/%.c
 	@ mkdir -p $(dir $@)
 	$(Q) "    CC  "$<
-	$(V) $(CC) -c $(INC_krn) $(INC) $(CFLAGS) -o $@ $<
+	$(V) $(CC) -c $(INC) $(CFLAGS) -o $@ $<
 
 $(obj_dir)/%.d: $(src_dir)/src/%.c
 	@ mkdir -p $(dir $@)
 	$(Q) "    DP  "$<
-	$(V) $(CC) -MM $(INC_krn) $(INC) $(CFLAGS) -o $@ $<
+	$(V) $(CC) -MM $(INC) $(CFLAGS) -o $@ $<
 ifneq ($(DPMAX),)
 	@ cp $@ $@.tmp
 	@ sh -c "cat $@.tmp | fmt -1 | sed -e 's/.*://' -e 's/\\\\$$//' -e 's/^\s*//' | grep -v '^\s*$$' | sed 's/$$/:/'" >> $@
@@ -182,6 +184,12 @@ help:
 	@ echo "    ARCH=?      Change the architecture. I recommand changing "
 	@ echo "                also the build directory or cleaning (default:x86)."
 	@ echo "    bld_dir=?   Change the directory to put generated file (default:.)."
+	@ echo " "
+	@ echo "DEPENDENCIES:"
+	@ echo "  This script may run only using binutils suite."
+	@ echo "  However architecture specific part will often require a bit more."
+	@ echo "    - um  :: lcov"
+	@ echo "    - x86 :: nasm (grub xorriso)"
 	@ echo " "
 
 
