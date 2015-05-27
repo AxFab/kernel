@@ -27,8 +27,11 @@ struct spinlock {
   int cpu_;
   atomic_t key_;
   const char *where_;
+  struct spinlock* next_;
 };
+#define INIT_SPINLOCK { 0, 0, NULL, NULL }
 
+extern struct spinlock *SP_first, *SP_last;
 
 #define klock(l)         klock_(l,__AT__);
 #define kunlock(l)       kunlock_(l);
@@ -50,6 +53,13 @@ static inline void klock_(struct spinlock *locker, const char *where)
     cli();
 
     if (atomic_xchg(&locker->key_, 1) == 0) {
+      if (SP_first)
+        SP_last->next_ = locker;
+      else 
+        SP_first = locker;
+      locker->next_ = NULL;
+      SP_last = locker;
+
       ++LockCounter;
       locker->cpu_ = kCpuNo;
       locker->where_ = where;
@@ -62,12 +72,27 @@ static inline void klock_(struct spinlock *locker, const char *where)
 /* ----------------------------------------------------------------------- */
 static inline void kunlock_(struct spinlock *locker)
 {
+  struct spinlock *list = NULL;
+
   assert (locker->key_ == 1);
   assert (locker->cpu_ == kCpuNo);
 
   locker->key_ = 0;
   locker->cpu_ = 0;
   locker->where_ = NULL;
+
+  if (SP_first == locker) {
+    SP_first = locker->next_;
+  }
+  else {
+    list = SP_first;
+    while (list->next_ != locker)
+      list = list->next_;
+    list->next_ = locker->next_;
+  }
+
+  if (SP_last == locker)
+    SP_last = list;
 
   if (--LockCounter == 0 && NULL)
     sti();

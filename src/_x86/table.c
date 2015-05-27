@@ -80,6 +80,7 @@ void IRQ14_Handler();
 void IRQ15_Handler();
 
 void SysCall_Handler();
+void SysWait_Handler();
 void Interrupt_Handler();
 
 struct x86_TaskSs *i386_TssAddress = (struct x86_TaskSs *)0x1000;
@@ -198,6 +199,7 @@ void cpu_init_table ()
   IDT_entry(0x77, 0x08, (uint32_t)IRQ15_Handler, INTGATE);
 
   IDT_entry(0x30, 0x08, (uint32_t)SysCall_Handler, TRAPGATE);
+  IDT_entry(0x31, 0x08, (uint32_t)SysWait_Handler, TRAPGATE);
 
   PIC_init ();
 }

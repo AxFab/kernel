@@ -225,7 +225,7 @@ void initialize_smp()
 
 void cpu_sched_ticks()
 {
-  kprintf(".");
+  // kprintf(".");
   sched_next(kSYS.scheduler_);
 }
 

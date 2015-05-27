@@ -14,7 +14,9 @@ void kpanic(const char *msg, ...)
   va_start(ap, msg);
   vsnprintf(buf, 256, msg, ap);
   va_end(ap);
-  sysLogTty->write(buf);
+  // mtx_fastlock(sysLogTty->mutex_);
+  sysLogTty->write(buf, -1);
+  // mtx_unlock(sysLogTty->mutex_);
   kstacktrace(12);
   cpu_halt();
 }
@@ -29,7 +31,9 @@ void kprintf(const char *msg, ...)
   va_start(ap, msg);
   vsnprintf(buf, 256, msg, ap);
   va_end(ap);
-  sysLogTty->write(buf);
+  // mtx_fastlock(sysLogTty->mutex_);
+  sysLogTty->write(buf, -1);
+  // mtx_unlock(sysLogTty->mutex_);
   kunlock(&sysLogLock);
 }
 

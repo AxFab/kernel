@@ -183,12 +183,16 @@ void callSys ()
   else if (!strcmp(part, "sys_wait"))
     sys_wait_do(buf, &rent);
 
+  else if (!strcmp(part, "sys_mmap"))
+    sys_mmap_do(buf, &rent);
+
   else if (!memcmp(part, "WAKEUP", 6))
     longjmp(cpuJmp[main_count--], 2);
 
   else
     printf ("Unknow syscall : '%s'\n", part);
-
+  
+  assert (kCPU.lockCounter_ == 0); /* No throw when locked. */
   longjmp(cpuJmp[main_count], 5);
 }
 
@@ -211,7 +215,8 @@ void callHdw (char *buf)
     printf("  ..] KEY %x (%c)\n", iVal, iVal);
   } else
     assert(0);
-
+  
+  assert (kCPU.lockCounter_ == 0); /* No throw when locked. */
   if (kCPU.current_)
     longjmp(cpuJmp[main_count], 5);
   else
@@ -350,6 +355,7 @@ int main ()
   int until = 0;
   until = until || testCase ("base");
   until = until || testCase ("mthread");
+  until = until || testCase ("mmap");
   until = until || testCase ("base");
   return until;
 }

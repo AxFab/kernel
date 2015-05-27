@@ -6,6 +6,7 @@
 
 void ksymbols_load (kInode_t *ino);
 
+struct spinlock *SP_first = NULL, *SP_last = NULL;
 
 static const char *masterPaths[] = {
   "sbin/master.xe",

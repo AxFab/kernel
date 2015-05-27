@@ -54,8 +54,9 @@ int __syscall_5(int n, void *a1, void *a2, void *a3, void *a4, void *a5);
 #define SYS_EXIT    0x10
 #define SYS_EXEC    0x11
 #define SYS_MMAP    0x12
+#define SYS_GWD     0x13
 
-#define SYS_WAIT 0x14
+#define SYS_WAIT    0x14
 
 #define SYS_CLOSE   0x20
 #define SYS_OPEN    0x21

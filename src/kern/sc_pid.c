@@ -104,6 +104,7 @@ int sys_wait (int reason, int param, int timeout)
 }
 
 
+/* ----------------------------------------------------------------------- */
 size_t sys_mmap(int fd, size_t address, size_t length, size_t offset, int flags)
 {
   kResx_t *resx;
@@ -130,5 +131,17 @@ size_t sys_mmap(int fd, size_t address, size_t length, size_t offset, int flags)
   // area_display(sp);
   return (area == NULL) ? 0 :  area->address_;
 }
+
+
+
+/* ----------------------------------------------------------------------- */
+int sys_pinfo (char* buf, int lg, int what)
+{
+  kInode_t* ino = kCPU.current_->process_->session_->workingDir_;
+  inode_readlink(ino, buf, lg);
+  __seterrno(0);
+  return 0;
+}
+
 
 

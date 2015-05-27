@@ -14,11 +14,12 @@ int snprintf(char *, size_t, const char *, ...);
 #define DAYS_PER_4Y   (365*4   + 1)
 
 
-#undef INT_MIN
-#define INT_MIN ((int)-2147483649UL)
-
 #undef INT_MAX
-#define INT_MAX ((int)2147483648UL)
+#define INT_MAX ((int)2147483647)
+
+#undef INT_MIN
+#define INT_MIN ((int)-INT_MAX - 1)
+
 
 static const char *const weekDayStrings[] = {
   "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"

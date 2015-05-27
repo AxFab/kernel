@@ -28,31 +28,51 @@
 #include <smkos/kstruct/task.h>
 #include <smkos/kstruct/user.h>
 #include <smkos/file.h>
+#include <smkos/fcntl.h>
 
+int sys_check_pathname(const char *path)
+{
+  int max;
+  kMemArea_t *area = area_find(&kCPU.current_->process_->mspace_, (size_t)path);
+  if (area == NULL)
+    return __seterrno(EFAULT);
+  max = MIN(area->limit_ - (size_t)path, PATH_MAX);
+  int lg = strnlen(path, max);
+  if (lg >= max)
+    return __seterrno(EINVAL);
+  return __seterrno(0);
+}
 
 int sys_open(const char *path, int dirFd, int flags, int mode)
 {
-  // int err;
   kInode_t *ino = NULL;
   kResx_t *resx;
 
-  // if (err = sys_check_pathname(path))
-  //   return err;
+  /* Check arguments */
+  if (path == NULL || sys_check_pathname(path)) 
+    return -1;
+  
 
+  /* Look for dir file descritpor */
   if (dirFd > 0) {
     resx = process_get_resx (kCPU.current_->process_, dirFd, 0);
-
     if (resx == NULL)
       return EBADF;
-
     ino = resx->ino_;
   }
 
+  /* Look for path */
+  if (path != NULL)
   ino = search_inode (path, ino, flags);
 
-  if (ino == NULL) {
-    __seterrno(ENOSYS);
-    return -1;
+  if (ino == NULL) { 
+    if (flags & O_CREAT) {
+      __seterrno(EROFS);
+      return -1;
+    } else {
+      __seterrno(ENOENT);
+      return -1;
+    }
   }
 
   klock (&kCPU.current_->process_->lock_);
@@ -80,8 +100,12 @@ int sys_write(int fd, const void *data, size_t lg, off_t off)
   if (resx == NULL)
     return -1;
 
-  if (fd == 1)
-    kprintf (data);
+  if (resx->ino_->subsys_) {
+    mtx_lock(&resx->ino_->subsys_->mutex_);
+    lg = resx->ino_->subsys_->write(data, lg);
+    mtx_unlock(&resx->ino_->subsys_->mutex_);
+    return lg;
+  }
 
   switch (resx->type_) {
   case S_IFBLK:
@@ -109,6 +133,7 @@ ssize_t sys_read(int fd, void *data, size_t lg, off_t off)
   ssize_t ret = 0;
   kResx_t *resx;
 
+  // kprintf ("[Sr]");
   if (lg > FBUFFER_MAX) {
     __seterrno(ENOSYS);
     return -1;

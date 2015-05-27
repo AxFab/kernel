@@ -22,6 +22,7 @@
 #pragma once
 
 #include <smkos/kernel.h>
+#include <smkos/sync.h>
 
 
 /* ----------------------------------------------------------------------- */
@@ -59,8 +60,9 @@ struct kUser
 
 /* ----------------------------------------------------------------------- */
 struct kSubSystem {
+  struct mutex mutex_;
   void (*event)(int type, int value);
-  void (*write)(const char *m);
+  int (*write)(const void *m, int lg);
   kTerm_t* term_;
   kInode_t* out_;
   kInode_t* in_;

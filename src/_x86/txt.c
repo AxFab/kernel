@@ -1,6 +1,15 @@
 #include <smkos/kernel.h>
 #include <smkos/arch.h>
 #include <smkos/kstruct/user.h>
+#include <smkos/kstruct/term.h>
+
+
+#undef INT_MAX
+#define INT_MAX ((int)2147483647)
+
+#undef INT_MIN
+#define INT_MIN ((int)-INT_MAX - 1)
+
 
 /* ----------------------------------------------------------------------- */
 static uint16_t *txtOutBuffer = (uint16_t *)0xB8000;
@@ -61,26 +70,28 @@ static void show_cursor_vga_text (int row, int col)
 
 
 /* ----------------------------------------------------------------------- */
-void kwrite_tty(const char *m)
+int kwrite_tty(const void *m, int lg)
 {
-
-  for (; *m; ++m) {
-    if (*m < 0x20) {
-      if (*m == '\n')
+  const char* s = (const char*)m;
+  if (lg < 0)
+    lg = INT_MAX;
+  for (; *s && lg-- > 0; ++s) {
+    if (*s < 0x20) {
+      if (*s == '\n')
         txtOutIdx += 80 - (txtOutIdx % 80);
-      else if (*m == '\r')
+      else if (*s == '\r')
         txtOutIdx -= (txtOutIdx % 80);
-      else if (*m == '\t')
+      else if (*s == '\t')
         txtOutIdx += 4 - (txtOutIdx % 4);
-      else if (*m == '\e' && m[1] == '[') {
-        ++m;
-        ascii_cmd(&m);
+      else if (*s == '\e' && s[1] == '[') {
+        ++s;
+        ascii_cmd(&s);
       }
 
       continue;
     }
 
-    txtOutBuffer[txtOutIdx++] = (*m & 0xff) | 0x700;
+    txtOutBuffer[txtOutIdx++] = (*s & 0xff) | 0x700;
 
     if (txtOutIdx > 1840) {
       memcpy((void *)0xB8000, (void *)(0xB8000 + 80 * 2), 1840 * 2);
@@ -88,24 +99,63 @@ void kwrite_tty(const char *m)
       memset((void *)(0xB8000 + 1840 * 2), 0, 80 * 2);
     }
   }
+
+  return (int)(s - (const char*)m);
 }
 
 
 /* ----------------------------------------------------------------------- */
+
+extern kSubSystem_t *sysLogTty;
+#define EV_KEYUP 10
+#define EV_KEYDW 11
+#define _BKSP 0x08
+#define _ESC 0x1B
+#define _EOL '\n'
+
+
 void event_tty(int type, int value)
 {
-  if (type == 10) {
-    if ((value >= 0x20 && value < 0x80) && txtInIdx < 80) {
-      txtInBuffer[txtInIdx++] = (value & 0xff) | 0x700;
-      show_cursor_vga_text(24, txtInIdx);
-    } else if (value == '\n') {
-      memset (txtInBuffer, 0, 80 * 2);
-      txtInIdx = 0;
-    } else if (value == /*KEY_BACKSPACE*/8 && txtInIdx > 0) {
+  kInode_t *ino = sysLogTty->in_;
+
+  switch (type) {
+  case EV_KEYDW:
+    if (value == _BKSP && txtInIdx > 0) {
+      //fs_pipe_unget(1);
       txtInBuffer[--txtInIdx] = 0x700;
       show_cursor_vga_text(24, txtInIdx);
+
+    } else if (value == _EOL) {
+      fs_pipe_write(ino, &value, 1);
+      memset (txtInBuffer, 0, 80 * 2);
+      txtInIdx = 0;
+
+    } else if (value < 0x80) {
+      fs_pipe_write(ino, &value, 1);
+      if ((value >= 0x20 && value < 0x80) && txtInIdx < 80) {
+        txtInBuffer[txtInIdx++] = (value & 0xff) | 0x700;
+        show_cursor_vga_text(24, txtInIdx);
+      }
     }
+
+    break;
+
+  default:
+    break;
   }
+
+  // if (type == 10) {
+  //   if ((value >= 0x20 && value < 0x80) && txtInIdx < 80) {
+  //     txtInBuffer[txtInIdx++] = (value & 0xff) | 0x700;
+  //     show_cursor_vga_text(24, txtInIdx);
+  //   } else if (value == '\n') {
+  //     memset (txtInBuffer, 0, 80 * 2);
+  //     txtInIdx = 0;
+  //   } else if (value == /*KEY_BACKSPACE*/8 && txtInIdx > 0) {
+  //     txtInBuffer[--txtInIdx] = 0x700;
+  //     show_cursor_vga_text(24, txtInIdx);
+  //   }
+  // }
 }
 
 

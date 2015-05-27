@@ -105,12 +105,10 @@ ssize_t fs_pipe_read(kInode_t *ino, void *buf, size_t lg)
 
     /* Capacity ahead */
     cap = pipe->size_ - pipe->rpen_;
-
     if (pipe->flags_ & FP_BY_LINE)
       cap = MIN(cap, fs_pipe_newline(pipe));
     else
       cap = MIN(cap, pipe->avail_);
-
     cap = MIN(cap, lg);
 
     if (cap == 0) {

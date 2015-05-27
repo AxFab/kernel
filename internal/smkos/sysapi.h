@@ -33,6 +33,8 @@ SCALL(int, sys_reboot, int, int);
 SCALL(int, sys_exit, int errcode, int pid);
 SCALL(int, sys_exec, const char *exec, struct SMK_StartInfo *info);
 SCALL(size_t, sys_mmap, int fd, size_t address, size_t length, size_t offset, int flags);
+SCALL(int, sys_pinfo, char* buf, int lg, int what);
+
 
 SCALL(int, sys_start, const char*name, size_t entry, size_t param);
 SCALL(int, sys_stop, int);

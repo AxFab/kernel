@@ -485,5 +485,76 @@ kInode_t *follow_symlink(kInode_t *ino, int *links)
 }
 
 
+int inode_readlink(kInode_t* ino, char* buf, int lg)
+{
+  int ret;
+  char *uri;
+  buf[0] = '\0';
+
+  if (!ino)
+    return __seterrno(EINVAL);
+
+  uri = kalloc(PATH_MAX);
+  for (;;) {
+    if (ino->parent_ == NULL) {
+      kfree (uri);
+      return __seterrno(0);
+    }
+
+    ret = snprintf(uri, PATH_MAX, "/%s%s", ino->name_, buf);
+    strncpy(buf, uri, lg);
+
+    if (ret < 0 || ret > PATH_MAX) {
+      kfree (uri);
+      return __seterrno(ENAMETOOLONG);
+    }
+
+    ino = ino->parent_;
+  }
+}
+
+
+// --------------------------------------------------------------------------
+
+int inode_readuri(kInode_t* ino, char* buf, int lg)
+{
+#define ISVOL(ino) (S_ISDIR(ino->stat_.mode_) && ino->dev_ != ino->parent_->dev_)
+  int ret;
+  char *uri;
+  buf[0] = '\0';
+
+  if (!ino)
+    return __seterrno(EINVAL);
+
+  uri = kalloc(PATH_MAX);
+  for (;;) {
+    if (ino == NULL) {
+      ret = snprintf(uri, PATH_MAX, "%s:%s", "Sys", buf);
+
+    } else if (ISVOL(ino)) {
+      ret = snprintf(uri, PATH_MAX, "%s:%s", ino->name_, buf);
+
+    } else {
+      ret = snprintf(uri, PATH_MAX, "\\%s%s", ino->name_, buf);
+    }
+
+    strncpy(buf, uri, lg);
+
+    if (ret < 0 || ret > PATH_MAX) {
+      kfree (uri);
+      return __seterrno(ENAMETOOLONG);
+    }
+
+    if (ino == NULL || ISVOL(ino)) {
+      kfree (uri);
+      return __seterrno(0);
+    }
+
+    ino = ino->parent_;
+  }
+}
+
+
+
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

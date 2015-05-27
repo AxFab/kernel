@@ -338,7 +338,7 @@ kCpu_Switch2:
 ;          * Only if needed
 
 ; void cpu_restart_(cr3, kstk, entry, param, ustack, tssAdd)
-global cpu_restart_, cpu_resume_
+global cpu_restart_, cpu_resume_, cpu_wait
 cpu_restart_:
     push ebp
     mov ebp, esp
@@ -403,7 +403,7 @@ cpu_start_:
     mov eax, [ebp + 8] ; Cr3
     mov ebx, [ebp + 12] ; Tss.esp
     mov ecx, [ebp + 16] ; SP
-    mov edi, [ebp + 28] ; TSS Address
+    mov edi, [ebp + 20] ; TSS Address
 
   ; Set TSS ESP0
     add edi, 4
@@ -430,8 +430,8 @@ cpu_start_:
 cpu_halt_:
     push ebp
     mov ebp, esp
-    mov eax, [ebp + 8]
-    mov edi, [ebp + 12]
+    mov eax, [ebp + 8] ; CPU Stack
+    mov edi, [ebp + 12] ; TSS Address
     sub eax, 10
     cli
     mov esp, eax
@@ -441,8 +441,8 @@ cpu_halt_:
     mov dword [esp + 8], 0x200            ; eflags
 
   ; Set TSS ESP0
-    mov ebx, eax
-    mov [edi], ebx   
+    add edi, 4
+    mov [edi], eax
 
     mov ax, SGMT_KRN_DATA
     mov ds, ax
@@ -458,7 +458,16 @@ cpu_halt_:
     hlt
     jmp .pause
 
-    
+; void cpu_wait()
+cpu_wait:
+    mov byte [0xB8012], 'W'
+    mov byte [0xB8013], 0x57
+    int 0x31
+    mov byte [0xB8014], 'a'
+    mov byte [0xB8015], 0x57
+    ret
+
+
 ; cpuid ------------------------------------
 
 cpuid:
@@ -516,6 +525,7 @@ global IRQ14_Handler
 global IRQ15_Handler
 
 global SysCall_Handler
+global SysWait_Handler
 global Interrupt_Handler
 
 extern kpanic, sys_ex, sys_irq, sys_call, 
@@ -657,6 +667,22 @@ SysCall_Handler:
     SAVE_REGS
     push esp
     call sys_call
+    add esp, 4
+    LOAD_REGS
+    iret
+
+extern sys_wait_
+SysWait_Handler:
+    cli
+    SAVE_REGS
+    push esp
+
+;    mov byte [0xB8010], '.'
+;    mov byte [0xB8015], 0x57
+    call sys_wait_
+    ; sys_wait_ should never return
+    mov byte [0xB8010], 'F'
+    mov byte [0xB8011], 0x57
     add esp, 4
     LOAD_REGS
     iret
@@ -955,7 +981,7 @@ ap_32start:
 
 
 
-global x86_ApError 
+global x86_ApError
 align 4096
 x86_ApError:
     nop

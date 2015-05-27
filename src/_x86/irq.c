@@ -57,7 +57,13 @@ void(*x86_irq_hanlder[16])();
 */
 void sys_irq (int no, size_t *params)
 {
-  kCPU.current_->stackPtr_ = (size_t)params;
+  // kprintf ("<I+%x>", (size_t)params);
+  if (kCPU.current_ && kCPU.current_->state_ == SCHED_EXEC) {
+    kCPU.current_->stackPtr_ = (size_t)params;
+    // kprintf ("<I+%x>", (size_t)params);
+    assert (kCPU.current_->stackPtr_ < kCPU.current_->kstack_->limit_);
+    assert (kCPU.current_->stackPtr_ > kCPU.current_->kstack_->limit_ - 4096 * 2);
+  }
 
   if (no < 0 || no >= 16)
     kpanic ("IRQ no %d !?\n", no);
@@ -77,10 +83,28 @@ int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5);
 
 void sys_call(size_t *params)
 {
+  assert (kCPU.current_ && kCPU.current_->state_ == SCHED_EXEC);
   kCPU.current_->stackPtr_ = (size_t)params;
+  // kprintf ("<S+%x>", (size_t)params);
+  assert (kCPU.current_->stackPtr_ < kCPU.current_->kstack_->limit_);
+  assert (kCPU.current_->stackPtr_ > kCPU.current_->kstack_->limit_ - 4096 * 2);
   int err = system_call(params[11], params[10], params[9], params[8], params[5], params[4]);
   params[11] = err;
   params[9] = __geterrno();
+}
+
+void sys_wait_(size_t *params)
+{
+  assert (kCPU.current_ && kCPU.current_->state_ == SCHED_EXEC);
+  // kprintf ("<W+%x>", (size_t)params);
+  kCPU.current_->stackPtr_ = (size_t)params;
+  assert (kCPU.current_->stackPtr_ < kCPU.current_->kstack_->limit_);
+  assert (kCPU.current_->stackPtr_ > kCPU.current_->kstack_->limit_ - 4096 * 2);
+  // kprintf ("Put Thread of %d to blocked state\n", kCPU.current_->process_->pid_);
+  sched_stop(kSYS.scheduler_, kCPU.current_, SCHED_BLOCKED);
+  sched_next(kSYS.scheduler_);
+  assert(0);
+  /* @todo -- this is not CPU releated. */
 }
 
 

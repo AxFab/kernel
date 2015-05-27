@@ -3,9 +3,12 @@
 #include <stdio.h>
 
 /* ----------------------------------------------------------------------- */
-void kwrite_tty(const char *m)
+int kwrite_tty(const void *m, int lg)
 {
-  printf ("%s", m);
+  if (lg < 0)
+    return printf ("%s", (const void*)m);
+  else
+    return fwrite((const void*)m, lg, 1, stdout);
 }
 
 

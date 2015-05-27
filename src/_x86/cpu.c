@@ -23,6 +23,7 @@
 #include <smkos/kapi.h>
 #include <smkos/kstruct/task.h>
 
+#define TSS_CPU0_ADD 0x1000
 // #include <smkos/core.h>
 
 #include "mmu.h"
@@ -36,16 +37,19 @@ size_t mmu_newdir();
 void cpu_halt()
 {
   kernel_state (KST_IDLE);
-  cpu_halt_(MMU_PREALLOC_STK, 0x1004);
+  cpu_halt_(MMU_PREALLOC_STK, TSS_CPU0_ADD);
 }
 
-void cpu_wait()
-{
-  sched_stop(kSYS.scheduler_, kCPU.current_, SCHED_BLOCKED);
-  sched_next(kSYS.scheduler_);
-  assert(0);
-  /* @todo -- this is not CPU releated. */
-}
+
+// void cpu_wait()
+// {
+//   kprintf ("Put Thread of %d to blocked state\n");
+
+//   sched_stop(kSYS.scheduler_, kCPU.current_, SCHED_BLOCKED);
+//   sched_next(kSYS.scheduler_);
+//   assert(0);
+//   /* @todo -- this is not CPU releated. */
+// }
 
 void log_sys(const char *sbuf)
 {
@@ -71,18 +75,12 @@ void cpu_run_task(kThread_t *thread)
   }
 
   kCPU.current_->state_ = SCHED_EXEC;
+  kCPU.lockCounter_++; /* Prevent call to `sti' */
   kunlock (&thread->process_->lock_);
+  kCPU.lockCounter_--;
   kernel_state(KST_USERSP);
-  // kprintf ("Start task \n");
-  // kprintf ("  Kstack :: %x\n", thread->kstack_->limit_ - 0x10);
-  // kprintf ("  Ustack :: %x\n", thread->ustack_->limit_ - 0x10);
-  // kprintf ("  PgDir :: %x\n", thread->process_->pageDir_);
-  // kprintf ("  Entry :: %x\n", thread->paramEntry_);
-  // kprintf ("  Param :: %x\n", thread->paramValue_);
-  /// @todo - Change TSS, CR3*, Entry*, Params*
-  //         * Only if needed
 
-  // for (;;);
+
   if (thread->paramEntry_ != 0) {
     eip = thread->paramEntry_;
     thread->paramEntry_ = 0;
@@ -91,16 +89,15 @@ void cpu_run_task(kThread_t *thread)
                  eip,
                  thread->paramValue_,
                  thread->ustack_->limit_ - 0x10,
-                 0x1000);
+                 TSS_CPU0_ADD);
   } else {
+    assert (thread->stackPtr_ < thread->kstack_->limit_);
+    assert (thread->stackPtr_ > thread->kstack_->limit_ - 4096 * 2);
     cpu_resume_(thread->process_->pageDir_,
                 thread->kstack_->limit_ - 0x10,
                 thread->stackPtr_,
-                0x1000);
-
-
+                TSS_CPU0_ADD);
   }
-
 
   cpu_halt();
 }

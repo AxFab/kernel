@@ -6,6 +6,7 @@ struct mutex {
   atomic_t key_;
   struct spinlock lock_;
 };
+#define INIT_MUTEX { 0, INIT_SPINLOCK }
 
 /** @brief Common structure that hold information about a semaphore. */
 struct semaphore {
@@ -13,6 +14,7 @@ struct semaphore {
   /* int flags_;*/
   struct spinlock lock_;
 };
+#define INIT_SEMAPHORE { 0, INIT_SPINLOCK }
 
 
 /* ----------------------------------------------------------------------- */

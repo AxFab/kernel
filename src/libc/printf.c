@@ -9,11 +9,12 @@
  */
 int vfprintf (FILE *fp, const char *str, va_list ap);
 
-#undef INT_MAX
-#define INT_MAX 2147483648UL
 
-#undef UINT_MAX
-#define UINT_MAX 4294967296UL
+#undef INT_MAX
+#define INT_MAX ((int)2147483647)
+
+#undef INT_MIN
+#define INT_MIN ((int)-INT_MAX - 1)
 
 // ---------------------------------------------------------------------------
 /** Write on a string streaming */

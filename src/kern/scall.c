@@ -34,6 +34,9 @@ static kScHandler system_delegate[128] = {
   SYS_CALL_ENTRY (SYS_WRITE, sys_write),
   SYS_CALL_ENTRY (SYS_READ, sys_read),
   SYS_CALL_ENTRY (SYS_MMAP, sys_mmap),
+  SYS_CALL_ENTRY (SYS_OPEN, sys_open),
+  SYS_CALL_ENTRY (SYS_CLOSE, sys_close),
+  SYS_CALL_ENTRY (SYS_GWD, sys_pinfo),
 };
 
 
@@ -42,15 +45,15 @@ int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
 {
   int c;
   // kprintf("SYSCALL %d] %8x, %8x, %8x, %8x, %8x\n", no, p1, p2, p3, p4, p5);
-  kprintf("[S%x]", no);
+  // kprintf("[S%x]", no);
 
   if (no < 0 || no >= 128 || system_delegate[no] == NULL) {
+    kprintf("Unsupported syscall [0x%x]\n", no);
     __seterrno(ENOSYS);
     return -1;
   }
 
-  for (c = 0; c < 0x8000000; ++c);
-
+  // for (c = 0; c < 0x800000; ++c);
   return system_delegate[no] (p1, p2, p3, p4, p5);
 }
 

@@ -9,8 +9,8 @@
 #define _EOL '\n'
 
 /* ----------------------------------------------------------------------- */
-void kwrite_tty(const char *m);
-void kwrite_pipe(const char *m);
+int kwrite_tty(const void *m, int lg);
+int kwrite_pipe(const void *m, int lg);
 
 void event_tty(int type, int value);
 void event_pipe(int type, int value);
@@ -21,21 +21,25 @@ void font64_clean(kTerm_t *term);
 
 
 kSubSystem_t vgaText = {
-  event_tty,
-  kwrite_tty,
+#ifdef _MSC_BUILD
+  INIT_MUTEX,
+  event_tty, kwrite_tty,
   0, 0, 0
-
-  //.write = kwrite_tty,
-  //.event = event_tty,
+#else
+  .write = kwrite_tty,
+  .event = event_tty
+#endif
 };
 
 kSubSystem_t frameTty = {
-  event_pipe,
-  kwrite_pipe,
+#ifdef _MSC_BUILD
+  INIT_MUTEX,
+  event_pipe, kwrite_pipe,
   0, 0, 0
-
-  //.write = kwrite_pipe,
-  //.event = event_pipe,
+#else
+  .write = kwrite_pipe,
+  .event = event_pipe,
+#endif
 };
 
 
@@ -112,16 +116,23 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
 
 void term_create_tty (kSubSystem_t *subsys)
 {
+  kInode_t *ino;
   kInode_t *inon;
   char no[10];
   static int auto_incr = 0;
   int nol = auto_incr++;
+  
+  snprintf(no, 10, "Tty%d", nol);
+  ino = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, PAGE_SIZE);
+  assert (ino != NULL);
 
   snprintf(no, 10, ".Tty%d", nol);
   inon = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, PAGE_SIZE);
   assert (inon != NULL);
-
+  
+  ino->subsys_ = subsys;
   inon->subsys_ = subsys;
+  subsys->out_ = ino;
   subsys->in_ = inon;
 }
 
@@ -323,11 +334,13 @@ void term_write (kTerm_t *term)
 
 
 /* ----------------------------------------------------------------------- */
-void kwrite_pipe (const char *m)
+int kwrite_pipe (const void *m, int lg)
 {
-  int lg = strlen (m);
-  fs_pipe_write (sysLogTty->term_->ino_, m, lg);
+  if (lg < 0)
+    lg = strlen ((const char*)m);
+  lg = fs_pipe_write (sysLogTty->term_->ino_, m, lg);
   term_write(sysLogTty->term_);
+  return lg;
 }
 
 #define EV_KEYUP 10 // Already in 3, think about header

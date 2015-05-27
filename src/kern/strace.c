@@ -311,5 +311,37 @@ void sys_wait_do (char *str, char **rent)
   log_sys(sbuf);
 }
 
+
+/* ----------------------------------------------------------------------- */
+void sys_mmap_save (char *snBuf, int snLg, int fd, size_t address, size_t length, size_t offset, int flags, size_t ret)
+{
+  const char *ino = NULL;
+  kResx_t *resx = process_get_resx (kCPU.current_->process_, fd, 0);
+
+  if (resx != NULL)
+    ino = resx->ino_->name_;
+
+  snprintf (snBuf, snLg, "sys_mmap (%d:%s, 0x%x, 0x%x, 0x%x, 0x%x) = 0x%x", fd, ino, address, length, offset, flags, ret);
+}
+
+void sys_mmap_do (char *str, char **rent)
+{
+  char sbuf[128];
+  int fd = parseInt(rent);
+  size_t address = (size_t)parseInt(rent);
+  size_t length = (size_t)parseInt(rent);
+  size_t offset = (size_t)parseInt(rent);
+  int flags = parseInt(rent);
+  char* sres = parseStr(rent);
+  size_t res = (size_t)strtol(sres, NULL, 0);
+  size_t ret = sys_mmap(fd, address, length, offset, flags);
+  if (sres[0] == '+')
+    assert (ret != 0);
+  else
+    assert (ret == res);
+  sys_mmap_save(sbuf, 128, fd, address, length, offset, flags, ret);
+  log_sys(sbuf);
+}
+
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
