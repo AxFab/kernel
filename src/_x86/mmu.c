@@ -73,6 +73,9 @@ void mmu_releasepage(page_t page)
 /** Remove the page from the context, eventualy memzero it first */
 void mmu_clean_page(size_t address)
 {
+  address = ALIGN_DW(address, PAGE_SIZE);
+  // memset(address, 0, PAGE_SIZE);
+  *MMU_LEVELPG(address) = 0;
 }
 
 /* ----------------------------------------------------------------------- */

@@ -32,12 +32,13 @@
 
 int sys_check_pathname(const char *path)
 {
+  int lg;
   int max;
   kMemArea_t *area = area_find(&kCPU.current_->process_->mspace_, (size_t)path);
   if (area == NULL)
     return __seterrno(EFAULT);
   max = MIN(area->limit_ - (size_t)path, PATH_MAX);
-  int lg = strnlen(path, max);
+  lg = strnlen(path, max);
   if (lg >= max)
     return __seterrno(EINVAL);
   return __seterrno(0);
@@ -49,9 +50,9 @@ int sys_open(const char *path, int dirFd, int flags, int mode)
   kResx_t *resx;
 
   /* Check arguments */
-  if (path == NULL || sys_check_pathname(path)) 
+  if (path == NULL || sys_check_pathname(path))
     return -1;
-  
+
 
   /* Look for dir file descritpor */
   if (dirFd > 0) {
@@ -65,7 +66,7 @@ int sys_open(const char *path, int dirFd, int flags, int mode)
   if (path != NULL)
   ino = search_inode (path, ino, flags);
 
-  if (ino == NULL) { 
+  if (ino == NULL) {
     if (flags & O_CREAT) {
       __seterrno(EROFS);
       return -1;

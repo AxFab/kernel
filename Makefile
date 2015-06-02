@@ -40,7 +40,7 @@ endif
 # ---------------------------------------------------------------------------
 # Additional info
 linuxname := $(shell uname -sr)
-git_hash := $(shell git --git-dir=$(src_dir) log -n1 --pretty='%h')$(shell if [ -n "$(git status --short -uno)"]; then echo '+'; fi)
+git_hash := $(shell git --git-dir=$(src_dir)/.git log -n1 --pretty='%h')$(shell if [ -n "$(git status --short -uno)"]; then echo '+'; fi)
 date := $(shell date '+%d %b %Y')
 vtag := $(shell cat $(src_dir)/.build)
 

@@ -1,3 +1,24 @@
+/*
+ *      This file is part of the SmokeOS project.
+ *  Copyright (C) 2015  <Fabien Bavent>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *   - - - - - - - - - - - - - - -
+ *
+ *      Implementation for terminals.
+ */
 #include <smkos/kapi.h>
 #include <smkos/klimits.h>
 #include <smkos/kstruct/fs.h>
@@ -121,7 +142,7 @@ void term_create_tty (kSubSystem_t *subsys)
   char no[10];
   static int auto_incr = 0;
   int nol = auto_incr++;
-  
+
   snprintf(no, 10, "Tty%d", nol);
   ino = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, PAGE_SIZE);
   assert (ino != NULL);
@@ -129,7 +150,7 @@ void term_create_tty (kSubSystem_t *subsys)
   snprintf(no, 10, ".Tty%d", nol);
   inon = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, PAGE_SIZE);
   assert (inon != NULL);
-  
+
   ino->subsys_ = subsys;
   inon->subsys_ = subsys;
   subsys->out_ = ino;

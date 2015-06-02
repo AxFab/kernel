@@ -232,11 +232,14 @@ kProcess_t *create_logon_process(kInode_t *ino, kUser_t *user, kInode_t *dir, co
   procdir = create_inode (bufPid, kSYS.procIno_, S_IFDIR | 0400, 0);
   stdin = search_inode(".Tty0", kSYS.procIno_, 0);
   stdout = search_inode("Tty0", kSYS.procIno_, 0);
-  // stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
-  // stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  if (stdin == NULL)
+    stdin = create_inode ("stdin", procdir, S_IFIFO | 0400, PAGE_SIZE);
+  if (stdout == NULL)
+    stdout = create_inode ("stdout", procdir, S_IFIFO | 0400, PAGE_SIZE);
   stderr = stdout;
 
   process = alloc_process(ino->assembly_, pid);
+  process->procDir_ = procdir;
 
   if (process == NULL)
     return NULL;
@@ -303,6 +306,7 @@ kProcess_t *create_child_process(kInode_t *ino, kProcess_t *parent, struct SMK_S
     stderr = stdout;
 
   process = alloc_process(ino->assembly_, pid);
+  process->procDir_ = procdir;
 
   if (process == NULL)
     return NULL;

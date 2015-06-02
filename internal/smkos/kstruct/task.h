@@ -66,6 +66,7 @@ struct kProcess {
   int pid_;
   kAssembly_t* assembly_;
   kSession_t* session_;
+  kInode_t *procDir_;
   time_t start_;
   kMemSpace_t mspace_;
   struct spinlock lock_;

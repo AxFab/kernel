@@ -30,6 +30,7 @@ typedef int(*kScHandler)(size_t p1, size_t p2, size_t p3, size_t p4, size_t p5);
 static kScHandler system_delegate[128] = {
   SYS_CALL_ENTRY (SYS_REBOOT, NULL),
   SYS_CALL_ENTRY (SYS_EXIT, sys_exit),
+  SYS_CALL_ENTRY (SYS_EXEC, sys_exec),
   SYS_CALL_ENTRY (SYS_PAUSE, NULL),
   SYS_CALL_ENTRY (SYS_WRITE, sys_write),
   SYS_CALL_ENTRY (SYS_READ, sys_read),
@@ -43,7 +44,6 @@ static kScHandler system_delegate[128] = {
 /* ----------------------------------------------------------------------- */
 int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
 {
-  int c;
   // kprintf("SYSCALL %d] %8x, %8x, %8x, %8x, %8x\n", no, p1, p2, p3, p4, p5);
   // kprintf("[S%x]", no);
 

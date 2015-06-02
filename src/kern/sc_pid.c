@@ -56,11 +56,13 @@ int sys_exec(const char *exec, struct SMK_StartInfo *info)
   kInode_t *ino = search_inode(exec, pwd, 0);
 
   if (ino == NULL) {
+    kprintf("Program %s 'ENOENT'\n", exec);
     __seterrno(ENOENT);
     return -1;
   }
 
   if (load_assembly(ino) == NULL) {
+    kprintf("Program %s 'ENOEXEC'\n", exec);
     __seterrno(ENOEXEC);
     return -1;
   }
@@ -68,6 +70,7 @@ int sys_exec(const char *exec, struct SMK_StartInfo *info)
   inode_open(ino);
   process = create_child_process(ino, kCPU.current_->process_, info);
 
+  kprintf("Program %s '%d'\n", exec, __geterrno());
   if (!process)
     return -1;
 

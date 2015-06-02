@@ -55,7 +55,7 @@ static inline void klock_(struct spinlock *locker, const char *where)
     if (atomic_xchg(&locker->key_, 1) == 0) {
       if (SP_first)
         SP_last->next_ = locker;
-      else 
+      else
         SP_first = locker;
       locker->next_ = NULL;
       SP_last = locker;
