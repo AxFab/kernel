@@ -10,6 +10,7 @@
 #define VGA_No 23
 #define BMP_No 24
 #define KDB_No 38
+#define FAT_No 16
 
 
 /* --- File Systems ------------------------------------------------------ */
@@ -31,7 +32,7 @@ static inline void init_drivers()
 {
   register_driver(GPT);
   register_driver(ISO9660);
-  /* register_driver(FATFS); */
+  register_driver(FATFS);
   register_driver(KDB);
 
 #if !defined(_FS) || defined(_FS_x86) /* _x86 */

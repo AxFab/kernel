@@ -32,6 +32,7 @@
 
 int sys_check_pathname(const char *path)
 {
+#if !defined(_FS_UM)
   int lg;
   int max;
   kMemArea_t *area = area_find(&kCPU.current_->process_->mspace_, (size_t)path);
@@ -41,6 +42,7 @@ int sys_check_pathname(const char *path)
   lg = strnlen(path, max);
   if (lg >= max)
     return __seterrno(EINVAL);
+#endif
   return __seterrno(0);
 }
 

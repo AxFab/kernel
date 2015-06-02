@@ -53,9 +53,9 @@ void kernel_start ()
 
   /* Initialize the VFS */
   initialize_vfs();
-
+  
   /* Search kernel helper files */
-  ino = search_inode ("boot/kImage.map", kSYS.sysIno_, 0);
+  ino = search_inode("boot/kImage.map", kSYS.sysIno_, 0);
 
   if (ino)
     ksymbols_load(ino);

@@ -74,6 +74,7 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
     return NULL;
   }
 
+  memset(&stat, 0, sizeof(stat));
   if (open_fs(dir))
     return NULL;
 
@@ -82,7 +83,10 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
 
   if (err != 0)
     return NULL;
-
+  
+  stat.major_ = dir->stat_.major_;
+  stat.minor_ = dir->stat_.minor_;
+  stat.block_ = dir->stat_.block_;
   ino = register_inode (name, dir, &stat, false);
   return ino;
 }

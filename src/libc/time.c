@@ -242,6 +242,10 @@ char *asctime(const struct tm *restrict date)
   return asctime_r(date, buf);
 }
 
+time_t mktime(struct tm *tm)
+{
+  return timegm(tm);
+}
 
 time_t timegm(struct tm *tm)
 {

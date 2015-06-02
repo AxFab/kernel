@@ -8,6 +8,7 @@ SRC_kfs += $(src_dir)/src/fs/gpt.c
 SRC_kfs += $(src_dir)/src/fs/iso.c
 SRC_kfs += $(src_dir)/src/fs/kdb.c
 # SRC_kfs += $(src_dir)/src/fs/raid0.c
+SRC_kfs += $(src_dir)/src/fs/fat.c
 SRC_kfs += $(src_dir)/src/fs/tmpfs.c
 
 ifeq ($(ARCH),um)

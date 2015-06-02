@@ -35,7 +35,7 @@ int GPT_count = 0;
 /* ----------------------------------------------------------------------- */
 int GPT_mount (kInode_t *dev, const char *name)
 {
-  int idx;
+  int idx, sub;
   char subname [10];
   SMK_stat_t stat;
   struct GPT_mbrEntry *entry;
@@ -63,10 +63,11 @@ int GPT_mount (kInode_t *dev, const char *name)
 
   entry = (struct GPT_mbrEntry *)&address[446];
 
-  for (idx = 0; idx < 4; ++idx, ++entry) {
-    if (entry->sectors_ == 0)
+  for (idx = 0, sub = 0; idx < 4; ++idx, ++entry) {
+    if (entry->sectors_ == 0 || (entry->partitionType_ != 0 && entry->partitionType_ != (char)0x80))
       continue;
 
+    sub++;
     stat.lba_ = entry->firstLBA_;
     stat.length_ = entry->sectors_;
     stat.major_ = GPT_No;
@@ -76,8 +77,9 @@ int GPT_mount (kInode_t *dev, const char *name)
     create_device(subname, dev, &stat, NULL);
   }
 
+
   area_unmap(kSYS.mspace_, area);
-  return 0;
+  return sub == 0 ? EBADF : 0;
 }
 
 
