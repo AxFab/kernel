@@ -21,7 +21,7 @@
  */
 #include <smkos/kernel.h>
 #include <smkos/kapi.h>
-#include <smkos/sysapi.h>
+// #include <smkos/sysapi.h>
 #include <smkos/klimits.h>
 #include <smkos/kstruct/fs.h>
 #include <smkos/kstruct/map.h>
@@ -75,15 +75,20 @@ static int parseInt (char **rent)
 void log_sys(const char *sbuf);
 
 /* ----------------------------------------------------------------------- */
-void sys_open_save (char *snBuf, int snLg, const char *path, int dirFd, int flags, int mode, int ret)
+void sys_open_save (char *snBuf, int snLg, const char *path, int dirFd, int flags, int mode, int p5, int ret)
 {
+  const char *dir = NULL;
   const char *ino = NULL;
   kResx_t *resx = process_get_resx (kCPU.current_->process_, dirFd, 0);
 
   if (resx != NULL)
+    dir = resx->ino_->name_;
+
+  resx = process_get_resx (kCPU.current_->process_, ret, 0);
+  if (resx != NULL)
     ino = resx->ino_->name_;
 
-  snprintf (snBuf, snLg, "sys_open (%p:\"%s\", %d:%s, %x, 0%o) = %d", path, path, dirFd, ino, flags, mode, ret);
+  snprintf (snBuf, snLg, "sys_open (%p:\"%s\", %d:%s, %x, 0%o) = %d:%s", path, path, dirFd, dir, flags, mode, ret, ino);
 }
 
 void sys_open_do (char *str, char **rent)
@@ -96,12 +101,12 @@ void sys_open_do (char *str, char **rent)
   int res = parseInt(rent);
   int ret = sys_open(path, dir, flags, mode);
   assert (ret == res);
-  sys_open_save(sbuf, 128, path, dir, flags, mode, ret);
+  sys_open_save(sbuf, 128, path, dir, flags, mode, 0, ret);
   log_sys(sbuf);
 }
 
 /* ----------------------------------------------------------------------- */
-void sys_close_save (char *snBuf, int snLg, int fd, int ret)
+void sys_close_save (char *snBuf, int snLg, int fd, int p2, int p3, int p4, int p5, int ret)
 {
   const char *ino = NULL;
   kResx_t *resx = process_get_resx (kCPU.current_->process_, fd, 0);
@@ -119,12 +124,12 @@ void sys_close_do (char *str, char **rent)
   int res = parseInt(rent);
   int ret = sys_close(fd);
   assert (ret == res);
-  sys_close_save(sbuf, 128, fd, ret);
+  sys_close_save(sbuf, 128, fd, 0, 0, 0, 0, ret);
   log_sys(sbuf);
 }
 
 /* ----------------------------------------------------------------------- */
-void sys_write_save (char *snBuf, int snLg, int fd, const void *buf, size_t lg, off_t off, ssize_t bytes)
+void sys_write_save (char *snBuf, int snLg, int fd, const void *buf, size_t lg, off_t off, int p5, ssize_t bytes)
 {
   const char *ino = NULL;
   kResx_t *resx = process_get_resx (kCPU.current_->process_, fd, 0);
@@ -145,13 +150,13 @@ void sys_write_do (char *str, char **rent)
   int res = parseInt(rent);
   int ret = sys_write(fd, buf, lg, sk);
   assert (ret == res);
-  sys_write_save(sbuf, 128, fd, buf, lg, sk, ret);
+  sys_write_save(sbuf, 128, fd, buf, lg, sk, 0, ret);
   log_sys(sbuf);
 }
 
 
 /* ----------------------------------------------------------------------- */
-void sys_read_save (char *snBuf, int snLg, int fd, void *buf, size_t lg, off_t off, ssize_t bytes)
+void sys_read_save (char *snBuf, int snLg, int fd, void *buf, size_t lg, off_t off, int p5, ssize_t bytes)
 {
   const char *ino = NULL;
   kResx_t *resx = process_get_resx (kCPU.current_->process_, fd, 0);
@@ -178,13 +183,13 @@ void sys_read_do (char *str, char **rent)
   if (buf && ret > 0)
     assert(!memcmp(buf, tmp, ret));
 
-  sys_read_save(sbuf, 128, fd, tmp, lg, sk, ret);
+  sys_read_save(sbuf, 128, fd, tmp, lg, sk, 0, ret);
   log_sys(sbuf);
   kfree(tmp);
 }
 
 /* ----------------------------------------------------------------------- */
-void sys_exec_save(char *snBuf, int snLg, const char *exe, SMK_StartInfo_t *si, int ret)
+void sys_exec_save(char *snBuf, int snLg, const char *exe, SMK_StartInfo_t *si, int p3, int p4, int p5, int ret)
 {
   kResx_t *resx;
   const char *ino0 = NULL;
@@ -234,12 +239,12 @@ void sys_exec_do (char *str, char **rent)
   res = parseInt(rent);
   ret = sys_exec(exe, &si);
   assert (ret == res);
-  sys_exec_save(sbuf, 128, exe, &si, ret);
+  sys_exec_save(sbuf, 128, exe, &si, 0, 0, 0, ret);
   log_sys(sbuf);
 }
 
 /* ----------------------------------------------------------------------- */
-void sys_exit_save(char *snBuf, int snLg, int status, int pid, int ret)
+void sys_exit_save(char *snBuf, int snLg, int status, int pid, int p3, int p4, int p5, int ret)
 {
   __unused(ret);
   snprintf (snBuf, snLg, "sys_exit (%d, %d)", status, pid);
@@ -250,14 +255,14 @@ void sys_exit_do (char *str, char **rent)
   char sbuf[128];
   int status = parseInt(rent);
   int pid = parseInt(rent);
-  sys_exit_save(sbuf, 128, status, pid, 0);
+  sys_exit_save(sbuf, 128, status, pid, 0, 0, 0, 0);
   log_sys(sbuf);
   sys_exit(status, pid);
   assert(0);
 }
 
 /* ----------------------------------------------------------------------- */
-void sys_start_save (char *snBuf, int snLg, const char *name, size_t entry, size_t param, int ret)
+void sys_start_save (char *snBuf, int snLg, const char *name, size_t entry, size_t param, int p4, int p5, int ret)
 {
   snprintf (snBuf, snLg, "sys_start (%p:\"%s\", %x, %u) = %d", name, name, entry, param, ret);
 }
@@ -271,12 +276,12 @@ void sys_start_do (char *str, char **rent)
   int res = parseInt(rent);
   int ret = sys_start(name, entry, param);
   assert (ret == res);
-  sys_start_save(sbuf, 128, name, entry, param, ret);
+  sys_start_save(sbuf, 128, name, entry, param, 0, 0, ret);
   log_sys(sbuf);
 }
 
 /* ----------------------------------------------------------------------- */
-void sys_stop_save (char *snBuf, int snLg, int param, int ret)
+void sys_stop_save (char *snBuf, int snLg, int param, int p2, int p3, int p4, int p5, int ret)
 {
   __unused(param);
   __unused(ret);
@@ -286,14 +291,14 @@ void sys_stop_save (char *snBuf, int snLg, int param, int ret)
 void sys_stop_do (char *str, char **rent)
 {
   char sbuf[128];
-  sys_stop_save(sbuf, 128, 0, 0);
+  sys_stop_save(sbuf, 128, 0, 0, 0, 0, 0, 0);
   log_sys(sbuf);
   sys_stop(0);
   assert(0);
 }
 
 /* ----------------------------------------------------------------------- */
-void sys_wait_save (char *snBuf, int snLg, int reason, int param, int timeout, int ret)
+void sys_wait_save (char *snBuf, int snLg, int reason, int param, int timeout, int p4, int p5, int ret)
 {
   snprintf (snBuf, snLg, "sys_wait (%x, %d, %d:<%dsec>) = %d", reason, param, timeout, timeout / 1000000, ret);
 }
@@ -307,7 +312,7 @@ void sys_wait_do (char *str, char **rent)
   int res = parseInt(rent);
   int ret = sys_wait(reason, param, timeout);
   assert (ret == res);
-  sys_wait_save(sbuf, 128, reason, param, timeout, ret);
+  sys_wait_save(sbuf, 128, reason, param, timeout, 0, 0, ret);
   log_sys(sbuf);
 }
 
@@ -342,6 +347,14 @@ void sys_mmap_do (char *str, char **rent)
   sys_mmap_save(sbuf, 128, fd, address, length, offset, flags, ret);
   log_sys(sbuf);
 }
+
+
+/* ----------------------------------------------------------------------- */
+void sys_pinfo_save (char *snBuf, int snLg, char* buf, int lg, int what, int p4, int p5, int ret)
+{
+  snprintf (snBuf, snLg, "sys_pinfo (%p:\"%s\", %d, %d) = %d", buf, buf, lg, what, ret);
+}
+
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

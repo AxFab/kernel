@@ -114,6 +114,19 @@ static void display_inode(kInode_t *ino, int depth)
 
 
 /* ----------------------------------------------------------------------- */
+static void dispose_drivers()
+{
+  kDriver_t *pilote;
+  kDriver_t *iter = ll_first(&kSYS.driverPool_, kDriver_t, allNd_);
+  while (iter) {
+    pilote = iter;
+    iter = ll_next(iter, kDriver_t, allNd_);
+    if (pilote->major_ != 0)
+      unregister_driver(pilote);
+  }
+}
+
+/* ----------------------------------------------------------------------- */
 /** @brief Grab a lock on the file system driver of an inode.
   * @param ino The inode used ot get the lock.
   * @retval ZERO No error occurs and the mutex have been acquired.
@@ -359,7 +372,6 @@ int unregister_driver(kDriver_t *driver)
   kfree(driver);
   return __seterrno(0);
 }
-
 
 /* ----------------------------------------------------------------------- */
 kDevice_t *create_device(const char *name, kInode_t *underlying, SMK_stat_t *stat, void *info)

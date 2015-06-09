@@ -110,7 +110,7 @@ $(krn_img): $(call objs,$(SRCS)) $(SLIB) $(KDEPS)
 	@ mkdir -p $(dir $@)
 	$(Q) "    LD  "$@
 ifneq ($(ARCH),um)
-	$(V) $(LD) -T $(arch_src)/kernel.ld $(LFLAGS) -o $@ $(call objs,$(SRCS)) $(SLIB)
+	$(V) $(LD) -T $(arch_src)/kernel.ld $(LFLAGS) -o $@ -Map $@.map $(call objs,$(SRCS)) $(SLIB)
 else
 	$(V) $(CC) $(LFLAGS) -o $@ $^
 endif

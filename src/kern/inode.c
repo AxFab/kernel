@@ -47,6 +47,7 @@
   */
 static kInode_t *search_child (const char *name, kInode_t *dir)
 {
+  int cmp;
   int err;
   SMK_stat_t stat;
   kInode_t *ino = dir->child_;
@@ -57,7 +58,10 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
 
   // Loop over present children.
   while (ino) {
-    int cmp = strcmp(ino->name_, name);
+    if (dir->dev_->fs_->caseSensitive_)
+      cmp = strcmp(ino->name_, name);
+    else
+      cmp = strcmpi(ino->name_, name);
 
     if (cmp == 0) {
       klock (&ino->lock_);
@@ -83,7 +87,7 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
 
   if (err != 0)
     return NULL;
-  
+
   stat.major_ = dir->stat_.major_;
   stat.minor_ = dir->stat_.minor_;
   stat.block_ = dir->stat_.block_;
@@ -116,7 +120,7 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
   if (uriLg > PATH_MAX)
     return __seterrnoN(EINVAL, kInode_t);
 
-  uri = kalloc(uriLg + 1);
+  uri = (char*)kalloc(uriLg + 1);
 
   assert (kCPU.lockCounter_ == 0);
   __seterrno (0);
@@ -374,6 +378,12 @@ kInode_t *create_inode(const char *name, kInode_t *dir, int mode, size_t lg)
     return __seterrnoN(ENAMETOOLONG, kInode_t);
 
   klock(&dir->lock_);
+
+  if (dir->dev_->fs_->create == NULL) {
+    kunlock(&dir->lock_);
+    return __seterrnoN(EROFS, kInode_t);
+  }
+
 
   if (open_fs(dir))
     return NULL;

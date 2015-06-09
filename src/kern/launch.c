@@ -42,7 +42,7 @@ void kernel_start ()
   memset (&kSYS, 0, sizeof (kSYS));
   memset (&kCPU, 0, sizeof (kCPU));
   kernel_state (KST_KERNSP);
-  kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ " from git:" _GITH_ " on " _OSNAME_ ".\n");
+  kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ " from git:" _GITH_ ".\n");
   mmu_load_env();
 
   /* Initialize time managment */
@@ -87,7 +87,8 @@ void kernel_start ()
   create_logon_process(ino, user, kSYS.sysIno_, masterPaths[idx]);
   scavenge_area(kSYS.mspace_);
 
-  kprintf ("CPU %d is ready\n", kCpuNo);
+  // kprintf ("CPU %d is ready\n", kCpuNo);
+  kprintf("\033[38mSmokeOS " _VTAG_ "\033[0m, build at " __DATE__ " from git:" _GITH_ ".\n\n");
   cpu_start_scheduler();
 
 }

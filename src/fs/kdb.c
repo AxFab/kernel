@@ -44,6 +44,9 @@ kDevice_t *devKeyBoard = NULL;
 #define EV_KEYUP 10
 #define EV_KEYDW 11
 
+bool keyStShift = false;
+bool keyStAlt = false;
+bool keyStCtrl = false;
 
 /* ----------------------------------------------------------------------- */
 void KDB_irq ()
@@ -57,7 +60,14 @@ void KDB_irq ()
 
   rg = inb(0x60); // - 1;
 
-  ccode = key_layout_us[rg & 0x7F][0];
+  ccode = key_layout_us[rg & 0x7F][keyStShift ? 1 : 0];
+  if (ccode == KEY_SH_LF || ccode == KEY_SH_RG)
+    keyStShift = !(bool)(rg & 0x80);
+  else if (ccode == KEY_ALT)
+    keyStAlt = !(bool)(rg & 0x80);
+  else if (ccode == KEY_CTRL)
+    keyStCtrl = !(bool)(rg & 0x80);
+
   fs_event(devKeyBoard->ino_, rg > 0x80 ? EV_KEYUP : EV_KEYDW, ccode);
 }
 

@@ -48,6 +48,7 @@ int sys_check_pathname(const char *path)
 
 int sys_open(const char *path, int dirFd, int flags, int mode)
 {
+  kInode_t *dir = NULL;
   kInode_t *ino = NULL;
   kResx_t *resx;
 
@@ -61,21 +62,29 @@ int sys_open(const char *path, int dirFd, int flags, int mode)
     resx = process_get_resx (kCPU.current_->process_, dirFd, 0);
     if (resx == NULL)
       return EBADF;
-    ino = resx->ino_;
+    dir = resx->ino_;
   }
 
   /* Look for path */
   if (path != NULL)
-  ino = search_inode (path, ino, flags);
+    ino = search_inode (path, dir, flags);
 
   if (ino == NULL) {
     if (flags & O_CREAT) {
-      __seterrno(EROFS);
-      return -1;
+      if (dir == NULL)
+        dir = kCPU.current_->process_->session_->workingDir_;
+      // dir =  search_last_parent (&path, dir);
+      // @todo Be sure to have last parent into dirFd !
+      ino = create_inode(path, dir, mode, 0);
+      if (ino == NULL)
+        return -1;
     } else {
       __seterrno(ENOENT);
       return -1;
     }
+  } else if ((flags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL)) {
+    __seterrno(EEXIST);
+    return -1;
   }
 
   klock (&kCPU.current_->process_->lock_);

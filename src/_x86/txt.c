@@ -91,13 +91,13 @@ int kwrite_tty(const void *m, int lg)
       continue;
     }
 
-    txtOutBuffer[txtOutIdx++] = (*s & 0xff) | 0x700;
-
     if (txtOutIdx > 1840) {
       memcpy((void *)0xB8000, (void *)(0xB8000 + 80 * 2), 1840 * 2);
       txtOutIdx -= 80;
       memset((void *)(0xB8000 + 1840 * 2), 0, 80 * 2);
     }
+
+    txtOutBuffer[txtOutIdx++] = (*s & 0xff) | 0x700;
   }
 
   return (int)(s - (const char*)m);

@@ -96,6 +96,9 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
   term->bgColor_ = 0xff323232;
 
   term->pipe_ = fs_create_pipe(ino);
+  // @Todo -- This is a hugly hack to avoid blocking kwrite!
+  ((char*)term->pipe_->mmap_->address_)[0] = 0;
+  ((char*)term->pipe_->mmap_->limit_)[-1] = 0;
   term->row_ = 1;
   term->first_ = KALLOC(kLine_t);
   term->first_->txColor_ = 0xffa6a6a6;

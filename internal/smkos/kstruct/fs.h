@@ -40,6 +40,7 @@ struct kDriver {
   const char *name_;
 
   int major_;
+  bool caseSensitive_;
   struct llnode allNd_;
   atomic_t usage_;
 

@@ -130,7 +130,6 @@ static inline void *ll_pop_back_(struct llhead *list, size_t off)
  */
 static inline void ll_remove(struct llhead *list, struct llnode *node)
 {
-  /** @test Check that useless loop is optimized or add #if */
 #if !defined(NDEBUG)
   struct llnode *w = node;
 

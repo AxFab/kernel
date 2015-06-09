@@ -43,7 +43,7 @@ int GPT_mount (kInode_t *dev, const char *name)
   kMemArea_t *area;
   time_t now = time(NULL);
 
-  if (dev == NULL || !S_ISBLK(dev->stat_.mode_) || dev->stat_.block_ != 512)
+  if (dev == NULL || !S_ISBLK(dev->stat_.mode_) || dev->stat_.block_ != 512 || dev->stat_.major_ == GPT_No)
     return ENODEV;
 
   area = area_map_ino(kSYS.mspace_, dev, 0, 512, 0);
@@ -64,12 +64,12 @@ int GPT_mount (kInode_t *dev, const char *name)
   entry = (struct GPT_mbrEntry *)&address[446];
 
   for (idx = 0, sub = 0; idx < 4; ++idx, ++entry) {
-    if (entry->sectors_ == 0 || (entry->partitionType_ != 0 && entry->partitionType_ != (char)0x80))
+    if (entry->sectors_ == 0 || (entry->status_ != 0 && entry->status_ != (char)0x80))
       continue;
 
     sub++;
     stat.lba_ = entry->firstLBA_;
-    stat.length_ = entry->sectors_;
+    stat.length_ = entry->sectors_ * stat.block_;
     stat.major_ = GPT_No;
     stat.minor_ = ++GPT_count;
     stat.mode_ = S_IFBLK | 0700;

@@ -50,7 +50,7 @@ mboot:
     ; dd 0
     ; dd start
 
-    dd 1            ; mode
+    dd 0            ; mode
     dd 800           ; width
     dd 600           ; height
     dd 0            ; depth
@@ -460,11 +460,7 @@ cpu_halt_:
 
 ; void cpu_wait()
 cpu_wait:
-    mov byte [0xB8012], 'W'
-    mov byte [0xB8013], 0x57
     int 0x31
-    mov byte [0xB8014], 'a'
-    mov byte [0xB8015], 0x57
     ret
 
 

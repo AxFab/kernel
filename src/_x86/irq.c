@@ -87,11 +87,9 @@ void sys_irq (int no, size_t *params)
     assert (kCPU.current_->stackPtr_ > kCPU.current_->kstack_->limit_ - 4096 * 2);
   }
 
-  if (no < 0 || no >= 16)
-    kpanic ("IRQ no %d !?\n", no);
-
+  assert(no >= 0 && no < 16);
   if (x86_irq_hanlder[no] == NULL) {
-    /* kprintf ("IRQ no %d: ignored\n", no); */
+    kprintf("\033[91mIRQ no %d: ignored !?\033[0m\n", no);
     return;
   }
 

@@ -45,21 +45,5 @@ static inline void init_drivers()
 }
 
 
-static inline void dispose_drivers()
-{
-  unregister_driver(search_driver(GPT_No));
-  unregister_driver(search_driver(ISO_No));
-  unregister_driver(search_driver(KDB_No));
-
-#if !defined(_FS) || defined(_FS_x86) /* _x86 */
-  unregister_driver(search_driver(ATA_No));
-  unregister_driver(search_driver(VGA_No));
-#elif defined(_FS) && defined(_FS_UM) /* _um */
-  unregister_driver(search_driver(HDD_No));
-  unregister_driver(search_driver(BMP_No));
-#endif
-}
-
-
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

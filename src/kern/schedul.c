@@ -56,6 +56,7 @@ int sched_signal (int raise, size_t data, const char *at)
   } else {
     process = kCPU.current_->process_;
     kprintf ("Process failed: %d (%x) at %s.", raise, data, at);
+    kstacktrace(12);
     err = sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
     if (err == 0)
       process_exit(process, 0);

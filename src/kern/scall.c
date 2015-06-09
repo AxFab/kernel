@@ -26,6 +26,9 @@
 typedef int(*kScHandler)(size_t p1, size_t p2, size_t p3, size_t p4, size_t p5);
 #define SYS_CALL_ENTRY(n,f)  [n] = ((kScHandler)(f))
 
+typedef int(*kScPrinter)(char*, int, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5, int ret);
+#define SYS_CALL_SAVE(n,f)  [n] = ((kScPrinter)(f ## _save))
+
 
 static kScHandler system_delegate[128] = {
   SYS_CALL_ENTRY (SYS_REBOOT, NULL),
@@ -40,10 +43,25 @@ static kScHandler system_delegate[128] = {
   SYS_CALL_ENTRY (SYS_GWD, sys_pinfo),
 };
 
+static kScPrinter system_delegate_save[128] = {
+  SYS_CALL_SAVE (SYS_EXIT, sys_exit),
+  SYS_CALL_SAVE (SYS_EXEC, sys_exec),
+  SYS_CALL_SAVE (SYS_WRITE, sys_write),
+  SYS_CALL_SAVE (SYS_READ, sys_read),
+  SYS_CALL_SAVE (SYS_MMAP, sys_mmap),
+  SYS_CALL_SAVE (SYS_OPEN, sys_open),
+  SYS_CALL_SAVE (SYS_CLOSE, sys_close),
+  SYS_CALL_SAVE (SYS_GWD, sys_pinfo),
+};
+
 
 /* ----------------------------------------------------------------------- */
+int sno = 0;
 int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
 {
+  char tmp[512];
+  int ret;
+  int err;
   // kprintf("SYSCALL %d] %8x, %8x, %8x, %8x, %8x\n", no, p1, p2, p3, p4, p5);
   // kprintf("[S%x]", no);
 
@@ -54,7 +72,14 @@ int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
   }
 
   // for (c = 0; c < 0x800000; ++c);
-  return system_delegate[no] (p1, p2, p3, p4, p5);
+  ret = system_delegate[no] (p1, p2, p3, p4, p5);
+  err = __geterrno();
+#ifndef NDEBUG
+  system_delegate_save[no](tmp, 512, p1, p2, p3, p4, p5, ret);
+  // kprintf ("\033[34m -%d- \033[31m%s\033[0m\n", sno++, tmp);
+#endif
+  __seterrno(err);
+  return ret;
 }
 
 
