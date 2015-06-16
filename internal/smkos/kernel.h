@@ -95,6 +95,7 @@ struct kCpu {
   enum kState state_;
   int lockCounter_; /**< A counter for the number of spinlock taken */
   int errno_;
+  const char *lastError_;
   kThread_t *current_;
   clock_t lastClock_;
   clock_t times_[KSTATES];
@@ -135,18 +136,22 @@ extern struct kSys kSYS;
 
 #define KALLOC(t)  (t*)kalloc(sizeof(t))
 
-static inline int __seterrno(int err)
+
+#define __unused(v)  ((void)(v))
+#define __seterrno(e)    __seterrno_(e, __AT__)
+#define __seterrnoN(e,t)  (t*)__seterrnoN_(e, __AT__)
+
+static inline int __seterrno_(int err, const char* at)
 {
   kCPU.errno_ = err;
+  kCPU.lastError_ = at;
   return err;
 }
 
-#define __unused(v)  ((void)(v))
-#define __seterrnoN(e,t)  (t*)__seterrnoN_(e)
-
-static inline void* __seterrnoN_(int err)
+static inline void* __seterrnoN_(int err, const char* at)
 {
   kCPU.errno_ = err;
+  kCPU.lastError_ = at;
   return NULL;
 }
 
