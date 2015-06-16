@@ -34,6 +34,8 @@ static kScHandler system_delegate[128] = {
   SYS_CALL_ENTRY (SYS_REBOOT, NULL),
   SYS_CALL_ENTRY (SYS_EXIT, sys_exit),
   SYS_CALL_ENTRY (SYS_EXEC, sys_exec),
+  SYS_CALL_ENTRY (SYS_START, sys_start),
+  SYS_CALL_ENTRY (SYS_STOP, sys_stop),
   SYS_CALL_ENTRY (SYS_PAUSE, NULL),
   SYS_CALL_ENTRY (SYS_WRITE, sys_write),
   SYS_CALL_ENTRY (SYS_READ, sys_read),
@@ -46,6 +48,8 @@ static kScHandler system_delegate[128] = {
 static kScPrinter system_delegate_save[128] = {
   SYS_CALL_SAVE (SYS_EXIT, sys_exit),
   SYS_CALL_SAVE (SYS_EXEC, sys_exec),
+  SYS_CALL_SAVE (SYS_START, sys_start),
+  SYS_CALL_SAVE (SYS_STOP, sys_stop),
   SYS_CALL_SAVE (SYS_WRITE, sys_write),
   SYS_CALL_SAVE (SYS_READ, sys_read),
   SYS_CALL_SAVE (SYS_MMAP, sys_mmap),
