@@ -50,7 +50,9 @@ int sys_open(const char *path, int dirFd, int flags, int mode)
 {
   kInode_t *dir = NULL;
   kInode_t *ino = NULL;
+  char* name = NULL;
   kResx_t *resx;
+  int lg;
 
   /* Check arguments */
   if (path == NULL || sys_check_pathname(path))
@@ -73,9 +75,12 @@ int sys_open(const char *path, int dirFd, int flags, int mode)
     if (flags & O_CREAT) {
       if (dir == NULL)
         dir = kCPU.current_->process_->session_->workingDir_;
-      // dir =  search_last_parent (&path, dir);
-      // @todo Be sure to have last parent into dirFd !
-      ino = create_inode(path, dir, mode, 0);
+
+      lg = strlen(path)+1;
+      name = (char*)kalloc(lg);
+      dir = search_last_parent (path, dir, flags, name, lg);
+      ino = create_inode(name, dir, mode, 0);
+      kfree(name);
       if (ino == NULL)
         return -1;
     } else {

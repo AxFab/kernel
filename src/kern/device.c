@@ -310,7 +310,8 @@ void initialize_vfs()
 
   kSYS.devIno_ = create_inode ("dev", root, S_IFDIR | 0775, 0);
   kSYS.mntIno_ = create_inode ("mnt", root, S_IFDIR | 0775, 0);
-  kSYS.procIno_ = create_inode ("proc", root, S_IFDIR | 0775, 0);
+  kSYS.procIno_ = create_inode ("proc", root, S_IFDIR | 0555, 0);
+  create_inode ("tmp", root, S_IFDIR | 0700, 0);
 
   init_drivers();
   mount_alls ();

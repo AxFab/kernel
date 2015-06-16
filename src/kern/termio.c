@@ -191,6 +191,11 @@ void term_changecolor(kTerm_t *term, kLine_t *style, int cmd)
   } else if (cmd < 30) {
   } else if (cmd < 40) {
     style->txColor_ = consoleColor[cmd - 30];
+  } else if (cmd < 50) {
+    style->bgColor_ = consoleBgColor[cmd - 40];
+  } else if (cmd < 90) {
+  } else if (cmd < 100) {
+    style->txColor_ = consoleSecColor[cmd - 90];
   } else {
   }
 }

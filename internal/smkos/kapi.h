@@ -87,7 +87,7 @@ kInode_t *follow_symlink(kInode_t *ino, int *links);
 int unregister_inode (kInode_t *ino);
 int inode_readlink(kInode_t* ino, char* buf, int lg);
 int inode_readuri(kInode_t* ino, char* buf, int lg);
-
+kInode_t *search_last_parent (const char *path, kInode_t *dir, int flags, char *filename, int lg);
 
 /* === MEMORY AREA ======================================================= */
 kMemArea_t* area_get(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t length);
