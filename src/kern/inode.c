@@ -97,6 +97,74 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
 
 
 /* ----------------------------------------------------------------------- */
+static kInode_t *init_search(const char *path, kInode_t *dir)
+{
+  // Find the initial directory.
+  if (strrchr (path, ':')) {
+    /// @todo read volume
+  } else if (path[0] == '/' || path[0] == '\\') {
+    dir = kSYS.rootIno_;
+  } else if (dir == NULL) {
+    if (kCPU.current_ != NULL)
+      dir = kCPU.current_->process_->session_->workingDir_;
+    else
+      dir = kSYS.rootIno_;
+  }
+
+  return dir;
+}
+
+/* ----------------------------------------------------------------------- */
+static kInode_t *lookfor_child_inode(const char *name, kInode_t *dir, int flags, int *links)
+{
+  assert (kislocked(&dir->lock_));
+
+  // Follow symlink.
+  if (S_ISLNK(dir->stat_.mode_)) {
+    dir = follow_symlink(dir, flags, links);
+
+    if (dir == NULL)
+      return NULL;
+  }
+
+  // Check if we are on a directory.
+  if (!S_ISDIR (dir->stat_.mode_)) {
+    kunlock (&dir->lock_);
+    return __seterrnoN(ENOTDIR, kInode_t);
+  }
+
+  // Handle special names
+  if (name[0] == '.') {
+    if (name[1] == '\0')
+      return dir;
+
+    if (name[1] == '.') {
+      if (name[1] == '\0') {
+        kunlock (&dir->lock_);
+        dir = dir->parent_;
+        klock (&dir->lock_);
+        return dir;
+      }
+
+      if ((flags & AT_THREE_DOT) && name[2] == '.' && name[3] == '\0') {
+        kunlock (&dir->lock_);
+
+        do {
+          dir = dir->parent_;
+        } while (dir->parent_ != NULL/* && !S_ISVOL(dir->stat_.mode_)*/);
+
+        klock (&dir->lock_);
+        return dir;
+      }
+    }
+  }
+
+  // Search child node
+  dir = search_child (name, dir);
+  return dir;
+}
+
+/* ----------------------------------------------------------------------- */
 /** @brief Search an inode on the filetree.
   * @param path   [in] The file descriptor
   * @param dir    [in] The initial node where to start the search.
@@ -109,12 +177,57 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
   * @retval      -> follow_symlink().
   * @retval      -> search_child().
   */
-kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
+kInode_t *search_inode (const char *path, kInode_t *dir, int flags, int *links)
 {
   char *uri;
   char *name = NULL;
   int symLinkLoop = 0;
   char *rentTok;
+  int uriLg = strlen(path);
+
+  if (links = NULL)
+    links = &symLinkLoop;
+
+  if (uriLg > PATH_MAX)
+    return __seterrnoN(EINVAL, kInode_t);
+
+  uri = (char*)kalloc(uriLg + 1);
+
+  assert (kCPU.lockCounter_ == 0);
+  __seterrno (0);
+
+  // Find the initial directory.
+  dir = init_search(path, dir);
+  strncpy (uri, path, uriLg);
+  klock (&dir->lock_);
+
+  // For each folder inside the pathname.
+  for (name = strtok_r (uri, "/\\", &rentTok);
+       name != NULL;
+       name = strtok_r (NULL, "/\\", &rentTok) ) {
+
+    dir = lookfor_child_inode(name, dir, flags, links);
+    if (dir == NULL) {
+      kfree(uri);
+      return NULL;
+    }
+  }
+
+  // We read all folder on path, we found it.
+  kunlock (&dir->lock_);
+  kfree(uri);
+  return dir;
+}
+
+
+kInode_t *search_last_parent (const char *path, kInode_t *dir, int flags, char *filename, int lg)
+{
+  char *uri;
+  char *lname = NULL;
+  char *name = NULL;
+  int symLinkLoop = 0;
+  char *rentTok;
+  kInode_t *pdir;
   int uriLg = strlen(path);
 
   if (uriLg > PATH_MAX)
@@ -126,17 +239,7 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
   __seterrno (0);
 
   // Find the initial directory.
-  if (strrchr (path, ':')) {
-    /// @todo read volume
-  } else if (path[0] == '/' || path[0] == '\\')
-    dir = kSYS.rootIno_;
-  else if (dir == NULL) {
-    if (kCPU.current_ != NULL)
-      dir = kCPU.current_->process_->session_->workingDir_;
-    else
-      dir = kSYS.rootIno_;
-  }
-
+  dir = init_search(path, dir);
   strncpy (uri, path, uriLg);
   klock (&dir->lock_);
 
@@ -145,64 +248,22 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags)
        name != NULL;
        name = strtok_r (NULL, "/\\", &rentTok) ) {
 
-    assert (kislocked(&dir->lock_));
-
-    // Follow symlink.
-    if (S_ISLNK(dir->stat_.mode_)) {
-      dir = follow_symlink(dir, &symLinkLoop);
-
-      if (dir == NULL) {
-        kfree(uri);
-        return NULL;
-      }
-    }
-
-    // Check if we are on a directory.
-    if (!S_ISDIR (dir->stat_.mode_)) {
-      kunlock (&dir->lock_);
-      kfree(uri);
-      return __seterrnoN(ENOTDIR, kInode_t);
-    }
-
-    // Handle special names
-    if (name[0] == '.') {
-      if (name[1] == '\0')
-        continue;
-
-      if (name[1] == '.') {
-        if (name[1] == '\0') {
-          kunlock (&dir->lock_);
-          dir = dir->parent_;
-          klock (&dir->lock_);
-          continue;
-        }
-
-        if ((flags & AT_THREE_DOT) && name[2] == '.' && name[3] == '\0') {
-          kunlock (&dir->lock_);
-
-          do {
-            dir = dir->parent_;
-          } while (dir->parent_ != NULL/* && !S_ISVOL(dir->stat_.mode_)*/);
-
-          klock (&dir->lock_);
-          continue;
-        }
-      }
-    }
-
-    // Search child node
-    dir = search_child (name, dir);
-
+    pdir = dir;
+    dir = lookfor_child_inode(name, dir, flags, &symLinkLoop);
     if (dir == NULL) {
+      strncpy(filename, name, lg);
       kfree(uri);
-      return NULL;
+      return pdir;
     }
+
+    lname = name;
   }
 
   // We read all folder on path, we found it.
+  strncpy(filename, lname, lg);
   kunlock (&dir->lock_);
   kfree(uri);
-  return dir;
+  return pdir;
 }
 
 
@@ -371,20 +432,21 @@ kInode_t *create_inode(const char *name, kInode_t *dir, int mode, size_t lg)
   int err;
   SMK_stat_t stat;
 
-  assert (name != NULL);
-  assert (dir != NULL);
+  assert(name != NULL);
+  assert(dir != NULL);
+  assert(strchr(name, '/') == NULL);
+  assert(strchr(name, '\\') == NULL);
+  assert(strchr(name, ':') == NULL);
 
   if (strnlen(name, FNAME_MAX) >= FNAME_MAX)
     return __seterrnoN(ENAMETOOLONG, kInode_t);
 
-  klock(&dir->lock_);
 
   if (dir->dev_->fs_->create == NULL) {
-    kunlock(&dir->lock_);
     return __seterrnoN(EROFS, kInode_t);
   }
 
-
+  klock(&dir->lock_);
   if (open_fs(dir))
     return NULL;
 
@@ -397,6 +459,42 @@ kInode_t *create_inode(const char *name, kInode_t *dir, int mode, size_t lg)
   return register_inode(name, dir, &stat, true);
 }
 
+/* ----------------------------------------------------------------------- */
+kInode_t* create_symlink(const char *name, kInode_t *dir, const char* path)
+{
+  int err;
+  SMK_stat_t stat;
+
+  assert(name != NULL);
+  assert(path != NULL);
+  assert(dir != NULL);
+  assert(strchr(name, '/') == NULL);
+  assert(strchr(name, '\\') == NULL);
+  assert(strchr(name, ':') == NULL);
+
+  if (strnlen(name, FNAME_MAX) >= FNAME_MAX)
+    return __seterrnoN(ENAMETOOLONG, kInode_t);
+
+  if (strnlen(path, PATH_MAX) >= PATH_MAX)
+    return __seterrnoN(ENAMETOOLONG, kInode_t);
+
+
+  if (dir->dev_->fs_->symlink == NULL) {
+    return __seterrnoN(EROFS, kInode_t);
+  }
+
+  klock(&dir->lock_);
+  if (open_fs(dir))
+    return NULL;
+
+  err = dir->dev_->fs_->symlink(name, dir, S_IFLNK | 0755, path, &stat);
+  close_fs(dir);
+
+  if (err)
+    return __seterrnoN(err, kInode_t);
+
+  return register_inode(name, dir, &stat, true);
+}
 
 /* ----------------------------------------------------------------------- */
 /** @brief Call the inode scavanger which will try to free cached data. */
@@ -489,13 +587,43 @@ int inode_close (kInode_t *ino)
 
 /* ----------------------------------------------------------------------- */
 /** @brief Give the inode a symbolic link is refering to. */
-kInode_t *follow_symlink(kInode_t *ino, int *links)
+kInode_t *follow_symlink(kInode_t *ino, int flags, int *links)
 {
+  int ret;
+  kInode_t *lnk;
+  int lg = MIN(PATH_MAX, ino->stat_.length_ + 1);
+  char* tmpBuf;
   if (links != NULL)
     (*links)++;
 
-  __seterrno(ENOSYS);
-  return NULL;
+  __seterrno(0);
+  assert(kislocked(&ino->lock_));
+  if (ino->symlink_ != NULL) {
+    lnk = ino->symlink_;
+    kunlock(&ino->lock_);
+    klock(&lnk->lock_);
+    return lnk;
+  }
+
+  if (ino->dev_->fs_->readlink == NULL)
+    return __seterrnoN(ENOSYS, kInode_t);
+
+  if (open_fs(ino))
+    return NULL;
+
+  tmpBuf = (char*)kalloc(lg);
+  ret = ino->dev_->fs_->readlink(ino, tmpBuf, lg);
+  close_fs(ino);
+  if (ret) {
+    kfree(tmpBuf);
+    return NULL;
+  }
+
+  lnk = search_inode(tmpBuf, ino->parent_, flags, links);
+  ino->symlink_ = lnk;
+  kfree(tmpBuf);
+  klock(&lnk->lock_);
+  return lnk;
 }
 
 

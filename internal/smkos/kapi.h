@@ -71,7 +71,7 @@ ssize_t fs_reg_read(kInode_t *ino, void* buf, size_t lg, ssize_t offset);
 
 /* === INODES ============================================================ */
 /** @brief Search an inode on the filetree. */
-kInode_t *search_inode (const char *path, kInode_t *dir, int flags);
+kInode_t *search_inode (const char *path, kInode_t *dir, int flags, int* links);
 /** @brief Try to add a new inode on the VFS tree. */
 kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, bool unlock);
 /** @brief Create a new inode. */
@@ -83,11 +83,12 @@ int inode_open (kInode_t *ino);
 /** @brief Function to release an inodes */
 int inode_close (kInode_t *ino);
 /** @brief Give the inode a symbolic link is refering to. */
-kInode_t *follow_symlink(kInode_t *ino, int *links);
+kInode_t *follow_symlink(kInode_t *ino, int flags, int *links);
 int unregister_inode (kInode_t *ino);
 int inode_readlink(kInode_t* ino, char* buf, int lg);
 int inode_readuri(kInode_t* ino, char* buf, int lg);
 kInode_t *search_last_parent (const char *path, kInode_t *dir, int flags, char *filename, int lg);
+kInode_t* create_symlink(const char *name, kInode_t *dir, const char* path);
 
 /* === MEMORY AREA ======================================================= */
 kMemArea_t* area_get(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t length);

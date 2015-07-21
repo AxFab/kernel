@@ -53,9 +53,9 @@ void kernel_start ()
 
   /* Initialize the VFS */
   initialize_vfs();
-  
+
   /* Search kernel helper files */
-  ino = search_inode("boot/kImage.map", kSYS.sysIno_, 0);
+  ino = search_inode("boot/kImage.map", kSYS.sysIno_, 0, NULL);
 
   if (ino)
     ksymbols_load(ino);
@@ -68,7 +68,7 @@ void kernel_start ()
   idx = 0;
 
   while (masterPaths[idx]) {
-    ino = search_inode (masterPaths[idx], kSYS.sysIno_, 0);
+    ino = search_inode (masterPaths[idx], kSYS.sysIno_, 0, NULL);
 
     if (ino && NULL != load_assembly(ino))
       break;
@@ -77,8 +77,8 @@ void kernel_start ()
   }
 
   // Open Graphic buffer
-  kb = search_inode ("/dev/Kb0", NULL, 0);
-  fb = search_inode ("/dev/Fb0", NULL, 0);
+  kb = search_inode ("/dev/Kb0", NULL, 0, NULL);
+  fb = search_inode ("/dev/Fb0", NULL, 0, NULL);
   create_subsys(kb, fb);
 
   if (!masterPaths[idx])

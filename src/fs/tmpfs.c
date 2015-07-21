@@ -49,6 +49,7 @@ int TMPFS_create(const char *name, kInode_t *dir, int mode, size_t lg, SMK_stat_
   case S_IFREG:
   case S_IFDIR:
   case S_IFIFO:
+  case S_IFLNK:
     return 0;
 
   default:
@@ -56,6 +57,26 @@ int TMPFS_create(const char *name, kInode_t *dir, int mode, size_t lg, SMK_stat_
   }
 }
 
+/* ----------------------------------------------------------------------- */
+int TMPFS_symlink(const char *name, kInode_t *dir, int mode, const char *path, SMK_stat_t *stat)
+{
+  int ret;
+  int lg = strlen(path) + 1;
+  ret = TMPFS_create(name, dir, mode, lg, stat);
+  stat->lba_ = (size_t)strdup(path);
+  stat->length_ = lg;
+  return ret;
+}
+
+int TMPFS_readlink(kInode_t *fp, char* path, int lg)
+{
+  if (S_ISLNK(fp->stat_.mode_)) {
+    strncpy(path, (char*)fp->stat_.lba_, MAX(lg, fp->stat_.length_));
+    return 0;
+  }
+
+  return ENOSYS;
+}
 
 /* ----------------------------------------------------------------------- */
 void TMPFS (kDriver_t *driver)
@@ -63,6 +84,8 @@ void TMPFS (kDriver_t *driver)
   driver->name_ = strdup("tmpfs");
   driver->mount = TMPFS_mount;
   driver->create = TMPFS_create;
+  driver->symlink = TMPFS_symlink;
+  driver->readlink = TMPFS_readlink;
 }
 
 /* ----------------------------------------------------------------------- */

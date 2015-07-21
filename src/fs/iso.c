@@ -155,14 +155,21 @@ int ISO_mount (kInode_t *dev, const char *name)
       // kprintf ("ROOT { %x - %x }\n", firstDesc->rootDir.locExtendLE, firstDesc->rootDir.dataLengthLE);
       // kprintf ("VOLUME NAME '%s'\n", firstDesc->volname);
 
-      for (i = 127; i > 0; --i) {
+      for (i = 127; i >= 0; --i) {
         if (firstDesc->applicationId [i] == ' ')
           firstDesc->applicationId [i] = '\0';
         else
           break;
       }
 
-      strcpy (cdName, firstDesc->applicationId);
+      for (i = 31; i >= 0; --i) {
+        if (firstDesc->volname [i] == ' ')
+          firstDesc->volname [i] = '\0';
+        else
+          break;
+      }
+
+      strcpy (cdName, firstDesc->volname);
 
       // kprintf ("iso9660] This disc is named '%s' \n", firstDesc->applicationId);
 

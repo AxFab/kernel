@@ -53,8 +53,9 @@ struct kDriver {
 
   int (*lookup)(const char *name, kInode_t *dir, SMK_stat_t *file);
   int (*readdir)();
-  int (*readlink)();
+  int (*readlink)(kInode_t *fp, char* path, int lg);
   int (*create)(const char *name, kInode_t *dir, int mode, size_t lg, SMK_stat_t *stat);
+  int (*symlink)(const char *name, kInode_t *dir, int mode, const char *path, SMK_stat_t *stat);
 
   int (*read)(kInode_t *fp, void *buffer, size_t length, size_t offset);
   int (*write)(kInode_t *fp, const void *buffer, size_t length, size_t offset);
@@ -90,6 +91,7 @@ struct kInode {
   kDevice_t *dev_;
   struct bbtree pageTree_;
 
+  kInode_t *symlink_;
   kSubSystem_t *subsys_;
   union {
     kAssembly_t *assembly_;

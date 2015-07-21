@@ -61,7 +61,7 @@ static void display_inode(kInode_t *ino, int depth)
   kInode_t *dir;
 
   const char ftype[] = {
-    'a', '-', 'd', '3', 'b', 'c', 'p', '7', '8', '9',
+    '0', '-', 'd', 'l', 'b', 'c', 'p', '7', '8', '9',
   };
   const char *frights[] = {
     "---", "--x", "-w-", "-wx", "r--", "r-x", "rw-", "rwx", "???",
@@ -307,7 +307,6 @@ void initialize_vfs()
   ll_push_back (&kSYS.deviceList_, &root->dev_->allNd_);
 
   kSYS.rootIno_ = root;
-
   kSYS.devIno_ = create_inode ("dev", root, S_IFDIR | 0775, 0);
   kSYS.mntIno_ = create_inode ("mnt", root, S_IFDIR | 0775, 0);
   kSYS.procIno_ = create_inode ("proc", root, S_IFDIR | 0555, 0);
@@ -315,6 +314,7 @@ void initialize_vfs()
 
   init_drivers();
   mount_alls ();
+  kSYS.sysIno_ = search_inode("/usr", NULL, 0, NULL); // @todo Follow symlink!
   // display_inodes();
 }
 
@@ -377,6 +377,7 @@ int unregister_driver(kDriver_t *driver)
 /* ----------------------------------------------------------------------- */
 kDevice_t *create_device(const char *name, kInode_t *underlying, SMK_stat_t *stat, void *info)
 {
+  char* tmpBuf;
   kDevice_t *dev;
   kInode_t *ino;
   kInode_t *dir = kSYS.devIno_;
@@ -387,12 +388,12 @@ kDevice_t *create_device(const char *name, kInode_t *underlying, SMK_stat_t *sta
 
   assert (stat->major_ != dir->stat_.major_ || stat->minor_ != dir->stat_.minor_);
 
-  if (!kSYS.sysIno_ && S_ISDIR(stat->mode_) && !strcmpi("sdC", underlying->name_)) {
+  /*if (!kSYS.sysIno_ && S_ISDIR(stat->mode_) && !strcmpi("sdC", underlying->name_)) {
     ino = register_inode("usr", kSYS.rootIno_, stat, false);
     kSYS.sysIno_ = ino;
-  } else
-    ino = register_inode(name, dir, stat, false);
-
+  } else*/
+  ino = register_inode(name, dir, stat, false);
+  assert(ino != NULL);
   dev = KALLOC(kDevice_t);
   ino->dev_ = dev;
 
@@ -409,9 +410,12 @@ kDevice_t *create_device(const char *name, kInode_t *underlying, SMK_stat_t *sta
   ll_push_back (&kSYS.deviceList_, &dev->allNd_);
   kunlock (&ino->lock_);
 
-  // if (!kSYS.sysIno_ && S_ISDIR(stat->mode_) && !strcmpi("sdC", underlying->name_)) {
-  /// @todo create_link()
-  // }
+  if (!kSYS.sysIno_ && S_ISDIR(stat->mode_) && !strcmpi("sdC", underlying->name_)) {
+    tmpBuf = (char*)kalloc(PATH_MAX);
+    inode_readlink(ino, tmpBuf, PATH_MAX);
+    create_symlink("usr", kSYS.rootIno_, tmpBuf);
+    kfree(tmpBuf);
+  }
 
   return dev;
 }
