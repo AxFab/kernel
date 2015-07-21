@@ -19,6 +19,7 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define __AT__  __FILE__ ":" TOSTRING(__LINE__)
 
+#define XOR_32_TO_8(v)  (((v) & 0xff) ^ (((v) >> 8) & 0xff) ^ (((v) >> 16) & 0xff) ^ (((v) >> 24) & 0xff))
 
 #if 0
 #  define assert(e) ((void)0)

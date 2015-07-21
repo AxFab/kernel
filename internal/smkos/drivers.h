@@ -30,6 +30,7 @@ void KDB(kDriver_t *driver);
 /* --- Register all drivers ---------------------------------------------- */
 static inline void init_drivers()
 {
+#if !defined(_FS_NONE)
   register_driver(GPT);
   register_driver(ISO9660);
   register_driver(FATFS);
@@ -41,6 +42,7 @@ static inline void init_drivers()
 #elif defined(_FS) && defined(_FS_UM) /* _um */
   register_driver(HDD);
   register_driver(BMP);
+#endif
 #endif
 }
 

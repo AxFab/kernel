@@ -42,7 +42,7 @@ int HDD_mount (kInode_t *dev, const char *name)
   stat.major_ = HDD_No;
   stat.mode_ =  S_IFBLK | 0770;
 
-  fpa = fopen(SD_DIR "/hdd.img", "r+");
+  fpa = fopen(SD_DIR "/hdd.img", "rb+");
 
   if (fpa) {
     fseek(fpa, 64 * _Mb_ - 1, SEEK_SET);
@@ -55,7 +55,7 @@ int HDD_mount (kInode_t *dev, const char *name)
     create_device("sda", dev, &stat, fpa);
   }
 
-  fpc = fopen(SD_DIR "/OsCore.iso", "r");
+  fpc = fopen(SD_DIR "/OsCore.iso", "rb");
 
   if (fpc) {
     fseek(fpc, 0, SEEK_END);
