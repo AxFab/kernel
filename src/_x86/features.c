@@ -140,6 +140,7 @@ void initialize_smp()
   page_t apicPage;
   uint32_t eax, ebx;
 
+  // PCI_check_all();
   // Request CPU features
   // kprintf ("Initializing multi-processing...\n");
   cpuid(1, 0, cpu_features);
@@ -226,6 +227,7 @@ void initialize_smp()
 void cpu_sched_ticks()
 {
   // kprintf(".");
+  dbg_ticks();
   sched_next(kSYS.scheduler_);
 }
 

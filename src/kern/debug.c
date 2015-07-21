@@ -135,6 +135,31 @@ void kdump (void *ptr, int lg)
 }
 
 
+/* ------------------------------------------------------------------------ */
+long long ticks = 0;
+int func_dbg = 0;
+
+#define FUNC_BEG(x,t)    if (func_dbg < (x) && ticks > (t)) { ++func_dbg;
+#define FUNC_DBG(x,t)     } else if (func_dbg < (x) && ticks > (t)) { ++func_dbg;
+#define FUNC_END( )       }
+
+void dbg_ticks()
+{
+  kInode_t* ino;
+
+  ++ticks;
+  FUNC_BEG (1, 25)
+
+    ino = search_inode("/proc/.Tty0", NULL, 0, NULL);
+    fs_pipe_write(ino, (void*)"Fab\n", 4);
+
+  FUNC_DBG (2, 50)
+
+
+  FUNC_END ()
+}
+
+
 
 /* ======================================================================= */
 #define SC_TEXT   1
