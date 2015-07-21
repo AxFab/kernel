@@ -173,18 +173,24 @@ static int ATA_Polling (struct ATA_Drive *dr)
   uint8_t state = inb(dr->pbase_ + ATA_REG_STATUS); // Read Status Register.
 
   // (III) Check For Errors:
-  if (state & ATA_SR_ERR)
+  if (state & ATA_SR_ERR) {
+    kprintf(" - ATA] device on error\n");
     return 2; // Error.
+  }
 
   // (IV) Check If Device fault:
-  if (state & ATA_SR_DF)
+  if (state & ATA_SR_DF) {
+    kprintf(" - ATA] device fault\n");
     return 1; // Device Fault.
+  }
 
   // (V) Check DRQ:
   // -------------------------------------------------
   // BSY = 0; DF = 0; ERR = 0 so we should check for DRQ now.
-  if ((state & ATA_SR_DRQ) == 0)
+  if ((state & ATA_SR_DRQ) == 0) {
+    kprintf(" - ATA] DRQ should be set\n");
     return 3; // DRQ should be set
+  }
 
   return 0;
 }
@@ -369,7 +375,7 @@ int ATAPI_Read (struct ATA_Drive *dr, uint32_t lba,  uint8_t sects, uint8_t *buf
   int i;
   uint8_t packet[12];
 
-  // kprintf (" - ATAPI] read 1 sector at LBA: %d on %x\n", lba, buf);
+  // kprintf (" - ATAPI] read %d sector at LBA: %d on %x\n", sects, lba, buf);
 
   cli();
   outb(dr->pbase_ + ATA_REG_CONTROL, 0x0);

@@ -55,7 +55,7 @@ int sched_signal (int raise, size_t data, const char *at)
     kpanic ("Kernel trigger an exception ; signal: %d (%x) at %s.", raise, data, at);
   } else {
     process = kCPU.current_->process_;
-    kprintf ("Process failed: %d (%x) at %s.", raise, data, at);
+    kprintf ("\033[31mProcess %d failed\033[0m: %d (%x) at %s.", kCPU.current_->process_->pid_, raise, data, at);
     kstacktrace(12);
     err = sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
     if (err == 0)

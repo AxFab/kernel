@@ -37,6 +37,9 @@ int fs_block_read(kInode_t *fp, void *buffer, size_t length, size_t offset)
     return err;
 
   err = fp->dev_->fs_->read(fp, buffer, length, offset);
+  if (err) {
+    kprintf("Error, reading at %s using %s on lba %d(%x) \n", fp->name_, fp->dev_->fs_->name_, offset / fp->stat_.block_, offset);
+  }
   close_fs (fp);
   return err;
 }

@@ -113,8 +113,6 @@ void kernel_start();
 void kernel_sweep();
 struct kSys kSYS;
 
-FILE *progFp[15][15];
-
 int parseChar (char **rent);
 char *strtok_r(char *, const char *, char **);
 
@@ -139,6 +137,8 @@ void log_sys(const char *sbuf)
   printf ("  %2d.%02d] %s\n", kCPU.current_->process_->pid_, (kCPU.current_->paramEntry_ >> 24), sbuf);
 }
 
+
+FILE *progFp[15][15];
 
 /* ----------------------------------------------------------------------- */
 void callSys ()
@@ -191,7 +191,7 @@ void callSys ()
 
   else
     printf ("Unknow syscall : '%s'\n", part);
-  
+
   assert (kCPU.lockCounter_ == 0); /* No throw when locked. */
   longjmp(cpuJmp[main_count], 5);
 }
@@ -215,7 +215,7 @@ void callHdw (char *buf)
     printf("  ..] KEY %x (%c)\n", iVal, iVal);
   } else
     assert(0);
-  
+
   assert (kCPU.lockCounter_ == 0); /* No throw when locked. */
   if (kCPU.current_)
     longjmp(cpuJmp[main_count], 5);
@@ -347,19 +347,6 @@ int testCase (const char *dir)
   fclose(progFp[0][0]);
   return ret;
 }
-
-/* ----------------------------------------------------------------------- */
-/* At this point we leave CRTK. */
-int main ()
-{
-  int until = 0;
-  until = until || testCase ("base");
-  until = until || testCase ("mthread");
-  until = until || testCase ("mmap");
-  until = until || testCase ("base");
-  return until;
-}
-
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
