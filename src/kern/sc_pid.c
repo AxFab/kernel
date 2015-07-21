@@ -53,7 +53,7 @@ int sys_exec(const char *exec, struct SMK_StartInfo *info)
 {
   kProcess_t *process;
   kInode_t *pwd = kCPU.current_->process_->session_->workingDir_;
-  kInode_t *ino = search_inode(exec, pwd, 0);
+  kInode_t *ino = search_inode(exec, pwd, 0, NULL);
 
   if (ino == NULL) {
     __seterrno(ENOENT);

@@ -69,7 +69,7 @@ int sys_open(const char *path, int dirFd, int flags, int mode)
 
   /* Look for path */
   if (path != NULL)
-    ino = search_inode (path, dir, flags);
+    ino = search_inode (path, dir, flags, NULL);
 
   if (ino == NULL) {
     if (flags & O_CREAT) {
@@ -214,7 +214,7 @@ int sys_access (const char *path, int dirFd, int mode, int flags)
     ino = resx->ino_;
   }
 
-  ino = search_inode (path, ino, flags);
+  ino = search_inode (path, ino, flags, NULL);
 
   if (ino == NULL)
     return __geterrno();

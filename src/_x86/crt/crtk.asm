@@ -80,7 +80,7 @@ start:
 
   .failed:
     hlt
-    jmp $ 
+    jmp $
 
 
 ; Grub -------------------------------------
@@ -107,7 +107,7 @@ startup:
     rep stosd
 
     call cpu_init_table
-    
+
     mov esp, MEM_KSTACK_PTR - 0x10
     lgdt [.gdtregs]
     jmp SGMT_KRN_CODE:.reloadCS
@@ -121,7 +121,7 @@ startup:
 
     mov byte [0xB8004], '.'
     mov byte [0xB8005], 0x57
-    
+
 
     lidt [.idtregs]
     mov ax, _x86_TSS_Sgmt
@@ -129,7 +129,7 @@ startup:
 
     mov byte [0xB8006], '.'
     mov byte [0xB8007], 0x57
-    
+
     mov eax, 0x2000 ; PAGE kernel
     mov cr3, eax
     mov eax, cr0
@@ -138,10 +138,10 @@ startup:
 
     mov byte [0xB8008], '.'
     mov byte [0xB8009], 0x57
-    
+
     call kernel_start
     hlt
-    jmp $ 
+    jmp $
 
     sti
     jmp $
@@ -524,7 +524,7 @@ global SysCall_Handler
 global SysWait_Handler
 global Interrupt_Handler
 
-extern kpanic, sys_ex, sys_irq, sys_call, 
+extern kpanic, sys_ex, sys_irq, sys_call,
 extern general_protection, page_fault
 
 
@@ -682,7 +682,7 @@ SysWait_Handler:
     add esp, 4
     LOAD_REGS
     iret
-    
+
 
 Interrupt_Handler:
   IRQ_HANDLER -1
@@ -864,7 +864,7 @@ UM_TEST:
 %define  CPU_COUNT  0x7f8
 
 ; ==========================================
-global x86_ApStart 
+global x86_ApStart
 align 4096
 x86_ApStart:
 use16
@@ -954,7 +954,7 @@ ap_32start:
 
     ; Print a message
     ; push esp
-    ; push .msg 
+    ; push .msg
     ; call kprintf
 
     ; Unlock the spinlock
