@@ -14,6 +14,8 @@ const char *_utoa_digitsX = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno
 // ---------------------------------------------------------------------------
 uintmax_t _strtox(const char *str, char **endptr, int base, char *sign)
 {
+  int v;
+  char *pst;
   uintmax_t value = 0;
 
   if (endptr) (*endptr) = (char *)str;
@@ -40,23 +42,27 @@ uintmax_t _strtox(const char *str, char **endptr, int base, char *sign)
     }
   }
 
-  if (*str < '0' || (*str | LOWER) >= _utoa_digits[base]) {
+  pst = strchr(_utoa_digits, *str);
+  v = (pst == NULL) ? 65 : pst - _utoa_digits;
+  if (v >= base) {
     /// @todo errno !?
     return 0;
   }
 
   for (;; str++) {
 
-    if (*str < '0' || (*str | LOWER) >= _utoa_digits[base])
+    pst = strchr(_utoa_digits, *str);
+    v = (pst == NULL) ? 65 : pst - _utoa_digits;
+    if (v >= base) {
+      pst = strchr(_utoa_digits, *str | LOWER);
+      v = (pst == NULL) ? 65 : pst - _utoa_digits;
+    }
+
+    if (v >= base)
       break;
 
     value *= base;
-
-    if (*str <= '9')
-      value += (*str) - '0';
-    else
-      value += ((*str) | LOWER) - 'a' + 10;
-
+    value += v;
   }
 
   if (endptr) (*endptr) = (char *)str;

@@ -84,11 +84,11 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
   kTerm_t *term;
 
   snprintf(no, 10, "Tty%d", nol);
-  ino = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, PAGE_SIZE);
+  ino = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, 8 * PAGE_SIZE);
   assert (ino != NULL);
 
   snprintf(no, 10, ".Tty%d", nol);
-  inon = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, PAGE_SIZE);
+  inon = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, 8 * PAGE_SIZE);
   assert (inon != NULL);
 
   term = KALLOC(kTerm_t);
@@ -210,10 +210,10 @@ void term_readcmd(kTerm_t *term, kLine_t *style, const char **str)
   if (**str != '[')
     return;
 
-  (*str)++;
   i = 0;
 
   do {
+    (*str)++;
     val[i++] = (int)strtoull(*str, (char **)str, 10);
 
   } while (i < 5 && **str == ';');
@@ -427,7 +427,7 @@ int BMP_sync(kInode_t *);
 void clean_subsys()
 {
 #ifdef _FS_UM
-  kInode_t *fb = search_inode ("/dev/Fb0", NULL, 0);
+  kInode_t *fb = search_inode ("/dev/Fb0", NULL, 0, NULL);
   BMP_sync(fb);
 #endif
 
