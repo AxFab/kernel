@@ -81,7 +81,7 @@ endif
 ifeq ($(MAKECMDGOALS),clean)
 NODEPS = 1
 endif
-ifeq ($(MAKECMDGOALS),destroy)
+ifeq ($(MAKECMDGOALS),distclean)
 NODEPS = 1
 endif
 
@@ -153,8 +153,9 @@ clean:
 	@ rm -rf $(obj_dir)
 	@ rm -rf $(lib_dir)
 
-destroy: clean
-	@ rm $(krn_img)
+distclean: clean
+	@ rm -f $(krn_img)
+	@ rm -rf cov_*
 
 sources:
 	@ echo $(SRCS) | tr ' ' '\n'
@@ -169,7 +170,7 @@ help:
 	@ echo " the commands: "
 	@ echo "   all:        build the kernel image"
 	@ echo "   clean:      remove temporary file (objs & libs)"
-	@ echo "   destroy:    remove all generated files."
+	@ echo "   distclean:  remove all generated files."
 	@ echo "   sources:    print a list of kernel sources files."
 	@ echo "   help:       print this help."
 	@ echo " Some other targets might be defined for one architecture:"
