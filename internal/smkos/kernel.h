@@ -183,4 +183,8 @@ unsigned long long strtoull(const char*, char**, int);
 int snprintf(char *, size_t, const char *, ...);
 void kstacktrace(size_t MaxFrames);
 void kdump(void*, int);
+void dbg_ticks();
+
+
+ int bclearbytes (uint8_t *table, int offset, int length);
 

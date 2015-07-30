@@ -1,4 +1,5 @@
 #include <smkos/kernel.h>
+#include <smkos/kapi.h>
 #include <smkos/arch.h>
 #include <smkos/kstruct/user.h>
 #include <smkos/kstruct/term.h>

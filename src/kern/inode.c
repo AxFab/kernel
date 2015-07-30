@@ -185,7 +185,7 @@ kInode_t *search_inode (const char *path, kInode_t *dir, int flags, int *links)
   char *rentTok;
   int uriLg = strlen(path);
 
-  if (links = NULL)
+  if (links == NULL)
     links = &symLinkLoop;
 
   if (uriLg > PATH_MAX)

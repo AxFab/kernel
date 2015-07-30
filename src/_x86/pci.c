@@ -92,7 +92,6 @@ void PCI_check_bus(uint8_t bus)
 void PCI_check_all(void)
 {
   int bus;
-  int device;
   uint16_t headerType = PCI_config_getw(0, 0, 0, 0xe);
   kprintf ("PCI detection\n");
   if( (headerType & 0x80) == 0) {

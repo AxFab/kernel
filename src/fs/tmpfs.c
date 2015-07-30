@@ -70,8 +70,10 @@ int TMPFS_symlink(const char *name, kInode_t *dir, int mode, const char *path, S
 
 int TMPFS_readlink(kInode_t *fp, char* path, int lg)
 {
+  assert (fp->stat_.length_ < PATH_MAX);
+
   if (S_ISLNK(fp->stat_.mode_)) {
-    strncpy(path, (char*)fp->stat_.lba_, MAX(lg, fp->stat_.length_));
+    strncpy(path, (char*)fp->stat_.lba_, MAX(lg, (int)fp->stat_.length_));
     return 0;
   }
 
