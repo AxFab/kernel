@@ -97,6 +97,7 @@ struct kCpu {
   int errno_;
   const char *lastError_;
   kThread_t *current_;
+  char* spec_;
   clock_t lastClock_;
   clock_t times_[KSTATES];
 };
@@ -124,7 +125,7 @@ struct kSys {
   int pageMax_;
   int pidAutoInc_;
   int ttyAutoInc_;
-
+  int cpuCount_;
   struct kCpu _cpu[8];
 };
 

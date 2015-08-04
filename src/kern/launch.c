@@ -1,9 +1,10 @@
 #include <smkos/kapi.h>
+#include <smkos/alimits.h>
 #include <smkos/kstruct/user.h>
 #include <smkos/kstruct/map.h>
 #include <smkos/drivers.h>
 
-
+void kernel_info();
 void ksymbols_load (kInode_t *ino);
 
 struct spinlock *SP_first = NULL, *SP_last = NULL;
@@ -39,8 +40,17 @@ void kernel_start ()
   struct tm dateTime;
 
   /* Initialize kernel environment */
+  atomic_t avail = kSYS.pageAvailable_;
+  size_t max = kSYS.memMax_;
+  int pag = kSYS.pageMax_;
+  atomic_t used = kSYS.pageUsed_;
   memset (&kSYS, 0, sizeof (kSYS));
   memset (&kCPU, 0, sizeof (kCPU));
+  kSYS.pageAvailable_ = avail;
+  kSYS.memMax_ = max;
+  kSYS.pageMax_ = pag;
+  kSYS.pageUsed_ = used;
+
   kernel_state (KST_KERNSP);
   kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ " from git:" _GITH_ ".\n");
   mmu_load_env();
@@ -88,7 +98,7 @@ void kernel_start ()
   scavenge_area(kSYS.mspace_);
 
   // kprintf ("CPU %d is ready\n", kCpuNo);
-  kprintf("\033[38mSmokeOS " _VTAG_ "\033[0m, build at " __DATE__ " from git:" _GITH_ ".\n\n");
+  kernel_info();
   cpu_start_scheduler();
 
 }
@@ -118,6 +128,24 @@ void kernel_sweep()
   mmu_leave_env();
 }
 
+/* ----------------------------------------------------------------------- */
+void kernel_info()
+{
+  int i;
+  struct tm dateTime;
+  dateTime = cpu_get_clock();
+  kprintf("\033[38mSmokeOS " _VTAG_ "\033[0m, build at " __DATE__ " from git:" _GITH_ ".\n\n");
+  kprintf("Date: %s\n", asctime(&dateTime));
+  kprintf("Cpus count: %d\n", kSYS.cpuCount_);
+  for (i=0; i<kSYS.cpuCount_; ++i)
+    kprintf("  - CPU %d :: %s\n", i, kSYS._cpu[0].spec_);
+  kprintf ("Memory: ");
+  kprintf (" %s detected, ", kpsize((uintmax_t)kSYS.memMax_));
+  kprintf (" %s allocatable, ", kpsize((uintmax_t)kSYS.pageMax_ * PAGE_SIZE));
+  kprintf (" %s available\n", kpsize((uintmax_t)kSYS.pageAvailable_ * PAGE_SIZE));
+  kprintf ("\n\033[94m Greetings...\033[0m\n\n");
+
+}
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

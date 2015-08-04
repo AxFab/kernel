@@ -35,25 +35,64 @@ int cpu_features[4];
 #define AE_VECTOR (((size_t)x86_ApError ) >> 12)
 
 // EAX, EBX, EDX, ECX
-#define x86_FEATURES_FPU    (0 != (cpu_features[2] & (1 << 0)))
-#define x86_FEATURES_VME    (0 != (cpu_features[2] & (1 << 1)))
-#define x86_FEATURES_PE     (0 != (cpu_features[2] & (1 << 2)))
-#define x86_FEATURES_PSE    (0 != (cpu_features[2] & (1 << 3)))
-#define x86_FEATURES_TSC    (0 != (cpu_features[2] & (1 << 4)))
-#define x86_FEATURES_MSR    (0 != (cpu_features[2] & (1 << 5)))
-#define x86_FEATURES_PAE    (0 != (cpu_features[2] & (1 << 6)))
-#define x86_FEATURES_MCE    (0 != (cpu_features[2] & (1 << 7)))
-#define x86_FEATURES_CX8    (0 != (cpu_features[2] & (1 << 8)))
-#define x86_FEATURES_APIC   (0 != (cpu_features[2] & (1 << 9)))
-#define x86_FEATURES_SEP    (0 != (cpu_features[2] & (1 << 11)))
-#define x86_FEATURES_MMTR   (0 != (cpu_features[2] & (1 << 12)))
-#define x86_FEATURES_PSE36  (0 != (cpu_features[2] & (1 << 17)))
-#define x86_FEATURES_X2APIC (0 != (cpu_features[3] & (1 << 21)))
-#define x86_FEATURES_MMX    (0 != (cpu_features[2] & (1 << 23)))
-#define x86_FEATURES_SSE    (0 != (cpu_features[2] & (1 << 25)))
-#define x86_FEATURES_SSE2   (0 != (cpu_features[2] & (1 << 26)))
-#define x86_FEATURES_HHT    (0 != (cpu_features[2] & (1 << 28)))
-#define x86_FEATURES_TM     (0 != (cpu_features[2] & (1 << 29)))
+#define x86_FEATURES_FPU     (0 != (cpu_features[2] & (1 << 0)))
+#define x86_FEATURES_VME     (0 != (cpu_features[2] & (1 << 1)))
+#define x86_FEATURES_PE      (0 != (cpu_features[2] & (1 << 2)))
+#define x86_FEATURES_PSE     (0 != (cpu_features[2] & (1 << 3)))
+#define x86_FEATURES_TSC     (0 != (cpu_features[2] & (1 << 4)))
+#define x86_FEATURES_MSR     (0 != (cpu_features[2] & (1 << 5)))
+#define x86_FEATURES_PAE     (0 != (cpu_features[2] & (1 << 6)))
+#define x86_FEATURES_MCE     (0 != (cpu_features[2] & (1 << 7)))
+#define x86_FEATURES_CX8     (0 != (cpu_features[2] & (1 << 8)))
+#define x86_FEATURES_APIC    (0 != (cpu_features[2] & (1 << 9)))
+#define x86_FEATURES_SEP     (0 != (cpu_features[2] & (1 << 11)))
+#define x86_FEATURES_MTRR    (0 != (cpu_features[2] & (1 << 12)))
+#define x86_FEATURES_PGE     (0 != (cpu_features[2] & (1 << 13)))
+#define x86_FEATURES_MCA     (0 != (cpu_features[2] & (1 << 14)))
+#define x86_FEATURES_CMOV    (0 != (cpu_features[2] & (1 << 15)))
+#define x86_FEATURES_PAT     (0 != (cpu_features[2] & (1 << 16)))
+#define x86_FEATURES_PSE36   (0 != (cpu_features[2] & (1 << 17)))
+#define x86_FEATURES_PSN     (0 != (cpu_features[2] & (1 << 18)))
+#define x86_FEATURES_CLF     (0 != (cpu_features[2] & (1 << 19)))
+#define x86_FEATURES_DTES    (0 != (cpu_features[2] & (1 << 21)))
+#define x86_FEATURES_ACPI    (0 != (cpu_features[2] & (1 << 22)))
+#define x86_FEATURES_MMX     (0 != (cpu_features[2] & (1 << 23)))
+#define x86_FEATURES_FXSR    (0 != (cpu_features[2] & (1 << 24)))
+#define x86_FEATURES_SSE     (0 != (cpu_features[2] & (1 << 25)))
+#define x86_FEATURES_SSE2    (0 != (cpu_features[2] & (1 << 26)))
+#define x86_FEATURES_SS      (0 != (cpu_features[2] & (1 << 27)))
+#define x86_FEATURES_HTT     (0 != (cpu_features[2] & (1 << 28)))
+#define x86_FEATURES_TM1     (0 != (cpu_features[2] & (1 << 29)))
+#define x86_FEATURES_IA64    (0 != (cpu_features[2] & (1 << 30)))
+#define x86_FEATURES_PBE     (0 != (cpu_features[2] & (1 << 31)))
+
+#define x86_FEATURES_SSE3    (0 != (cpu_features[3] & (1 << 0)))
+#define x86_FEATURES_PCLMUL  (0 != (cpu_features[3] & (1 << 1)))
+#define x86_FEATURES_DTES64  (0 != (cpu_features[3] & (1 << 2)))
+#define x86_FEATURES_MONITOR (0 != (cpu_features[3] & (1 << 3)))
+#define x86_FEATURES_DS_CPL  (0 != (cpu_features[3] & (1 << 4)))
+#define x86_FEATURES_VMX     (0 != (cpu_features[3] & (1 << 5)))
+#define x86_FEATURES_SMX     (0 != (cpu_features[3] & (1 << 6)))
+#define x86_FEATURES_EST     (0 != (cpu_features[3] & (1 << 7)))
+#define x86_FEATURES_TM2     (0 != (cpu_features[3] & (1 << 8)))
+#define x86_FEATURES_SSSE3   (0 != (cpu_features[3] & (1 << 9)))
+#define x86_FEATURES_CID     (0 != (cpu_features[3] & (1 << 10)))
+#define x86_FEATURES_FMA     (0 != (cpu_features[3] & (1 << 12)))
+#define x86_FEATURES_CX16    (0 != (cpu_features[3] & (1 << 13)))
+#define x86_FEATURES_ETPRD   (0 != (cpu_features[3] & (1 << 14)))
+#define x86_FEATURES_PDCM    (0 != (cpu_features[3] & (1 << 15)))
+#define x86_FEATURES_DCA     (0 != (cpu_features[3] & (1 << 18)))
+#define x86_FEATURES_SSE4_1  (0 != (cpu_features[3] & (1 << 19)))
+#define x86_FEATURES_SSE4_2  (0 != (cpu_features[3] & (1 << 20)))
+#define x86_FEATURES_x2APIC  (0 != (cpu_features[3] & (1 << 21)))
+#define x86_FEATURES_MOVBE   (0 != (cpu_features[3] & (1 << 22)))
+#define x86_FEATURES_POPCNT  (0 != (cpu_features[3] & (1 << 23)))
+#define x86_FEATURES_AES     (0 != (cpu_features[3] & (1 << 25)))
+#define x86_FEATURES_XSAVE   (0 != (cpu_features[3] & (1 << 26)))
+#define x86_FEATURES_OSXSAVE (0 != (cpu_features[3] & (1 << 27)))
+#define x86_FEATURES_AVX     (0 != (cpu_features[3] & (1 << 28)))
+
+
 
 #define cpu_count (*((uint16_t*)0x7f8))
 
@@ -139,10 +178,13 @@ void initialize_smp()
 {
   page_t apicPage;
   uint32_t eax, ebx;
+  int cpu_name[5];
 
   // PCI_check_all();
   // Request CPU features
   // kprintf ("Initializing multi-processing...\n");
+  cpuid(0, 0, cpu_name);
+  cpu_name[4] = 0;
   cpuid(1, 0, cpu_features);
   x86_InitializeFPU ();
   x86_ActiveCache();
@@ -162,6 +204,68 @@ void initialize_smp()
   // if (x86_FEATURES_HHT) kprintf ("  Hyper Threading Tech.\n");
   // if (x86_FEATURES_TM) kprintf ("  Therm. Monitor\n");
 
+  kCPU.spec_ = (char*)kalloc(512);
+  strcpy(kCPU.spec_, &cpu_name[1]);
+
+  if (x86_FEATURES_FPU)     strcat(kCPU.spec_, ", FPU");
+  if (x86_FEATURES_VME)     strcat(kCPU.spec_, ", VME");
+  if (x86_FEATURES_PE)      strcat(kCPU.spec_, ", PE");
+  if (x86_FEATURES_PSE)     strcat(kCPU.spec_, ", PSE");
+  if (x86_FEATURES_TSC)     strcat(kCPU.spec_, ", TSC");
+  if (x86_FEATURES_MSR)     strcat(kCPU.spec_, ", MSR");
+  if (x86_FEATURES_PAE)     strcat(kCPU.spec_, ", PAE");
+  if (x86_FEATURES_MCE)     strcat(kCPU.spec_, ", MCE");
+  if (x86_FEATURES_CX8)     strcat(kCPU.spec_, ", CX8");
+  if (x86_FEATURES_APIC)    strcat(kCPU.spec_, ", APIC");
+  if (x86_FEATURES_SEP)     strcat(kCPU.spec_, ", SEP");
+  if (x86_FEATURES_MTRR)    strcat(kCPU.spec_, ", MTRR");
+  if (x86_FEATURES_PGE)     strcat(kCPU.spec_, ", PGE");
+  if (x86_FEATURES_MCA)     strcat(kCPU.spec_, ", MCA");
+  if (x86_FEATURES_CMOV)    strcat(kCPU.spec_, ", CMOV");
+  if (x86_FEATURES_PAT)     strcat(kCPU.spec_, ", PAT");
+  if (x86_FEATURES_PSE36)   strcat(kCPU.spec_, ", PSE36");
+  if (x86_FEATURES_PSN)     strcat(kCPU.spec_, ", PSN");
+  if (x86_FEATURES_CLF)     strcat(kCPU.spec_, ", CLF");
+  if (x86_FEATURES_DTES)    strcat(kCPU.spec_, ", DTES");
+  if (x86_FEATURES_ACPI)    strcat(kCPU.spec_, ", ACPI");
+  if (x86_FEATURES_MMX)     strcat(kCPU.spec_, ", MMX");
+  if (x86_FEATURES_FXSR)    strcat(kCPU.spec_, ", FXSR");
+  if (x86_FEATURES_SSE)     strcat(kCPU.spec_, ", SSE");
+  if (x86_FEATURES_SSE2)    strcat(kCPU.spec_, ", SSE2");
+  if (x86_FEATURES_SS)      strcat(kCPU.spec_, ", SS");
+  if (x86_FEATURES_HTT)     strcat(kCPU.spec_, ", HTT");
+  if (x86_FEATURES_TM1)     strcat(kCPU.spec_, ", TM1");
+  if (x86_FEATURES_IA64)    strcat(kCPU.spec_, ", IA64");
+  if (x86_FEATURES_PBE)     strcat(kCPU.spec_, ", PBE");
+
+  if (x86_FEATURES_SSE3)    strcat(kCPU.spec_, ", SSE3");
+  if (x86_FEATURES_PCLMUL)  strcat(kCPU.spec_, ", PCLMUL");
+  if (x86_FEATURES_DTES64)  strcat(kCPU.spec_, ", DTES64");
+  if (x86_FEATURES_MONITOR) strcat(kCPU.spec_, ", MONITOR");
+  if (x86_FEATURES_DS_CPL)  strcat(kCPU.spec_, ", DS_CPL");
+  if (x86_FEATURES_VMX)     strcat(kCPU.spec_, ", VMX");
+  if (x86_FEATURES_SMX)     strcat(kCPU.spec_, ", SMX");
+  if (x86_FEATURES_EST)     strcat(kCPU.spec_, ", EST");
+  if (x86_FEATURES_TM2)     strcat(kCPU.spec_, ", TM2");
+  if (x86_FEATURES_SSSE3)   strcat(kCPU.spec_, ", SSSE3");
+  if (x86_FEATURES_CID)     strcat(kCPU.spec_, ", CID");
+  if (x86_FEATURES_FMA)     strcat(kCPU.spec_, ", FMA");
+  if (x86_FEATURES_CX16)    strcat(kCPU.spec_, ", CX16");
+  if (x86_FEATURES_ETPRD)   strcat(kCPU.spec_, ", ETPRD");
+  if (x86_FEATURES_PDCM)    strcat(kCPU.spec_, ", PDCM");
+  if (x86_FEATURES_DCA)     strcat(kCPU.spec_, ", DCA");
+  if (x86_FEATURES_SSE4_1)  strcat(kCPU.spec_, ", SSE4_1");
+  if (x86_FEATURES_SSE4_2)  strcat(kCPU.spec_, ", SSE4_2");
+  if (x86_FEATURES_x2APIC)  strcat(kCPU.spec_, ", x2APIC");
+  if (x86_FEATURES_MOVBE)   strcat(kCPU.spec_, ", MOVBE");
+  if (x86_FEATURES_POPCNT)  strcat(kCPU.spec_, ", POPCNT");
+  if (x86_FEATURES_AES)     strcat(kCPU.spec_, ", AES");
+  if (x86_FEATURES_XSAVE)   strcat(kCPU.spec_, ", XSAVE");
+  if (x86_FEATURES_OSXSAVE) strcat(kCPU.spec_, ", OSXSAVE");
+  if (x86_FEATURES_AVX)     strcat(kCPU.spec_, ", AVX");
+
+
+
   //
   if (!x86_FEATURES_MSR) {
     kprintf ("No MSR capability\n");
@@ -169,7 +273,7 @@ void initialize_smp()
   } else if (!x86_FEATURES_APIC) {
     kprintf ("No APIC capability\n");
     return;
-  } else if (!x86_FEATURES_X2APIC) {
+  } else if (!x86_FEATURES_x2APIC) {
     // kprintf ("No x2APIC implemented\n");
   }
 
@@ -220,6 +324,7 @@ void initialize_smp()
 
   // Wait timer interrupt - We should have init all CPUs
   kprintf ("BSP found a count of %d CPUs\n", cpu_count + 1);
+  kSYS.cpuCount_ = cpu_count + 1;
   // for (;;);
   cli();
 }
