@@ -78,8 +78,13 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
   kInode_t *inon;
   kMemArea_t *area;
   char no[10];
+#ifndef _FONT8
   int fontW = 6;
   int fontH = 9;
+#else
+  int fontW = 8;
+  int fontH = 8;
+#endif
   int nol = kSYS.ttyAutoInc_++;
   kTerm_t *term;
 
