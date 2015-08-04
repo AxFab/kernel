@@ -137,9 +137,23 @@ size_t sys_mmap(int fd, size_t address, size_t length, size_t offset, int flags)
 /* ----------------------------------------------------------------------- */
 int sys_pinfo (char* buf, int lg, int what)
 {
-  kInode_t* ino = kCPU.current_->process_->session_->workingDir_;
-  inode_readlink(ino, buf, lg);
+  kInode_t* ino;
   __seterrno(0);
+  switch (what) {
+    case KI_PWD:
+      ino = kCPU.current_->process_->session_->workingDir_;
+      inode_readlink(ino, buf, lg);
+      break;
+
+    case KI_USERNAME:
+      strncpy(buf, kCPU.current_->process_->session_->user_->name_, lg);
+      break;
+
+    default:
+      __seterrno(EINVAL);
+      return -1;
+  }
+
   return 0;
 }
 
