@@ -52,6 +52,7 @@ void mmu_clean_page(size_t address)
 /* ----------------------------------------------------------------------- */
 page_t mmu_newpage()
 {
+  assert (kSYS.pageAvailable_ > 0);
   atomic_dec(&kSYS.pageAvailable_);
   atomic_inc(&kSYS.pageUsed_);
   return kSYS.pageUsed_ * 0x1000 + 0x100000;

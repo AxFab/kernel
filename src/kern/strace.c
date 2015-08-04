@@ -31,6 +31,23 @@
 
 int strtol(const char *, char **, int);
 
+
+static void parseEscape(char* str) {
+  int i, j;
+  for (i=0, j=0; str[i]; ++i, ++j) {
+    if (str[i] == '\\') {
+      if (str[i+1] == 'n')
+        str[i++] = '\n';
+
+      if (str[i] != '\\')
+        continue;
+    }
+
+    str[i] = str[j];
+  }
+
+  str[i] = '\0';
+}
 static char *parseStr (char **rent)
 {
   char *str = strtok_r(NULL, " (,;)=", rent);
@@ -41,9 +58,11 @@ static char *parseStr (char **rent)
 
   if (str[0] == str[lg - 1] && str[0] == '"') {
     str[lg - 1] = '\0';
+    parseEscape(&str[1]);
     return &str[1];
   }
 
+  parseEscape(str);
   return str;
 }
 
@@ -355,6 +374,24 @@ void sys_pinfo_save (char *snBuf, int snLg, char* buf, int lg, int what, int p4,
   snprintf (snBuf, snLg, "sys_pinfo (%p:\"%s\", %d, %d) = %d", buf, buf, lg, what, ret);
 }
 
+void sys_pinfo_do (char *str, char **rent)
+{
+  char sbuf[128];
+  char* buf = parseStr(rent);
+  size_t lg = (size_t)parseInt(rent);
+  size_t what = (size_t)parseInt(rent);
+  int res = parseInt(rent);
+  char *tmp = (char *)kalloc(lg + 1);
+  int ret = sys_pinfo(tmp, lg, what);
+  assert (ret == res);
+
+  if (buf && ret > 0)
+    assert(!strcmp(buf, tmp));
+
+  sys_pinfo_save(sbuf, 128, tmp, lg, what, 0, 0, ret);
+  log_sys(sbuf);
+  kfree(tmp);
+}
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */

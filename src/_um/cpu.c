@@ -150,12 +150,18 @@ void callSys ()
   int pid = kCPU.current_->process_->pid_;
 
   assert (kCPU.current_ != NULL);
-  part = fgets(buf, 128, progFp[pid][ent]);
-  // printf ("strace -- %d, %d : %s\n", pid, ent, buf);
-  assert (part != NULL);
+  for (;;) {
+    part = fgets(buf, 128, progFp[pid][ent]);
+    // printf ("strace -- %d, %d : %s\n", pid, ent, buf);
+    assert (part != NULL);
+
+    if (part[0] == '#')
+      continue;
+
+    break;
+  }
 
   part = strtok_r(buf, " (,;)=", &rent);
-
   if (!strcmp(part, "sys_exec"))
     sys_exec_do(buf, &rent);
 
@@ -185,6 +191,10 @@ void callSys ()
 
   else if (!strcmp(part, "sys_mmap"))
     sys_mmap_do(buf, &rent);
+
+  else if (!strcmp(part, "sys_pinfo"))
+    sys_pinfo_do(buf, &rent);
+
 
   else if (!memcmp(part, "WAKEUP", 6))
     longjmp(cpuJmp[main_count--], 2);
@@ -310,6 +320,7 @@ int testCase (const char *dir)
     for (th = 0; th < 15; ++th)
       progFp[idx][th] = NULL;
 
+  kSYS.pageAvailable_ = 5000;
   /* Start threads for CPUs at { kernel_ready(); main_jmp_loop(); }
   // @todo assert -- kalloc is available, memory is virtual, screen is OK, timer is set */
   kernel_start();
