@@ -6,6 +6,7 @@
 
 void kernel_info();
 void ksymbols_load (kInode_t *ino);
+void ksymclean();
 
 struct spinlock *SP_first = NULL, *SP_last = NULL;
 
@@ -125,6 +126,7 @@ void kernel_sweep()
 
   sweep_vfs();
   destroy_all_users();
+  ksymclean();
   mmu_leave_env();
 }
 

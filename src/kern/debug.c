@@ -30,7 +30,7 @@
 // ----------------------------------------------------------------------------
 typedef struct kSymbol kSymbol_t;
 struct kSymbol {
-  const char *name_;
+  char *name_;
   size_t     address_;
   kSymbol_t  *next_;
 };
@@ -76,11 +76,28 @@ const char *ksymbol (void *address)
   return ">>>>>";
 }
 
-// ----------------------------------------------------------------------------
+
+/* ----------------------------------------------------------------------- */
+void ksymclean()
+{
+  kSymbol_t *sym;
+  kSymbol_t *iter = first;
+  do {
+    sym = iter;
+    iter = iter->next_;
+    kfree(sym->name_);
+    kfree(sym);
+  } while (iter);
+  first = NULL;
+  last = NULL;
+}
+
+/* ----------------------------------------------------------------------- */
 /**
     Print the stack trace of the current frame
     FIXME: We can improve readablility by parsing the .map file
  */
+
 void kstacktrace(size_t MaxFrames)
 {
   size_t frame;
@@ -151,10 +168,17 @@ void dbg_ticks()
   FUNC_BEG (1, 25)
 
     ino = search_inode("/proc/.Tty0", NULL, 0, NULL);
-    fs_pipe_write(ino, (void*)"Fab\n", 4);
+    fs_pipe_write(ino, (void*)"Fabien\n", 7);
 
   FUNC_DBG (2, 50)
 
+    ino = search_inode("/proc/.Tty0", NULL, 0, NULL);
+    fs_pipe_write(ino, (void*)"bin/ls\n", 8);
+
+  FUNC_DBG (3, 75)
+
+    ino = search_inode("/proc/.Tty0", NULL, 0, NULL);
+    fs_pipe_write(ino, (void*)"bin/color\n", 8);
 
   FUNC_END ()
 }

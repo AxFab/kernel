@@ -37,6 +37,7 @@ int main (int argc, char** argv)
   until = until || testCase ("mthread");
   until = until || testCase ("mmap");
   until = until || testCase ("base");
+  until = until || testCase ("shell");
 
   return until;
 #else
