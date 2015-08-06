@@ -60,6 +60,8 @@ struct kDriver {
   int (*read)(kInode_t *fp, void *buffer, size_t length, size_t offset);
   int (*write)(kInode_t *fp, const void *buffer, size_t length, size_t offset);
   int (*flush)(kInode_t *fp);
+
+  int (*release)(kInode_t *fp);
 };
 
 

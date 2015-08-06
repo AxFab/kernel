@@ -406,9 +406,18 @@ int unregister_inode (kInode_t *ino)
     kfree(page);
   }
 
-
   kunlock (&ino->lock_);
-  kunlock (&ino->parent_->lock_);
+  if (ino->dev_->fs_->release) {
+    ino->prev_ = NULL;
+    ino->next_ = NULL;
+    if (open_fs(ino->parent_))
+      kpanic("Memory leak, can free all");
+    ino->parent_->dev_->fs_->release (ino);
+    close_fs(ino->parent_);
+
+  } else {
+    kunlock (&ino->parent_->lock_);
+  }
 
   /// @todo Free all buckets and stream objects...
   /// @todo Push to garbadge candidate

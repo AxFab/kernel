@@ -68,6 +68,7 @@ int TMPFS_symlink(const char *name, kInode_t *dir, int mode, const char *path, S
   return ret;
 }
 
+/* ----------------------------------------------------------------------- */
 int TMPFS_readlink(kInode_t *fp, char* path, int lg)
 {
   assert (fp->stat_.length_ < PATH_MAX);
@@ -81,6 +82,14 @@ int TMPFS_readlink(kInode_t *fp, char* path, int lg)
 }
 
 /* ----------------------------------------------------------------------- */
+int TMPFS_release(kInode_t *fp)
+{
+  if (S_ISLNK(fp->stat_.mode_)) {
+    kfree((char*)fp->stat_.lba_);
+  }
+}
+
+/* ----------------------------------------------------------------------- */
 void TMPFS (kDriver_t *driver)
 {
   driver->name_ = strdup("tmpfs");
@@ -88,6 +97,7 @@ void TMPFS (kDriver_t *driver)
   driver->create = TMPFS_create;
   driver->symlink = TMPFS_symlink;
   driver->readlink = TMPFS_readlink;
+  driver->release = TMPFS_release;
 }
 
 /* ----------------------------------------------------------------------- */
