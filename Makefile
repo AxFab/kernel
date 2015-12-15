@@ -1,78 +1,55 @@
-# Makefile
-# ---------------------------------------------------------------------------
+#      This file is part of the SmokeOS project.
+#  Copyright (C) 2015  <Fabien Bavent>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#  This makefile is more or less generic.
+#  The configuration is on `sources.mk`.
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+NAME = SmokeOS_Kernel
+ARCH = x86
+LINUX = $(shell uname -sr)
+DATE = $(shell date '+%d %b %Y')
+GIT = $(shell git --git-dir=$(topdir)/.git log -n1 --pretty='%h')$(shell if [ -n "$(git --git-dir=$(topdir)/.git status --short -uno)"]; then echo '+'; fi)
+VERSION = 0.1-$(GIT)
 
-# Settings user
-ARCH ?= x86
-bld_dir ?= .
-prefix =
+S = @
+V = $(shell [ -z $(VERBOSE) ] && echo @)
+Q = $(shell [ -z $(QUIET) ] && echo @ || echo @true)
 
-CC = gcc
-LD =  ld
-V =
+all: libs utils
 
-CFLAGS = -Wall -Wextra -Wno-unused-parameter -ggdb3
-LFLAGS =
-INC =
-SRCS =
+# D I R E C T O R I E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+prefix ?= /usr/local
+topdir ?= $(shell readlink -f .)
+gendir ?= $(shell pwd)
+srcdir = $(topdir)/src
+outdir = ${gendir}/obj
+bindir = ${gendir}/bin
+libdir = ${gendir}/lib
 
-# Settings scripted
-src_dir = $(shell dirname $(firstword $(MAKEFILE_LIST)))
+# C O M M A N D S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+CROSS_COMPILE ?= $(CROSS)
+AS = $(CROSS_COMPILE)as
+AR = $(CROSS_COMPILE)ar
+CC = $(CROSS_COMPILE)gcc -m32 
+CXX = $(CROSS_COMPILE)g++
+LD = $(CROSS_COMPILE)ld -melf_i386
+NM = $(CROSS_COMPILE)nm
 
-arch_src = $(src_dir)/src/_$(ARCH)
-deps_ax = $(src_dir)/3rdparty/axlibc
-bin_dir = $(bld_dir)
-lib_dir = $(bld_dir)/lib
-obj_dir = $(bld_dir)/obj
-krn_img = $(bld_dir)/$(prefix)/kImage
-
-
-ifneq ($(ARCH),um)
-CFLAGS += -ggdb3
-# CFLAGS += -nostdinc -isystem $(deps_ax)/include
-LFLAGS += -nostdlib
-else
-CFLAGS += -ggdb3 --coverage -fprofile-arcs -ftest-coverage
-CFLAGS += -D_FS -D_FS_UM
-LFLAGS += --coverage
-endif
-
-
-# ---------------------------------------------------------------------------
-# Additional info
-linuxname := $(shell uname -sr)
-git_hash := $(shell git --git-dir=$(src_dir)/.git log -n1 --pretty='%h')$(shell if [ -n "$(git status --short -uno)"]; then echo '+'; fi)
-date := $(shell date '+%d %b %Y')
-vtag := $(shell cat $(src_dir)/.build)
-
-CFLAGS += -D_DATE_=\"'$(date)'\" -D_OSNAME_=\"'$(linuxname)'\"
-CFLAGS += -D_GITH_=\"'$(git_hash)'\" -D_VTAG_=\"'$(vtag)'\"
-
-INC += -I $(src_dir)/include -I $(src_dir)/include/_$(ARCH)
-INC += -I $(src_dir)/internal -I $(src_dir)/internal/_$(ARCH)
-
-# ---------------------------------------------------------------------------
-# Generic definitions
-define objs
-	$(patsubst $(src_dir)/src/%.c,$(obj_dir)/%.o,    \
-	$(patsubst $(src_dir)/src/%.cpp,$(obj_dir)/%.o,  \
-	$(patsubst $(src_dir)/src/%.asm,$(obj_dir)/%.o,  \
-	$(1)                                             \
-	)))
-endef
-
-ifeq ($(VERBOSE),)
-V = @
-else
-V =
-endif
-
-ifeq ($(QUIET),)
-Q = @ echo
-else
-Q = @ true
-endif
-
-ifeq ($(shell [ -d $(obj_dir) ] || echo N ),N)
+# A V O I D   D E P E N D E N C Y -=-=-=-=-=-=-=-=-=-=-=-
+ifeq ($(shell [ -d $(outdir) ] || echo N ),N)
 NODEPS=1
 endif
 ifeq ($(MAKECMDGOALS),help)
@@ -85,121 +62,106 @@ ifeq ($(MAKECMDGOALS),distclean)
 NODEPS = 1
 endif
 
-# ---------------------------------------------------------------------------
-# Source code
-SRCS += $(wildcard $(src_dir)/src/kern/*.c)
-SRCS += $(wildcard $(src_dir)/src/_$(ARCH)/*.c)
-SLIB += $(lib_dir)/libkfs.a
+# D E L I V E R I E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+define obj
+  $(patsubst $(srcdir)/%.c,$(outdir)/$(1)/%.$(3),   \
+  $(patsubst $(srcdir)/%.cpp,$(outdir)/$(1)/%.$(3), \
+  $(patsubst $(srcdir)/%.asm,$(outdir)/$(1)/%.$(3), \
+    $(filter-out $($(2)_omit-y),$($(2)_src-y))      \
+  )))
+endef
 
-ifneq ($(ARCH),um)
-SRCS += $(wildcard $(src_dir)/src/libc/*.c)
-# SLIB += $(lib_dir)/libaxb.a
-endif
+define link
+DEPS += $(call obj,$2,$1,d)
+$1: $(bindir)/$1
+$(bindir)/$1: $(call obj,$2,$1,o)
+	$(S) mkdir -p $$(dir $$@)
+	$(Q) echo "    LD  "$$@
+	$(V) $(CC) $($(1)_LFLAGS) -o $$@ $$^
+	$(Q) ls -lh $$@
+	$(Q) size $$@
+endef
 
+define kimg
+DEPS += $(call obj,$2,$1,d)
+$1: $(gendir)/$1
+$(gendir)/$1: $(call obj,$2,$1,o) $(outdir)/_$(ARCH)/crtk.o
+	$(S) mkdir -p $$(dir $$@)
+	$(Q) echo "    LD  "$$@
+	$(V) $(LD) -T $(srcdir)/_$(ARCH)/kernel.ld $($(1)_LFLAGS) \
+		-o $$@ -Map $$@.map $(call obj,$2,$1,o)
+	$(Q) ls -lh $$@
+	$(Q) size $$@
+endef
 
-# ---------------------------------------------------------------------------
-all: $(krn_img)
-#	@ strip $<
-	@ ls -lh $<
-	@ size $<
+define ccpl
+$(outdir)/$(1)/%.o: $(srcdir)/%.c
+	$(S) mkdir -p $$(dir $$@)
+	$(Q) echo "    CC  "$$@
+	$(V) $(CC) -c $($(1)_CFLAGS) -o $$@ $$<
+$(outdir)/$(1)/%.d: $(srcdir)/%.c
+	$(S) mkdir -p $$(dir $$@)
+	$(Q) echo "    CM  "$$@
+	$(V) $(CC) -c $($(1)_CFLAGS) -o $$@ $$<
+endef
 
-include $(arch_src)/make.mk
-include $(src_dir)/src/fs/make.mk
+define crt
+$(outdir)/%/$1.o: $(srcdir)/%/crt/$1.asm
+	$(S) mkdir -p $$(dir $$@)
+	$(Q) echo "    ASM "$$@
+	$(V) nasm -f elf32 -o $$@ $$^
+endef
 
-$(krn_img): $(call objs,$(SRCS)) $(SLIB) $(KDEPS)
-	@ mkdir -p $(dir $@)
-	$(Q) "    LD  "$@
-ifneq ($(ARCH),um)
-	$(V) $(LD) -T $(arch_src)/kernel.ld $(LFLAGS) -o $@ -Map $@.map $(call objs,$(SRCS)) $(SLIB)
-else
-	$(V) $(CC) $(LFLAGS) -o $@ $^
-endif
-
-$(obj_dir)/%.o: $(src_dir)/src/%.c
-	@ mkdir -p $(dir $@)
-	$(Q) "    CC  "$<
-	$(V) $(CC) -c $(INC) $(CFLAGS) -o $@ $<
-
-$(obj_dir)/%.d: $(src_dir)/src/%.c
-	@ mkdir -p $(dir $@)
-	$(Q) "    DP  "$<
-	$(V) $(CC) -MM $(INC) $(CFLAGS) -o $@ $<
-ifneq ($(DPMAX),)
-	@ cp $@ $@.tmp
-	@ sh -c "cat $@.tmp | fmt -1 | sed -e 's/.*://' -e 's/\\\\$$//' -e 's/^\s*//' | grep -v '^\s*$$' | sed 's/$$/:/'" >> $@
-	@ rm $@.tmp
-endif
-
-# ===========================================================================
-#    Static Libraries
-# ===========================================================================
-
-# ---------------------------------------------------------------------------
-# libaxb.a - external
-$(lib_dir)/libaxb.a:
-	$(Q) "    >>  "$@
-	@ cd $(deps_ax) && $(MAKE) $@
-	$(Q) "    <<  "$@
-
-
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
 $(lib_dir)/lib%.a:
-	@ mkdir -p $(dir $@)
-	$(Q) "    AR  "$@
+	$(S) mkdir -p $(dir $@)
+	$(Q) echo "    AR  "$@
 	$(V) ar src $@ $^
 
-clean:
-	@ rm -rf $(obj_dir)
-	@ rm -rf $(lib_dir)
+# S O U R C E S   C O M P I L A T I O N -=-=-=-=-=-=-=-=-
+include $(topdir)/sources.mk
 
+# C O M M O N   T A R G E T S -=-=-=-=-=-=-=-=-=-=-=-=-=-
+libs: $(DV_LIBS)
+utils: $(DV_UTILS) $(DV_CHECK)
+statics: $(patsubst %,$(gendir)/lib/%.a,$(DV_LIBS))
+# install: install_dev install_runtime install_utils
+# unistall:
+# TODO -- rm $(prefix)/XX (without messing with others libs)
+clean: 
+	$(V) rm -rf $(outdir)
 distclean: clean
-	@ rm -f $(krn_img)
-	@ rm -rf cov_*
+	$(V) rm -rf $(libdir)
+	$(V) rm -rf $(bindir)
+config:
+# TODO -- Create/update configuration headers
+check: $(DV_CHECK)
+# TODO -- Launch unit tests
+.PHONY: all libs utils install unistall 
+.PHONY: clean distclean config check
 
-sources:
-	@ echo $(SRCS) | tr ' ' '\n'
+# P A C K A G I N G -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+release: $(gendir)/$(NAME)-$(ARCH)-$(VERSION).tar
+# .bz2
+# $(gendir)/$(NAME)-$(ARCH)-$(VERSION).tar.bz2: $(gendir)/$(NAME)-$(ARCH)-$(VERSION).tar
+# 	$(V) gzip $< -o $@
+$(gendir)/$(NAME)-$(ARCH)-$(VERSION).tar: $(DV_UTILS) $(DV_LIBS)
+	$(Q)  "  TAR   $@"
+	$(V) tar cf $@  -C $(topdir) $(topdir)/include
+	$(V) tar af $@ -C $(gendir) $^
 
-help:
-	@ echo " "
-	@ echo "        Makefile for the kernel"
-	@ echo "USAGE:"
-	@ echo "  make [target] [options]"
-	@ echo " "
-	@ echo " The target can be the path of a special delivery or one of "
-	@ echo " the commands: "
-	@ echo "   all:        build the kernel image"
-	@ echo "   clean:      remove temporary file (objs & libs)"
-	@ echo "   distclean:  remove all generated files."
-	@ echo "   sources:    print a list of kernel sources files."
-	@ echo "   help:       print this help."
-	@ echo " Some other targets might be defined for one architecture:"
-	@ echo "   _um: coverage (code coverage - you need testing repository)."
-	@ echo "   _x86: cdrom, create a bootable ISO image."
-	@ echo " "
-	@ echo "OPTIONS:"
-	@ echo "    QUIT=1      Remove extra logs."
-	@ echo "    VERBOSE=1   Print main commands."
-	@ echo "    NODEPS=1    Don't compute source dependencies."
-	@ echo "                Note this option may activates by-itself."
-	@ echo "    ARCH=?      Change the architecture. I recommand changing "
-	@ echo "                also the build directory or cleaning (default:x86)."
-	@ echo "    bld_dir=?   Change the directory to put generated file (default:.)."
-	@ echo " "
-	@ echo "DEPENDENCIES:"
-	@ echo "  This script may run only using binutils suite."
-	@ echo "  However architecture specific part will often require a bit more."
-	@ echo "    - um  :: lcov"
-	@ echo "    - x86 :: nasm (grub xorriso)"
-	@ echo " "
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+deps:
+	$(S) echo $(DEPS)
 
+dirs:
+	@ echo GPATH: $(GPATH)
+	@ echo VPATH: $(VPATH)
+	@ echo SPATH: $(SPATH)
 
-
-# ===========================================================================
+delv:
+	@ echo LIBS: $(DV_LIBS)
+	@ echo UTILS: $(DV_UTILS)
 
 ifeq ($(NODEPS),)
--include $(patsubst %.o,%.d,$(call objs,$(SRCS)))
+-include $(DEPS)
 endif
-
-# ===========================================================================
-# ===========================================================================

@@ -26,7 +26,15 @@
 
 #define SCALL(r,n,...)    r n (__VA_ARGS__); \
                           void n ## _do  (char*, char **); \
-                          void n ## _save  (char*, int, __VA_ARGS__, r)
+                          SCALL_SV(r,n,__VA_ARGS__)
+
+#define SCALL_SV(r,n,...) SCALL_SV_x(r,n,__VA_ARGS__,5,4,3,2,1)
+#define SCALL_SV_x(r,n,a,b,c,d,e,f,...) SCALL_SV_ ## f(r,n,a,b,c,d,e)
+#define SCALL_SV_5(r,n,a,b,c,d,e,...) void n ## _save  (char*, int, a, b, c, d, e, r)
+#define SCALL_SV_4(r,n,a,b,c,d,...) void n ## _save  (char*, int, a, b, c, d, int, r)
+#define SCALL_SV_3(r,n,a,b,c,...) void n ## _save  (char*, int, a, b, c, int, int, r)
+#define SCALL_SV_2(r,n,a,b,...) void n ## _save  (char*, int, a, b, int, int, int, r)
+#define SCALL_SV_1(r,n,a,...) void n ## _save  (char*, int, a, int, int, int, int, r)
 
 
 SCALL(int, sys_reboot, int, int);

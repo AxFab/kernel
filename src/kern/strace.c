@@ -21,7 +21,7 @@
  */
 #include <smkos/kernel.h>
 #include <smkos/kapi.h>
-// #include <smkos/sysapi.h>
+#include <smkos/sysapi.h>
 #include <smkos/klimits.h>
 #include <smkos/kstruct/fs.h>
 #include <smkos/kstruct/map.h>

@@ -1,5 +1,5 @@
 
-STARTUP(obj/crtk.o)
+STARTUP(obj/_x86/crtk.o)
 ENTRY(_start)
 OUTPUT_FORMAT(elf32-i386)
 SECTIONS
