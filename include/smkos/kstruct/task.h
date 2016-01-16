@@ -84,6 +84,8 @@ struct kProcess {
 
   struct bbtree resxTree_;
   int fdCount_;
+  kThread_t *mainThread_;
+  size_t entryPoint_;
 };
 
 

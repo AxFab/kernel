@@ -40,6 +40,7 @@ static void elf_read_section (kAssembly_t *assembly, kInode_t *ino, struct ELF_p
     sec = KALLOC (kSection_t);
     sec->address_ = phe->virtAddr_;
     sec->length_ = phe->memSize_;
+    sec->flength_ = phe->fileSize_;
     sec->align_ = phe->align_;
     sec->offset_ = phe->fileAddr_;
     sec->flags_ = phe->flags_ & 7;
@@ -130,10 +131,15 @@ void destroy_assembly (kAssembly_t *image)
   */
 kAssembly_t *load_assembly (kInode_t *ino)
 {
-  assert (S_ISREG (ino->stat_.mode_));
-
+  kAssembly_t *image;
+  
   if (ino->assembly_ == NULL) {
-    kAssembly_t *image;
+
+    if (!S_ISREG (ino->stat_.mode_)) {
+      kprintf("File '%s' is not a regular file.\n", ino->name_);
+      __seterrno(EINVAL);
+      return NULL;
+    }
 
     if (inode_open(ino))
       return NULL;

@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-is_pc= $(shell [ $(ARCH) = x86 ] && echo y)
+is_pc= $(shell [ $(target_arch) = x86 ] && echo y)
 
 # M O D U L E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Kernel sources
@@ -44,16 +44,16 @@ kum_CFLAGS += -ggdb3 --coverage $(CFLAGS) -D_FS -D_FS_UM
 kum_CFLAGS += -I $(topdir)/include
 kum_CFLAGS += -I $(topdir)/include/_um
 
-krn_$(ARCH)_LFLAGS += -nostdlib
-krn_$(ARCH)_CFLAGS += $(CFLAGS)
-krn_$(ARCH)_CFLAGS += -I $(topdir)/include
-krn_$(ARCH)_CFLAGS += -I $(topdir)/include/_$(ARCH)
+krn_$(target_arch)_LFLAGS += -nostdlib 
+krn_$(target_arch)_CFLAGS += $(CFLAGS) -ggdb3
+krn_$(target_arch)_CFLAGS += -I $(topdir)/include
+krn_$(target_arch)_CFLAGS += -I $(topdir)/include/_$(target_arch)
 
 
 # D E L I V E R I E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Kernel sources
 kImage_src-y += $(mod_krn-y) $(mod_kfs-y)
-kImage_src-y += $(wildcard $(srcdir)/_$(ARCH)/*.c)
+kImage_src-y += $(wildcard $(srcdir)/_$(target_arch)/*.c)
 kImage_src-y += $(wildcard $(srcdir)/libc/*.c)
 
 
@@ -74,11 +74,11 @@ ut_vfs_src-y += $(srcdir)/src/test/vfs.c
 # T A R G E T S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 $(eval $(call ccpl,ut))
 $(eval $(call ccpl,kum))
-$(eval $(call ccpl,krn_$(ARCH)))
+$(eval $(call ccpl,krn_$(target_arch)))
 $(eval $(call link,ut_utils,ut))
 $(eval $(call link,ut_vfs,ut))
 $(eval $(call link,kum,kum))
-$(eval $(call kimg,kImage,krn_$(ARCH)))
+$(eval $(call kimg,kImage,krn_$(target_arch)))
 $(eval $(call crt,crt0))
 $(eval $(call crt,crtk))
 

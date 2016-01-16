@@ -52,13 +52,13 @@ void kernel_start ()
   kSYS.pageMax_ = pag;
   kSYS.pageUsed_ = used;
 
-  kernel_state (KST_KERNSP);
-  kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ " from git:" _GITH_ ".\n");
+  kernel_state(KST_KERNSP);
+  kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ ".\n");
   mmu_load_env();
 
   /* Initialize time managment */
   dateTime = cpu_get_clock();
-  kprintf ("Date: %s\n", asctime(&dateTime));
+  kprintf("Date: %s\n", asctime(&dateTime));
 
   initialize_smp();
 

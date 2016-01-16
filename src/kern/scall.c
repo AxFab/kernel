@@ -22,6 +22,7 @@
 #include <smkos/kernel.h>
 #include <smkos/kapi.h>
 #include <smkos/sysapi.h>
+#include <smkos/kstruct/task.h>
 
 typedef int(*kScHandler)(size_t p1, size_t p2, size_t p3, size_t p4, size_t p5);
 #define SYS_CALL_ENTRY(n,f)  [n] = ((kScHandler)(f))
@@ -79,8 +80,10 @@ int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
   ret = system_delegate[no] (p1, p2, p3, p4, p5);
   err = __geterrno();
 #ifndef NDEBUG
-  system_delegate_save[no](tmp, 512, p1, p2, p3, p4, p5, ret);
-  // kprintf ("\033[34m -%d- \033[31m%s\033[0m\n", sno++, tmp);
+  // if (no == SYS_READ && ret >= 0) {
+  //   system_delegate_save[no](tmp, 512, p1, p2, p3, p4, p5, ret);
+  //   kprintf ("\033[34m -%d|%d- \033[31m%s\033[0m\n", sno++, kCPU.current_->process_->pid_, tmp);
+  // }
 #endif
   __seterrno(err);
   return ret;

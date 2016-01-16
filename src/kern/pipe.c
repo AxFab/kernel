@@ -78,6 +78,13 @@ static size_t fs_pipe_newline(kPipe_t *pipe)
   return 0;
 }
 
+#include <smkos/kstruct/fs.h>
+#include <smkos/kstruct/map.h>
+#include <smkos/kstruct/user.h>
+#include <smkos/kstruct/term.h>
+
+extern kSubSystem_t *sysLogTty;
+
 /* ----------------------------------------------------------------------- */
 /**  */
 ssize_t fs_pipe_read(kInode_t *ino, void *buf, size_t lg)
@@ -111,6 +118,8 @@ ssize_t fs_pipe_read(kInode_t *ino, void *buf, size_t lg)
       cap = MIN(cap, pipe->avail_);
     cap = MIN(cap, lg);
 
+    // if (ino != sysLogTty->term_->ino_)
+    //   kprintf("PIPE 0x%08x(+0x%x) %d ```%s```\n", pipe->mmap_->address_, pipe->wpen_, cap, (char*)pipe->mmap_->address_);
     if (cap == 0) {
       if (!(pipe->flags_ & FP_BLOCK) || bytes != 0)
         break;

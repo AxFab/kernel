@@ -122,8 +122,7 @@ static kProcess_t *alloc_process(kAssembly_t *assembly, int pid)
   klock (&process->lock_);
   ll_push_back(&kSYS.processes_, &process->allNd_);
 
-  thread = alloc_thread (process);
-  reset_thread (thread, assembly->entryPoint_, 0xc0ffee);
+  process->mainThread_ = alloc_thread(process);
   return process;
 }
 
@@ -204,7 +203,7 @@ kThread_t *create_thread(kProcess_t *process, size_t entry, size_t param)
   }
 
   if (thread == NULL)
-    thread = alloc_thread (process);
+    thread = alloc_thread(process);
 
   reset_thread (thread, entry, param);
   kunlock (&process->lock_);
@@ -247,11 +246,13 @@ kProcess_t *create_logon_process(kInode_t *ino, kUser_t *user, kInode_t *dir, co
   process->session_ = alloc_session (user, dir);
   atomic_inc(&process->session_->usage_);
 
-  if (area_assembly(&process->mspace_, ino->assembly_)) {
+  process->entryPoint_ = area_assembly(&process->mspace_, ino->assembly_);
+  if (process->entryPoint_ == 0) {
     destroy_process (process);
     return NULL;
   }
 
+  reset_thread (process->mainThread_, process->entryPoint_, 0xc0ffee);
   process_set_resx(process, stdin, 0); // O_RDLY |
   process_set_resx(process, stdout, 0); // O_WRLY |
   process_set_resx(process, stderr, 0); // O_WRLY | O_DIRECT
@@ -316,12 +317,14 @@ kProcess_t *create_child_process(kInode_t *ino, kProcess_t *parent, struct SMK_S
   process->session_ = parent->session_;
   atomic_inc(&process->session_->usage_);
 
-  if (area_assembly(&process->mspace_, ino->assembly_)) {
-    kunlock (&process->lock_);
+  process->entryPoint_ = area_assembly(&process->mspace_, ino->assembly_);
+  if (process->entryPoint_ == 0) {
+    // kunlock (&process->lock_);
     destroy_process (process);
     return NULL;
   }
 
+  reset_thread (process->mainThread_, process->entryPoint_, 0xc0ffee);
   process_set_resx(process, stdin, 0); // O_RDLY |
   process_set_resx(process, stdout, 0); // O_WRLY |
   process_set_resx(process, stderr, 0); // O_WRLY | O_DIRECT
@@ -393,6 +396,7 @@ kResx_t *process_get_resx(kProcess_t *process, int fd, int access)
   klock(&process->lock_);
   resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
 
+  kprintf(" \033[36mResxG<%d,%d,%x> - \033[0m", process->pid_, fd, resx);
   if (resx == NULL) {
     kunlock(&process->lock_);
     return __seterrnoN(EBADF, kResx_t);
@@ -424,6 +428,7 @@ kResx_t *process_set_resx(kProcess_t *process, kInode_t *ino, int oflags)
   inode_open(ino);
   /// @todo check capacity (access rights)
   resx->fdNd_.value_ = process->fdCount_++;
+  kprintf(" \033[36mResxS<%d,%d,%x> - \033[0m", process->pid_, resx->fdNd_.value_, resx);
   bb_insert(&process->resxTree_, &resx->fdNd_);
   return resx;
 }
@@ -453,7 +458,8 @@ int process_close_resx(kProcess_t *process, int fd)
   kResx_t *resx;
   klock(&process->lock_);
   resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
-
+  kprintf(" \033[36mResxR<%d,%d,%x> - \033[0m", process->pid_, fd, resx);
+  kstacktrace(12);
   if (resx == NULL) {
     kunlock(&process->lock_);
     return EBADF;

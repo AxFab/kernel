@@ -132,8 +132,10 @@ struct tm RTC_GetTime ()
   date.tm_yday = 0;
   date.tm_isdst = 0;
   date.tm_year -= 1900;
-  /* date.tm_mon--; */
+  date.tm_mon--;
 
+  date.tm_wday = date.tm_wday % 7;
+  /* date.tm_mon = date.tm_mon % 12; */
   return date;
 }
 

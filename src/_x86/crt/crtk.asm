@@ -350,14 +350,14 @@ cpu_restart_:
     mov edi, [ebp + 28] ; TSS Address
 
   ; Set TSS ESP0
-    add edi, 4
-    mov [edi], ebx
+    mov [edi + 4], ebx
 
   ; Set Page directory
     mov esp, MEM_KSTACK_PTR - 64 - 16
     mov cr3, eax
-    mov byte [ebx], 0
-    ; mov byte [esi], 0
+    mov byte [ebx], 0 ; PF: kstack
+    mov byte [esi], 0 ; PF: ustack
+    ;mov byte [ecx], 0 ; PF: program
 
   ; Create Stack
   ; Rewrite CS SS EIP EAX ESP EFLAGS

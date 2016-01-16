@@ -107,7 +107,7 @@ static int page_inode (kMemArea_t *area, size_t address)
   return __seterrno(err);
 }
 
-
+int PFp = 0;
 /* ----------------------------------------------------------------------- */
 int page_fault (size_t address, int cause)
 {
@@ -125,8 +125,10 @@ int page_fault (size_t address, int cause)
   // }
 
   if (address < mspace->base_ || address >= mspace->limit_) {
-    if (kCPU.current_ != NULL)
+    if (kCPU.current_ != NULL) {
       mspace = &kCPU.current_->process_->mspace_;
+      // PFp = 1;
+    }
 
     if (address < mspace->base_ || address >= mspace->limit_)
       return sched_signal(SIGSEV, address, __AT__);
@@ -146,18 +148,22 @@ int page_fault (size_t address, int cause)
   case VMA_HEAP:
   case VMA_STACK:
     assert (mspace != kSYS.mspace_); /* Never on kernel */
+    if (PFp) kprintf("\033[96m/\033[33m0x%0x.H\033[96m/\033[0m", address);
     return mmu_resolve(address, 0, VMA_READ | VMA_WRITE, true);
 
   case VMA_FIFO:
     assert (mspace == kSYS.mspace_); /* Pipe can only be mounted on kernel space */
+    if (PFp) kprintf("\033[96m/\033[33m0x%0x.Q\033[96m/\033[0m", address);  
     return mmu_resolve(address, 0, VMA_READ | VMA_WRITE | VMA_KERNEL, true);
 
   case VMA_FILE:
     assert (area->ino_ != NULL);
+    if (PFp) kprintf("\033[96m/\033[33m0x%0x.F\033[96m/\033[0m", address);  
     return page_inode(area, ALIGN_DW((size_t)address, PAGE_SIZE));
 
   case VMA_SHM:
     assert (((area->flags_ & VMA_KERNEL) != 0) == (mspace == kSYS.mspace_));
+    if (PFp) kprintf("\033[96m/\033[33m0x%0x.S\033[96m/\033[0m", address);  
     return mmu_resolve(address, 0, area->flags_ & VMA_MMU, true);
 
   default:

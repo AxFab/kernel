@@ -431,13 +431,14 @@ int area_init(kMemSpace_t *sp, size_t base, size_t length)
 static kMemArea_t *area_map_section (kMemSpace_t *sp, kSection_t *section, kInode_t *ino)
 {
   kMemArea_t *area;
+  char *base;
   int flags = (section->flags_ & (VMA_ACCESS | VMA_ASSEMBLY)) | VMA_FILE;
 
   if ((flags & VMA_WRITE) == 0)
     flags |= VMA_SHARED;
 
   area = area_map_at (sp, section->address_, section->length_, flags);
-
+  // kprintf("Section: 0x%08x - 0x%08x 0x%08x\n", section->address_, section->length_, section->flength_);
   if (area == NULL)
     return NULL;
 
@@ -447,21 +448,32 @@ static kMemArea_t *area_map_section (kMemSpace_t *sp, kSection_t *section, kInod
     return NULL;
   }
 
+  // if (section->flength_ < section->length_) {
+  //   base = (char*)area->address_;
+  //   base += section->flength_;
+  //   memset(base, 0, section->length_ - section->flength_);
+  // }
+
   return area;
 }
 
 
 /* ----------------------------------------------------------------------- */
-int area_assembly (kMemSpace_t *sp, kAssembly_t *assembly)
+size_t area_assembly (kMemSpace_t *sp, kAssembly_t *assembly)
 {
+  size_t entry = assembly->entryPoint_, base;
   kSection_t *section;
+
   klock (&sp->lock_);
   ll_for_each(&assembly->sections_, section, kSection_t, node_) {
-    area_map_section (sp, section, assembly->ino_);
+    base = area_map_section (sp, section, assembly->ino_)->address_;
+    if ((section->flags_ & (VMA_READ | VMA_EXEC)) == (VMA_READ | VMA_EXEC))
+      entry = base;
   }
 
   kunlock (&sp->lock_);
-  return __seterrno(0);
+  __seterrno(0);
+  return entry;
 }
 
 static inline void area_remove (kMemSpace_t *sp, kMemArea_t *area, bool freepage)

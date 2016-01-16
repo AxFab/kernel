@@ -18,39 +18,55 @@
 #  The configuration is on `sources.mk`.
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 NAME = SmokeOS_Kernel
-ARCH = x86
-LINUX = $(shell uname -sr)
-DATE = $(shell date '+%d %b %Y')
-GIT = $(shell git --git-dir=$(topdir)/.git log -n1 --pretty='%h')$(shell if [ -n "$(git --git-dir=$(topdir)/.git status --short -uno)"]; then echo '+'; fi)
-VERSION = 0.1-$(GIT)
 
-S = @
-V = $(shell [ -z $(VERBOSE) ] && echo @)
-Q = $(shell [ -z $(QUIET) ] && echo @ || echo @true)
+build ?= x86-pc-linux-gnu
+build_arch := $(word 1,$(subst -, ,$(build)))
+build_vendor := $(word 2,$(subst -, ,$(build)))
+build_os := $(patsubst $(build_arch)-$(build_vendor)-%,%,$(build))
+
+host ?= x86-pc-linux-gnu
+host_arch := $(word 1,$(subst -, ,$(host)))
+host_vendor := $(word 2,$(subst -, ,$(host)))
+host_os := $(patsubst $(host_arch)-$(host_vendor)-%,%,$(host))
+
+target ?= x86-pc-linux-gnu
+target_arch := $(word 1,$(subst -, ,$(target)))
+target_vendor := $(word 2,$(subst -, ,$(target)))
+target_os := $(patsubst $(target_arch)-$(target_vendor)-%,%,$(target))
+
+
+S := @
+V := $(shell [ -z $(VERBOSE) ] && echo @)
+Q := $(shell [ -z $(QUIET) ] && echo @ || echo @true)
 
 all: libs utils
 
 # D I R E C T O R I E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 prefix ?= /usr/local
-topdir ?= $(shell readlink -f .)
+topdir ?= $(shell readlink -f $(dir $(word 1,$(MAKEFILE_LIST))))
 gendir ?= $(shell pwd)
-srcdir = $(topdir)/src
-outdir = ${gendir}/obj
-bindir = ${gendir}/bin
-libdir = ${gendir}/lib
+srcdir := $(topdir)/src
+outdir := ${gendir}/obj
+bindir := ${gendir}/bin
+libdir := ${gendir}/lib
 
 # C O M M A N D S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 CROSS_COMPILE ?= $(CROSS)
-AS = $(CROSS_COMPILE)as
-AR = $(CROSS_COMPILE)ar
-CC = $(CROSS_COMPILE)gcc -m32 
-CXX = $(CROSS_COMPILE)g++
-LD = $(CROSS_COMPILE)ld -melf_i386
-NM = $(CROSS_COMPILE)nm
+AS := $(CROSS_COMPILE)as
+AR := $(CROSS_COMPILE)ar
+CC := $(CROSS_COMPILE)gcc -m32 
+CXX := $(CROSS_COMPILE)g++
+LD := $(CROSS_COMPILE)ld -melf_i386
+NM := $(CROSS_COMPILE)nm
+
+LINUX := $(shell uname -sr)
+DATE := $(shell date '+%d %b %Y')
+GIT := $(shell git --git-dir=$(topdir)/.git log -n1 --pretty='%h')$(shell if [ -n "$(git --git-dir=$(topdir)/.git status --short -uno)"]; then echo '+'; fi)
+VERSION := 0.1-$(GIT)
 
 # A V O I D   D E P E N D E N C Y -=-=-=-=-=-=-=-=-=-=-=-
 ifeq ($(shell [ -d $(outdir) ] || echo N ),N)
-NODEPS=1
+NODEPS = 1
 endif
 ifeq ($(MAKECMDGOALS),help)
 NODEPS = 1
@@ -71,13 +87,40 @@ define obj
   )))
 endef
 
+define libs
+	$(patsubst %,$(libdir)/lib%.$2,$($1))
+endef
+
+define llib
+DEPS += $(call obj,$2,$1,d)
+$1: $(libdir)/lib$1.so
+$(libdir)/lib$1.a: $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a)
+$(libdir)/lib$1.so: $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a) $(call libs,$1_DLIBS,a)
+	$(S) mkdir -p $$(dir $$@)
+	$(Q) echo "    LD  "$$@
+	$(V) $(CC) -shared $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a)
+	$(Q) ls -lh $$@
+	$(Q) size $$@
+endef
+
 define link
 DEPS += $(call obj,$2,$1,d)
 $1: $(bindir)/$1
-$(bindir)/$1: $(call obj,$2,$1,o)
+$(bindir)/$1: $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a) $(call libs,$1_DLIBS,a)
 	$(S) mkdir -p $$(dir $$@)
 	$(Q) echo "    LD  "$$@
-	$(V) $(CC) $($(1)_LFLAGS) -o $$@ $$^
+	$(V) $(CC) $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a)
+	$(Q) ls -lh $$@
+	$(Q) size $$@
+endef
+
+define linkp
+DEPS += $(call obj,$2,$1,d)
+$1: $(bindir)/$1
+$(bindir)/$1: $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a) $(call libs,$1_DLIBS,so) $(patsubst $(srcdir)/%.asm,$(outdir)/%.o,$($1_CRT))
+	$(S) mkdir -p $$(dir $$@)
+	$(Q) echo "    LD  "$$@
+	$(V) $(LD) -T $($(1)_SCP) $($(1)_LFLAGS) -o $$@ -Map $$@.map $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a)
 	$(Q) ls -lh $$@
 	$(Q) size $$@
 endef
@@ -85,11 +128,10 @@ endef
 define kimg
 DEPS += $(call obj,$2,$1,d)
 $1: $(gendir)/$1
-$(gendir)/$1: $(call obj,$2,$1,o) $(outdir)/_$(ARCH)/crtk.o
+$(gendir)/$1: $(call obj,$2,$1,o) $(outdir)/_$(target_arch)/crt/crtk.o
 	$(S) mkdir -p $$(dir $$@)
 	$(Q) echo "    LD  "$$@
-	$(V) $(LD) -T $(srcdir)/_$(ARCH)/kernel.ld $($(1)_LFLAGS) \
-		-o $$@ -Map $$@.map $(call obj,$2,$1,o)
+	$(V) $(LD) -T $(srcdir)/_$(target_arch)/kernel.ld $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o)
 	$(Q) ls -lh $$@
 	$(Q) size $$@
 endef
@@ -106,16 +148,22 @@ $(outdir)/$(1)/%.d: $(srcdir)/%.c
 endef
 
 define crt
-$(outdir)/%/$1.o: $(srcdir)/%/crt/$1.asm
+$(outdir)/$1.o: $(srcdir)/$1.asm
 	$(S) mkdir -p $$(dir $$@)
 	$(Q) echo "    ASM "$$@
 	$(V) nasm -f elf32 -o $$@ $$^
 endef
 
-$(lib_dir)/lib%.a:
+$(outdir)/%.o: $(srcdir)/%.asm
+	$(S) mkdir -p $(dir $@)
+	$(Q) echo "    ASM "$@
+	$(V) nasm -f elf32 -o $@ $^
+
+
+$(libdir)/lib%.a:
 	$(S) mkdir -p $(dir $@)
 	$(Q) echo "    AR  "$@
-	$(V) ar src $@ $^
+	$(V) $(AR) src $@ $^
 
 # S O U R C E S   C O M P I L A T I O N -=-=-=-=-=-=-=-=-
 include $(topdir)/sources.mk
@@ -140,11 +188,11 @@ check: $(DV_CHECK)
 .PHONY: clean distclean config check
 
 # P A C K A G I N G -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-release: $(gendir)/$(NAME)-$(ARCH)-$(VERSION).tar
+release: $(gendir)/$(NAME)-$(target_arch)-$(VERSION).tar
 # .bz2
-# $(gendir)/$(NAME)-$(ARCH)-$(VERSION).tar.bz2: $(gendir)/$(NAME)-$(ARCH)-$(VERSION).tar
+# $(gendir)/$(NAME)-$(target_arch)-$(VERSION).tar.bz2: $(gendir)/$(NAME)-$(target_arch)-$(VERSION).tar
 # 	$(V) gzip $< -o $@
-$(gendir)/$(NAME)-$(ARCH)-$(VERSION).tar: $(DV_UTILS) $(DV_LIBS)
+$(gendir)/$(NAME)-$(target_arch)-$(VERSION).tar: $(DV_UTILS) $(DV_LIBS)
 	$(Q)  "  TAR   $@"
 	$(V) tar cf $@  -C $(topdir) $(topdir)/include
 	$(V) tar af $@ -C $(gendir) $^

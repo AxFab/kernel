@@ -257,6 +257,7 @@ int vfprintf (FILE *fp, const char *str, va_list ap)
 {
   int lg;
   char ch;
+  char *mxs;
   union SMK_FmtArg arg;
   char tmp [512];
   struct SMK_FmtSpec sb;
@@ -267,9 +268,12 @@ int vfprintf (FILE *fp, const char *str, va_list ap)
 
     // Write litteral characters
     if (*str != '%') {
-      if (fp->write_(fp, str++, 1) < 0)
+      mxs = strchr(str, '%');
+      lg = (mxs == NULL) ? strlen(str) : (int)(mxs - str);
+      if (fp->write_(fp, str, lg) < 0)
         return -1;
 
+      str += lg;
       continue;
 
       // Handle %% escape code

@@ -54,6 +54,7 @@ int sys_exec(const char *exec, struct SMK_StartInfo *info)
   kProcess_t *process;
   kInode_t *pwd = kCPU.current_->process_->session_->workingDir_;
   kInode_t *ino = search_inode(exec, pwd, 0, NULL);
+  kprintf("Search file '%s'.\n", exec);
 
   if (ino == NULL) {
     __seterrno(ENOENT);
@@ -124,7 +125,7 @@ size_t sys_mmap(int fd, size_t address, size_t length, size_t offset, int flags)
     return 0;
   } else {
     klock(&sp->lock_);
-    area = area_map(sp, length, flags);
+    area = area_map(sp, length, flags | VMA_HEAP);
     kunlock(&sp->lock_);
   }
 

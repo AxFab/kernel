@@ -104,7 +104,7 @@ kMemArea_t* area_map_ino(kMemSpace_t* sp, kInode_t* ino, size_t offset, size_t l
 void area_unmap(kMemSpace_t* sp, kMemArea_t* area);
 /** @brief Initialize a new address space structure with a first user-stack */
 int area_init(kMemSpace_t* sp, size_t base, size_t length);
-int area_assembly (kMemSpace_t *sp, kAssembly_t* assembly);
+size_t area_assembly (kMemSpace_t *sp, kAssembly_t* assembly);
 void scavenge_area(kMemSpace_t* sp);
 int area_destroy(kMemSpace_t* sp);
 void area_display(kMemSpace_t* sp);

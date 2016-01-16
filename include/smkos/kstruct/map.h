@@ -107,6 +107,7 @@ struct kAssembly {
 struct kSection {
   size_t address_;
   size_t length_;
+  size_t flength_;
   size_t align_;
   size_t offset_;
   struct llnode node_;
