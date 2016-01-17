@@ -100,6 +100,8 @@ int sys_open(const char *path, int dirFd, int flags, int mode)
 
 int sys_close(int fd)
 {
+  if (fd < 0)
+    return -1;
   return process_close_resx(kCPU.current_->process_, fd);
 }
 

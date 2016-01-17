@@ -390,13 +390,15 @@ void process_exit(kProcess_t *process, int status)
 
 
 /* ----------------------------------------------------------------------- */
+int RXp = 0;
+
 kResx_t *process_get_resx(kProcess_t *process, int fd, int access)
 {
   kResx_t *resx;
   klock(&process->lock_);
   resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
 
-  kprintf(" \033[36mResxG<%d,%d,%x> - \033[0m", process->pid_, fd, resx);
+  if (RXp) kprintf(" \033[36mResxG<%d,%d,%x> - \033[0m", process->pid_, fd, resx);
   if (resx == NULL) {
     kunlock(&process->lock_);
     return __seterrnoN(EBADF, kResx_t);
@@ -428,7 +430,7 @@ kResx_t *process_set_resx(kProcess_t *process, kInode_t *ino, int oflags)
   inode_open(ino);
   /// @todo check capacity (access rights)
   resx->fdNd_.value_ = process->fdCount_++;
-  kprintf(" \033[36mResxS<%d,%d,%x> - \033[0m", process->pid_, resx->fdNd_.value_, resx);
+  if (RXp) kprintf(" \033[36mResxS<%d,%d,%x> - \033[0m", process->pid_, resx->fdNd_.value_, resx);
   bb_insert(&process->resxTree_, &resx->fdNd_);
   return resx;
 }
@@ -458,7 +460,7 @@ int process_close_resx(kProcess_t *process, int fd)
   kResx_t *resx;
   klock(&process->lock_);
   resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
-  kprintf(" \033[36mResxR<%d,%d,%x> - \033[0m", process->pid_, fd, resx);
+  if (RXp) kprintf(" \033[36mResxR<%d,%d,%x> - \033[0m", process->pid_, fd, resx);
   kstacktrace(12);
   if (resx == NULL) {
     kunlock(&process->lock_);
