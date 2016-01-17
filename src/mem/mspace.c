@@ -431,7 +431,7 @@ int area_init(kMemSpace_t *sp, size_t base, size_t length)
 static kMemArea_t *area_map_section (kMemSpace_t *sp, kSection_t *section, kInode_t *ino)
 {
   kMemArea_t *area;
-  char *base;
+  // char *base;
   int flags = (section->flags_ & (VMA_ACCESS | VMA_ASSEMBLY)) | VMA_FILE;
 
   if ((flags & VMA_WRITE) == 0)

@@ -227,7 +227,7 @@ static time_t FAT_read_time(unsigned short date, unsigned short time)
 static struct FAT_LongNameEntry * FAT_prepare_entries (const char *name, int mode, SMK_stat_t *stat)
 {
   struct FAT_LongNameEntry * entries;
-  struct FAT_ShortEntry * shEntry;
+  // struct FAT_ShortEntry * shEntry;
   const char *lname = name;
   int i, j, eIdx = 0;
   int *ptr;
@@ -237,7 +237,7 @@ static struct FAT_LongNameEntry * FAT_prepare_entries (const char *name, int mod
     enCount++;
 
   entries = (struct FAT_LongNameEntry *)kalloc ((enCount + 1) * sizeof(struct FAT_LongNameEntry));
-  shEntry = (struct FAT_ShortEntry *)(&entries[enCount]);
+  // shEntry = (struct FAT_ShortEntry *)(&entries[enCount]);
 
   for (i=0,j=0; i < nlg; ++i, ++j) {
     if (j >= 13)
@@ -541,6 +541,7 @@ int FAT_create (const char *name, kInode_t *dir, int mode, size_t lg, SMK_stat_t
 
   // We need how many longentry !?
   entryLg = FAT_prepare_entries(name, mode, stat);
+  __unused(entryLg);
 
   for (;;) {
     cluster = CLUSTER_OF(volume, lba);

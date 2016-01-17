@@ -19,14 +19,21 @@ is_pc= $(shell [ $(target_arch) = x86 ] && echo y)
 # M O D U L E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Kernel sources
 mod_krn-y += $(wildcard $(srcdir)/kern/*.c)
+mod_krn-y += $(wildcard $(srcdir)/mem/*.c)
+mod_krn-y += $(wildcard $(srcdir)/stm/*.c)
+mod_krn-y += $(wildcard $(srcdir)/tsk/*.c)
+mod_krn-y += $(wildcard $(srcdir)/vfs/*.c)
 
 # Minimum file systems
-mod_mfs-y += $(srcdir)/fs/gpt.c $(srcdir)/fs/iso.c $(srcdir)/fs/tmpfs.c
-mod_mfs-y += $(srcdir)/fs/kdb.c $(srcdir)/fs/fat.c
+mod_mfs-y += $(wildcard $(srcdir)/vfs/gpt/*.c)
+mod_mfs-y += $(wildcard $(srcdir)/vfs/iso/*.c)
+mod_mfs-y += $(wildcard $(srcdir)/vfs/kdb/*.c)
+mod_mfs-y += $(wildcard $(srcdir)/vfs/fat/*.c)
 
 # Configured file systems
 mod_kfs-y += $(mod_mfs-y)
-mod_kfs-$(is_pc) += $(srcdir)/fs/ata.c $(srcdir)/fs/svga.c
+mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/ata/*.c)
+mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/svga/*.c)
 
 
 # F L A G S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -37,29 +44,29 @@ CFLAGS += -D_GITH_=\"'$(GIT)'\" -D_VTAG_=\"'$(VERSION)'\"
 ut_LFLAGS += --coverage
 ut_CFLAGS += -ggdb3 --coverage $(CFLAGS) -D_FS -D_FS_UM
 ut_CFLAGS += -I $(topdir)/include
-ut_CFLAGS += -I $(topdir)/include/_um
+ut_CFLAGS += -I $(topdir)/include/asm/_um
 
 kum_LFLAGS += --coverage
 kum_CFLAGS += -ggdb3 --coverage $(CFLAGS) -D_FS -D_FS_UM
 kum_CFLAGS += -I $(topdir)/include
-kum_CFLAGS += -I $(topdir)/include/_um
+kum_CFLAGS += -I $(topdir)/include/asm/_um
 
 krn_$(target_arch)_LFLAGS += -nostdlib 
 krn_$(target_arch)_CFLAGS += $(CFLAGS) -ggdb3
 krn_$(target_arch)_CFLAGS += -I $(topdir)/include
-krn_$(target_arch)_CFLAGS += -I $(topdir)/include/_$(target_arch)
+krn_$(target_arch)_CFLAGS += -I $(topdir)/include/asm/_$(target_arch)
 
 
 # D E L I V E R I E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Kernel sources
 kImage_src-y += $(mod_krn-y) $(mod_kfs-y)
-kImage_src-y += $(wildcard $(srcdir)/_$(target_arch)/*.c)
-kImage_src-y += $(wildcard $(srcdir)/libc/*.c)
+kImage_src-y += $(wildcard $(srcdir)/asm/_$(target_arch)/*.c)
+kImage_src-y += $(wildcard $(srcdir)/asm/libc/*.c)
 
 
 # kernel usermode (functional tests)
 kum_src-y += $(mod_krn-y) $(mod_mfs-y)
-kum_src-y += $(wildcard $(srcdir)/_um/*.c)
+kum_src-y += $(wildcard $(srcdir)/asm/_um/*.c)
 kum_src-y += $(srcdir)/fs/bmp.c $(srcdir)/fs/hdd.c
 
 

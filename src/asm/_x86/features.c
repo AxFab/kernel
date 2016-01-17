@@ -205,7 +205,7 @@ void initialize_smp()
   // if (x86_FEATURES_TM) kprintf ("  Therm. Monitor\n");
 
   kCPU.spec_ = (char*)kalloc(512);
-  strcpy(kCPU.spec_, &cpu_name[1]);
+  strcpy(kCPU.spec_, (char*)&cpu_name[1]);
 
   if (x86_FEATURES_FPU)     strcat(kCPU.spec_, ", FPU");
   if (x86_FEATURES_VME)     strcat(kCPU.spec_, ", VME");

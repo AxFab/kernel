@@ -109,7 +109,6 @@ static kSession_t *alloc_session(kUser_t *user, kInode_t *dir)
   */
 static kProcess_t *alloc_process(kAssembly_t *assembly, int pid)
 {
-  kThread_t *thread;
   kProcess_t *process = KALLOC (kProcess_t);
   process->pid_ = pid;
   // process->commandLine_ = strdup(cmd);

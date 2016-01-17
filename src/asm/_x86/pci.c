@@ -39,6 +39,7 @@ void PCI_check_device(uint8_t bus, uint8_t device)
     return;
 
   headerType = PCI_config_getw(bus, device, 0, 0xe) >> 8;
+  __unused(headerType);
 
   for (i=0; i<0x20; i++)
     buf[i] = PCI_config_getw(bus, device, 0, i*2);

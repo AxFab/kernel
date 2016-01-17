@@ -128,10 +128,10 @@ endef
 define kimg
 DEPS += $(call obj,$2,$1,d)
 $1: $(gendir)/$1
-$(gendir)/$1: $(call obj,$2,$1,o) $(outdir)/_$(target_arch)/crt/crtk.o
+$(gendir)/$1: $(call obj,$2,$1,o) $(outdir)/asm/_$(target_arch)/crt/crtk.o
 	$(S) mkdir -p $$(dir $$@)
 	$(Q) echo "    LD  "$$@
-	$(V) $(LD) -T $(srcdir)/_$(target_arch)/kernel.ld $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o)
+	$(V) $(LD) -T $(srcdir)/asm/_$(target_arch)/kernel.ld $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o)
 	$(Q) ls -lh $$@
 	$(Q) size $$@
 endef

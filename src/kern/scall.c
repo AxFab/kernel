@@ -46,25 +46,24 @@ static kScHandler system_delegate[128] = {
   SYS_CALL_ENTRY (SYS_GWD, sys_pinfo),
 };
 
-static kScPrinter system_delegate_save[128] = {
-  SYS_CALL_SAVE (SYS_EXIT, sys_exit),
-  SYS_CALL_SAVE (SYS_EXEC, sys_exec),
-  SYS_CALL_SAVE (SYS_START, sys_start),
-  SYS_CALL_SAVE (SYS_STOP, sys_stop),
-  SYS_CALL_SAVE (SYS_WRITE, sys_write),
-  SYS_CALL_SAVE (SYS_READ, sys_read),
-  SYS_CALL_SAVE (SYS_MMAP, sys_mmap),
-  SYS_CALL_SAVE (SYS_OPEN, sys_open),
-  SYS_CALL_SAVE (SYS_CLOSE, sys_close),
-  SYS_CALL_SAVE (SYS_GWD, sys_pinfo),
-};
+// static kScPrinter system_delegate_save[128] = {
+//   SYS_CALL_SAVE (SYS_EXIT, sys_exit),
+//   SYS_CALL_SAVE (SYS_EXEC, sys_exec),
+//   SYS_CALL_SAVE (SYS_START, sys_start),
+//   SYS_CALL_SAVE (SYS_STOP, sys_stop),
+//   SYS_CALL_SAVE (SYS_WRITE, sys_write),
+//   SYS_CALL_SAVE (SYS_READ, sys_read),
+//   SYS_CALL_SAVE (SYS_MMAP, sys_mmap),
+//   SYS_CALL_SAVE (SYS_OPEN, sys_open),
+//   SYS_CALL_SAVE (SYS_CLOSE, sys_close),
+//   SYS_CALL_SAVE (SYS_GWD, sys_pinfo),
+// };
 
 
 /* ----------------------------------------------------------------------- */
 int sno = 0;
 int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
 {
-  char tmp[512];
   int ret;
   int err;
   // kprintf("SYSCALL %d] %8x, %8x, %8x, %8x, %8x\n", no, p1, p2, p3, p4, p5);

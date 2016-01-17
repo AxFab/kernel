@@ -87,6 +87,8 @@ int TMPFS_release(kInode_t *fp)
   if (S_ISLNK(fp->stat_.mode_)) {
     kfree((char*)fp->stat_.lba_);
   }
+
+  return 0;
 }
 
 /* ----------------------------------------------------------------------- */
