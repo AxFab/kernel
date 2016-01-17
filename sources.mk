@@ -25,15 +25,14 @@ mod_krn-y += $(wildcard $(srcdir)/tsk/*.c)
 mod_krn-y += $(wildcard $(srcdir)/vfs/*.c)
 
 # Minimum file systems
-mod_mfs-y += $(wildcard $(srcdir)/vfs/gpt/*.c)
-mod_mfs-y += $(wildcard $(srcdir)/vfs/iso/*.c)
-mod_mfs-y += $(wildcard $(srcdir)/vfs/kdb/*.c)
-mod_mfs-y += $(wildcard $(srcdir)/vfs/fat/*.c)
+mod_mfs-y += $(wildcard $(srcdir)/vfs/vol/*/*.c)
+mod_mfs-y += $(wildcard $(srcdir)/vfs/blk/gpt/*.c)
+mod_mfs-y += $(wildcard $(srcdir)/vfs/chr/kdb/*.c)
 
 # Configured file systems
 mod_kfs-y += $(mod_mfs-y)
-mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/ata/*.c)
-mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/svga/*.c)
+mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/blk/ata/*.c)
+mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/chr/svga/*.c)
 
 
 # F L A G S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
