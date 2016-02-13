@@ -25,6 +25,7 @@
 #include <smkos/arch.h>
 #include <smkos/stat.h>
 
+
 typedef struct SMK_StartInfo SMK_StartInfo_t;
 
 /* === ASSEMBLY ========================================================== */

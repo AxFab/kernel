@@ -103,16 +103,16 @@ struct kCpu {
 };
 
 struct kSys {
-  struct llhead driverPool_;
+  llhead_t driverPool_;
   kInode_t *rootIno_;
   kInode_t *devIno_;
   kInode_t *mntIno_;
   kInode_t *sysIno_;
   kInode_t *procIno_;
-  struct llhead inodeLru_;
-  struct llhead deviceList_;
-  struct llhead userList_;
-  struct llhead processes_;
+  llhead_t inodeLru_;
+  llhead_t deviceList_;
+  llhead_t userList_;
+  llhead_t processes_;
 
   kMemSpace_t *mspace_;
   kScheduler_t *scheduler_;
@@ -142,6 +142,14 @@ extern struct kSys kSYS;
 #define __seterrno(e)    __seterrno_(e, __AT__)
 #define __seterrnoN(e,t)  (t*)__seterrnoN_(e, __AT__)
 
+
+int __seterrno_(int err, const char* at);
+void* __seterrnoN_(int err, const char* at);
+int __geterrno();
+void kernel_state(enum kState state);
+
+
+#if 0
 static inline int __seterrno_(int err, const char* at)
 {
   kCPU.errno_ = err;
@@ -169,6 +177,7 @@ static inline void kernel_state(enum kState state)
   kCPU.state_ = state;
   kCPU.lastClock_ = now;
 }
+#endif
 
 #ifndef __AX_STR_EX
 char* strdup(const char*);

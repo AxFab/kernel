@@ -19,6 +19,9 @@
  *
  *      Implementation of a spinlock.
  */
+#ifndef _NO_SKC
+#include <skc/splock.h>
+#else
 #pragma once
 #include <smkos/kernel.h>
 #include <smkos/atomic.h>
@@ -108,3 +111,4 @@ static inline int kislocked(struct spinlock *locker)
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
+#endif

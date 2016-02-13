@@ -20,8 +20,12 @@
  *      Implementation of a double linked list.
  */
 #pragma once
+#ifndef _NO_SKC
+#include <skc/llist.h>
+#else
 #include <stddef.h>
 #include <smkos/assert.h>
+#include <smkos/compiler.h>
 
 #ifndef offsetof
 #  define offsetof(t,m)   (size_t)&(((t*)0)->m)
@@ -192,3 +196,5 @@ static inline void *ll_next_(void *item, size_t off)
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
+
+#endif

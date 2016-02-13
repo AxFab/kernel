@@ -4,7 +4,7 @@
 /** @brief Common structure that hold information about a mutex. */
 struct mutex {
   atomic_t key_;
-  struct spinlock lock_;
+  splock_t lock_;
 };
 #define INIT_MUTEX { 0, INIT_SPINLOCK }
 
@@ -12,11 +12,20 @@ struct mutex {
 struct semaphore {
   atomic_t value_;
   /* int flags_;*/
-  struct spinlock lock_;
+  splock_t lock_;
 };
 #define INIT_SEMAPHORE { 0, INIT_SPINLOCK }
 
 
+
+int mtx_lock(struct mutex *mtx);
+int mtx_unlock(struct mutex *mtx);
+void semaphore_aquire(struct semaphore *sem, int i); 
+bool semaphore_tryaquire(struct semaphore *sem, int i);
+void semaphore_release (struct semaphore *sem, int i);
+
+
+#if 0
 /* ----------------------------------------------------------------------- */
 static inline int mtx_lock(struct mutex *mtx)
 {
@@ -85,3 +94,4 @@ static inline void semaphore_release (struct semaphore *sem, int i)
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
+#endif

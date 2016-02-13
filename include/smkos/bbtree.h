@@ -20,6 +20,9 @@
  *      Implementation of a balanced binary tree: AA-tree.
  */
 #pragma once
+#ifndef _NO_SKC
+#include <skc/bbtree.h>
+#else
 #include <stddef.h>
 #include <smkos/assert.h>
 
@@ -279,3 +282,4 @@ static inline void bb_remove (struct bbtree *tree, struct bbnode *node)
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
+#endif
