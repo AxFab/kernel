@@ -67,27 +67,27 @@ kImage_src-y += $(wildcard $(srcdir)/asm/libc/*.c)
 # kernel usermode (functional tests)
 kum_src-y += $(mod_krn-y) $(mod_mfs-y)
 kum_src-y += $(wildcard $(srcdir)/asm/_um/*.c)
-kum_src-y += $(srcdir)/fs/bmp.c $(srcdir)/fs/hdd.c
+kum_src-y += $(wildcard $(srcdir)/vfs/bmp/*.c)
+kum_src-y += $(wildcard $(srcdir)/vfs/hdd/*.c)
 
 
 # U N I T - T E S T S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-# UT_utils (unit tests)
-ut_utils_src-y += $(srcdir)/src/test/utils.c
-
-# UT_vfs (unit tests)
-ut_vfs_src-y += $(srcdir)/src/test/vfs.c
+# UT_ (unit tests)
+ut_src-y += $(wildcard $(srcdir)/test/*.c)
 
 
 # T A R G E T S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-$(eval $(call ccpl,ut))
-$(eval $(call ccpl,kum))
-$(eval $(call ccpl,krn_$(target_arch)))
-$(eval $(call link,ut_utils,ut))
-$(eval $(call link,ut_vfs,ut))
-$(eval $(call link,kum,kum))
-$(eval $(call kimg,kImage,krn_$(target_arch)))
-$(eval $(call crt,crt0))
-$(eval $(call crt,crtk))
+$(eval $(call ccpl,ut)) # compile unit test
+$(eval $(call link,ut,ut)) # link unit test
 
-DV_CHECK += $(bindir)/ut_utils $(bindir)/ut_vfs
-DV_UTILS += $(bindir)/kum $(gendir)/kImage
+$(eval $(call ccpl,kum)) # compile hosted kernel
+$(eval $(call link,kum,kum)) # link hosted kernel
+
+$(eval $(call ccpl,krn_$(target_arch))) # compile kernel image
+$(eval $(call kimg,kImage,krn_$(target_arch))) # link kernel image
+
+$(eval $(call crt,crtk)) # compile CRTK
+
+DV_CHECK += $(bindir)/ut
+DV_UTILS += $(bindir)/kum  
+# $(gendir)/kImage

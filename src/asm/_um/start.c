@@ -23,9 +23,9 @@
 int testCase (const char *dir);
 
 /* ----------------------------------------------------------------------- */
-#include <check.h>
+// #include <check.h>
 #include <stdlib.h>
-void fixture_inodes(Suite* suite);
+// void fixture_inodes(Suite* suite);
 
 /* At this point we leave CRTK. */
 int main (int argc, char** argv)

@@ -82,12 +82,12 @@ void ksymclean()
 {
   kSymbol_t *sym;
   kSymbol_t *iter = first;
-  do {
+  while (iter) {
     sym = iter;
     iter = iter->next_;
     kfree(sym->name_);
     kfree(sym);
-  } while (iter);
+  }
   first = NULL;
   last = NULL;
 }

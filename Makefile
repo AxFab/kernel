@@ -131,7 +131,7 @@ $1: $(gendir)/$1
 $(gendir)/$1: $(call obj,$2,$1,o) $(outdir)/asm/_$(target_arch)/crt/crtk.o
 	$(S) mkdir -p $$(dir $$@)
 	$(Q) echo "    LD  "$$@
-	$(V) $(LD) -T $(srcdir)/asm/_$(target_arch)/kernel.ld $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o)
+	$(V) $(LD) -T $(srcdir)/asm/_$(target_arch)/kernel.ld $($(1)_LFLAGS) -o $$@ -Map $$@.map $(call obj,$2,$1,o)
 	$(Q) ls -lh $$@
 	$(Q) size $$@
 endef
@@ -196,6 +196,20 @@ $(gendir)/$(NAME)-$(target_arch)-$(VERSION).tar: $(DV_UTILS) $(DV_LIBS)
 	$(Q)  "  TAR   $@"
 	$(V) tar cf $@  -C $(topdir) $(topdir)/include
 	$(V) tar af $@ -C $(gendir) $^
+
+SED_LCOV  = -e '/SF:\/usr.*/,/end_of_record/d'
+SED_LCOV += -e '/SF:.*\/src\/tests\/.*/,/end_of_record/d'
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Create coverage HTML report
+%.lcov: $(bindir)/%
+	@ find -name *.gcda | xargs -r rm
+	@ CK_FORK=no $<
+	@ lcov -c --directory . -b . -o $@
+	@ sed $(SED_LCOV) -i $@
+
+cov_%: %.lcov
+	@ genhtml -o $@ $<
 
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 deps:
