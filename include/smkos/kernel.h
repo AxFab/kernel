@@ -121,7 +121,7 @@ struct kSys {
   atomic_t pageUsed_;
   size_t objMemory_;
 
-  size_t memMax_;
+  int64_t memMax_;
   int pageMax_;
   int pidAutoInc_;
   int ttyAutoInc_;

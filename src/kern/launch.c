@@ -42,7 +42,7 @@ void kernel_start ()
 
   /* Initialize kernel environment */
   atomic_t avail = kSYS.pageAvailable_;
-  size_t max = kSYS.memMax_;
+  int64_t max = kSYS.memMax_;
   int pag = kSYS.pageMax_;
   atomic_t used = kSYS.pageUsed_;
   memset (&kSYS, 0, sizeof (kSYS));

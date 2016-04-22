@@ -22,10 +22,15 @@ void mmu_ram (int64_t base, int64_t length)
 {
   uint64_t obase = base;
 
-  if (length < 0 || base < 0 || base + length > 4 * _Gb_)
+  if (length < 0 || base < 0 || base + length < 0)
     return;
 
   kSYS.memMax_ = base + length;
+  if (base > 4 * _Gb_)
+    return;
+
+  if (base + length > 4 * _Gb_)
+    length = 4 * _Gb_ - base;
 
   base = ALIGN_UP(base, PAGE_SIZE);
   length = ALIGN_DW(length - (base - obase), PAGE_SIZE);

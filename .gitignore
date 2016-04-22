@@ -28,7 +28,7 @@
 
 # -------------------------------------------------------
 # Add repository files
-!.gitignore
+!.git*
 !.travis.yml
 !README*
 !LICENSE*

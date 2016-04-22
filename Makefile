@@ -144,7 +144,7 @@ $(outdir)/$(1)/%.o: $(srcdir)/%.c
 $(outdir)/$(1)/%.d: $(srcdir)/%.c
 	$(S) mkdir -p $$(dir $$@)
 	$(Q) echo "    CM  "$$@
-	$(V) $(CC) -c $($(1)_CFLAGS) -o $$@ $$<
+	$(V) $(CC) -M $($(1)_CFLAGS) -o $$@ $$<
 endef
 
 define crt
