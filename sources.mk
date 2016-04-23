@@ -42,6 +42,7 @@ CFLAGS += -D_DATE_=\"'$(DATE)'\" -D_OSNAME_=\"'$(LINUX)'\"
 CFLAGS += -D_GITH_=\"'$(GIT)'\" -D_VTAG_=\"'$(VERSION)'\"
 
 ut_LFLAGS += --coverage
+ut_LIBS += `pkg-config --libs check`
 ut_CFLAGS += -ggdb3 --coverage $(CFLAGS) -D_FS -D_FS_UM
 ut_CFLAGS += -I $(topdir)/include
 ut_CFLAGS += -I $(topdir)/include/asm/_um

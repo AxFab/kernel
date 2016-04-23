@@ -98,7 +98,7 @@ $(libdir)/lib$1.a: $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a)
 $(libdir)/lib$1.so: $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a) $(call libs,$1_DLIBS,a)
 	$(S) mkdir -p $$(dir $$@)
 	$(Q) echo "    LD  "$$@
-	$(V) $(CC) -shared $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a)
+	$(V) $(CC) -shared $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a) $($(1)_LIBS)
 	$(Q) ls -lh $$@
 	$(Q) size $$@
 endef
@@ -109,7 +109,7 @@ $1: $(bindir)/$1
 $(bindir)/$1: $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a) $(call libs,$1_DLIBS,a)
 	$(S) mkdir -p $$(dir $$@)
 	$(Q) echo "    LD  "$$@
-	$(V) $(CC) $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a)
+	$(V) $(CC) $($(1)_LFLAGS) -o $$@ $(call obj,$2,$1,o) $(call libs,$1_SLIBS,a) $($(1)_LIBS)
 	$(Q) ls -lh $$@
 	$(Q) size $$@
 endef
