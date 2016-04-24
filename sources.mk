@@ -75,7 +75,11 @@ kum_src-y += $(wildcard $(srcdir)/vfs/hdd/*.c)
 # U N I T - T E S T S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # UT_ (unit tests)
 ut_src-y += $(wildcard $(srcdir)/test/*.c)
-
+ut_src-y += $(mod_krn-y) $(mod_mfs-y)
+ut_src-y += $(wildcard $(srcdir)/asm/_um/*.c)
+ut_src-y += $(wildcard $(srcdir)/vfs/bmp/*.c)
+ut_src-y += $(wildcard $(srcdir)/vfs/hdd/*.c)
+ut_omit-y += $(srcdir)/asm/_um/start.c
 
 # T A R G E T S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 $(eval $(call ccpl,ut)) # compile unit test

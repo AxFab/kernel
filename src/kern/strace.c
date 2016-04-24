@@ -161,6 +161,7 @@ void sys_write_save (char *snBuf, int snLg, int fd, const void *buf, size_t lg, 
 
 void sys_write_do (char *str, char **rent)
 {
+  kThread_t *current = kCPU.current_;
   char sbuf[128];
   int fd = parseInt(rent);
   char *buf = parseStr(rent);
@@ -169,6 +170,7 @@ void sys_write_do (char *str, char **rent)
   int res = parseInt(rent);
   int ret = sys_write(fd, buf, lg, sk);
   assert (ret == res);
+  assert(current == kCPU.current_);
   sys_write_save(sbuf, 128, fd, buf, lg, sk, 0, ret);
   log_sys(sbuf);
 }
@@ -189,6 +191,7 @@ void sys_read_save (char *snBuf, int snLg, int fd, void *buf, size_t lg, off_t o
 
 void sys_read_do (char *str, char **rent)
 {
+  kThread_t *current = kCPU.current_;
   char sbuf[128];
   int fd = parseInt(rent);
   char *buf = parseStr(rent);
@@ -198,6 +201,7 @@ void sys_read_do (char *str, char **rent)
   char *tmp = (char *)kalloc(lg + 1);
   int ret = sys_read(fd, tmp, lg, sk);
   assert (ret == res);
+  assert(current == kCPU.current_);
 
   if (buf && ret > 0)
     assert(!memcmp(buf, tmp, ret));

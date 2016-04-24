@@ -51,7 +51,7 @@ void fs_pipe_destroy(kInode_t *ino)
 
 /* ----------------------------------------------------------------------- */
 /**  */
-static size_t fs_pipe_newline(kPipe_t *pipe)
+static size_t fs_pipe_newline(kPipe_t *pipe, char ch)
 {
   size_t i, cap;
   size_t max = pipe->size_ - pipe->rpen_;
@@ -60,7 +60,7 @@ static size_t fs_pipe_newline(kPipe_t *pipe)
   cap = MIN(max, pipe->avail_);
 
   for (i = 0; i < cap; ++i) {
-    if (address[i] == '\n')
+    if (address[i] == ch)
       return i + 1;
   }
 
@@ -71,7 +71,7 @@ static size_t fs_pipe_newline(kPipe_t *pipe)
   cap = MAX(0, pipe->avail_ - max);
 
   for (i = 0; i < cap; ++i) {
-    if (address[i] == '\n')
+    if (address[i] == ch)
       return i + max + 1;
   }
 
@@ -113,7 +113,7 @@ ssize_t fs_pipe_read(kInode_t *ino, void *buf, size_t lg)
     /* Capacity ahead */
     cap = pipe->size_ - pipe->rpen_;
     if (pipe->flags_ & FP_BY_LINE)
-      cap = MIN(cap, fs_pipe_newline(pipe));
+      cap = MIN(cap, fs_pipe_newline(pipe, '\n'));
     else
       cap = MIN(cap, pipe->avail_);
     cap = MIN(cap, lg);
@@ -145,7 +145,6 @@ ssize_t fs_pipe_read(kInode_t *ino, void *buf, size_t lg)
 }
 
 
-/* ----------------------------------------------------------------------- */
 /**  */
 ssize_t fs_pipe_write(kInode_t *ino, const void *buf, size_t lg)
 {
@@ -155,19 +154,8 @@ ssize_t fs_pipe_write(kInode_t *ino, const void *buf, size_t lg)
   void *address;
   kPipe_t *pipe = ino->pipe_;
   kWait_t *wait;
-  kWait_t *iter;
-  bool haveNl = false;
 
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
-
-  /* Search for '\n' */
-  if (pipe->flags_ & FP_BY_LINE) {
-    for (i = 0; i < lg; ++i)
-      if (((char *)buf)[i] == '\n') {
-        haveNl = true;
-        break;
-      }
-  }
 
   /* Loop inside the buffer */
   if (!pipe)
@@ -207,18 +195,11 @@ ssize_t fs_pipe_write(kInode_t *ino, const void *buf, size_t lg)
   }
 
   // IF BLOCKED !
-  if (haveNl) {
-    iter = ll_first(&pipe->waiting_, kWait_t, lnd_);
-
-    while (iter) {
-      wait = iter;
-      iter = ll_next(iter, kWait_t, lnd_);
-
-      if (wait->reason_ == WT_PIPE_READ) {
-        wait->reason_ = WT_HANDLED;
-        sched_insert(kSYS.scheduler_, wait->thread_);
-        // ll_remove(&pipe->waiting_, &wait->lnd_);
-      }
+  ll_for_each(&pipe->waiting_, wait, kWait_t, lnd_) {
+    if (wait->reason_ == WT_PIPE_READ) {
+      wait->reason_ = WT_HANDLED;
+      sched_insert(kSYS.scheduler_, wait->thread_);
+      // ll_remove(&pipe->waiting_, &wait->lnd_);
     }
   }
 
@@ -227,8 +208,7 @@ ssize_t fs_pipe_write(kInode_t *ino, const void *buf, size_t lg)
 }
 
 
-/* ----------------------------------------------------------------------- */
-/**  */
+/*  */
 int fs_event(kInode_t *ino, int type, int value)
 {
   struct SMK_Event event;
@@ -253,6 +233,3 @@ int fs_event(kInode_t *ino, int type, int value)
   // return ENOSYS;
 }
 
-
-/* ----------------------------------------------------------------------- */
-/* ----------------------------------------------------------------------- */

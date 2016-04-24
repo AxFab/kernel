@@ -10,6 +10,7 @@ int main (int argc, char** argv) {
 
   fixture_llist(suite);
   fixture_bbtree(suite);
+  fixture_fifo(suite);
   
   SRunner* runner = srunner_create(suite);
   if (argc > 1) {
