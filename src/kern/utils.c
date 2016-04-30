@@ -107,6 +107,14 @@ void __assert_do (int as, const char *ex, const char *at)
 }
 
 
+/* Terminate a function in case of stack overflow */
+void __stack_chk_fail(void)
+{
+  kpanic("Stack overflow detected \n");
+}
+
+
+
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
 

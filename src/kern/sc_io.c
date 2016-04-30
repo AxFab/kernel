@@ -105,7 +105,7 @@ int sys_close(int fd)
   return process_close_resx(kCPU.current_->process_, fd);
 }
 
-int sys_write(int fd, const void *data, size_t lg, off_t off)
+ssize_t sys_write(int fd, const void *data, size_t lg, off_t off)
 {
   kResx_t *resx;
 

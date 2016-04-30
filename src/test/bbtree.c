@@ -16,7 +16,7 @@ void bbnode_print(bbnode_t *node, int lvl) {
     return;
   for (i=0; i < lvl; ++i)
     printf("  ");
-  printf(" %d] %s\n", node->value_, itemof(node, item_t, node_)->value_);
+  printf(" %d] %s\n", (int)node->value_, itemof(node, item_t, node_)->value_);
   bbnode_print(node->left_, lvl + 1);
   bbnode_print(node->right_, lvl + 1);
 }
@@ -31,7 +31,7 @@ START_TEST(test_bbbasic) {
   item_t b = INIT_ITEM(2, "#2");
   item_t c = INIT_ITEM(3, "#3");
   item_t d = INIT_ITEM(4, "#4");
-  item_t e = INIT_ITEM(5, "#5");
+  // item_t e = INIT_ITEM(5, "#5");
   item_t *it;
   bbtree_t t = INIT_BBTREE;
 

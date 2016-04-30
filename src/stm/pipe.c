@@ -148,7 +148,6 @@ ssize_t fs_pipe_read(kInode_t *ino, void *buf, size_t lg)
 /**  */
 ssize_t fs_pipe_write(kInode_t *ino, const void *buf, size_t lg)
 {
-  size_t i;
   ssize_t bytes = 0;
   size_t cap = 0;
   void *address;

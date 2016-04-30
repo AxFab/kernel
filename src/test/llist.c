@@ -1,5 +1,6 @@
 #include <skc/llist.h>
 #include <check.h>
+#include <stdio.h>
 
 typedef struct item {
   int value_;

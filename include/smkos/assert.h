@@ -24,9 +24,10 @@
 #if 0
 #  define assert(e) ((void)0)
 #  define DEBUG(c)  ((void)0)
-#else
-#  define assert(e)       __assert_do((int)(e),#e, __AT__)
-#  define assert_msg(e,m)   __assert_do((int)(e),m, __AT__)
+#else 
+#  define __long long
+#  define assert(e)       __assert_do((__long)(e),#e, __AT__)
+#  define assert_msg(e,m)   __assert_do((__long)(e),m, __AT__)
 #  define DEBUG(c)    do { c } while(0)
 void __assert_do(int as, const char *ex, const char *at);
 #endif

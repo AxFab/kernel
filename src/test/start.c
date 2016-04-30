@@ -3,6 +3,7 @@
 
 void fixture_llist(Suite*);
 void fixture_bbtree(Suite*);
+void fixture_fifo(Suite*);
 
 
 int main (int argc, char** argv) {
