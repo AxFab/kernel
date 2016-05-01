@@ -75,7 +75,7 @@ kInode_t *sysOut = NULL;
 int term_create (kSubSystem_t *subsys, kInode_t *frame)
 {
   kInode_t *ino;
-  kInode_t *inon;
+  kInode_t *ino_out;
   kMemArea_t *area;
   char no[10];
 #ifndef _FONT8
@@ -89,18 +89,17 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
   kTerm_t *term;
 
   snprintf(no, 10, "Tty%d", nol);
-  ino = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, 8 * PAGE_SIZE);
+  ino = create_inode(no,  kSYS.procIno_, S_IFTTY | 0400, 0);
   assert (ino != NULL);
-
-  snprintf(no, 10, ".Tty%d", nol);
-  inon = create_inode(no,  kSYS.procIno_, S_IFIFO | 0400, 8 * PAGE_SIZE);
-  assert (inon != NULL);
+  create_inode(".in", ino, S_IFIFO | 0400, PAGE_SIZE);
+  ino_out = create_inode(".out", ino, S_IFIFO | 0400, 8 * PAGE_SIZE);
+  sysOut = ino;
 
   term = KALLOC(kTerm_t);
   term->txColor_ = 0xffa6a6a6; // 0xff5c5c5c;
   term->bgColor_ = 0xff323232;
 
-  term->pipe_ = fs_create_pipe(ino);
+  term->pipe_ = fs_create_pipe(ino_out);
   // @Todo -- This is a hugly hack to avoid blocking kwrite!
   ((char*)term->pipe_->mmap_->address_)[0] = 0;
   ((char*)term->pipe_->mmap_->limit_)[-1] = 0;
@@ -132,11 +131,11 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
   term->max_col_ = (term->width_ - 2) / fontW;
 
   ino->subsys_ = subsys;
-  inon->subsys_ = subsys;
+  // inon->subsys_ = subsys;
 
   subsys->term_ = term;
   subsys->out_ = ino;
-  subsys->in_ = inon;
+  // subsys->in_ = inon;
 
   term->clear(term);
 
@@ -335,6 +334,9 @@ void term_write (kTerm_t *term)
   kLine_t *newLine;
   int pen; // Where start the next line
 
+  if (term == NULL)
+    term = sysLogTty->term_;
+  
   for (;;) {
 
     if (term->row_ > term->max_row_) {
@@ -383,9 +385,9 @@ int kwrite_pipe (const void *m, int lg)
 
 void event_pipe(int type, int value)
 {
-  kInode_t *ino = sysLogTty->in_;
 
-  // kTerm_t* term = sysLogTty->term_;
+  kInode_t* ino = search_child(".in", sysOut);
+
   switch (type) {
   case EV_KEYDW:
     if (value == _BKSP) {
@@ -418,13 +420,13 @@ void create_subsys(kInode_t *kbd, kInode_t *screen)
 
 void open_subsys(kInode_t *input, kInode_t *output)
 {
-  assert(S_ISFIFO(input->stat_.mode_) || S_ISCHR(input->stat_.mode_));
-  assert(S_ISFIFO(output->stat_.mode_) || S_ISCHR(output->stat_.mode_));
+//   assert(S_ISFIFO(input->stat_.mode_) || S_ISCHR(input->stat_.mode_));
+//   assert(S_ISFIFO(output->stat_.mode_) || S_ISCHR(output->stat_.mode_));
 
-  fs_create_pipe(input);
-  fs_create_pipe(output);
+//   fs_create_pipe(input);
+//   fs_create_pipe(output);
 
-  sysOut = output;
+//   sysOut = output;
 }
 
 int BMP_sync(kInode_t *);
@@ -444,5 +446,13 @@ void clean_subsys()
 }
 
 
-/* ----------------------------------------------------------------------- */
-/* ----------------------------------------------------------------------- */
+void kwrite(void* buf, int lg) {
+  if (sysOut != NULL) {
+    kInode_t* ino = search_child(".out", sysOut);
+    fs_pipe_write(ino, buf, lg);
+    term_write(sysLogTty->term_);
+  } else {
+
+  }
+}
+

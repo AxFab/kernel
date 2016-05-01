@@ -39,6 +39,9 @@ int grub_initialize (uint32_t *bTable)
   if (bTable[0] & (1 << 9))
     kprintf ("Boot Loader: %s\n", (char *)bTable[16]);
 
+  if (bTable[0] & (1 << 2))
+    kprintf ("Command Line: %s\n", (char *)bTable[4]);
+
   if (bTable[0] & (1 << 1)) {
     kprintf ("Booting device: ");
 

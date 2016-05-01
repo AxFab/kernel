@@ -76,7 +76,9 @@ int system_call (int no, size_t p1, size_t p2, size_t p3, size_t p4, size_t p5)
   }
 
   // for (c = 0; c < 0x800000; ++c);
+  assert (kCPU.lockCounter_ == 0);
   ret = system_delegate[no] (p1, p2, p3, p4, p5);
+  assert (kCPU.lockCounter_ == 0);
   err = __geterrno();
 #ifndef NDEBUG
   // if (no == SYS_READ && ret >= 0) {

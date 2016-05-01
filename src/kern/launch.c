@@ -56,7 +56,7 @@ void kernel_start ()
   kprintf("SmokeOS " _VTAG_ ", build at " __DATE__ ".\n");
   mmu_load_env();
 
-  /* Initialize time managment */
+  /* Initialize time management */
   dateTime = cpu_get_clock();
   kprintf("Date: %s\n", asctime(&dateTime));
 

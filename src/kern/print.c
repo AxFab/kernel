@@ -3,20 +3,19 @@
 #include <smkos/kstruct/user.h>
 #include <stdarg.h>
 
-extern kSubSystem_t *sysLogTty;
+void kwrite(void* buf, int lg);
 // int vsnprintf(char* buf, int lg, const char* fmt, va_list ap);
 
 /* ----------------------------------------------------------------------- */
 void kpanic(const char *msg, ...)
 {
+  int lg;
   char buf[256];
   va_list ap;
   va_start(ap, msg);
-  vsnprintf(buf, 256, msg, ap);
+  lg = vsnprintf(buf, 256, msg, ap);
   va_end(ap);
-  // mtx_fastlock(sysLogTty->mutex_);
-  sysLogTty->write(buf, -1);
-  // mtx_unlock(sysLogTty->mutex_);
+  kwrite(buf, lg);
   kstacktrace(12);
   cpu_halt();
 }
@@ -25,15 +24,14 @@ void kpanic(const char *msg, ...)
 struct spinlock sysLogLock;
 void kprintf(const char *msg, ...)
 {
+  int lg;
   char buf[256];
   va_list ap;
   klock(&sysLogLock);
   va_start(ap, msg);
-  vsnprintf(buf, 256, msg, ap);
+  lg = vsnprintf(buf, 256, msg, ap);
   va_end(ap);
-  // mtx_fastlock(sysLogTty->mutex_);
-  sysLogTty->write(buf, -1);
-  // mtx_unlock(sysLogTty->mutex_);
+  kwrite(buf, lg);
   kunlock(&sysLogLock);
 }
 

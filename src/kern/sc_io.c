@@ -108,6 +108,7 @@ int sys_close(int fd)
 ssize_t sys_write(int fd, const void *data, size_t lg, off_t off)
 {
   kResx_t *resx;
+  ssize_t bytes;
 
   if (lg > FBUFFER_MAX) {
     __seterrno(ENOSYS);
@@ -115,41 +116,21 @@ ssize_t sys_write(int fd, const void *data, size_t lg, off_t off)
   }
 
   resx = process_get_resx (kCPU.current_->process_, fd, CAP_WRITE);
-
   if (resx == NULL)
     return -1;
 
-  if (resx->ino_->subsys_) {
-    mtx_lock(&resx->ino_->subsys_->mutex_);
-    lg = resx->ino_->subsys_->write(data, lg);
-    mtx_unlock(&resx->ino_->subsys_->mutex_);
-    return lg;
-  }
-
-  switch (resx->type_) {
-  case S_IFBLK:
-  case S_IFREG:
-    // return fs_block_write();
-    return -1;
-
-  case S_IFCHR:
-  case S_IFIFO:
-    return fs_pipe_write (resx->ino_, data, lg);
-
-  case S_IFDIR:
-    __seterrno(EISDIR);
-    return -1;
-
-  default:
-    assert(resx->type_ == 0);
-    __seterrno(EBADF);
-    return -1;
-  }
+  if (off < 0)
+    off = resx->seek_;
+  bytes = stream_write(resx->ino_, data, lg, off, resx->oflags_);
+  if (bytes > 0)
+    resx->seek_ = off + bytes;
+  
+  return bytes;
 }
 
 ssize_t sys_read(int fd, void *data, size_t lg, off_t off)
 {
-  ssize_t ret = 0;
+  ssize_t bytes;
   kResx_t *resx;
 
   // kprintf ("[Sr]");
@@ -163,38 +144,13 @@ ssize_t sys_read(int fd, void *data, size_t lg, off_t off)
   if (resx == NULL)
     return -1;
 
-  switch (resx->type_) {
-  case S_IFBLK:
-  case S_IFREG:
-    if (off >= 0)
-      resx->seek_ = off;
-
-    ret = fs_reg_read(resx->ino_, data, lg, resx->seek_);
-
-    if (ret > 0)
-      resx->seek_ += ret;
-
-    return ret;
-
-  case S_IFCHR:
-  case S_IFIFO:
-    ret = fs_pipe_read (resx->ino_, data, lg);
-
-    if (ret == 0) {
-      return -1;
-    }
-
-    return ret;
-
-  case S_IFDIR:
-    __seterrno(EISDIR);
-    return -1;
-
-  default:
-    assert(resx->type_ == 0);
-    __seterrno(EBADF);
-    return -1;
-  }
+  if (off < 0)
+    off = resx->seek_;
+  bytes = stream_read(resx->ino_, data, lg, off, resx->oflags_);
+  if (bytes > 0)
+    resx->seek_ = off + bytes;
+  
+  return bytes;
 }
 
 // int access(const char *pathname, int mode);

@@ -45,16 +45,18 @@
   * @bug Think about case-sensitive file systems.
   * @note The directory inode must be locked, and parameters are not checked.
   */
-static kInode_t *search_child (const char *name, kInode_t *dir)
+kInode_t *search_child(const char *name, kInode_t *dir)
 {
   int cmp;
   int err;
+  int need_lock = !kislocked(&dir->lock_); 
   SMK_stat_t stat;
   kInode_t *ino = dir->child_;
 
   assert (name != NULL && strnlen(name, FNAME_MAX) < FNAME_MAX);
   assert (dir != NULL);
-  assert (kislocked(&dir->lock_));
+  if (need_lock)
+    klock(&dir->lock_);
 
   // Loop over present children.
   while (ino) {
@@ -64,7 +66,8 @@ static kInode_t *search_child (const char *name, kInode_t *dir)
       cmp = strcmpi(ino->name_, name);
 
     if (cmp == 0) {
-      klock (&ino->lock_);
+      if (!need_lock)
+        klock (&ino->lock_);
       kunlock (&dir->lock_);
       return ino;
     }
@@ -323,7 +326,14 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
   kInode_t *ino;
   assert (name != NULL && strnlen(name, FNAME_MAX) < FNAME_MAX);
   assert (dir != NULL && stat != NULL);
-  assert (S_ISDIR (dir->stat_.mode_));
+
+  if (!S_ISDIR (dir->stat_.mode_)) {
+    if (S_ISTTY(dir->stat_.mode_)) {
+      if (strcmp(name, ".in") && strcmp(name, ".out"))
+        return __seterrnoN(EINVAL, kInode_t);
+    } else 
+      return __seterrnoN(EINVAL, kInode_t);
+  }
 
   klock(&dir->lock_);
   ino = KALLOC(kInode_t);
@@ -336,7 +346,6 @@ kInode_t *register_inode (const char *name, kInode_t *dir, SMK_stat_t *stat, boo
   memcpy (&ino->stat_, stat, sizeof(SMK_stat_t));
   ino->dev_ = dir->dev_;
   ino->stat_.mode_ &= (0777 | S_IFMT);
-  // klock(&dir->lock_);
   klock(&ino->lock_);
 
   if (attach_inode(ino, dir, name)) {

@@ -162,23 +162,23 @@ int func_dbg = 0;
 
 void dbg_ticks()
 {
-  kInode_t* ino;
+  // kInode_t* ino;
 
   ++ticks;
   FUNC_BEG (1, 25)
 
-    ino = search_inode("/proc/.Tty0", NULL, 0, NULL);
-    fs_pipe_write(ino, (void*)"Fabien\n", 7);
+  //   ino = search_inode("/proc/Tty0", NULL, 0, NULL);
+  //   stream_write(ino, (void*)"Fabien\n", 7, 0);
 
-  FUNC_DBG (2, 50)
+  // FUNC_DBG (2, 50)
 
-    ino = search_inode("/proc/.Tty0", NULL, 0, NULL);
-    fs_pipe_write(ino, (void*)"bin/ls\n", 8);
+  //   ino = search_inode("/proc/Tty0", NULL, 0, NULL);
+  //   fs_pipe_write(ino, (void*)"bin/ls\n", 8);
 
-  FUNC_DBG (3, 75)
+  // FUNC_DBG (3, 75)
 
-    ino = search_inode("/proc/.Tty0", NULL, 0, NULL);
-    fs_pipe_write(ino, (void*)"bin/color\n", 8);
+  //   ino = search_inode("/proc/Tty0", NULL, 0, NULL);
+  //   fs_pipe_write(ino, (void*)"bin/color\n", 8);
 
   FUNC_END ()
 }

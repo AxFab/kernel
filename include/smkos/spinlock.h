@@ -42,6 +42,10 @@ int *__lockcounter();
 /* ----------------------------------------------------------------------- */
 static inline void klock_(struct spinlock *locker, const char *where)
 {
+  if (locker->key_ > 0 && locker->cpu_ == kCpuNo) {
+    locker->key_++;
+    return;
+  }
   /* int t = 100000000;*/
   for (;;) {
     while (locker->key_ != 0) {
@@ -74,9 +78,12 @@ static inline void kunlock_(struct spinlock *locker)
 {
   struct spinlock *list = NULL;
 
-  assert (locker->key_ == 1);
+  assert (locker->key_ >= 1);
   assert (locker->cpu_ == kCpuNo);
-
+  if (locker->key_ > 1) {
+    --locker->key_;
+    return;
+  }
   locker->key_ = 0;
   locker->cpu_ = 0;
   locker->where_ = NULL;

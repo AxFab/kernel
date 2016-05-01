@@ -50,6 +50,7 @@ int TMPFS_create(const char *name, kInode_t *dir, int mode, size_t lg, SMK_stat_
   case S_IFDIR:
   case S_IFIFO:
   case S_IFLNK:
+  case S_IFTTY:
     return 0;
 
   default:
