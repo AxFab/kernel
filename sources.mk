@@ -18,7 +18,8 @@ is_pc= $(shell [ $(target_arch) = x86 ] && echo y)
 
 # M O D U L E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Kernel sources
-mod_krn-y += $(wildcard $(srcdir)/kern/*.c)
+mod_krn-y += $(wildcard $(srcdir)/util/*.c)
+mod_krn-y += $(wildcard $(srcdir)/scall/*.c)
 mod_krn-y += $(wildcard $(srcdir)/mem/*.c)
 mod_krn-y += $(wildcard $(srcdir)/stm/*.c)
 mod_krn-y += $(wildcard $(srcdir)/tsk/*.c)
@@ -61,8 +62,8 @@ krn_$(target_arch)_CFLAGS += -I $(topdir)/include/asm/_$(target_arch)
 # D E L I V E R I E S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 # Kernel sources
 kImage_src-y += $(mod_krn-y) $(mod_kfs-y)
+kImage_src-y += $(wildcard $(srcdir)/libc/*.c)
 kImage_src-y += $(wildcard $(srcdir)/asm/_$(target_arch)/*.c)
-kImage_src-y += $(wildcard $(srcdir)/asm/libc/*.c)
 
 
 # kernel usermode (functional tests)
