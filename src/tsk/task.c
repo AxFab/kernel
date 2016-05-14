@@ -17,7 +17,7 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Process, thread and session managment.
+ *      Process, thread and session management.
  */
 #include <smkos/kapi.h>
 #include <smkos/klimits.h>
@@ -28,7 +28,7 @@
 #include <smkos/file.h>
 
 /* ----------------------------------------------------------------------- */
-/** @brief Instanciate a new thread object.
+/** @brief Instantiate a new thread object.
   * @param process The parent process that need a new thread.
   * @return A new thread object.
   *
@@ -78,7 +78,7 @@ static void reset_thread (kThread_t *thread, size_t entry, size_t param)
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Instanciate a new session.
+/** @brief Instantiate a new session.
   * @todo Session creation should be handle on user module.
   * @todo I should defined the exact scope/usage of a session.
   */
@@ -97,7 +97,7 @@ static kSession_t *alloc_session(kUser_t *user, kInode_t *dir)
 
 
 /* ----------------------------------------------------------------------- */
-/** @brief Instanciate a new process.
+/** @brief Instantiate a new process.
   * @param assembly The assembly used on this process
   * @param The pid to used
   * @todo This method should create needed inodes that will be accessible
@@ -129,7 +129,7 @@ static kProcess_t *alloc_process(kAssembly_t *assembly, int pid)
 /* ----------------------------------------------------------------------- */
 /** @brief Destroy a thread object.
   *
-  * This is only a part of the destroy_process processedre and must stay
+  * This is only a part of the destroy_process procedure and must stay
   * static.
   */
 static inline void destroy_thread(kThread_t *thread)

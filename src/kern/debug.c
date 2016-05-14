@@ -92,12 +92,7 @@ void ksymclean()
   last = NULL;
 }
 
-/* ----------------------------------------------------------------------- */
-/**
-    Print the stack trace of the current frame
-    FIXME: We can improve readablility by parsing the .map file
- */
-
+/* Print the stack trace of the current frame */
 void kstacktrace(size_t MaxFrames)
 {
   size_t frame;
