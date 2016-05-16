@@ -22,39 +22,21 @@
 
 int testCase (const char *dir);
 
-/* ----------------------------------------------------------------------- */
-// #include <check.h>
+
 #include <stdlib.h>
-// void fixture_inodes(Suite* suite);
 
 /* At this point we leave CRTK. */
 int main (int argc, char** argv)
 {
-#if 1
   int until = 0;
-  // until = until || testCase ("fs1");
+  until = until || testCase ("fs1");
   until = until || testCase ("base");
-  until = until || testCase ("mthread");
+  // until = until || testCase ("mthread");
   until = until || testCase ("mmap");
   until = until || testCase ("base");
   until = until || testCase ("shell");
 
   return until;
-#else
-
-  Suite* suite = suite_create ("Kernel unit tests");
-  fixture_inodes (suite);
-  SRunner* runner = srunner_create(suite);
-  if (argc > 1) {
-    srunner_set_log (runner, "check.log");
-    srunner_set_xml (runner, "report_check.xml");
-  }
-
-  srunner_run_all (runner, CK_NORMAL);
-  int failed_tests = srunner_ntests_failed(runner);
-  srunner_free (runner);
-  return (failed_tests == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
-#endif
 }
 
 

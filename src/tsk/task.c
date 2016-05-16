@@ -478,3 +478,15 @@ int process_close_resx(kProcess_t *process, int fd)
 
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
+void display_tasks() 
+{
+  kThread_t *thread;
+  kProcess_t *process;
+  int state[] = {'Z', 'S', 'B', 'R', 'E', 'A'};
+  ll_for_each(&kSYS.processes_, process, kProcess_t, allNd_) {
+    ll_for_each (&process->threads_, thread, kThread_t, taskNd_) {
+      
+      kprintf("Task [%2d.%02d] (%c)\n", process->pid_, thread->paramEntry_ >> 24, state[thread->state_]);
+    }
+  }
+}

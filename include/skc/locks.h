@@ -48,7 +48,7 @@ struct spinlock
   atomic_t users_;
   int cpu_;
   int recurs_;
-  const char *at_:
+  const char *at_;
 };
 
 #define sp_lock(l) sp_lock_(l, __AT__)
@@ -60,7 +60,7 @@ static inline void sp_lock_(splock_t *lock, const char *at)
     ++lock->recurs_;
     return;
   }
-  me = atomic_xadd(&lock->users, 1);
+  me = atomic_xadd(&lock->users_, 1);
   while (lock->ticket_ != me)
     cpu_relax();
   lock->at_ = at;
@@ -77,7 +77,7 @@ static inline void sp_unlock(splock_t *lock)
   atomic_inc(&lock->ticket_);
 }
 
-static inline bool sp_locked(splock_t *lock)
+static inline int sp_locked(splock_t *lock)
 {
   barrier();
   return lock->ticket_ != lock->users_ && lock->cpu_ == cpu_no();
@@ -95,10 +95,11 @@ typedef struct rwlock rwlock_t;
 
 struct rwlock
 {
-  atomic_t ticket_;
+  atomic_t read_;
+  atomic_t write_;
   atomic_t users_;
   int cpu_;
-  const char *at_:
+  const char *at_;
 };
 
 
@@ -151,6 +152,19 @@ static inline void rw_upgrade(rwlock_t *lock)
 /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
 
 typedef struct mutex mutex_t;
+typedef struct task task_t;
+
+struct mutex 
+{
+  atomic_t locked_;
+  atomic_t error_;
+  atomic_t warn_;
+  task_t *task_;
+  int flags_;
+};
+
+#define MTX_RECURSIVE 1
+
 
 /* Set option on an mutex and insure it's unlocked. */
 void mtx_init(mutex_t *mtx, int option);
@@ -159,7 +173,7 @@ int mtx_lock(mutex_t *mtx);
 /* Try to acquire the lock without blocking. */
 int mtx_trylock(mutex_t *mtx);
 /* Try to acquire the lock but give up after some time. */
-int mtx_timedlock(mutex_t *mtx, time_t limit);
+// int mtx_timedlock(mutex_t *mtx, time_t limit);
 /* Unlock the mutex hold by the current task. */
 void mtx_unlock(mutex_t *mtx);
 /* Function to called after the death of a task holding the mutex. */
@@ -176,7 +190,7 @@ int sem_lock(semaphore_t *sem, int qty);
 /* Try to acquire the lock without blocking. */
 int sem_trylock(semaphore_t *sem, int qty);
 /* Try to acquire the lock but give up after some time. */
-int sem_timedlock(semaphore_t *sem, int qty, time_t limit);
+// int sem_timedlock(semaphore_t *sem, int qty, time_t limit);
 /* Unlock the semaphore hold by the current task. */
 void sem_unlock(semaphore_t *sem);
 /* Function to called after the death of a task holding the semaphore. */

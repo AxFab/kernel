@@ -1,13 +1,9 @@
 #include <skc/fifo.h>
+#include <skc/locks.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct mutex mutex_t;
-struct mutex {
-  int i;
-};
-void mtx_lock(mutex_t* m) {}
-void mtx_unlock(mutex_t* m) {}
+
 #define malloc kalloc
 void *kalloc(size_t);
 

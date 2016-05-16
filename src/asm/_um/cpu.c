@@ -30,7 +30,18 @@
 static int main_count = -1;
 static jmp_buf cpuJmp[16];
 
+#define assert(co) assert_(co, #co, __AT__)
 
+static inline void assert_(int co, const char *ex, const char *at) 
+{
+  if (!co) {
+    printf("Assertion at %s: %s\n", at, ex);
+    exit(-1);
+  }
+}
+
+void BMP_sync (kInode_t *ino);
+void display_tasks();
 void x86_IRQ_handler(int no, void (*handler)())
 {
   __unused(no);
@@ -215,16 +226,20 @@ void callHdw (char *buf)
   char *rent;
 
   part = strtok_r(buf, " (,;)=", &rent);
+  // part = strtok_r(NULL, " (,;)=", &rent);
   assert (part != NULL);
-  part = strtok_r(NULL, " (,;)=", &rent);
-
+  
   if (!memcmp(part, "KEY_PRESS", 9)) {
     iVal = parseChar(&rent);
     fs_event(devKeyBoard->ino_, EV_KEYDW, iVal);
     fs_event(devKeyBoard->ino_, EV_KEYUP, iVal);
     printf("  ..] KEY %x (%c)\n", iVal, iVal);
-  } else
+  } else if (!memcmp(part, "TIMEOUT", 7)) {
+    assert (kSYS.processes_.count_ == 0);
+    return;
+  } else {
     assert(0);
+  }
 
   assert (kCPU.lockCounter_ == 0); /* No throw when locked. */
   if (kCPU.current_)
@@ -234,11 +249,17 @@ void callHdw (char *buf)
 }
 
 
+int stops[] = { 3, 2, 3, 1 };
+int sp = 0;
+int cntSck = 2; 
+int timer = 0;
+int nextHdw = -1;
+char bufHdw[128];
+char *part; 
+
 /* ----------------------------------------------------------------------- */
 int main_jmp_loop()
 {
-  char buf[128];
-  char *part;
   int idx;
   ++main_count;
   idx = setjmp(cpuJmp[main_count]);
@@ -251,56 +272,52 @@ int main_jmp_loop()
 
   assert (kCPU.lockCounter_ == 0); /* No throw when locked. */
 
-  if (idx == 5)
+  if (idx == 5) {
     assert (kCPU.current_ != NULL);
-
-  if (idx == 2) /* WAKEUP */
+  } else  if (idx == 2) {/* WAKEUP */
+    assert (main_count >= 0);
     return 0;
-
-  if (idx == 3) { /* BLOCKED */
+  } else if (idx == 3) { /* BLOCKED */
     sched_stop(kSYS.scheduler_, kCPU.current_, SCHED_BLOCKED);
     sched_next(kSYS.scheduler_);
   }
 
-  for (;;) {
-    part = fgets(buf, 128, progFp[0][0]);
 
-    if (part == NULL) {
-      printf("END OF Hdw FILE\n");
-      return 0;
-    } else if (buf[0] == '#' || buf[0] == ' ' || buf[0] == '\0' || buf[0] == '\n')
-      continue;
-
-    break;
+  if (cntSck <= 0 && kCPU.current_ != NULL) {
+    sp = (sp + 1) % 4;
+    cntSck = stops[sp];
+    assert(idx != 1);
+    /* assert (kCPU.state_ == KST_USERSP); */
+    callSys ();
   }
 
-  switch (buf[0]) {
-  case 'S':
-    cpu_sched_ticks();
-    break;
+  if (nextHdw < timer) {
+    for (;;) {
+      part = fgets(bufHdw, 128, progFp[0][0]);
+      if (part == NULL) {
+        printf("END OF Hdw FILE\n");
+        return 0;
+      } else if (bufHdw[0] == '#' || bufHdw[0] == ' ' || bufHdw[0] == '\0' || bufHdw[0] == '\n') {
+        continue;
+      } else {
+        nextHdw = strtol(bufHdw, &part, 10);
+        break;
+      }
+    }
+  }
 
-  case 'C':
-    assert (idx != 1);
-    /* assert (kCPU.state_ == KST_USERSP); */
-    assert (kCPU.current_ != NULL);
-    callSys ();
-    break;
-
-  case 'H':
-    callHdw (buf);
-    break;
-
-  case 'T':
-    assert (main_count == 0);
+  if (timer >= nextHdw) {
+    nextHdw = -1;
+    callHdw (part);
+    // TOD0 Print all processes
+    display_tasks();
     kernel_sweep();
     return 0;
-
-  case 't':
-    assert (main_count == buf[1] - '0');
-    kernel_sweep();
-    longjmp(cpuJmp[0], 2);
   }
 
+  --cntSck;
+  ++timer;
+  cpu_sched_ticks();
   assert (0);
   return -1;
 }
@@ -315,6 +332,13 @@ int testCase (const char *dir)
   char tmp[120];
 
   main_count = -1;
+
+  sp = 0;
+  cntSck = 2; 
+  timer = 0;
+  nextHdw = -1;
+  memset(bufHdw, 0, 128);
+
 
   for (idx = 0; idx < 15; ++idx)
     for (th = 0; th < 15; ++th)
