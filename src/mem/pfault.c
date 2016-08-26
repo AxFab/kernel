@@ -24,8 +24,8 @@
 #include <smkos/kstruct/fs.h>
 #include <smkos/kstruct/map.h>
 #include <smkos/kstruct/task.h>
+#include <signal.h>
 
-#define SIGSEV 13
 
 #define AD_USERSP 1
 #define AD_UNUSED -1
@@ -131,9 +131,9 @@ int page_fault (size_t address, int cause)
     }
 
     if (address < mspace->base_ || address >= mspace->limit_)
-      return sched_signal(SIGSEV, address, __AT__);
+      return sched_signal(SIGSEGV, address, __AT__);
   } else if (userspace)
-    return sched_signal(SIGSEV, address, __AT__);
+    return sched_signal(SIGSEGV, address, __AT__);
 
   assert(kCPU.lockCounter_ == 0);
   assert(mspace != NULL);
@@ -142,7 +142,7 @@ int page_fault (size_t address, int cause)
   assert (POW2(mtype));
 
   if (area == NULL)
-    return sched_signal(SIGSEV, address, __AT__);
+    return sched_signal(SIGSEGV, address, __AT__);
 
   switch (mtype) {
   case VMA_HEAP:

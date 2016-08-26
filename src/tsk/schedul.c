@@ -23,6 +23,7 @@
 #include <smkos/kstruct/map.h>
 #include <smkos/kstruct/task.h>
 #include <smkos/sync.h>
+#include <bits/signum.h>
 
 /* SCHEDULER
   * The smoke OS scheduler is a customized round-robin based algorithm.
@@ -43,6 +44,47 @@
   * @note To read or update schNext_ value we need to lock on schLock_.
   */
 
+/* ----------------------------------------------------------------------- */
+const char* sig_brief[] = {
+  "No Signal",
+  "Hangup",
+  "Interrupt",
+  "Quit",
+  "Illegal instruction",
+  "Trace trap",
+  "Abort",
+  "BUS error",
+  "Floating-point exception",
+  "Kill, unblockable",
+  "User-defined signal 1",
+  "Segmentation violation",
+  "User-defined signal 2",
+  "Broken pipe",
+  "Alarm clock",
+  "Termination",
+  "Stack fault",
+  "Child status has changed",
+  "Continue",
+  "Stop, unblockable",
+  "Keyboard stop",
+  "Background read from tty",
+  "Background write to tty",
+  "Urgent condition on socket",
+  "CPU limit exceeded",
+  "File size limit exceeded",
+  "Virtual alarm clock",
+  "Profiling alarm clock",
+  "Window size change",
+  "Pollable event occurred",
+  "Power failure restart",
+  "Bad system call",
+};
+
+const char *sigstr(int sig) {
+  if (sig < 0 || sig >= (int)(sizeof(sig_brief) / sizeof(char*)))
+    return "Unknow signal";
+  return sig_brief[sig];
+};
 
 /* ----------------------------------------------------------------------- */
 /** Thread a signal */
@@ -52,10 +94,12 @@ int sched_signal (int raise, size_t data, const char *at)
   kProcess_t *process;
 
   if (kCPU.current_ == NULL) {
-    kpanic ("Kernel trigger an exception ; signal: %d (%x) at %s.\n", raise, data, at);
+    kpanic ("Kernel trigger an exception ; signal: %d - %s (%x) at %s.\n", 
+      raise, sigstr(raise), data, at);
   } else {
     process = kCPU.current_->process_;
-    kprintf ("\033[31mProcess %d failed\033[0m: %d (%x) at %s.\n", kCPU.current_->process_->pid_, raise, data, at);
+    kprintf ("\033[31mProcess %d failed\033[0m: %d - %s (%x) at %s.\n", 
+      kCPU.current_->process_->pid_, raise, sigstr(raise), data, at);
     kstacktrace(12);
     area_display(&process->mspace_);
     err = sched_stop (kSYS.scheduler_, kCPU.current_, SCHED_ZOMBIE);
