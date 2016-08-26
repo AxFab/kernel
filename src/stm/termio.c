@@ -29,6 +29,7 @@
 #define _ESC 0x1B
 #define _EOL '\n'
 
+kInode_t *search_child2(const char *name, kInode_t *dir);
 /* ----------------------------------------------------------------------- */
 int kwrite_tty(const void *m, int lg);
 int kwrite_pipe(const void *m, int lg);
@@ -386,7 +387,7 @@ int kwrite_pipe (const void *m, int lg)
 void event_pipe(int type, int value)
 {
 
-  kInode_t* ino = search_child(".in", sysOut);
+  kInode_t* ino = search_child2(".in", sysOut);
 
   switch (type) {
   case EV_KEYDW:
@@ -448,7 +449,7 @@ void clean_subsys()
 
 void kwrite(void* buf, int lg) {
   if (sysOut != NULL) {
-    kInode_t* ino = search_child(".out", sysOut);
+    kInode_t* ino = search_child2(".out", sysOut);
     fs_pipe_write(ino, buf, lg);
     term_write(sysLogTty->term_);
   } else {

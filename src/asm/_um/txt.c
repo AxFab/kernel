@@ -6,9 +6,9 @@
 int kwrite_tty(const void *m, int lg)
 {
   if (lg < 0)
-    return printf ("%s", (const void*)m);
+    return printf ("%s", (const char*)m);
   else
-    return fwrite((const void*)m, lg, 1, stdout);
+    return fwrite((const char*)m, lg, 1, stdout);
 }
 
 

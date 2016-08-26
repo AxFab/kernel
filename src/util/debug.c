@@ -125,10 +125,10 @@ void kdump (void *ptr, int lg)
   int i;
 
   while (lg > 0) {
-    kprintf ("0x%8x  ", (unsigned int)ptr);
+    kprintf ("0x%8zx  ", (size_t)ptr);
 
     for (i = 0; i < 16; ++i)
-      kprintf (" %02x", ((uint8_t *)ptr)[i]);
+      kprintf (" %02hhx", ((uint8_t *)ptr)[i]);
 
     kprintf ("  ");
 

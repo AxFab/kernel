@@ -287,7 +287,7 @@ void sys_exit_do (char *str, char **rent)
 /* ----------------------------------------------------------------------- */
 void sys_start_save (char *snBuf, int snLg, const char *name, size_t entry, size_t param, int p4, int p5, int ret)
 {
-  snprintf (snBuf, snLg, "sys_start (%p:\"%s\", %x, %u) = %d", name, name, entry, param, ret);
+  snprintf (snBuf, snLg, "sys_start (%p:\"%s\", %zx, %zu) = %d", name, name, entry, param, ret);
 }
 
 void sys_start_do (char *str, char **rent)
@@ -349,7 +349,7 @@ void sys_mmap_save (char *snBuf, int snLg, int fd, size_t address, size_t length
   if (resx != NULL)
     ino = resx->ino_->name_;
 
-  snprintf (snBuf, snLg, "sys_mmap (%d:%s, 0x%x, 0x%x, 0x%x, 0x%x) = 0x%x", fd, ino, address, length, offset, flags, ret);
+  snprintf (snBuf, snLg, "sys_mmap (%d:%s, 0x%zx, 0x%zx, 0x%zx, 0x%x) = 0x%zx", fd, ino, address, length, offset, flags, ret);
 }
 
 void sys_mmap_do (char *str, char **rent)

@@ -30,15 +30,15 @@
 static int main_count = -1;
 static jmp_buf cpuJmp[16];
 
-#define assert(co) assert_(co, #co, __AT__)
 
-static inline void assert_(int co, const char *ex, const char *at) 
-{
-  if (!co) {
-    printf("Assertion at %s: %s\n", at, ex);
-    exit(-1);
-  }
-}
+// #define assert(co) assert_(co, #co, __AT__)
+// static inline void assert_(int co, const char *ex, const char *at) 
+// {
+//   if (!co) {
+//     printf("Assertion at %s: %s\n", at, ex);
+//     exit(-1);
+//   }
+// }
 
 void BMP_sync (kInode_t *ino);
 void display_tasks();
@@ -138,14 +138,14 @@ void cpu_start_scheduler()
 
 void cpu_wait()
 {
-  printf ("  %2d.%02d] is waiting...\n", kCPU.current_->process_->pid_, kCPU.current_->paramEntry_ >> 24);
+  printf ("  %2d.%02d] is waiting...\n", kCPU.current_->process_->pid_, (int)(kCPU.current_->paramEntry_ >> 24));
   sched_stop(kSYS.scheduler_, kCPU.current_, SCHED_BLOCKED);
   main_jmp_loop();
 }
 
 void log_sys(const char *sbuf)
 {
-  printf ("  %2d.%02d] %s\n", kCPU.current_->process_->pid_, (kCPU.current_->paramEntry_ >> 24), sbuf);
+  printf ("  %2d.%02d] %s\n", kCPU.current_->process_->pid_, (int)(kCPU.current_->paramEntry_ >> 24), sbuf);
 }
 
 

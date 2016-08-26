@@ -4,7 +4,7 @@
 void fixture_llist(Suite*);
 void fixture_bbtree(Suite*);
 void fixture_fifo(Suite*);
-
+void fixture_vfs(Suite *s);
 
 int main (int argc, char** argv) {
   Suite* suite = suite_create ("Kernel unit tests");
@@ -12,6 +12,7 @@ int main (int argc, char** argv) {
   fixture_llist(suite);
   fixture_bbtree(suite);
   fixture_fifo(suite);
+  fixture_vfs(suite);
   
   SRunner* runner = srunner_create(suite);
   if (argc > 1) {

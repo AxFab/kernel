@@ -9,7 +9,8 @@
 #include <smkos/file.h>
 #include <smkos/fcntl.h>
 
-kInode_t *search_child(const char *name, kInode_t *dir);
+kInode_t *search_child2(const char *name, kInode_t *dir);
+void term_write (kTerm_t *term);
 
 ssize_t stream_read(kInode_t* ino, void *data, size_t lg, off_t off, int flags)
 {
@@ -20,7 +21,7 @@ ssize_t stream_read(kInode_t* ino, void *data, size_t lg, off_t off, int flags)
     return fs_reg_read(ino, data, lg, off);
 
   case S_IFTTY:
-    ino = search_child(".in", ino);
+    ino = search_child2(".in", ino);
     assert(ino != NULL);
     bytes = fs_pipe_read(ino, data, lg);
     return bytes;
@@ -39,6 +40,7 @@ ssize_t stream_read(kInode_t* ino, void *data, size_t lg, off_t off, int flags)
   }
 }
 
+
 ssize_t stream_write(kInode_t* ino, const void *data, size_t lg, off_t off, int flags)
 {
   ssize_t bytes;
@@ -49,7 +51,7 @@ ssize_t stream_write(kInode_t* ino, const void *data, size_t lg, off_t off, int 
     return -1;
 
   case S_IFTTY:
-    ino = search_child(".out", ino);
+    ino = search_child2(".out", ino);
     assert(ino != NULL);
     bytes = fs_pipe_write(ino, data, lg);
     term_write(NULL);

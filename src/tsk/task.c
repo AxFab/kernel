@@ -460,7 +460,7 @@ int process_close_resx(kProcess_t *process, int fd)
   klock(&process->lock_);
   resx = bb_search (&process->resxTree_, fd, kResx_t, fdNd_);
   if (RXp) kprintf(" \033[36mResxR<%d,%d,%x> - \033[0m", process->pid_, fd, resx);
-  kstacktrace(12);
+  // kstacktrace(12);
   if (resx == NULL) {
     kunlock(&process->lock_);
     return EBADF;

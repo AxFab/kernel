@@ -1,13 +1,9 @@
 #ifndef _SKC_FIFO_H
 #define _SKC_FIFO_H 1
 
+#include <cdefs/macros.h>
 #include <cdefs/stddef.h>
 #include <assert.h>
-
-#ifndef MIN
-# define MIN(a,b) ((a)<(b)?(a):(b))
-# define MAX(a,b) ((a)>(b)?(a):(b))
-#endif
 
 #define FP_NOBLOCK (1 << 0)
 #define FP_EOL (1 << 1)

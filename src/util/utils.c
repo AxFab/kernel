@@ -11,6 +11,13 @@ int *_geterrno()
   return &kCPU.errno_;
 }
 
+#undef __seterrno 
+int __seterrno(int err)
+{
+  kCPU.errno_ = err;
+  return &kCPU.errno_;
+}
+
 
 /* ----------------------------------------------------------------------- */
 int *__lockcounter()
@@ -106,6 +113,12 @@ void __assert_do (int as, const char *ex, const char *at)
     kpanic("Assertion: %s at %s.\n", ex, at);
 }
 
+void __assert_fail(const char *expr, const char *file, int line,
+                           const char *func) 
+{
+  kpanic("Assertion: %s at %s:%d, %s.\n", expr, file, line, func);
+}
+
 
 /* Terminate a function in case of stack overflow */
 void __stack_chk_fail(void)
@@ -114,7 +127,10 @@ void __stack_chk_fail(void)
 }
 
 
-
 /* ----------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
 
+void *tsk_pwd() {
+  return NULL;
+  
+}
