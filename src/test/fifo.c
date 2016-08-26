@@ -6,7 +6,7 @@ START_TEST(test_matrix) {
   char buf[6];
   char tmp[6];
   const char *abc = "abcdef";
-  const char *ABC = "ABCDEF";
+  // const char *ABC = "ABCDEF";
   fifo_t *fifo = fifo_init(&buf, 6);
 
   memcpy(buf, abc, 6);

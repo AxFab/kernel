@@ -102,6 +102,7 @@ struct rwlock
   const char *at_;
 };
 
+#define rw_wrlock(l) rw_wrlock_(l, __AT__)
 
 static inline void rw_wrlock_(rwlock_t *lock, const char *at)
 {

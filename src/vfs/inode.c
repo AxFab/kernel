@@ -45,7 +45,7 @@
   * @bug Think about case-sensitive file systems.
   * @note The directory inode must be locked, and parameters are not checked.
   */
-kInode_t *search_child(const char *name, kInode_t *dir)
+kInode_t *search_child2(const char *name, kInode_t *dir)
 {
   int cmp;
   int err;
@@ -163,7 +163,7 @@ static kInode_t *lookfor_child_inode(const char *name, kInode_t *dir, int flags,
   }
 
   // Search child node
-  dir = search_child (name, dir);
+  dir = search_child2 (name, dir);
   return dir;
 }
 
@@ -178,7 +178,7 @@ static kInode_t *lookfor_child_inode(const char *name, kInode_t *dir, int flags,
   * replace by 'root'.
   * @retval      ENOTDIR         No write access to the parent directory.
   * @retval      -> follow_symlink().
-  * @retval      -> search_child().
+  * @retval      -> search_child2().
   */
 kInode_t *search_inode (const char *path, kInode_t *dir, int flags, int *links)
 {

@@ -171,3 +171,8 @@ void clean_subsys();
 void wait_for(struct mutex * mutex, kWaitReason_e reason, struct llhead* list);
 void kstacktrace(size_t MaxFrames);
 
+
+
+ssize_t stream_write(kInode_t* ino, const void *data, size_t lg, off_t off, int flags);
+ssize_t stream_read(kInode_t* ino, void *data, size_t lg, off_t off, int flags);
+
