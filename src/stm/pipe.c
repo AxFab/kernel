@@ -153,9 +153,11 @@ ssize_t fs_pipe_write(kInode_t *ino, const void *buf, size_t lg)
   void *address;
   kPipe_t *pipe = ino->pipe_;
   kWait_t *wait;
+  int nl = 0;
 
   assert (S_ISFIFO(ino->stat_.mode_) || S_ISCHR(ino->stat_.mode_));
 
+  nl = (int)memchr((char*)buf, '\n', lg);
   /* Loop inside the buffer */
   if (!pipe)
     pipe = fs_create_pipe (ino);
@@ -194,11 +196,13 @@ ssize_t fs_pipe_write(kInode_t *ino, const void *buf, size_t lg)
   }
 
   // IF BLOCKED !
-  ll_for_each(&pipe->waiting_, wait, kWait_t, lnd_) {
-    if (wait->reason_ == WT_PIPE_READ) {
-      wait->reason_ = WT_HANDLED;
-      sched_insert(kSYS.scheduler_, wait->thread_);
-      // ll_remove(&pipe->waiting_, &wait->lnd_);
+  if (nl) {
+    ll_for_each(&pipe->waiting_, wait, kWait_t, lnd_) {
+      if (wait->reason_ == WT_PIPE_READ) {
+        wait->reason_ = WT_HANDLED;
+        sched_insert(kSYS.scheduler_, wait->thread_);
+        // ll_remove(&pipe->waiting_, &wait->lnd_);
+      }
     }
   }
 

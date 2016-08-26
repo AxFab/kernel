@@ -27,9 +27,9 @@
 
 /* SCHEDULER
   * The smoke OS scheduler is a customized round-robin based algorithm.
-  * The round robin is build from a circular linked list that.
+  * The round robin is build from a circular linked list that
   * contains all thread ready to be executed. A semaphore hold the number
-  * of available thread, that each CPU may aquire.
+  * of available thread, that each CPU may acquire.
   * Each CPU turn around the list and execute the first suitable task.
   * This algorithm in itself is really far from optimal, so we have several
   * system that intend to optimized it.
@@ -39,8 +39,8 @@
   * A task will gain weight if the task need all it's quantum to finish and
   * loose if IO bounded. Meaning that CPU bounded task will have large amount
   * of time to complete their task and other will have just what they need.
-  * Second, if IO bounded task have shorter elapsed time to execute, they are
-  * prioritary on other tasks.
+  * Second, if IO bounded task have shorter elapsed time to execute, they have
+  * priority on other tasks.
   * @note To read or update schNext_ value we need to lock on schLock_.
   */
 

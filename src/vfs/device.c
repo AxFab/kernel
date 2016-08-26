@@ -205,6 +205,10 @@ int unmount_device(kDevice_t *dev)
   assert (kCPU.lockCounter_ == 1);
   assert (kislocked(&dev->ino_->lock_));
 
+  if (dev->ino_->child_ != NULL) {
+    return __seterrno(EBUSY);
+  }
+
   if (open_fs(dev->ino_))
     return __geterrno();
 
@@ -270,7 +274,7 @@ void unmount_alls ()
       klock(&dev->ino_->lock_);
 
       if (dev->usage_ == 0 && dev->ino_->readers_ == 0) {
-        unmount_device(dev);
+        if (unmount_device(dev) == 0)
         ++deleted;
       } else
         kunlock(&dev->ino_->lock_);

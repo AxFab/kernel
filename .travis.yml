@@ -1,0 +1,9 @@
+# TravisCI configuration file
+
+language: c
+
+# install: make get-deps
+
+script: make target=x86-pc-smkos kImage
+
+

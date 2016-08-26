@@ -17,28 +17,31 @@
  *
  *   - - - - - - - - - - - - - - -
  *
- *      Usermode CPU wrapper implementation.
+ *      Macro definitions.
  */
+#ifndef _CDEFS_MACROS_H
+#define _CDEFS_MACROS_H 1
 
-int testCase (const char *dir);
+#define _Kb_ (1024L)
+#define _Mb_ (1024L*_Kb_)
+#define _Gb_ (1024LL*_Mb_)
+#define _Tb_ (1024LL*_Gb_)
+#define _Pb_ (1024LL*_Tb_)
+#define _Eb_ (1024LL*_Pb_)
+
+#define ALIGN_UP(v,a)      (((v)+(a-1))&(~(a-1)))
+#define ALIGN_DW(v,a)      ((v)&(~(a-1)))
+
+#define MIN(a,b)    ((a)<=(b)?(a):(b))
+#define MAX(a,b)    ((a)>=(b)?(a):(b))
+#define POW2(v)   ((v) != 0 && ((v) & ((v)-1)) == 0)
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define __AT__  __FILE__ ":" TOSTRING(__LINE__)
+
+#define XOR_32_TO_8(v)  (((v) & 0xff) ^ (((v) >> 8) & 0xff) ^ (((v) >> 16) & 0xff) ^ (((v) >> 24) & 0xff))
 
 
-#include <stdlib.h>
 
-/* At this point we leave CRTK. */
-int main (int argc, char** argv)
-{
-  int until = 0;
-  until = until || testCase ("fs1");
-  until = until || testCase ("base");
-  // until = until || testCase ("mthread");
-  until = until || testCase ("mmap");
-  until = until || testCase ("base");
-  until = until || testCase ("shell");
-
-  return until;
-}
-
-
-/* ----------------------------------------------------------------------- */
-/* ----------------------------------------------------------------------- */
+#endif  /* _CDEFS_MACROS_H */

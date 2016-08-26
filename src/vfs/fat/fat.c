@@ -313,24 +313,24 @@ int FAT_mount (kInode_t *dev, const char *name)
     return EBADF;
   }
 
-	mount->CountofClusters = mount->DataSec / bpb->BPB_SecPerClus;
-	mount->FATType = (mount->CountofClusters < 4085 ? FAT12 : (mount->CountofClusters < 65525 ? FAT16 : FAT32));
-	if (mount->FATType == FAT16) {
-		mount->RootEntry = bpb->BPB_ResvdSecCnt + (bpb->BPB_NumFATs * bpb->BPB_FATSz16);
-	}
-	else {
-		mount->RootEntry = ((bpb32->BPB_RootClus - 2) * bpb->BPB_SecPerClus) + mount->FirstDataSector;
-	}
-	mount->SecPerClus = bpb->BPB_SecPerClus;
-	mount->ResvdSecCnt = bpb->BPB_ResvdSecCnt;
-	mount->BytsPerSec = bpb->BPB_BytsPerSec;
+  mount->CountofClusters = mount->DataSec / bpb->BPB_SecPerClus;
+  mount->FATType = (mount->CountofClusters < 4085 ? FAT12 : (mount->CountofClusters < 65525 ? FAT16 : FAT32));
+  if (mount->FATType == FAT16) {
+    mount->RootEntry = bpb->BPB_ResvdSecCnt + (bpb->BPB_NumFATs * bpb->BPB_FATSz16);
+  }
+  else {
+    mount->RootEntry = ((bpb32->BPB_RootClus - 2) * bpb->BPB_SecPerClus) + mount->FirstDataSector;
+  }
+  mount->SecPerClus = bpb->BPB_SecPerClus;
+  mount->ResvdSecCnt = bpb->BPB_ResvdSecCnt;
+  mount->BytsPerSec = bpb->BPB_BytsPerSec;
 
-	memcpy (mount->name, "UNNAMED", 48); // ERR
-	mount->totalSize = (long long)mount->DataSec * 512;
-	mount->usedSpace = 0;
-	mount->freeSpace = 0;
+  memcpy (mount->name, "UNNAMED", 48); // ERR
+  mount->totalSize = (long long)mount->DataSec * 512;
+  mount->usedSpace = 0;
+  mount->freeSpace = 0;
 
-	// kprintf ("DEBUG: FAT - byte per sector: %d\n", bpb->BPB_BytsPerSec);
+  // kprintf ("DEBUG: FAT - byte per sector: %d\n", bpb->BPB_BytsPerSec);
   memset(&stat, 0, sizeof(stat));
   stat.atime_ = now;
   stat.ctime_ = now;
