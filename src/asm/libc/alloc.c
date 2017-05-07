@@ -552,6 +552,24 @@ void *malloc_(size_t length)
 }
 
 
+void *calloc(size_t size, size_t nbr)
+{
+  void *ptr;
+  size_t length = ALIGN_UP(size, 8) * nbr;
+  struct SMK_HeapArea *area;
+  ll_for_each (&gHeapArea, area, struct SMK_HeapArea, node_) {
+    ptr = malloc_r(area, length);
+
+    if (ptr) {
+      memset(ptr, 0, length);
+      return ptr;
+    }
+  }
+
+  return NULL;
+}
+
+
 /* ----------------------------------------------------------------------- */
 /** @brief Free dynamic memory
   * @return The free() function returns no value.

@@ -19,7 +19,7 @@
  *
  *      Self-Balanced Bianry tree implementation.
  */
-#ifndef _SKC_BBTREE_H 
+#ifndef _SKC_BBTREE_H
 #define _SKC_BBTREE_H  1
 
 #include <cdefs/stddef.h>
@@ -37,6 +37,10 @@
 #define bb_search(t,v,s,m)    (s*)itemof(bb_search_((t)->root_,(v),RECURS_LMT),s,m)
 #define bb_search_le(t,v,s,m) (s*)itemof(bb_search_le_((t)->root_,(v),RECURS_LMT),s,m)
 
+#define bb_search_less(t,v,s,m) (s*)itemof(bb_search_le_((t)->root_,(v),RECURS_LMT),s,m)
+#define bb_full_left(n,s,m) (s*)itemof(bb_full_left_(n),s,m)
+#define bb_next(n,s,m) (s*)itemof(bb_next_(n),s,m)
+#define bb_previous(n,s,m) (s*)itemof(bb_previous_(n),s,m)
 
 /* ----------------------------------------------------------------------- */
 typedef struct bbtree bbtree_t;
@@ -51,6 +55,7 @@ struct bbtree {
 
 /* BBTree (self-balancing binary tree) node */
 struct bbnode {
+  bbnode_t *parent_;
   bbnode_t *left_;
   bbnode_t *right_;
   size_t value_;
@@ -58,7 +63,7 @@ struct bbnode {
 };
 
 #define INIT_BBTREE     {NULL,0}
-#define INIT_BBNODE(n)  {NULL,NULL,n,0}
+#define INIT_BBNODE(n)  {NULL,NULL,NULL,n,0}
 
 
 
@@ -79,8 +84,13 @@ static inline bbnode_t *bb_skew(bbnode_t *node)
     return node;
 
   temp = node;
+  node->parent_ = temp;
+  temp->parent_ = node;
   node = node->left_;
   temp->left_ = node->right_;
+  if (node->right_ != NULL) {
+    node->right_->parent_ = temp;
+  }
   node->right_ = temp;
   return node;
 }
@@ -105,8 +115,14 @@ static inline bbnode_t *bb_split(bbnode_t *node)
     return node;
 
   temp = node;
+  node->parent_ = temp;
+  temp->parent_ = node;
   node = node->right_;
   temp->right_ = node->left_;
+  temp->left_ = node->right_;
+  if (node->left_ != NULL) {
+    node->left_->parent_ = temp;
+  }
   node->left_ = temp;
   ++node->level_;
   return node;
@@ -119,6 +135,7 @@ static inline bbnode_t *bb_insert_(bbnode_t *root, bbnode_t *node, int limit)
 
   if (root == NULL) {
     node->level_ = 1;
+    node->parent_ = NULL;
     node->right_ = NULL;
     node->left_ = NULL;
     return node;
@@ -126,8 +143,10 @@ static inline bbnode_t *bb_insert_(bbnode_t *root, bbnode_t *node, int limit)
 
   if (node->value_ < root->value_) {
     root->left_ = bb_insert_ (root->left_, node, limit - 1);
+    root->left_->parent_ = root;
   } else { /* if (node->value_ > root->value_) { */
     root->right_ = bb_insert_ (root->right_, node, limit - 1);
+    root->right_->parent_ = root;
   }
 
   root = bb_skew(root);
@@ -186,6 +205,13 @@ static inline bbnode_t *bb_remove_(bbtree_t *tree, bbnode_t *node, size_t rmVal,
     }
 
     node = rplc;
+  }
+
+  if (node->left_ != NULL) {
+    node->left_->parent_ = node;
+  }
+  if (node->right_ != NULL) {
+    node->right_->parent_ = node;
   }
 
   /* Rebalance the tree. Decrease the level of all nodes in this level if
@@ -275,6 +301,68 @@ static inline void bb_remove(bbtree_t *tree, bbnode_t *node)
 {
   tree->root_ = bb_remove_(tree, tree->root_, node->value_, RECURS_LMT);
   tree->count_--;
+}
+
+/* ----------------------------------------------------------------------- */
+
+static inline void *bb_full_left_(bbnode_t *root)
+{
+  bbnode_t *node = root;
+  if (node == NULL) {
+    return NULL;
+  }
+
+  while (node->left_ != NULL) {
+    node = node->left_;
+  }
+
+  return node;
+}
+
+static inline void *bb_full_right_(bbnode_t *root)
+{
+  bbnode_t *node = root;
+  if (node == NULL) {
+    return NULL;
+  }
+
+  while (node->left_ != NULL) {
+    node = node->left_;
+  }
+
+  return node;
+}
+
+static inline void *bb_previous_(bbnode_t *root)
+{
+  bbnode_t *node = root;
+  if (root->left_ != NULL) {
+    return bb_full_right_(root->left_);
+  }
+
+  for (; node->parent_ !=NULL ; node = node->parent_) {
+    if (node->parent_->left_ != node) {
+      return bb_full_right_(node->parent_);
+    }
+  }
+
+  return NULL;
+}
+
+static inline void *bb_next_(bbnode_t *root)
+{
+  bbnode_t *node = root;
+  if (root->right_ != NULL) {
+    return bb_full_left_(root->right_);
+  }
+
+  for (; node->parent_ !=NULL ; node = node->parent_) {
+    if (node->parent_->right_ != node) {
+      return bb_full_left_(node->parent_);
+    }
+  }
+
+  return NULL;
 }
 
 

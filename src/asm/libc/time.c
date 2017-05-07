@@ -242,11 +242,6 @@ char *asctime(const struct tm *restrict date)
   return asctime_r(date, buf);
 }
 
-time_t mktime(struct tm *tm)
-{
-  return timegm(tm);
-}
-
 time_t timegm(struct tm *tm)
 {
   struct tm datetime;
@@ -260,5 +255,10 @@ time_t timegm(struct tm *tm)
   *tm = datetime;
   tm->tm_isdst = 0;
   return t;
+}
+
+time_t mktime(struct tm *tm)
+{
+  return timegm(tm);
 }
 

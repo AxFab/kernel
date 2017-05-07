@@ -29,6 +29,7 @@
 #include <smkos/kstruct/user.h>
 #include <smkos/file.h>
 #include <smkos/fcntl.h>
+#include <string.h>
 
 int sys_check_pathname(const char *path)
 {

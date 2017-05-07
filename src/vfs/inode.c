@@ -24,6 +24,7 @@
 #include <smkos/kstruct/fs.h>
 #include <smkos/kstruct/task.h>
 #include <smkos/kstruct/user.h>
+#include <string.h>
 
 /* INODES
   * The inode module manage files entry.

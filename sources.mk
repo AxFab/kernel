@@ -37,9 +37,12 @@ mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/svga/*.c)
 
 
 # F L A G S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-CFLAGS += -Wall -Wextra -Wno-unused-parameter 
+CFLAGS += -Wall -Wextra -Wno-unused-parameter -std=c11
 CFLAGS += -D_DATE_=\"'$(DATE)'\" -D_OSNAME_=\"'$(LINUX)'\"
 CFLAGS += -D_GITH_=\"'$(GIT)'\" -D_VTAG_=\"'$(VERSION)'\"
+CFLAGS += -nostdinc -isystem $(topdir)/../skc/include
+CFLAGS += -isystem $(topdir)/../skc/include/asm/x86-gcc
+CFLAGS += -D__SKC_PARAM -D__C11 -D__REENT -D__SECURED_2 -D_NO_SYS
 
 ut_LFLAGS += --coverage
 ut_LIBS += `pkg-config --libs check`
@@ -52,7 +55,7 @@ kum_CFLAGS += -ggdb3 --coverage $(CFLAGS) -D_FS -D_FS_UM
 kum_CFLAGS += -I $(topdir)/include
 kum_CFLAGS += -I $(topdir)/include/asm/_um
 
-krn_$(target_arch)_LFLAGS += -nostdlib 
+krn_$(target_arch)_LFLAGS += -nostdlib
 krn_$(target_arch)_CFLAGS += $(CFLAGS) -ggdb3
 krn_$(target_arch)_CFLAGS += -I $(topdir)/include
 krn_$(target_arch)_CFLAGS += -I $(topdir)/include/asm/_$(target_arch)
@@ -94,5 +97,5 @@ $(eval $(call kimg,kImage,krn_$(target_arch))) # link kernel image
 $(eval $(call crt,crtk)) # compile CRTK
 
 DV_CHECK += $(bindir)/ut
-DV_UTILS += $(bindir)/kum  
+DV_UTILS += $(bindir)/kum
 # $(gendir)/kImage

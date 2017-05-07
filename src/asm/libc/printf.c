@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <limits.h>
 #include <smkos/file.h>
 
 /* All of those methods are bind over vfprintf
@@ -9,12 +10,6 @@
  */
 int vfprintf (FILE *fp, const char *str, va_list ap);
 
-
-#undef INT_MAX
-#define INT_MAX ((int)2147483647)
-
-#undef INT_MIN
-#define INT_MIN ((int)-INT_MAX - 1)
 
 // ---------------------------------------------------------------------------
 /** Write on a string streaming */

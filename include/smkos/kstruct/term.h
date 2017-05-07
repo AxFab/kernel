@@ -51,3 +51,16 @@ struct kTerm {
   void (*paint) (kTerm_t *term, kLine_t *style, int ch, int row, int col);
   void (*clear)(kTerm_t *term);
 };
+
+
+
+struct bitmap_font {
+  int width_;
+  int height_;
+  int dispx_;
+  int dispy_;
+  int glyph_size_;
+  const uint8_t *const glyph_;
+};
+
+extern struct bitmap_font *fontbmp;

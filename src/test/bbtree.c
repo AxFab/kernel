@@ -8,7 +8,7 @@ typedef struct item {
   bbnode_t node_;
 }  item_t;
 
-#define INIT_ITEM(i, n) {n, INIT_BBNODE(i)}
+#define INIT_ITEM(i, n) {(char*)n, INIT_BBNODE(i)}
 
 void bbnode_print(bbnode_t *node, int lvl) {
   int i;
@@ -22,7 +22,7 @@ void bbnode_print(bbnode_t *node, int lvl) {
 }
 
 void bbtree_print(bbtree_t *tree) {
-  bbnode_print(tree->root_, 0); 
+  bbnode_print(tree->root_, 0);
   printf("  -----\n");
 }
 

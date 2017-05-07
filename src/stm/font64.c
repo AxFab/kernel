@@ -7,8 +7,11 @@
 
 
 
-#define FONT64_PEN(t,r,c) \
-      ( 1 + (t)->width_ + ( (r - 1) * (fontH + 1) ) * (t)->width_ + c * fontW )
+#define FONT64_PEN(t,r,c,f) \
+      ( 1 + (t)->width_ + ( (r - 1) * (f->dispy_ + 1) ) * (t)->width_ + c * f->dispx_ )
+
+#define FONTBMP_PEN(t,r,c,f) \
+      ( 1 + (t)->width_ + ( (r - 1) * (f->dispy_ + 1) ) * (t)->width_ + c * f->dispx_ )
 
 // ===========================================================================
 //      Font64 - Data
@@ -77,6 +80,26 @@ uint64_t ttyFont8x8 [] = {
   0x0000661824420000, 0x0608102844420000, 0x00003C08103C0000, 0x000038080C0C0838,
   0x0010101010101010, 0x00001C103030101C, 0x000000324C000000, 0x00007E7E7E7E7E7E,
 };
+
+
+struct bitmap_font font64_8 = {
+  .width_ = 8,
+  .height_ = 8,
+  .dispx_ = 8,
+  .dispy_ = 8,
+  .glyph_size_ = 8,
+  .glyph_ = (uint8_t*)ttyFont8x8,
+};
+
+struct bitmap_font font64_6_9 = {
+  .width_ = 6,
+  .height_ = 9,
+  .dispx_ = 6,
+  .dispy_ = 9,
+  .glyph_size_ = 8,
+  .glyph_ = (uint8_t*)ttyFont6x9,
+};
+
 
 #ifndef _FONT8
 const int fontW = 6;
@@ -149,7 +172,7 @@ static void font64_draw (kTerm_t *term, int ch, kLine_t *style, int pen, int wid
   */
 void font64_paint (kTerm_t *term, kLine_t *style, int ch, int row, int col)
 {
-  int pen = FONT64_PEN(term, row, col);
+  int pen = FONT64_PEN(term, row, col, fontbmp);
   font64_draw (term, ch, style, pen, term->width_);
 
 }
@@ -159,6 +182,74 @@ void font64_paint (kTerm_t *term, kLine_t *style, int ch, int row, int col)
 /**
   */
 void font64_clean(kTerm_t *term)
+{
+  int i;
+  int lg = term->width_ * term->height_;
+
+  for (i = 0; i < lg; ++i)
+    ((uint32_t *)term->pixels_)[i] = term->bgColor_;
+}
+
+
+// ===========================================================================
+//      Bitmap font - Methods
+// ===========================================================================
+
+
+// ---------------------------------------------------------------------------
+
+static void fontbmp_draw (kTerm_t *term, int ch, kLine_t *style, int pen, int width)
+{
+  int i, j, l = 0;
+  const uint8_t *glyph = &(fontbmp->glyph_[(ch - 32) * fontbmp->glyph_size_]);
+
+  for (j = 0; j < fontbmp->height_; ++j) {
+    for (i = 0; i < fontbmp->width_; ++i) {
+      ((uint32_t *)term->pixels_)[pen + i] = ((*glyph) & (1 << l)) ? style->txColor_ : style->bgColor_;
+      if (++l >= 8) {
+        glyph++;
+        l = 0;
+      }
+    }
+    for (; i < fontbmp->dispx_; ++i) {
+      ((uint32_t *)term->pixels_)[pen + i] = style->bgColor_;
+    }
+
+    pen += width;
+  }
+  for (; j < fontbmp->dispy_; ++j) {
+    for (i = 0; i < fontbmp->dispx_; ++i) {
+      ((uint32_t *)term->pixels_)[pen + i] = style->bgColor_;
+    }
+    pen += width;
+  }
+
+  uint32_t underline = style->flags_ & 2 ? style->txColor_ : style->bgColor_;
+  for (i = 0; i < fontbmp->dispx_; ++i) {
+    ((uint32_t *)term->pixels_)[pen + i] = underline;
+  }
+}
+
+// ===========================================================================
+//      Bitmap font - Interface
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+/** Paint a text line on the frame buffer used by this terminal
+  * @return           The value is the offset of the end of line if marked
+  */
+void fontbmp_paint (kTerm_t *term, kLine_t *style, int ch, int row, int col)
+{
+  int pen = FONTBMP_PEN(term, row, col, fontbmp);
+  fontbmp_draw (term, ch, style, pen, term->width_);
+
+}
+
+
+// ---------------------------------------------------------------------------
+/**
+  */
+void fontbmp_clean(kTerm_t *term)
 {
   int i;
   int lg = term->width_ * term->height_;

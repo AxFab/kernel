@@ -2,20 +2,13 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <limits.h>
 #include <smkos/file.h>
-
 
 /* All of those methods are bind over vfscanf
  * which is implemented in another file.
  */
 int vfscanf(FILE *restrict f, const char *restrict format, va_list ap);
-
-
-#undef INT_MAX
-#define INT_MAX ((int)2147483647)
-
-#undef INT_MIN
-#define INT_MIN ((int)-INT_MAX - 1)
 
 
 // ---------------------------------------------------------------------------

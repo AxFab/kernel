@@ -40,6 +40,16 @@ void event_pipe(int type, int value);
 void font64_paint (kTerm_t *term, kLine_t *style, int ch, int row, int col);
 void font64_clean(kTerm_t *term);
 
+void fontbmp_paint (kTerm_t *term, kLine_t *style, int ch, int row, int col);
+void fontbmp_clean(kTerm_t *term);
+
+extern struct bitmap_font font_linux;
+extern struct bitmap_font font_8_15;
+extern struct bitmap_font font_6_10;
+extern struct bitmap_font font_7_13;
+extern struct bitmap_font font64_6_9;
+struct bitmap_font *fontbmp = &font_7_13;
+
 
 kSubSystem_t vgaText = {
 #ifdef _MSC_BUILD
@@ -78,13 +88,6 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
   kInode_t *inon;
   kMemArea_t *area;
   char no[10];
-#ifndef _FONT8
-  int fontW = 6;
-  int fontH = 9;
-#else
-  int fontW = 8;
-  int fontH = 8;
-#endif
   int nol = kSYS.ttyAutoInc_++;
   kTerm_t *term;
 
@@ -98,7 +101,7 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
 
   term = KALLOC(kTerm_t);
   term->txColor_ = 0xffa6a6a6; // 0xff5c5c5c;
-  term->bgColor_ = 0xff323232;
+  term->bgColor_ = 0xff181818; // 0xff323232;
 
   term->pipe_ = fs_create_pipe(ino);
   // @Todo -- This is a hugly hack to avoid blocking kwrite!
@@ -107,7 +110,7 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
   term->row_ = 1;
   term->first_ = KALLOC(kLine_t);
   term->first_->txColor_ = 0xffa6a6a6;
-  term->first_->bgColor_ = 0xff323232;
+  term->first_->bgColor_ = 0xff181818; // 0xff323232;
   term->last_ = term->first_;
   term->top_ = term->first_;
   inode_open(ino);
@@ -123,13 +126,13 @@ int term_create (kSubSystem_t *subsys, kInode_t *frame)
 
 
   term->line_ = term->width_;
-  term->colMax_ = term->line_ / fontW;
-  term->paint = font64_paint;
-  term->clear = font64_clean;
+  term->colMax_ = term->line_ / fontbmp->dispx_;
+  term->paint = fontbmp_paint;
+  term->clear = fontbmp_clean;
 
 
-  term->max_row_ = (term->height_ - 1) / (fontH + 1);
-  term->max_col_ = (term->width_ - 2) / fontW;
+  term->max_row_ = (term->height_ - 1) / (fontbmp->dispy_ + 1);
+  term->max_col_ = (term->width_ - 2) / fontbmp->dispx_;
 
   ino->subsys_ = subsys;
   inon->subsys_ = subsys;
