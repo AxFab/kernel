@@ -40,8 +40,10 @@ mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/svga/*.c)
 CFLAGS += -Wall -Wextra -Wno-unused-parameter -std=c11
 CFLAGS += -D_DATE_=\"'$(DATE)'\" -D_OSNAME_=\"'$(LINUX)'\"
 CFLAGS += -D_GITH_=\"'$(GIT)'\" -D_VTAG_=\"'$(VERSION)'\"
+
 CFLAGS += -nostdinc -isystem $(topdir)/../skc/include
-CFLAGS += -isystem $(topdir)/../skc/include/asm/x86-gcc
+CFLAGS += -isystem $(topdir)/../skc/include/asm/$(target_arch)-$(CC)
+CFLAGS += -isystem $(topdir)/../skc/include/asm/smkos
 CFLAGS += -D__SKC_PARAM -D__C11 -D__REENT -D__SECURED_2 -D_NO_SYS
 
 ut_LFLAGS += --coverage
