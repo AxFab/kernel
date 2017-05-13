@@ -3,6 +3,7 @@
 #include <smkos/kstruct/user.h>
 #include <smkos/kstruct/map.h>
 #include <smkos/drivers.h>
+#include <klib/pci.h>
 
 void kernel_info();
 void ksymbols_load (kInode_t *ino);
@@ -131,8 +132,10 @@ void kernel_sweep()
 }
 
 /* ----------------------------------------------------------------------- */
-void PCI_check_all_buses(void);
-void PCI_check_all_buses_force(void);
+int e1000_initialize(PCI_device_t *pci);
+
+#define INTEL_VEND     0x8086  // Vendor ID for Intel
+
 
 void kernel_info()
 {
@@ -143,13 +146,17 @@ void kernel_info()
   kprintf("Date: %s\n", asctime(&dateTime));
   kprintf("Cpus count: %d\n", kSYS.cpuCount_);
   for (i=0; i<kSYS.cpuCount_; ++i)
-    kprintf("  - CPU %d :: %s\n", i, kSYS._cpu[0].spec_);
-  kprintf ("Memory: ");
+    kprintf("  - CPU %d :: %s\n", i, kSYS._cpu[0].vendor_);
+  kprintf("%s\n", kSYS._cpu[0].spec_);
+  kprintf ("\nMemory: ");
   kprintf (" %s detected, ", kpsize((uintmax_t)kSYS.memMax_));
   kprintf (" %s usable, ", kpsize((uintmax_t)kSYS.pageMax_ * PAGE_SIZE));
   kprintf (" %s available\n", kpsize((uintmax_t)kSYS.pageAvailable_ * PAGE_SIZE));
 
   kprintf ("\n");
+
+  // PCI_register_driver(0x020000, INTEL_VEND, e1000_initialize);
+
   PCI_check_all_buses();
   kprintf ("\n\033[94m Greetings...\033[0m\n\n");
 }

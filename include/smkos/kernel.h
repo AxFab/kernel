@@ -97,6 +97,8 @@ struct kCpu {
   int errno_;
   const char *lastError_;
   kThread_t *current_;
+  char vendor_[16];
+  int features_[4];
   char* spec_;
   clock_t lastClock_;
   clock_t times_[KSTATES];

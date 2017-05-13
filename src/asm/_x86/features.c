@@ -174,8 +174,10 @@ int cpu_no()
 
 
 /* ----------------------------------------------------------------------- */
+
 void initialize_smp()
 {
+  int i;
   page_t apicPage;
   uint32_t eax, ebx;
   int cpu_name[5];
@@ -189,23 +191,14 @@ void initialize_smp()
   x86_InitializeFPU ();
   x86_ActiveCache();
 
+  for (i = 0; i < 4; ++i) {
+    kCPU.features_[i] = cpu_features[i];
+    // cpu_features_common[i] &= cpu_features[i];
+  }
 
-  // if (x86_FEATURES_FPU) kprintf ("  OnBoard x87 FPU\n");
-  // if (x86_FEATURES_VME) kprintf ("  Virtual 8086 mode extensions\n");
-  // if (x86_FEATURES_TSC) kprintf ("  Time Stamp Counter\n");
-  // if (x86_FEATURES_MSR) kprintf ("  Model-specific registers\n");
-  // if (x86_FEATURES_PAE) kprintf ("  Physical Address Extension\n");
-  // if (x86_FEATURES_APIC) kprintf ("  Onboard Advanced Programmable Interrupt Controller\n");
-  // if (x86_FEATURES_MMTR) kprintf ("  MMTR features\n");
-  // if (x86_FEATURES_PSE36) kprintf ("  36-bit page size extension\n");
-  // if (x86_FEATURES_MMX) kprintf ("  MMX instructions\n");
-  // if (x86_FEATURES_SSE) kprintf ("  SSE extensions\n");
-  // if (x86_FEATURES_SSE2) kprintf ("  SSE2 extensions\n");
-  // if (x86_FEATURES_HHT) kprintf ("  Hyper Threading Tech.\n");
-  // if (x86_FEATURES_TM) kprintf ("  Therm. Monitor\n");
-
+  strcpy(kCPU.vendor_, (char*)&cpu_name[1]);
   kCPU.spec_ = (char*)kalloc(512);
-  strcpy(kCPU.spec_, (char*)&cpu_name[1]);
+  strcpy(kCPU.spec_, "Features");
 
   if (x86_FEATURES_FPU)     strcat(kCPU.spec_, ", FPU");
   if (x86_FEATURES_VME)     strcat(kCPU.spec_, ", VME");
@@ -263,8 +256,7 @@ void initialize_smp()
   if (x86_FEATURES_XSAVE)   strcat(kCPU.spec_, ", XSAVE");
   if (x86_FEATURES_OSXSAVE) strcat(kCPU.spec_, ", OSXSAVE");
   if (x86_FEATURES_AVX)     strcat(kCPU.spec_, ", AVX");
-
-
+  kCPU.spec_[8] = ':';
 
   //
   if (!x86_FEATURES_MSR) {
@@ -326,13 +318,16 @@ void initialize_smp()
   kprintf ("BSP found a count of %d CPUs\n", cpu_count + 1);
   kSYS.cpuCount_ = cpu_count + 1;
   // for (;;);
+
+
+
   cli();
 }
 
 void cpu_sched_ticks()
 {
   // kprintf(".");
-  dbg_ticks();
+  // dbg_ticks();
   sched_next(kSYS.scheduler_);
 }
 

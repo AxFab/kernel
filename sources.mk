@@ -23,6 +23,7 @@ mod_krn-y += $(wildcard $(srcdir)/mem/*.c)
 mod_krn-y += $(wildcard $(srcdir)/stm/*.c)
 mod_krn-y += $(wildcard $(srcdir)/tsk/*.c)
 mod_krn-y += $(wildcard $(srcdir)/vfs/*.c)
+mod_krn-y += $(wildcard $(srcdir)/net/*.c)
 
 # Minimum file systems
 mod_mfs-y += $(wildcard $(srcdir)/vfs/gpt/*.c)
