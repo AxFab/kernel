@@ -131,6 +131,9 @@ void kernel_sweep()
 }
 
 /* ----------------------------------------------------------------------- */
+void PCI_check_all_buses(void);
+void PCI_check_all_buses_force(void);
+
 void kernel_info()
 {
   int i;
@@ -143,10 +146,12 @@ void kernel_info()
     kprintf("  - CPU %d :: %s\n", i, kSYS._cpu[0].spec_);
   kprintf ("Memory: ");
   kprintf (" %s detected, ", kpsize((uintmax_t)kSYS.memMax_));
-  kprintf (" %s allocatable, ", kpsize((uintmax_t)kSYS.pageMax_ * PAGE_SIZE));
+  kprintf (" %s usable, ", kpsize((uintmax_t)kSYS.pageMax_ * PAGE_SIZE));
   kprintf (" %s available\n", kpsize((uintmax_t)kSYS.pageAvailable_ * PAGE_SIZE));
-  kprintf ("\n\033[94m Greetings...\033[0m\n\n");
 
+  kprintf ("\n");
+  PCI_check_all_buses();
+  kprintf ("\n\033[94m Greetings...\033[0m\n\n");
 }
 
 /* ----------------------------------------------------------------------- */

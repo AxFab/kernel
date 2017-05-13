@@ -37,7 +37,7 @@ mod_kfs-$(is_pc) += $(wildcard $(srcdir)/vfs/svga/*.c)
 
 
 # F L A G S -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-CFLAGS += -Wall -Wextra -Wno-unused-parameter -std=c11
+CFLAGS += -Wall -Wextra -Wno-unused-parameter -std=c11 -Wno-format
 CFLAGS += -D_DATE_=\"'$(DATE)'\" -D_OSNAME_=\"'$(LINUX)'\"
 CFLAGS += -D_GITH_=\"'$(GIT)'\" -D_VTAG_=\"'$(VERSION)'\"
 
